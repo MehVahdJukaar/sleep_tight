@@ -1,0 +1,52 @@
+
+modLoader="javafml" #mandatory
+
+loaderVersion="[40,)" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.
+
+license="ARR"
+
+[[mods]] #mandatory
+
+modId= "sleep_tight" #mandatory
+
+version = "${version}"
+
+displayName="Sleep Tight" #mandatory
+
+logoFile="icon.png" #optional
+
+credits="Mehvahdjukaar, Plantkillable" #optional
+
+authors="MehVahdJukaar, Plantkillable" #optional
+
+itemIcon="minecraft:goat_horn" #catalogue icon
+
+description='''
+Balanced sleep
+'''
+
+
+[modproperties.sleep_tight]
+    catalogueItemIcon = "sleep_tight:dream_essence" #catalogue icon
+    configuredBackground = "minecraft:textures/block/snow.png"
+
+
+[[dependencies.sleep_tight]] #optional
+    modId="forge" #mandatory
+    mandatory=true #mandatory
+    versionRange="[40,)" #mandatory
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.sleep_tight]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.19.2,1.20)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.sleep_tight]]
+    modId="moonlight"
+    mandatory=true
+    versionRange="[1.19.2-2.1.20,]"
+    side="BOTH"

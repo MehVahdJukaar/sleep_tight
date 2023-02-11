@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "00",
+    "00"
+  ],
+  "key": {
+    "0": {
+      "item": "minecraft:goat_horn"
+    }
+  },
+  "result": {
+    "item": "sleep_tight:ram_block",
+    "count": 1
+  }
+}

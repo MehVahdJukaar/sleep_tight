@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "sleep_tight",
+  "version": "${version}",
+  "name": "You've Goat to be kidding me",
+  "description": "Ram blocks for automation, Viking helmets and Geeps!",
+  "authors": [
+    "Mehvahdjukaar, Plantkillable"
+  ],
+  "contact": {
+    "homepage": "https://www.curseforge.com/minecraft/mc-mods/sleep_tight",
+    "sources": "https://github.com/MehVahdJukaar/sleep_tight"
+  },
+  "license": "ARR",
+  "icon": "icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.mehvahdjukaar.sleep_tight.fabric.GoatedFabric"
+    ]
+  },
+  "mixins": [
+    "${mod_id}.mixins.json",
+    "${mod_id}-common.mixins.json"
+  ],
+  "depends": {
+    "fabric": "*",
+    "minecraft": ">=1.19.2",
+    "moonlight": ">=1.19.2-2.0.35"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "sleep_tight:thatch",
+    "sleep_tight:thatch_stairs",
+    "sleep_tight:thatch_slab",
+    "sleep_tight:thatch_vertical_slab"
+  ]
+}
+
+

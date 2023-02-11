@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "010",
+    "1 1"
+  ],
+  "key": {
+    "0": {
+      "item": "minecraft:goat_horn"
+    },
+    "1": {
+      "item": "minecraft:copper_ingot"
+    }
+  },
+  "result": {
+    "item": "sleep_tight:barbaric_helmet",
+    "count": 1
+  }
+}

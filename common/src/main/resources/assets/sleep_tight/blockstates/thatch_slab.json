@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "sleep_tight:block/thatch_slab"
+    },
+    "type=double": {
+      "model": "sleep_tight:block/thatch"
+    },
+    "type=top": {
+      "model": "sleep_tight:block/thatch_slab_top"
+    }
+  }
+}

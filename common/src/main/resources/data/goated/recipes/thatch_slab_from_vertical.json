@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "sleep_tight:thatch_vertical_slab"
+    }
+  ],
+  "result": {
+    "item": "sleep_tight:thatch_slab",
+    "count": 1
+  }
+}

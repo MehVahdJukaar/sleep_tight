@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "#  ",
+    "## ",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "sleep_tight:thatch"
+    }
+  },
+  "result": {
+    "item": "sleep_tight:thatch_stairs",
+    "count": 4
+  }
+}

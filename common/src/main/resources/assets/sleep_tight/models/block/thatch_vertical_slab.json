@@ -1,0 +1,9 @@
+{
+    "parent": "supplementaries:block/vertical_slab",
+    "textures": {
+        "bottom": "sleep_tight:block/thatch_top",
+        "top": "sleep_tight:block/thatch_top",
+        "side": "sleep_tight:block/thatch",
+        "back": "sleep_tight:block/thatch"
+    }
+}

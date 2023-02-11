@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "00",
+    "00"
+  ],
+  "key": {
+    "0": {
+      "item": "minecraft:grass"
+    }
+  },
+  "result": {
+    "item": "sleep_tight:thatch",
+    "count": 1
+  }
+}
