@@ -20,7 +20,6 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.util.Mth;
-import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class HammockBlockTileRenderer implements BlockEntityRenderer<HammockBlockEntity> {
@@ -50,20 +49,19 @@ public class HammockBlockTileRenderer implements BlockEntityRenderer<HammockBloc
     public void render(HammockBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
 
         BlockState state = blockEntity.getBlockState();
-        boolean onRope = state.getValue(HammockBlock.PART).isOnFence();
+        HammockBlock.Part value = state.getValue(HammockBlock.PART);
+        boolean onRope = value.isOnFence();
         float zOffset;
-        double dy;
+        double dy = value.getPivotOffset();
 
-        if(onRope){
-            dy = 0.3125;
+        if (onRope) {
             zOffset = -0.5f;
-            ropeB.xRot = (float) (Math.PI*-150/180f);
-            ropeF.xRot = (float) (Math.PI*-30/180f);
-        }else{
-            dy = 3/16f;
+            ropeB.xRot = (float) (Math.PI * -150 / 180f);
+            ropeF.xRot = (float) (Math.PI * -30 / 180f);
+        } else {
             zOffset = 0f;
-            ropeB.xRot = (float) (-130/180f*Math.PI);
-            ropeF.xRot = (float) (-50/180f*Math.PI);
+            ropeB.xRot = (float) (-130 / 180f * Math.PI);
+            ropeF.xRot = (float) (-50 / 180f * Math.PI);
         }
 
         poseStack.pushPose();
@@ -71,10 +69,10 @@ public class HammockBlockTileRenderer implements BlockEntityRenderer<HammockBloc
         poseStack.mulPose(Vector3f.YP.rotationDegrees(-state.getValue(HammockBlock.FACING).toYRot()));
 
 
-        float yaw =0* blockEntity.getYaw(partialTick);
+        float yaw = blockEntity.getYaw(partialTick);
         poseStack.mulPose(Vector3f.ZP.rotationDegrees(180.0F + 15 * Mth.sin(yaw)));
 
-        var pBuffer  = bufferSource.getBuffer(RenderType.lines());
+        var pBuffer = bufferSource.getBuffer(RenderType.lines());
         Matrix4f matrix4f = poseStack.last().pose();
         Matrix3f matrix3f = poseStack.last().normal();
         pBuffer.vertex(matrix4f, 0.0F, 0, -1.0F)
@@ -85,8 +83,7 @@ public class HammockBlockTileRenderer implements BlockEntityRenderer<HammockBloc
                 .normal(matrix3f, 0, 1, 0).endVertex();
 
 
-        poseStack.translate(0, 0.5+dy, zOffset);
-
+        poseStack.translate(0, 0.5 + dy, zOffset);
 
 
         Material material = SleepTightClient.HAMMOCK_TEXTURES[blockEntity.getColor().getId()];

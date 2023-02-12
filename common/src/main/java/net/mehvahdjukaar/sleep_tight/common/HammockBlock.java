@@ -2,6 +2,7 @@ package net.mehvahdjukaar.sleep_tight.common;
 
 import com.mojang.datafixers.util.Pair;
 import dev.architectury.injectables.annotations.PlatformOnly;
+import net.mehvahdjukaar.moonlight.api.block.IRotatable;
 import net.mehvahdjukaar.moonlight.api.set.BlocksColorAPI;
 import net.mehvahdjukaar.moonlight.api.util.Utils;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
@@ -38,19 +39,21 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class HammockBlock extends HorizontalDirectionalBlock implements EntityBlock {
+public class HammockBlock extends HorizontalDirectionalBlock implements EntityBlock, IRotatable {
 
     public static final EnumProperty<Part> PART = EnumProperty.create("part", Part.class);
     public static final BooleanProperty OCCUPIED = BlockStateProperties.OCCUPIED;
-    public static final VoxelShape SHAPE = Block.box(0.0, 3.0, 0.0, 16.0, 6.0, 16.0);
-
+    public static final VoxelShape SHAPE_FULL = Block.box(0.0, 3.0, 0.0, 16.0, 6.0, 16.0);
+    public static final VoxelShape SHAPE_NORTH = Block.box(0.0, 3.0, 8.0, 16.0, 6.0, 16.0);
+    public static final VoxelShape SHAPE_SOUTH = Block.box(0.0, 3.0, 0.0, 16.0, 6.0, 8);
+    public static final VoxelShape SHAPE_WEST = Block.box(8, 3.0, 0.0, 16.0, 6.0, 16.0);
+    public static final VoxelShape SHAPE_EAST = Block.box(0.0, 3.0, 0.0, 8, 6.0, 8);
 
     private final DyeColor color;
 
@@ -84,7 +87,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
 
                 return InteractionResult.SUCCESS;
             } else {
-                SleepHelper.startSleepInBed(player, pos,state.getValue(FACING), !state.getValue(PART).onFence).ifLeft(bedSleepingProblem -> {
+                player.startSleepInBed(pos).ifLeft(bedSleepingProblem -> {
                     if (bedSleepingProblem.getMessage() != null) {
                         player.displayClientMessage(bedSleepingProblem.getMessage(), true);
                     }
@@ -100,19 +103,6 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
-    public void updateEntityAfterFallOn(BlockGetter level, Entity entity) {
-        if (entity.isSuppressingBounce()) {
-            super.updateEntityAfterFallOn(level, entity);
-        } else {
-            Vec3 vec3 = entity.getDeltaMovement();
-            if (vec3.y < 0.0) {
-                double d = entity instanceof LivingEntity ? 1.0 : 0.8;
-                entity.setDeltaMovement(vec3.x, -vec3.y * 0.9F * d, vec3.z);
-            }
-        }
-    }
-
-    @Override
     public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
                                   LevelAccessor level, BlockPos currentPos, BlockPos neighborPos) {
         Part part = state.getValue(PART);
@@ -120,16 +110,24 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
         if (direction.getAxis() == myDir.getAxis()) {
             for (var v : part.getPiecesDirections(myDir)) {
                 if (v.getFirst() == direction) {
-                    if (neighborState.getBlock() instanceof HammockBlock) {
+                    if (neighborState.getBlock() instanceof HammockBlock nh) {
                         if (neighborState.getValue(PART) == v.getSecond() &&
                                 neighborState.getValue(FACING) == myDir) {
                             //accounts for color change
-                            BlockState newState = neighborState.is(this) ? neighborState :
-                                    BlocksColorAPI.changeColor(neighborState.getBlock(), this.color).withPropertiesOf(neighborState);
+                            BlockState newState = neighborState.is(this) ? state :
+                                    BlocksColorAPI.changeColor(state.getBlock(), nh.color)
+                                            .withPropertiesOf(state);
                             return newState.setValue(OCCUPIED, neighborState.getValue(OCCUPIED));
                         }
                         break;
                     }
+                    return Blocks.AIR.defaultBlockState();
+                }
+            }
+            Direction attDir = part.getConnectionDirection(myDir);
+            if (attDir == direction) {
+                Connection c = getConnectionType(attDir, currentPos, level);
+                if (c == Connection.NONE || (c == Connection.FENCE != part.onFence)) {
                     return Blocks.AIR.defaultBlockState();
                 }
             }
@@ -191,7 +189,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
         return null;
     }
 
-    private static Connection getConnectionType(Direction dir, BlockPos pos, Level level) {
+    private static Connection getConnectionType(Direction dir, BlockPos pos, LevelAccessor level) {
         BlockPos relative = pos.relative(dir);
         BlockState facingState = level.getBlockState(relative);
         Direction opposite = dir.getOpposite();
@@ -208,20 +206,27 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
             Part part = state.getValue(PART);
             for (var v : part.getPiecesDirections(state.getValue(FACING))) {
                 BlockPos blockPos = pos.relative(v.getFirst());
-             //   level.setBlock(blockPos, state.setValue(PART, v.getSecond()), 3);
+                level.setBlock(blockPos, state.setValue(PART, v.getSecond()), 3);
                 if (part == Part.HALF_HEAD) {
                     blockPos = blockPos.relative(v.getFirst());
-                  //  level.setBlock(blockPos, state.setValue(PART, Part.HALF_FOOT), 3);
+                    level.setBlock(blockPos, state.setValue(PART, Part.HALF_FOOT), 3);
                 }
-                level.blockUpdated(pos, Blocks.AIR);
-                state.updateNeighbourShapes(level, pos, 3);
             }
         }
     }
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return SHAPE;
+        Part part = state.getValue(PART);
+        if (part.onFence || part == Part.MIDDLE) return SHAPE_FULL;
+        else {
+            return switch (part.getConnectionDirection(state.getValue(FACING))) {
+                case WEST -> SHAPE_WEST;
+                case EAST -> SHAPE_EAST;
+                case SOUTH -> SHAPE_SOUTH;
+                default -> SHAPE_NORTH;
+            };
+        }
     }
 
     /*
@@ -272,7 +277,6 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
         return level.isClientSide ? Utils.getTicker(type, SleepTight.HAMMOCK_TILE.get(), HammockBlockEntity::tick) : null;
     }
 
-
     @Override
     public long getSeed(BlockState state, BlockPos pos) {
         BlockPos blockPos = getMasterPos(state, pos);
@@ -288,28 +292,16 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
         return false;
     }
 
-    private static int[][] bedStandUpOffsets(Direction firstDir, Direction secondDir) {
-        return ArrayUtils.addAll(bedSurroundStandUpOffsets(firstDir, secondDir), bedAboveStandUpOffsets(firstDir));
+
+
+    public static Vec3 getSleepPosition(BlockState state, BlockPos pos) {
+        Vec3 v = Vec3.atCenterOf(pos).subtract(0, 1 / 16f, 0);
+        if (!state.getValue(PART).onFence) {
+            v = v.relative(state.getValue(FACING), 0.5);
+        }
+        return v;
     }
 
-    private static int[][] bedSurroundStandUpOffsets(Direction firstDir, Direction secondDir) {
-        return new int[][]{
-                {secondDir.getStepX(), secondDir.getStepZ()},
-                {secondDir.getStepX() - firstDir.getStepX(), secondDir.getStepZ() - firstDir.getStepZ()},
-                {secondDir.getStepX() - firstDir.getStepX() * 2, secondDir.getStepZ() - firstDir.getStepZ() * 2},
-                {-firstDir.getStepX() * 2, -firstDir.getStepZ() * 2},
-                {-secondDir.getStepX() - firstDir.getStepX() * 2, -secondDir.getStepZ() - firstDir.getStepZ() * 2},
-                {-secondDir.getStepX() - firstDir.getStepX(), -secondDir.getStepZ() - firstDir.getStepZ()},
-                {-secondDir.getStepX(), -secondDir.getStepZ()},
-                {-secondDir.getStepX() + firstDir.getStepX(), -secondDir.getStepZ() + firstDir.getStepZ()},
-                {firstDir.getStepX(), firstDir.getStepZ()},
-                {secondDir.getStepX() + firstDir.getStepX(), secondDir.getStepZ() + firstDir.getStepZ()}
-        };
-    }
-
-    private static int[][] bedAboveStandUpOffsets(Direction dir) {
-        return new int[][]{{0, 0}, {-dir.getStepX(), -dir.getStepZ()}};
-    }
 
     private enum Connection {
         BLOCK, FENCE, NONE;
@@ -333,11 +325,17 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
         private final String name;
         private final int masterOffset;
         private final boolean onFence;
+        private final float pivotOffset;
 
         Part(String name, int offset, boolean onRope) {
             this.name = name;
             this.masterOffset = offset;
             this.onFence = onRope;
+            this.pivotOffset = onRope ? 0.3125f : 3 / 16f;
+        }
+
+        public float getPivotOffset() {
+            return pivotOffset;
         }
 
         @Override
@@ -372,6 +370,15 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
             };
         }
 
+        @Nullable
+        public Direction getConnectionDirection(Direction myDirection) {
+            return switch (this) {
+                case FOOT, HALF_FOOT -> myDirection.getOpposite();
+                case HEAD, HALF_HEAD -> myDirection;
+                default -> null;
+            };
+        }
+
         public List<Pair<Direction, Part>> getPiecesDirections(Direction myDirection) {
             var list = new ArrayList<Pair<Direction, Part>>();
             var p = getToHeadPart();
@@ -401,6 +408,17 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
                 case MIDDLE -> null;
             };
         }
+    }
+
+    @Override
+    public Optional<BlockState> getRotatedState(BlockState state, LevelAccessor world, BlockPos pos, Rotation rotation, Direction axis, @Nullable Vec3 hit) {
+        return Optional.empty();
+    }
+
+    //TODO
+    @Override
+    public Optional<Direction> rotateOverAxis(BlockState state, LevelAccessor world, BlockPos pos, Rotation rotation, Direction axis, @Nullable Vec3 hit) {
+        return IRotatable.super.rotateOverAxis(state, world, pos, rotation, axis, hit);
     }
 
 

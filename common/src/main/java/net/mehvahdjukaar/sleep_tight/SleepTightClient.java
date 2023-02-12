@@ -1,10 +1,20 @@
 package net.mehvahdjukaar.sleep_tight;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Matrix3f;
+import com.mojang.math.Matrix4f;
+import com.mojang.math.Vector3f;
 import net.mehvahdjukaar.moonlight.api.platform.ClientPlatformHelper;
 import net.mehvahdjukaar.sleep_tight.client.HammockBlockTileRenderer;
+import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
 import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.model.Material;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.DyeColor;
 
 import java.util.Arrays;
@@ -51,4 +61,25 @@ public class SleepTightClient {
         event.register(SleepTight.HAMMOCK_TILE.get(), HammockBlockTileRenderer::new);
     }
 
+    public static <T extends LivingEntity> void renderStuff(T entity, PoseStack poseStack, float p, MultiBufferSource bufferSource) {
+        var e = entity.getLevel().getBlockEntity(entity.getSleepingPos().get());
+        if (e instanceof HammockBlockEntity tile) {
+            float o = tile.getPivotOffset();
+            Vector3f v = tile.getAxis() == Direction.Axis.Z ? Vector3f.ZN : Vector3f.XN;
+            poseStack.translate(0, o, 0);
+            poseStack.mulPose(v.rotationDegrees(-15 * Mth.sin(tile.getYaw(p))));
+            var pBuffer = bufferSource.getBuffer(RenderType.lines());
+            Matrix4f matrix4f = poseStack.last().pose();
+            Matrix3f matrix3f = poseStack.last().normal();
+            pBuffer.vertex(matrix4f, 0.0F, 0, -1.0F)
+                    .color(0, 255, 255, 255)
+                    .normal(matrix3f, 0, 1, 0).endVertex();
+            pBuffer.vertex(matrix4f, 0, 0, 2)
+                    .color(0, 255, 255, 255)
+                    .normal(matrix3f, 0, 1, 0).endVertex();
+
+            poseStack.translate(0, -o, 0);
+
+        }
+    }
 }

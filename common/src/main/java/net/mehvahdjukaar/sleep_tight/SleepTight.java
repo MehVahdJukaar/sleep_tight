@@ -48,7 +48,7 @@ public class SleepTight {
 
 
     public static final Map<DyeColor, Supplier<Block>> HAMMOCKS = Util.make(() ->
-            Arrays.stream(DyeColor.values()).collect(Collectors.toMap(d -> d, d ->
+            Arrays.stream(DyeColor.values()).collect(Collectors.toUnmodifiableMap(d -> d, d ->
                     regWithItem("hammock_" + d.getName(), () ->
                             new HammockBlock(d), CreativeModeTab.TAB_DECORATIONS)))
     );

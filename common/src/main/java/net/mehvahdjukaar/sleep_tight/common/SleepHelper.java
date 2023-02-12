@@ -11,10 +11,10 @@ public class SleepHelper {
 
     public static Either<Player.BedSleepingProblem, Unit> startSleepInBed(Player player, BlockPos pos, Direction dir, boolean offset) {
         var r = player.startSleepInBed(pos);
-        if (r.right().isPresent()) {
+        if (r.right().isPresent() || true) {
             Vec3 v = Vec3.atCenterOf(pos);
             if(offset)v=v.relative(dir, 0.5);
-            player.setPos(v.x, v.y, v.z);
+            player.setPos(v.x, pos.getY() + 0.5, v.z);
         }
         return r;
     }

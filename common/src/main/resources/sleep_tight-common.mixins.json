@@ -4,8 +4,10 @@
   "package": "net.mehvahdjukaar.sleep_tight.mixins",
   "compatibilityLevel": "JAVA_17",
   "client": [
+    "LivingEntityRendererMixin"
   ],
   "mixins": [
+    "LivingEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -3,6 +3,7 @@ package net.mehvahdjukaar.sleep_tight.common;
 import dev.architectury.injectables.annotations.PlatformOnly;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.DyeColor;
@@ -14,8 +15,12 @@ import net.minecraft.world.phys.AABB;
 public class HammockBlockEntity extends BlockEntity {
 
     private final DyeColor color;
+
+    //client stuff
     private float yaw;
     private float prevYaw;
+    private float pivotOffset;
+    private Direction.Axis axis;
 
     public HammockBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(SleepTight.HAMMOCK_TILE.get(), blockPos, blockState);
@@ -28,6 +33,14 @@ public class HammockBlockEntity extends BlockEntity {
 
     public float getYaw(float partialTicks) {
         return Mth.lerp(partialTicks, prevYaw, yaw);
+    }
+
+    public float getPivotOffset() {
+        return pivotOffset;
+    }
+
+    public Direction.Axis getAxis() {
+        return axis;
     }
 
     @Override
@@ -43,6 +56,8 @@ public class HammockBlockEntity extends BlockEntity {
     public static void tick(Level level, BlockPos pos, BlockState state, HammockBlockEntity e) {
         e.prevYaw = e.yaw;
         e.yaw+=0.1f;
+        e.pivotOffset = state.getValue(HammockBlock.PART).getPivotOffset();
+        e.axis = state.getValue(HammockBlock.FACING).getAxis();
     }
 
 
