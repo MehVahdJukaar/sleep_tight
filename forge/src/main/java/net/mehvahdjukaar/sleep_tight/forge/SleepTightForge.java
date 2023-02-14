@@ -44,6 +44,7 @@ public class SleepTightForge {
         SleepTight.commonInit();
         if (PlatformHelper.getEnv().isClient()) {
             SleepTightClient.init();
+            MinecraftForge.EVENT_BUS.register(SleepTightForgeClient.class);
         }
         MinecraftForge.EVENT_BUS.register(this);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(SleepTightForge::setup);

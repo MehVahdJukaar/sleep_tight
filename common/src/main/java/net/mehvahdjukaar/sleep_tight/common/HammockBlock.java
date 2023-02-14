@@ -87,11 +87,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
 
                 return InteractionResult.SUCCESS;
             } else {
-                player.startSleepInBed(pos).ifLeft(bedSleepingProblem -> {
-                    if (bedSleepingProblem.getMessage() != null) {
-                        player.displayClientMessage(bedSleepingProblem.getMessage(), true);
-                    }
-                });
+                BedEntity.layDown(state, level, pos, player);
                 return InteractionResult.SUCCESS;
             }
         }
@@ -291,7 +287,6 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     public boolean isPathfindable(BlockState state, BlockGetter level, BlockPos pos, PathComputationType type) {
         return false;
     }
-
 
 
     public static Vec3 getSleepPosition(BlockState state, BlockPos pos) {

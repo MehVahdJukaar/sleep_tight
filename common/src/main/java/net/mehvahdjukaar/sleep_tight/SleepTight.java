@@ -2,6 +2,7 @@ package net.mehvahdjukaar.sleep_tight;
 
 import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
+import net.mehvahdjukaar.sleep_tight.common.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
 import net.minecraft.Util;
@@ -57,6 +58,10 @@ public class SleepTight {
             res("hammock"), () -> PlatformHelper.newBlockEntityType(HammockBlockEntity::new,
                     HAMMOCKS.values().stream().map(Supplier::get).toArray(Block[]::new))
     );
+
+    public static final Supplier<EntityType<BedEntity>> BED_ENTITY = RegHelper.registerEntityType(res("bed_entity"),
+           BedEntity::new, MobCategory.MISC, 0.5f, 0.25f, 3, Integer.MAX_VALUE );
+
 
     public static <T extends Block> Supplier<T> regWithItem(String name, Supplier<T> blockFactory, CreativeModeTab tab) {
         return regWithItem(name, blockFactory, new Item.Properties().tab(tab), 0);

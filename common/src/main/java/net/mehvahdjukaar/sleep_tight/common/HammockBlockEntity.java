@@ -20,7 +20,7 @@ public class HammockBlockEntity extends BlockEntity {
     private float yaw;
     private float prevYaw;
     private float pivotOffset;
-    private Direction.Axis axis;
+    private Direction direction;
 
     public HammockBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(SleepTight.HAMMOCK_TILE.get(), blockPos, blockState);
@@ -32,15 +32,15 @@ public class HammockBlockEntity extends BlockEntity {
     }
 
     public float getYaw(float partialTicks) {
-        return Mth.lerp(partialTicks, prevYaw, yaw);
+        return 0*Mth.lerp(partialTicks, prevYaw, yaw);
     }
 
     public float getPivotOffset() {
         return pivotOffset;
     }
 
-    public Direction.Axis getAxis() {
-        return axis;
+    public Direction getDirection() {
+        return direction;
     }
 
     @Override
@@ -55,9 +55,9 @@ public class HammockBlockEntity extends BlockEntity {
 
     public static void tick(Level level, BlockPos pos, BlockState state, HammockBlockEntity e) {
         e.prevYaw = e.yaw;
-        e.yaw+=0.1f;
+        e.yaw += 0.1f;
         e.pivotOffset = state.getValue(HammockBlock.PART).getPivotOffset();
-        e.axis = state.getValue(HammockBlock.FACING).getAxis();
+        e.direction = state.getValue(HammockBlock.FACING);
     }
 
 
