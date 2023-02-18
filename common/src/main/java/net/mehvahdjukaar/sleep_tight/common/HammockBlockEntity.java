@@ -17,14 +17,20 @@ public class HammockBlockEntity extends BlockEntity {
     private final DyeColor color;
 
     //client stuff
-    private float yaw;
-    private float prevYaw;
     private float pivotOffset;
     private Direction direction;
+
+    private boolean accelerating;
+    private boolean decelerating;
+    private float prevYaw;
+    private float yaw = 1;
+    private float angularVel = 0.1f;
 
     public HammockBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(SleepTight.HAMMOCK_TILE.get(), blockPos, blockState);
         this.color = ((HammockBlock) blockState.getBlock()).getColor();
+        this.pivotOffset = blockState.getValue(HammockBlock.PART).getPivotOffset();
+        this.direction = blockState.getValue(HammockBlock.FACING);
     }
 
     public DyeColor getColor() {
@@ -32,7 +38,7 @@ public class HammockBlockEntity extends BlockEntity {
     }
 
     public float getYaw(float partialTicks) {
-        return 0*Mth.lerp(partialTicks, prevYaw, yaw);
+        return (180 / Mth.PI) * 0.0f*Mth.lerp(partialTicks, prevYaw, yaw);//Mth.lerp(partialTicks, prevAmpl, ampl) * Mth.sin((tickCount + partialTicks) * 0.08f);
     }
 
     public float getPivotOffset() {
@@ -55,10 +61,45 @@ public class HammockBlockEntity extends BlockEntity {
 
     public static void tick(Level level, BlockPos pos, BlockState state, HammockBlockEntity e) {
         e.prevYaw = e.yaw;
-        e.yaw += 0.1f;
+
+
+        float damping = 0.0f;
+        float dt = 0.1f;
+        float freq = 1;
+
+        if (e.accelerating || e.decelerating) {
+            double decel = 0.5;
+            e.angularVel += decel * ((e.angularVel > 0 ^ e.decelerating) ? 1 : -1);
+        }
+
+        float drag = -damping * e.angularVel;
+
+        float k = (float) Math.pow(2 * Math.PI * freq, 2);
+
+        float acc = -k * Mth.sin(e.yaw) + drag;
+
+        e.angularVel += dt * acc;
+
+        e.yaw += (e.angularVel * dt);
+
+        //float max_yaw = max_swing_angle(self.yaw, self.angular_velocity, ff)
+
+
         e.pivotOffset = state.getValue(HammockBlock.PART).getPivotOffset();
         e.direction = state.getValue(HammockBlock.FACING);
+
+
+        e.accelerating = false;
+        e.decelerating = false;
     }
 
+
+    public void accelerate() {
+        this.accelerating = true;
+    }
+
+    public void decelerate() {
+        this.decelerating = true;
+    }
 
 }

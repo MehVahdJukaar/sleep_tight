@@ -5,6 +5,7 @@ import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
 import net.mehvahdjukaar.sleep_tight.common.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
+import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
 import net.minecraft.Util;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -38,6 +39,7 @@ public class SleepTight {
     }
 
     public static void commonInit() {
+        NetworkHandler.registerMessages();
 
     }
 

@@ -1,27 +1,18 @@
 package net.mehvahdjukaar.sleep_tight.forge;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Quaternion;
+import com.mojang.math.Vector3f;
+import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.common.BedEntity;
+import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.LivingEntityRenderer;
-import net.minecraft.client.renderer.entity.layers.RenderLayer;
-import net.minecraft.core.Direction;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.ViewportEvent;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-
-import java.util.Iterator;
-
-import static net.minecraft.client.renderer.entity.LivingEntityRenderer.isEntityUpsideDown;
 
 public class SleepTightForgeClient {
 
@@ -30,9 +21,40 @@ public class SleepTightForgeClient {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && player.isSleeping()) {
             float partialTick = (float) event.getPartialTick();
-            event.setPitch(player.getViewXRot(partialTick));
-            event.setYaw(player.getViewYRot(partialTick));
+            // event.setPitch(player.getViewXRot(partialTick));
+            // event.setYaw(player.getViewYRot(partialTick));
+            //  event.getCamera().move(-1,0,0);
+        } else if (player != null && player.getPose() == Pose.SLEEPING) {
+            event.getCamera().move(0.125, 8 / 16f, 0);
         }
+
+        //event.setYaw(0);
+        // event.setPitch(0);
+        //  event.setRoll(0);
+    }
+
+    public static float angle(Vector3f v1, Vector3f v2) {
+        float dot = v1.dot(v2);
+        float len1 = len(v1);
+        float len2 = len(v2);
+        float cosAngle = dot / (len1 * len2);
+        return (float) Math.toDegrees(Math.acos(cosAngle));
+    }
+
+    public static float len(Vector3f v) {
+        return Mth.sqrt(v.x() * v.x() + v.y() * v.y() + v.z() * v.z());
+    }
+
+    public static float angle(float angle1, float angle2) {
+        float diff = angle2 - angle1;
+        float angle = diff % 360;
+        if (angle < 0) {
+            angle += 360;
+        }
+        if (angle > 180) {
+            angle = 360 - angle;
+        }
+        return angle;
     }
 
     @SubscribeEvent

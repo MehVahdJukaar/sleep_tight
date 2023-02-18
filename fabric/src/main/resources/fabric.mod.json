@@ -16,7 +16,7 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "net.mehvahdjukaar.sleep_tight.fabric.GoatedFabric"
+      "net.mehvahdjukaar.sleep_tight.fabric.SleepTightFabric"
     ]
   },
   "mixins": [

@@ -70,7 +70,7 @@ public class HammockBlockTileRenderer implements BlockEntityRenderer<HammockBloc
 
 
         float yaw = blockEntity.getYaw(partialTick);
-        poseStack.mulPose(Vector3f.ZP.rotationDegrees(180.0F + 15 * Mth.sin(yaw)));
+        poseStack.mulPose(Vector3f.ZP.rotationDegrees(180.0F + yaw));
 
         var pBuffer = bufferSource.getBuffer(RenderType.lines());
         Matrix4f matrix4f = poseStack.last().pose();

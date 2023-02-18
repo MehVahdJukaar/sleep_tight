@@ -1,5 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.mixins;
 
+import net.mehvahdjukaar.sleep_tight.SleepTightClient;
+import net.mehvahdjukaar.sleep_tight.common.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.HammockBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -9,12 +11,18 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin extends Entity {
+
+    @Shadow public abstract boolean isSleeping();
+
+    @Shadow public abstract boolean isDeadOrDying();
 
     protected LivingEntityMixin(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -27,6 +35,13 @@ public abstract class LivingEntityMixin extends Entity {
           Vec3 v = HammockBlock.getSleepPosition(state, pos);
           this.setPos(v);
           ci.cancel();
+        }
+    }
+
+    @Inject(method = "isSleeping", at = @At(value = "HEAD"), cancellable = true)
+    public void sleepOnEntity(CallbackInfoReturnable<Boolean> cir){
+        if(this.level.isClientSide && !this.isDeadOrDying() && this.getVehicle() instanceof BedEntity && SleepTightClient.cameraHack){
+            cir.setReturnValue(true);
         }
     }
 }

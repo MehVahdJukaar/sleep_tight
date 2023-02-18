@@ -1,0 +1,14 @@
+package net.mehvahdjukaar.sleep_tight.network;
+
+import net.mehvahdjukaar.moonlight.api.platform.network.ChannelHandler;
+import net.mehvahdjukaar.moonlight.api.platform.network.NetworkDir;
+import net.mehvahdjukaar.sleep_tight.SleepTight;
+
+public class NetworkHandler {
+    public static final ChannelHandler CHANNEL = ChannelHandler.createChannel(SleepTight.res("network"));
+
+    public static void registerMessages() {
+        CHANNEL.register(NetworkDir.PLAY_TO_SERVER, ServerBoundCommitSleepMessage.class, ServerBoundCommitSleepMessage::new);
+    }
+
+}
