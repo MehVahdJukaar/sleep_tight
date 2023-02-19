@@ -4,9 +4,11 @@ import dev.architectury.injectables.annotations.PlatformOnly;
 import net.mehvahdjukaar.moonlight.api.entity.IControllableVehicle;
 import net.mehvahdjukaar.moonlight.api.entity.IExtraClientSpawnData;
 import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
+import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
-import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
+import net.mehvahdjukaar.sleep_tight.network.AccelerateHammockMessage;
+import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -123,9 +125,9 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     @Override
     public void positionRider(Entity passenger) {
         if (this.hasPassenger(passenger)) {
-            if(bedState.getBlock() instanceof IModBed b){
+            if (bedState.getBlock() instanceof IModBed b) {
                 var v = b.getSleepingPosition(bedState, this.blockPosition());
-               v =  v.relative(dir, -3 / 32f);
+                v = v.relative(dir, -3 / 32f);
                 passenger.setPos(v.x, v.y, v.z);
             }
         }
@@ -138,9 +140,9 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         float subtract = clampedDiff - diff;
         //((LivingEntity)  entity).yHeadRotO += subtract;
 
-          ((LivingEntity)  entity).yHeadRot += subtract;
+        ((LivingEntity) entity).yHeadRot += subtract;
         //   entity.setYRot(entity.getYRot() + f1 - diff);
-          entity.setXRot(Mth.clamp(entity.getXRot(),-75,0));
+        entity.setXRot(Mth.clamp(entity.getXRot(), -75, 0));
     }
 
     @PlatformOnly(PlatformOnly.FORGE)
@@ -207,6 +209,13 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             level.addFreshEntity(entity);
             player.startRiding(entity);
             level.setBlockAndUpdate(pos, state.setValue(BedBlock.OCCUPIED, true));
+
+        } else if (level.getBlockEntity(pos) instanceof HammockBlockEntity tile) {
+
+            var d = player.getDeltaMovement();
+            double vel = d.dot(MthUtils.V3itoV3(tile.getDirection().getClockWise().getNormal())) / d.length();
+
+            tile.addImpulse(-vel*1.1f);
         }
     }
 
@@ -214,10 +223,13 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     public void onInputUpdate(boolean left, boolean right, boolean up, boolean down, boolean sprint, boolean jumping) {
         if (jumping) {
             ClientEvents.playerSleepCommit(this);
-        } else if (up || down) {
+        } else if (left ^ right) {
             if (getBedTile() instanceof HammockBlockEntity tile) {
-                if (up) tile.accelerate();
-                if (down) tile.decelerate();
+                if (left) {
+                    tile.accelerateLeft();
+                } else {
+                    tile.accelerateRight();
+                }
             }
         }
     }

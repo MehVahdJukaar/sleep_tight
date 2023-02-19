@@ -69,7 +69,7 @@ public class HammockBlockTileRenderer implements BlockEntityRenderer<HammockBloc
         poseStack.mulPose(Vector3f.YP.rotationDegrees(-state.getValue(HammockBlock.FACING).toYRot()));
 
 
-        float yaw = blockEntity.gerRoll(partialTick);
+        float yaw = blockEntity.getRoll(partialTick);
         poseStack.mulPose(Vector3f.ZP.rotationDegrees(180.0F + yaw));
 
         var pBuffer = bufferSource.getBuffer(RenderType.lines());

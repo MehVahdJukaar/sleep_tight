@@ -53,7 +53,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     public static final VoxelShape SHAPE_NORTH = Block.box(0.0, 3.0, 8.0, 16.0, 6.0, 16.0);
     public static final VoxelShape SHAPE_SOUTH = Block.box(0.0, 3.0, 0.0, 16.0, 6.0, 8);
     public static final VoxelShape SHAPE_WEST = Block.box(8, 3.0, 0.0, 16.0, 6.0, 16.0);
-    public static final VoxelShape SHAPE_EAST = Block.box(0.0, 3.0, 8.0, 16, 6.0, 16);
+    public static final VoxelShape SHAPE_EAST = Block.box(0.0, 3.0, 0, 16, 6.0, 8);
 
     private final DyeColor color;
 
@@ -219,6 +219,18 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
+    public long getSeed(BlockState state, BlockPos pos) {
+        BlockPos blockPos = getMasterPos(state, pos);
+        return Mth.getSeed(blockPos.getX(), pos.getY(), blockPos.getZ());
+    }
+
+    private static BlockPos getMasterPos(BlockState state, BlockPos pos) {
+        return pos.relative(state.getValue(FACING), state.getValue(PART).getMasterOffset());
+    }
+
+    //block stuff
+
+    @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return state.getValue(PART).isMaster() ? new HammockBlockEntity(pos, state) : null;
     }
@@ -230,13 +242,8 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
-    public long getSeed(BlockState state, BlockPos pos) {
-        BlockPos blockPos = getMasterPos(state, pos);
-        return Mth.getSeed(blockPos.getX(), pos.getY(), blockPos.getZ());
-    }
-
-    private static BlockPos getMasterPos(BlockState state, BlockPos pos) {
-        return pos.relative(state.getValue(FACING), state.getValue(PART).getMasterOffset());
+    public boolean triggerEvent(BlockState state, Level level, BlockPos pos, int id, int param) {
+        return super.triggerEvent(state, level, pos, id, param);
     }
 
     @Override

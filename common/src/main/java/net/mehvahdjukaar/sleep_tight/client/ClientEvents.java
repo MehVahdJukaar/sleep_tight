@@ -29,7 +29,7 @@ public class ClientEvents {
         }
         if (pos != null && entity.getLevel().getBlockEntity(pos) instanceof HammockBlockEntity tile) {
 
-            float roll = tile.gerRoll(partialTicks);
+            float roll = tile.getRoll(partialTicks);
 
             float o = tile.getPivotOffset(); //hammock pivot
             Vector3f v = tile.getDirection().step();
@@ -60,7 +60,7 @@ public class ClientEvents {
             var q = camera.rotation().copy();
             q.conj();
             matrixStack.mulPose(q);
-            var yaw = tile.gerRoll(partialTicks);
+            var yaw = tile.getRoll(partialTicks);
 
             float a = 6 / 16f - tile.getPivotOffset();
             matrixStack.translate(0, -a, 0);

@@ -9,6 +9,8 @@ public class NetworkHandler {
 
     public static void registerMessages() {
         CHANNEL.register(NetworkDir.PLAY_TO_SERVER, ServerBoundCommitSleepMessage.class, ServerBoundCommitSleepMessage::new);
+        CHANNEL.register(NetworkDir.BOTH, AccelerateHammockMessage.class, AccelerateHammockMessage::new);
+
     }
 
 }
