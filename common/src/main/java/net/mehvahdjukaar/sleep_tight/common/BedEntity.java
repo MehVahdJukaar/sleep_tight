@@ -6,6 +6,7 @@ import net.mehvahdjukaar.moonlight.api.entity.IExtraClientSpawnData;
 import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
+import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -17,6 +18,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.piston.PistonMovingBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -28,6 +30,9 @@ import java.util.List;
 
 public class BedEntity extends Entity implements IControllableVehicle, IExtraClientSpawnData {
 
+    private Direction dir = Direction.NORTH;
+    private boolean hasOffset = false;
+    private BlockState bedState = Blocks.AIR.defaultBlockState();
 
     public BedEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -39,27 +44,24 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         this.dir = bedDir.getOpposite();
         this.hasOffset = isTripleBed(bedState);
         this.setYRot(this.dir.toYRot());
+        this.bedState = bedState;
     }
-
-    private Direction dir = Direction.NORTH;
-    private boolean hasOffset = false;
-
 
     @Override
     public void tick() {
         super.tick();
         List<Entity> passengers = getPassengers();
         for (var p : passengers) {
-              p.setPose(Pose.SLEEPING);
+            p.setPose(Pose.SLEEPING);
         }
         boolean dead = passengers.isEmpty();
         BlockPos pos = blockPosition();
-        BlockState state = level.getBlockState(pos);
-        boolean isBed = isBed(state);
+        this.bedState = level.getBlockState(pos);
+        boolean isBed = isBed(bedState);
 
-        if(isBed){
-            dir = state.getValue(BedBlock.FACING).getOpposite();
-            hasOffset = isTripleBed(state);
+        if (isBed) {
+            dir = bedState.getValue(BedBlock.FACING).getOpposite();
+            hasOffset = isTripleBed(bedState);
         }
 
         if (!dead && !isBed) {
@@ -93,12 +95,12 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         if (dead && !level.isClientSide) {
             discard();
             if (isBed) {
-                level.setBlockAndUpdate(pos, state.setValue(BedBlock.OCCUPIED, false));
+                level.setBlockAndUpdate(pos, bedState.setValue(BedBlock.OCCUPIED, false));
             }
         }
     }
 
-    private static boolean isTripleBed( BlockState state) {
+    private static boolean isTripleBed(BlockState state) {
         return state.getBlock() instanceof HammockBlock && !state.getValue(HammockBlock.PART).isOnFence();
     }
 
@@ -121,9 +123,11 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     @Override
     public void positionRider(Entity passenger) {
         if (this.hasPassenger(passenger)) {
-            var offset = dir.step();
-            offset.mul(hasOffset ? -11/16f : -3/16f);
-            passenger.setPos(this.getX() + offset.x(), this.getY(), this.getZ() + offset.z());
+            if(bedState.getBlock() instanceof IModBed b){
+                var v = b.getSleepingPosition(bedState, this.blockPosition());
+               v =  v.relative(dir, -3 / 32f);
+                passenger.setPos(v.x, v.y, v.z);
+            }
         }
     }
 
@@ -134,9 +138,9 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         float subtract = clampedDiff - diff;
         //((LivingEntity)  entity).yHeadRotO += subtract;
 
-        ((LivingEntity)  entity).yHeadRot += subtract;
-     //   entity.setYRot(entity.getYRot() + f1 - diff);
-        entity.setXRot(Mth.clamp(entity.getXRot(),-75,0));
+          ((LivingEntity)  entity).yHeadRot += subtract;
+        //   entity.setYRot(entity.getYRot() + f1 - diff);
+          entity.setXRot(Mth.clamp(entity.getXRot(),-75,0));
     }
 
     @PlatformOnly(PlatformOnly.FORGE)
@@ -176,14 +180,14 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     @Override
     protected void addPassenger(Entity passenger) {
         super.addPassenger(passenger);
-       // passenger.setPose(Pose.SLEEPING);
+        // passenger.setPose(Pose.SLEEPING);
         positionRider(passenger);
         passenger.setYRot(this.getYRot());
     }
 
     public void startSleepingOn(Player player) {
         var e = player.getVehicle();
-        if(e instanceof BedEntity){
+        if (e instanceof BedEntity) {
             player.removeVehicle();
             e.discard();
         }
@@ -195,9 +199,9 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     public static void layDown(BlockState state, Level level, BlockPos pos, Player player) {
-        if (!level.isClientSide && !state.getValue(BedBlock.OCCUPIED) && player.getVehicle() == null) {
+        if (!level.isClientSide) {
 
-            BedEntity entity = new BedEntity(level,state);
+            BedEntity entity = new BedEntity(level, state);
             entity.setPos(pos.getX() + 0.5, pos.getY() + 0.25, pos.getZ() + 0.5);
 
             level.addFreshEntity(entity);
@@ -208,19 +212,17 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
 
     @Override
     public void onInputUpdate(boolean left, boolean right, boolean up, boolean down, boolean sprint, boolean jumping) {
-        if(jumping){
-            SleepTightClient.playerSleepCommit(this);
-            //commitSleep(Minecraft.getInstance()., this.getOnPos());
-        }
-        else if(up || down){
-            if(getBedTile() instanceof HammockBlockEntity tile){
-                if(up)tile.accelerate();
-                if(down)tile.decelerate();
+        if (jumping) {
+            ClientEvents.playerSleepCommit(this);
+        } else if (up || down) {
+            if (getBedTile() instanceof HammockBlockEntity tile) {
+                if (up) tile.accelerate();
+                if (down) tile.decelerate();
             }
         }
     }
 
-    public BlockEntity getBedTile(){
+    public BlockEntity getBedTile() {
         return this.level.getBlockEntity(this.getOnPos());
     }
 

@@ -18,19 +18,12 @@ public class SleepTightForgeClient {
 
     @SubscribeEvent
     public static void onCameraSetup(ViewportEvent.ComputeCameraAngles event) {
-        LocalPlayer player = Minecraft.getInstance().player;
-        if (player != null && player.isSleeping()) {
-            float partialTick = (float) event.getPartialTick();
-            // event.setPitch(player.getViewXRot(partialTick));
-            // event.setYaw(player.getViewYRot(partialTick));
-            //  event.getCamera().move(-1,0,0);
-        } else if (player != null && player.getPose() == Pose.SLEEPING) {
-            event.getCamera().move(0.125, 8 / 16f, 0);
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+         if ( player != null && player.getVehicle() instanceof BedEntity && mc.options.getCameraType().isFirstPerson()) {
+            //same y offset as camera in bed
+            event.getCamera().move(0.125, 0.3-2/16f, 0);
         }
-
-        //event.setYaw(0);
-        // event.setPitch(0);
-        //  event.setRoll(0);
     }
 
     public static float angle(Vector3f v1, Vector3f v2) {

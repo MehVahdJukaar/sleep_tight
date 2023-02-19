@@ -1,8 +1,9 @@
 package net.mehvahdjukaar.sleep_tight.mixins;
 
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
+import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.mehvahdjukaar.sleep_tight.common.BedEntity;
-import net.mehvahdjukaar.sleep_tight.common.HammockBlock;
+import net.mehvahdjukaar.sleep_tight.common.IModBed;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -31,8 +32,8 @@ public abstract class LivingEntityMixin extends Entity {
     @Inject(method = "setPosToBed", at = @At("HEAD"), cancellable = true)
     public void setHammockPos(BlockPos pos, CallbackInfo ci){
         BlockState state = this.level.getBlockState(pos);
-        if(state.getBlock() instanceof HammockBlock){
-          Vec3 v = HammockBlock.getSleepPosition(state, pos);
+        if(state.getBlock() instanceof IModBed hammockBlock){
+          Vec3 v = hammockBlock.getSleepingPosition(state, pos);
           this.setPos(v);
           ci.cancel();
         }
@@ -40,7 +41,7 @@ public abstract class LivingEntityMixin extends Entity {
 
     @Inject(method = "isSleeping", at = @At(value = "HEAD"), cancellable = true)
     public void sleepOnEntity(CallbackInfoReturnable<Boolean> cir){
-        if(this.level.isClientSide && !this.isDeadOrDying() && this.getVehicle() instanceof BedEntity && SleepTightClient.cameraHack){
+        if(this.level.isClientSide && !this.isDeadOrDying() && this.getVehicle() instanceof BedEntity && ClientEvents.cameraHack){
             cir.setReturnValue(true);
         }
     }

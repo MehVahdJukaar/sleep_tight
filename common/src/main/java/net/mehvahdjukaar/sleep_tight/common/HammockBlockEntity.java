@@ -2,6 +2,7 @@ package net.mehvahdjukaar.sleep_tight.common;
 
 import dev.architectury.injectables.annotations.PlatformOnly;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -17,6 +18,11 @@ public class HammockBlockEntity extends BlockEntity {
     private final DyeColor color;
 
     //client stuff
+
+    private final float maxAngle;
+    private final float minAngle;
+    private final float k;
+
     private float pivotOffset;
     private Direction direction;
 
@@ -31,14 +37,16 @@ public class HammockBlockEntity extends BlockEntity {
         this.color = ((HammockBlock) blockState.getBlock()).getColor();
         this.pivotOffset = blockState.getValue(HammockBlock.PART).getPivotOffset();
         this.direction = blockState.getValue(HammockBlock.FACING);
+
+        float period = ClientConfigs.;
     }
 
     public DyeColor getColor() {
         return color;
     }
 
-    public float getYaw(float partialTicks) {
-        return (180 / Mth.PI) * 0.0f*Mth.lerp(partialTicks, prevYaw, yaw);//Mth.lerp(partialTicks, prevAmpl, ampl) * Mth.sin((tickCount + partialTicks) * 0.08f);
+    public float gerRoll(float partialTicks) {
+        return (180 / Mth.PI) * Mth.rotLerp(partialTicks, prevYaw, yaw);//Mth.lerp(partialTicks, prevAmpl, ampl) * Mth.sin((tickCount + partialTicks) * 0.08f);
     }
 
     public float getPivotOffset() {
@@ -68,13 +76,13 @@ public class HammockBlockEntity extends BlockEntity {
         float freq = 1;
 
         if (e.accelerating || e.decelerating) {
-            double decel = 0.5;
-            e.angularVel += decel * ((e.angularVel > 0 ^ e.decelerating) ? 1 : -1);
+            double dec = 0.1;
+            e.angularVel += dec * ((e.angularVel > 0 ^ e.decelerating) ? 1 : -1);
         }
 
         float drag = -damping * e.angularVel;
 
-        float k = (float) Math.pow(2 * Math.PI * freq, 2);
+        float k = (float) Math.pow(2 * Math.PI * 0.125, 2);
 
         float acc = -k * Mth.sin(e.yaw) + drag;
 

@@ -5,6 +5,7 @@ import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
 import net.mehvahdjukaar.sleep_tight.common.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
+import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
 import net.minecraft.Util;
 import net.minecraft.resources.ResourceLocation;
@@ -40,6 +41,7 @@ public class SleepTight {
 
     public static void commonInit() {
         NetworkHandler.registerMessages();
+        ClientConfigs.init();
 
     }
 
@@ -62,7 +64,7 @@ public class SleepTight {
     );
 
     public static final Supplier<EntityType<BedEntity>> BED_ENTITY = RegHelper.registerEntityType(res("bed_entity"),
-           BedEntity::new, MobCategory.MISC, 0.5f, 0.25f, 3, Integer.MAX_VALUE );
+           BedEntity::new, MobCategory.MISC, 0.5f, 0.5f, 3, Integer.MAX_VALUE );
 
 
     public static <T extends Block> Supplier<T> regWithItem(String name, Supplier<T> blockFactory, CreativeModeTab tab) {

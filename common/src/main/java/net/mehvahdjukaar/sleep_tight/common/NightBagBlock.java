@@ -8,10 +8,11 @@ import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class NightBagBlock extends BedBlock {
+public class NightBagBlock extends BedBlock implements IModBed{
 
     private static final VoxelShape SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 2.0D, 16.0D);
 
@@ -27,5 +28,11 @@ public class NightBagBlock extends BedBlock {
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return null;
+    }
+
+    @Override
+    public Vec3 getSleepingPosition(BlockState state, BlockPos pos) {
+        Vec3 v = Vec3.atCenterOf(pos);
+        return v;
     }
 }

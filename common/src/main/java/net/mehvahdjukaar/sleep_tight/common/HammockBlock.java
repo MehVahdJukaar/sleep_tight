@@ -45,15 +45,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class HammockBlock extends HorizontalDirectionalBlock implements EntityBlock, IRotatable {
+public class HammockBlock extends HorizontalDirectionalBlock implements EntityBlock, IRotatable, IModBed{
 
-    public static final EnumProperty<Part> PART = EnumProperty.create("part", Part.class);
+    public static final EnumProperty<HammockPart> PART = EnumProperty.create("part", HammockPart.class);
     public static final BooleanProperty OCCUPIED = BlockStateProperties.OCCUPIED;
     public static final VoxelShape SHAPE_FULL = Block.box(0.0, 3.0, 0.0, 16.0, 6.0, 16.0);
     public static final VoxelShape SHAPE_NORTH = Block.box(0.0, 3.0, 8.0, 16.0, 6.0, 16.0);
     public static final VoxelShape SHAPE_SOUTH = Block.box(0.0, 3.0, 0.0, 16.0, 6.0, 8);
     public static final VoxelShape SHAPE_WEST = Block.box(8, 3.0, 0.0, 16.0, 6.0, 16.0);
-    public static final VoxelShape SHAPE_EAST = Block.box(0.0, 3.0, 0.0, 8, 6.0, 8);
+    public static final VoxelShape SHAPE_EAST = Block.box(0.0, 3.0, 8.0, 16, 6.0, 16);
 
     private final DyeColor color;
 
@@ -61,37 +61,14 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
         super(Properties.of(Material.WOOL, color.getMaterialColor())
                 .sound(SoundType.WOOL).strength(0.1F).noOcclusion());
         this.color = color;
-        this.registerDefaultState(this.stateDefinition.any().setValue(PART, Part.MIDDLE).setValue(OCCUPIED, false));
+        this.registerDefaultState(this.stateDefinition.any().setValue(PART, HammockPart.MIDDLE).setValue(OCCUPIED, false));
     }
 
     public DyeColor getColor() {
         return color;
     }
 
-    @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (level.isClientSide) {
-            return InteractionResult.CONSUME;
-        } else {
-            pos = getMasterPos(state, pos);
-            state = level.getBlockState(pos);
-            if (!state.is(this)) {
-                return InteractionResult.CONSUME;
-            }
-
-            if (state.getValue(OCCUPIED)) {
-                //TODO: make nitwids use hammocks if available
-                //if (!this.kickVillagerOutOfBed(level, pos)) {
-                player.displayClientMessage(Component.translatable("block.minecraft.bed.occupied"), true);
-                //}
-
-                return InteractionResult.SUCCESS;
-            } else {
-                BedEntity.layDown(state, level, pos, player);
-                return InteractionResult.SUCCESS;
-            }
-        }
-    }
+    //shapes
 
     @Override
     public void fallOn(Level level, BlockState state, BlockPos pos, Entity entity, float fallDistance) {
@@ -101,7 +78,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     @Override
     public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
                                   LevelAccessor level, BlockPos currentPos, BlockPos neighborPos) {
-        Part part = state.getValue(PART);
+        HammockPart part = state.getValue(PART);
         Direction myDir = state.getValue(FACING);
         if (direction.getAxis() == myDir.getAxis()) {
             for (var v : part.getPiecesDirections(myDir)) {
@@ -123,7 +100,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
             Direction attDir = part.getConnectionDirection(myDir);
             if (attDir == direction) {
                 Connection c = getConnectionType(attDir, currentPos, level);
-                if (c == Connection.NONE || (c == Connection.FENCE != part.onFence)) {
+                if (c == Connection.NONE || (c == Connection.FENCE != part.isOnFence())) {
                     return Blocks.AIR.defaultBlockState();
                 }
             }
@@ -135,7 +112,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide && player.isCreative()) {
             //prevents drop
-            Part part = state.getValue(PART);
+            HammockPart part = state.getValue(PART);
             if (!part.isMaster()) {
                 int i = part.getMasterOffset();
                 if (i != 0) {
@@ -175,7 +152,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
                             }
                         }
                         if (getConnectionType(opposite, nextPos, level) == type) {
-                            var t = i == 1 ? Part.MIDDLE : type.getHead();
+                            var t = i == 1 ? HammockPart.MIDDLE : type.getHead();
                             return this.defaultBlockState().setValue(FACING, dir).setValue(PART, t);
                         }
                     }
@@ -199,13 +176,13 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
         if (!level.isClientSide) {
-            Part part = state.getValue(PART);
+            HammockPart part = state.getValue(PART);
             for (var v : part.getPiecesDirections(state.getValue(FACING))) {
                 BlockPos blockPos = pos.relative(v.getFirst());
                 level.setBlock(blockPos, state.setValue(PART, v.getSecond()), 3);
-                if (part == Part.HALF_HEAD) {
+                if (part == HammockPart.HALF_HEAD) {
                     blockPos = blockPos.relative(v.getFirst());
-                    level.setBlock(blockPos, state.setValue(PART, Part.HALF_FOOT), 3);
+                    level.setBlock(blockPos, state.setValue(PART, HammockPart.HALF_FOOT), 3);
                 }
             }
         }
@@ -213,8 +190,8 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        Part part = state.getValue(PART);
-        if (part.onFence || part == Part.MIDDLE) return SHAPE_FULL;
+        HammockPart part = state.getValue(PART);
+        if (part.isOnFence() || part == HammockPart.MIDDLE) return SHAPE_FULL;
         else {
             return switch (part.getConnectionDirection(state.getValue(FACING))) {
                 case WEST -> SHAPE_WEST;
@@ -223,27 +200,6 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
                 default -> SHAPE_NORTH;
             };
         }
-    }
-
-    /*
-    public static DoubleBlockCombiner.BlockType getBlockType(BlockState state) {
-        BedPart bedPart = state.getValue(PART);
-        return bedPart == BedPart.HEAD ? DoubleBlockCombiner.BlockType.FIRST : DoubleBlockCombiner.BlockType.SECOND;
-    }*/
-
-    private static Optional<Vec3> findStandUpPositionAtOffset(
-            EntityType<?> entityType, CollisionGetter collisionGetter, BlockPos pos, int[][] offsets, boolean simulate
-    ) {
-        BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
-
-        for (int[] is : offsets) {
-            mutableBlockPos.set(pos.getX() + is[0], pos.getY(), pos.getZ() + is[1]);
-            Vec3 vec3 = DismountHelper.findSafeDismountLocation(entityType, collisionGetter, mutableBlockPos, simulate);
-            if (vec3 != null) {
-                return Optional.of(vec3);
-            }
-        }
-        return Optional.empty();
     }
 
     @Override
@@ -288,122 +244,41 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
         return false;
     }
 
+    //bed logic
 
-    public static Vec3 getSleepPosition(BlockState state, BlockPos pos) {
-        Vec3 v = Vec3.atCenterOf(pos).subtract(0, 1 / 16f, 0);
-        if (!state.getValue(PART).onFence) {
-            v = v.relative(state.getValue(FACING), 0.5);
+    @Override
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        //called on both sides
+        pos = getMasterPos(state, pos);
+        state = level.getBlockState(pos);
+        if (!state.is(this) || player.getVehicle() != null) {
+            return InteractionResult.FAIL;
         }
+
+        if (state.getValue(OCCUPIED)) {
+            //TODO: make nitwids use hammocks if available
+            //if (!this.kickVillagerOutOfBed(level, pos)) {
+            player.displayClientMessage(Component.translatable("block.minecraft.bed.occupied"), true);
+            //}
+
+            return InteractionResult.SUCCESS;
+        } else {
+            BedEntity.layDown(state, level, pos, player);
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
+    }
+
+    @Override
+    public Vec3 getSleepingPosition(BlockState state, BlockPos pos) {
+        Vec3 v = Vec3.atCenterOf(pos).subtract(0, 0, 0);
+        float off = 3 / 32f;
+        if (!state.getValue(PART).isOnFence()) {
+            off += 0.5;
+        }
+        v = v.relative(state.getValue(FACING), off);
         return v;
     }
 
-
-    private enum Connection {
-        BLOCK, FENCE, NONE;
-
-        public int length() {
-            return this == BLOCK ? 3 : 2;
-        }
-
-        public Part getHead() {
-            return this == BLOCK ? Part.HALF_HEAD : Part.HEAD;
-        }
-    }
-
-    public enum Part implements StringRepresentable {
-        HALF_HEAD("half_head", -1, false),
-        MIDDLE("middle", 0, false),
-        HALF_FOOT("half_foot", 1, false),
-        HEAD("head", 0, true),
-        FOOT("foot", 1, true);
-
-        private final String name;
-        private final int masterOffset;
-        private final boolean onFence;
-        private final float pivotOffset;
-
-        Part(String name, int offset, boolean onRope) {
-            this.name = name;
-            this.masterOffset = offset;
-            this.onFence = onRope;
-            this.pivotOffset = onRope ? 0.3125f : 3 / 16f;
-        }
-
-        public float getPivotOffset() {
-            return pivotOffset;
-        }
-
-        @Override
-        public String toString() {
-            return this.name;
-        }
-
-        public String getSerializedName() {
-            return this.name;
-        }
-
-        //goes from head to foot
-        public boolean isFoot() {
-            return this == FOOT || this == HALF_FOOT;
-        }
-
-        public Part getToFootPart() {
-            return switch (this) {
-                case HEAD -> FOOT;
-                case HALF_HEAD -> MIDDLE;
-                case MIDDLE -> HALF_FOOT;
-                default -> null;
-            };
-        }
-
-        public Part getToHeadPart() {
-            return switch (this) {
-                case FOOT -> HEAD;
-                case MIDDLE -> HALF_HEAD;
-                case HALF_FOOT -> MIDDLE;
-                default -> null;
-            };
-        }
-
-        @Nullable
-        public Direction getConnectionDirection(Direction myDirection) {
-            return switch (this) {
-                case FOOT, HALF_FOOT -> myDirection.getOpposite();
-                case HEAD, HALF_HEAD -> myDirection;
-                default -> null;
-            };
-        }
-
-        public List<Pair<Direction, Part>> getPiecesDirections(Direction myDirection) {
-            var list = new ArrayList<Pair<Direction, Part>>();
-            var p = getToHeadPart();
-            if (p != null) list.add(Pair.of(myDirection, p));
-            var p1 = getToFootPart();
-            if (p1 != null) list.add(Pair.of(myDirection.getOpposite(), p1));
-            return list;
-        }
-
-        public int getMasterOffset() {
-            return masterOffset;
-        }
-
-        public boolean isMaster() {
-            return this.masterOffset == 0;
-        }
-
-        public boolean isOnFence() {
-            return onFence;
-        }
-
-        @Nullable
-        public Direction getRopeAttachmentDirection(Direction myDir) {
-            return switch (this) {
-                case FOOT, HALF_FOOT -> myDir.getOpposite();
-                case HEAD, HALF_HEAD -> myDir;
-                case MIDDLE -> null;
-            };
-        }
-    }
 
     @Override
     public Optional<BlockState> getRotatedState(BlockState state, LevelAccessor world, BlockPos pos, Rotation rotation, Direction axis, @Nullable Vec3 hit) {
@@ -435,4 +310,15 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
         return state.getValue(HorizontalDirectionalBlock.FACING);
     }
 
+    private enum Connection {
+        BLOCK, FENCE, NONE;
+
+        public int length() {
+            return this == BLOCK ? 3 : 2;
+        }
+
+        public HammockPart getHead() {
+            return this == BLOCK ? HammockPart.HALF_HEAD : HammockPart.HEAD;
+        }
+    }
 }

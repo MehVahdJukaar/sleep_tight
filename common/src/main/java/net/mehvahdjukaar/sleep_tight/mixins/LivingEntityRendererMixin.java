@@ -2,6 +2,7 @@ package net.mehvahdjukaar.sleep_tight.mixins;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
+import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -23,6 +24,6 @@ public abstract class LivingEntityRendererMixin  <T extends LivingEntity, M exte
     @Inject(method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
             at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;translate(DDD)V", ordinal = 0))
     public void hammockRender(T entity, float entityYaw, float partialTicks, PoseStack matrixStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci){
-        SleepTightClient.rotatePlayerInBed(entity, matrixStack, partialTicks, buffer);
+        ClientEvents.rotatePlayerInBed(entity, matrixStack, partialTicks, buffer);
     }
 }

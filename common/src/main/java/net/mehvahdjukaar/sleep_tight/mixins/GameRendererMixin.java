@@ -2,6 +2,7 @@ package net.mehvahdjukaar.sleep_tight.mixins;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
+import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,16 +19,16 @@ public abstract class GameRendererMixin {
     @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;renderItemInHand(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/Camera;F)V",
     shift = At.Shift.BEFORE), require = 1)
     public void bedCameraHackOn(float partialTicks, long finishTimeNano, PoseStack matrixStack, CallbackInfo ci) {
-        SleepTightClient.cameraHack = true;
+        ClientEvents.cameraHack = true;
     }
 
     @Inject(method = "renderLevel", at = @At(value = "TAIL"))
     public void bedCameraHackOff(float partialTicks, long finishTimeNano, PoseStack matrixStack, CallbackInfo ci) {
-        SleepTightClient.cameraHack = false;
+        ClientEvents.cameraHack = false;
     }
 
     @Inject(method = "renderLevel", at = @At(value = "HEAD"))
     public void mainBedCameraHack(float partialTicks, long finishTimeNano, PoseStack matrixStack, CallbackInfo ci) {
-        SleepTightClient.rotateCameraOverHammockAxis(partialTicks, matrixStack, this.getMainCamera());
+        ClientEvents.rotateCameraOverHammockAxis(partialTicks, matrixStack, this.getMainCamera());
     }
 }

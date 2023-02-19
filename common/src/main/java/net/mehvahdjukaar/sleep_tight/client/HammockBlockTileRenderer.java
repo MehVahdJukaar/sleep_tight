@@ -8,6 +8,7 @@ import com.mojang.math.Vector3f;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.common.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
+import net.mehvahdjukaar.sleep_tight.common.HammockPart;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
@@ -19,7 +20,6 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.resources.model.Material;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class HammockBlockTileRenderer implements BlockEntityRenderer<HammockBlockEntity> {
@@ -49,7 +49,7 @@ public class HammockBlockTileRenderer implements BlockEntityRenderer<HammockBloc
     public void render(HammockBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
 
         BlockState state = blockEntity.getBlockState();
-        HammockBlock.Part value = state.getValue(HammockBlock.PART);
+        HammockPart value = state.getValue(HammockBlock.PART);
         boolean onRope = value.isOnFence();
         float zOffset;
         double dy = value.getPivotOffset();
@@ -69,7 +69,7 @@ public class HammockBlockTileRenderer implements BlockEntityRenderer<HammockBloc
         poseStack.mulPose(Vector3f.YP.rotationDegrees(-state.getValue(HammockBlock.FACING).toYRot()));
 
 
-        float yaw = blockEntity.getYaw(partialTick);
+        float yaw = blockEntity.gerRoll(partialTick);
         poseStack.mulPose(Vector3f.ZP.rotationDegrees(180.0F + yaw));
 
         var pBuffer = bufferSource.getBuffer(RenderType.lines());
