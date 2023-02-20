@@ -8,6 +8,7 @@ import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.common.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.IModBed;
 import net.mehvahdjukaar.sleep_tight.common.NightBagBlock;
+import net.mehvahdjukaar.supplementaries.common.events.ServerEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
@@ -21,11 +22,13 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.PlayerSetSpawnEvent;
 import net.minecraftforge.event.entity.player.SleepingLocationCheckEvent;
 import net.minecraftforge.event.entity.player.SleepingTimeCheckEvent;
 import net.minecraftforge.event.level.SleepFinishedTimeEvent;
 import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -81,6 +84,17 @@ public class SleepTightForge {
 
             if (oldTime != newTime) {
                 evt.setTimeAddition(newTime);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onUseBlock(PlayerInteractEvent.RightClickBlock event) {
+        if (!event.isCanceled()) {
+            var ret = ModEvents.onRightClickBlock(event.getEntity(), event.getLevel(), event.getHand(), event.getHitVec());
+            if (ret != InteractionResult.PASS) {
+                event.setCanceled(true);
+                event.setCancellationResult(ret);
             }
         }
     }

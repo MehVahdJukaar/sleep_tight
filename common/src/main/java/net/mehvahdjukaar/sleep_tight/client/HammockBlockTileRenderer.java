@@ -72,16 +72,7 @@ public class HammockBlockTileRenderer implements BlockEntityRenderer<HammockBloc
         float yaw = blockEntity.getRoll(partialTick);
         poseStack.mulPose(Vector3f.ZP.rotationDegrees(180.0F + yaw));
 
-        var pBuffer = bufferSource.getBuffer(RenderType.lines());
-        Matrix4f matrix4f = poseStack.last().pose();
-        Matrix3f matrix3f = poseStack.last().normal();
-        pBuffer.vertex(matrix4f, 0.0F, 0, -1.0F)
-                .color(255, 0, 255, 255)
-                .normal(matrix3f, 0, 1, 0).endVertex();
-        pBuffer.vertex(matrix4f, 0, 0, 2)
-                .color(255, 0, 255, 255)
-                .normal(matrix3f, 0, 1, 0).endVertex();
-
+        //renderDebugPivot(poseStack, bufferSource);
 
         poseStack.translate(0, 0.5 + dy, zOffset);
 
@@ -91,5 +82,17 @@ public class HammockBlockTileRenderer implements BlockEntityRenderer<HammockBloc
         this.model.render(poseStack, vertexConsumer, packedLight, packedOverlay);
 
         poseStack.popPose();
+    }
+
+    private static void renderDebugPivot(PoseStack poseStack, MultiBufferSource bufferSource) {
+        var pBuffer = bufferSource.getBuffer(RenderType.lines());
+        Matrix4f matrix4f = poseStack.last().pose();
+        Matrix3f matrix3f = poseStack.last().normal();
+        pBuffer.vertex(matrix4f, 0.0F, 0, -1.0F)
+                .color(255, 0, 255, 255)
+                .normal(matrix3f, 0, 1, 0).endVertex();
+        pBuffer.vertex(matrix4f, 0, 0, 2)
+                .color(255, 0, 255, 255)
+                .normal(matrix3f, 0, 1, 0).endVertex();
     }
 }

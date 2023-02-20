@@ -6,12 +6,12 @@ import net.mehvahdjukaar.sleep_tight.common.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
+import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
 import net.minecraft.Util;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.DyeColor;
@@ -21,6 +21,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -39,14 +40,20 @@ public class SleepTight {
         return new ResourceLocation(MOD_ID, name);
     }
 
+
     public static void commonInit() {
         NetworkHandler.registerMessages();
         ClientConfigs.init();
+        CommonConfigs.init();
+
+
 
     }
 
 
     public static void commonSetup() {
+
+
     }
 
 

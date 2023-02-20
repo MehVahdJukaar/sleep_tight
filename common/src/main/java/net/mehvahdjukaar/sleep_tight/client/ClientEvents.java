@@ -11,8 +11,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
-import net.minecraft.tags.ItemTags;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -56,7 +54,31 @@ public class ClientEvents {
             else if (entity == mc.player) {
                 poseStack.translate(0, 0.125, 0);
             }
+        } else if (bedEntity != null) {
+
+            //bed
+
+            var mc = Minecraft.getInstance();
+
+
+            var dir = entity.getBedOrientation();
+            float f1 = 90 + dir.toYRot();
+            poseStack.mulPose(Vector3f.YP.rotationDegrees(f1));
+
+            poseStack.translate(1.5, 0, 0);
+
+            //fixes random offset for local player in third person
+            if (entity == mc.player) {
+                // poseStack.translate(0, 2 / 16f, 0);
+            }
+        } else {
+            var mc = Minecraft.getInstance();
+
+            if (entity == mc.player) {
+              //  poseStack.translate(0, 0.125, 0);
+            }
         }
+
     }
 
 
@@ -96,7 +118,7 @@ public class ClientEvents {
 
     public static void test(Entity entity, double x, double y, double z) {
         if (entity instanceof LocalPlayer) {
-            if (y == -60.5) {
+            if (y != -59.31248) {
                 int aa = 1;
                 // entity.setPosRaw(x, -60.5, z);
             }

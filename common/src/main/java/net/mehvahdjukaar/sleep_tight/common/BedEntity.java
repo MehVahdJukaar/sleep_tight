@@ -117,33 +117,6 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         return false;
     }
 
-    @Override
-    public double getPassengersRidingOffset() {
-        return 0.0125;
-    }
-
-    @Override
-    public void positionRider(Entity passenger) {
-        if (this.hasPassenger(passenger)) {
-            if (bedState.getBlock() instanceof IModBed b) {
-                var v = b.getSleepingPosition(bedState, this.blockPosition());
-                passenger.setPos(v.x, v.y, v.z);
-            }
-        }
-    }
-
-    @Override
-    public void onPassengerTurned(Entity entity) {
-        float diff = Mth.wrapDegrees(entity.getYHeadRot() - this.getYRot());
-        float clampedDiff = Mth.clamp(diff, -90, 90);
-        float subtract = clampedDiff - diff;
-        //((LivingEntity)  entity).yHeadRotO += subtract;
-
-        ((LivingEntity) entity).yHeadRot += subtract;
-        //   entity.setYRot(entity.getYRot() + f1 - diff);
-        entity.setXRot(Mth.clamp(entity.getXRot(), -75, 0));
-    }
-
     @PlatformOnly(PlatformOnly.FORGE)
     boolean shouldRiderSit() {
         return false;
@@ -179,9 +152,39 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     @Override
+    public double getPassengersRidingOffset() {
+        return 0.0125;
+    }
+
+    @Override
+    public void positionRider(Entity passenger) {
+        if (this.hasPassenger(passenger)) {
+            if (bedState.getBlock() instanceof IModBed b) {
+                var v = b.getSleepingPosition(bedState, this.blockPosition());
+                passenger.setPos(v.x, v.y, v.z);
+            }else{
+                //same as set pos to bed
+                var pos = this.blockPosition();
+                passenger.setPos(pos.getX() + 0.5, pos.getY() + 9/16f, pos.getZ() + 0.5);
+            }
+        }
+    }
+
+    @Override
+    public void onPassengerTurned(Entity entity) {
+        float diff = Mth.wrapDegrees(entity.getYHeadRot() - this.getYRot());
+        float clampedDiff = Mth.clamp(diff, -90, 90);
+        float subtract = clampedDiff - diff;
+        //((LivingEntity)  entity).yHeadRotO += subtract;
+
+        ((LivingEntity) entity).yHeadRot += subtract;
+        //   entity.setYRot(entity.getYRot() + f1 - diff);
+        entity.setXRot(Mth.clamp(entity.getXRot(), -75, 0));
+    }
+
+    @Override
     protected void addPassenger(Entity passenger) {
         super.addPassenger(passenger);
-        // passenger.setPose(Pose.SLEEPING);
         positionRider(passenger);
         passenger.setYRot(this.getYRot());
         passenger.setOldPosAndRot();
@@ -193,7 +196,6 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         super.removePassenger(passenger);
         this.positionRider(passenger);
         passenger.setPose(Pose.SLEEPING);
-        passenger.noPhysics = (true);
     }
 
     public void startSleepingOn(Player player) {

@@ -17,7 +17,7 @@ public class ClientConfigs {
     public static final Supplier<Double> SWING_FORCE;
 
     static{
-        ConfigBuilder builder = ConfigBuilder.create(SleepTight.res("client"), ConfigType.CLIENT);
+        ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.CLIENT);
 
         builder.push("hammock");
         HAMMOCK_FREQUENCY = builder.comment("Oscillaton frequency of a hammock (oscillations /sec). Exact one will match this on small angles and will increase slightly on big one like a real pendulum")

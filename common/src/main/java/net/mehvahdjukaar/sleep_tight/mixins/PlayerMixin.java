@@ -20,7 +20,7 @@ public abstract class PlayerMixin extends LivingEntity {
 
     @Inject(method = "updatePlayerPose", at = @At("HEAD"), cancellable = true)
     public void setSleepingPoseInHammock(CallbackInfo ci){
-        if(this.getVehicle() instanceof BedEntity bed){
+        if(this.getVehicle() instanceof BedEntity){
             this.setPose(Pose.SLEEPING);
             ci.cancel();
         }

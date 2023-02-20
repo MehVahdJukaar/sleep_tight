@@ -1,9 +1,8 @@
 package net.mehvahdjukaar.sleep_tight.mixins;
 
-import net.mehvahdjukaar.sleep_tight.SleepTightClient;
+import net.mehvahdjukaar.sleep_tight.ModEvents;
 import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.mehvahdjukaar.sleep_tight.common.BedEntity;
-import net.mehvahdjukaar.sleep_tight.common.IModBed;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -21,27 +20,29 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin extends Entity {
 
-    @Shadow public abstract boolean isSleeping();
+    @Shadow
+    public abstract boolean isSleeping();
 
-    @Shadow public abstract boolean isDeadOrDying();
+    @Shadow
+    public abstract boolean isDeadOrDying();
 
     protected LivingEntityMixin(EntityType<?> entityType, Level level) {
         super(entityType, level);
     }
 
     @Inject(method = "setPosToBed", at = @At("HEAD"), cancellable = true)
-    public void setHammockPos(BlockPos pos, CallbackInfo ci){
+    public void setHammockPos(BlockPos pos, CallbackInfo ci) {
         BlockState state = this.level.getBlockState(pos);
-        if(state.getBlock() instanceof IModBed hammockBlock){
-          Vec3 v = hammockBlock.getSleepingPosition(state, pos);
-          this.setPos(v);
-          ci.cancel();
+        Vec3 v = ModEvents.getSleepingPosition(state, pos);
+        if (v != null) {
+            this.setPos(v);
+            ci.cancel();
         }
     }
 
     @Inject(method = "isSleeping", at = @At(value = "HEAD"), cancellable = true)
-    public void sleepOnEntity(CallbackInfoReturnable<Boolean> cir){
-        if(this.level.isClientSide && !this.isDeadOrDying() && this.getVehicle() instanceof BedEntity && ClientEvents.cameraHack){
+    public void sleepOnEntity(CallbackInfoReturnable<Boolean> cir) {
+        if (this.level.isClientSide && !this.isDeadOrDying() && this.getVehicle() instanceof BedEntity && ClientEvents.cameraHack) {
             cir.setReturnValue(true);
         }
     }
