@@ -26,4 +26,5 @@ public abstract class LivingEntityRendererMixin  <T extends LivingEntity, M exte
     public void hammockRender(T entity, float entityYaw, float partialTicks, PoseStack matrixStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci){
         ClientEvents.rotatePlayerInBed(entity, matrixStack, partialTicks, buffer);
     }
+
 }

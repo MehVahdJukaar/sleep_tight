@@ -24,11 +24,6 @@ public class HammockBlockEntity extends BlockEntity {
     private boolean accelerateRight;
 
     //client stuff
-
-    private final float maxAngleEnergy;
-    private final float minAngleEnergy;
-    private final float k;
-
     private float pivotOffset;
     private Direction direction;
 
@@ -43,17 +38,8 @@ public class HammockBlockEntity extends BlockEntity {
         this.color = ((HammockBlock) blockState.getBlock()).getColor();
         this.pivotOffset = blockState.getValue(HammockBlock.PART).getPivotOffset();
         this.direction = blockState.getValue(HammockBlock.FACING);
-
-        double frequency = ClientConfigs.HAMMOCK_FREQUENCY.get();
-        //TODO: move as global variables
-        this.k = (float) Math.pow(2 * Math.PI * frequency, 2);
-        this.maxAngleEnergy = angleToEnergy(k, ClientConfigs.HAMMOCK_MAX_ANGLE.get());
-        this.minAngleEnergy = angleToEnergy(k, ClientConfigs.HAMMOCK_MIN_ANGLE.get());
     }
 
-    private static float angleToEnergy(float k, double degrees) {
-        return k * (1 - Mth.cos((float) Math.toRadians(degrees)));
-    }
 
     private static double calculateEnergy(float k, float vel, float angle) {
         return (1 - Mth.cos(angle)) * k + 0.5 * (vel * vel);
@@ -103,12 +89,16 @@ public class HammockBlockEntity extends BlockEntity {
 
         double energy = 0;
 
+        float k = ClientConfigs.getK();
+
         boolean hasAcc = (e.accelerateLeft || e.accelerateRight);
         if (hasAcc) e.hasDrag = true;
-        if (hasAcc || e.hasDrag) energy = calculateEnergy(e.k, e.angularVel, e.angle);
+        if (hasAcc || e.hasDrag) energy = calculateEnergy(k, e.angularVel, e.angle);
 
 
-        if (hasAcc && energy < e.maxAngleEnergy) {
+
+
+        if (hasAcc && energy < ClientConfigs.getMaxAngleEnergy()) {
             double dec = ClientConfigs.SWING_FORCE.get();
             e.angularVel += dec * (e.accelerateLeft ? -1 : 1);
 
@@ -116,10 +106,10 @@ public class HammockBlockEntity extends BlockEntity {
             NetworkHandler.CHANNEL.sendToServer(new AccelerateHammockMessage(pos, e.accelerateLeft));
         }
 
-        float acc = -e.k * Mth.sin(e.angle);
+        float acc = -k * Mth.sin(e.angle);
 
         if (e.hasDrag) {
-            if (energy > e.minAngleEnergy) {
+            if (energy > ClientConfigs.getMinAngleEnergy()) {
                 float drag = (float) (-damping * e.angularVel);
                 acc += drag;
             } else {

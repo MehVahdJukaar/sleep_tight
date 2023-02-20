@@ -22,7 +22,7 @@ public class SleepTightForgeClient {
         LocalPlayer player = mc.player;
          if ( player != null && player.getVehicle() instanceof BedEntity && mc.options.getCameraType().isFirstPerson()) {
             //same y offset as camera in bed
-            event.getCamera().move(0.125, 0.3-2/16f, 0);
+            event.getCamera().move(0, 0.3, 0);
         }
     }
 

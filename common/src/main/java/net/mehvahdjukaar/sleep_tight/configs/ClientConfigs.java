@@ -3,6 +3,8 @@ package net.mehvahdjukaar.sleep_tight.configs;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigBuilder;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
+import net.minecraft.util.Mth;
 
 import java.util.function.Supplier;
 
@@ -30,10 +32,37 @@ public class ClientConfigs {
                 .define("swing_force", 0.012, 0., 10);
         builder.pop();
 
-
+        builder.onChange(ClientConfigs::onChange);
         builder.buildAndRegister();
     }
 
     public static void init() {
+    }
+
+    private static void onChange(){
+        double frequency = ClientConfigs.HAMMOCK_FREQUENCY.get();
+        k = (float) Math.pow(2 * Math.PI * frequency, 2);
+        maxAngleEnergy = angleToEnergy(k, ClientConfigs.HAMMOCK_MAX_ANGLE.get());
+        minAngleEnergy = angleToEnergy(k, ClientConfigs.HAMMOCK_MIN_ANGLE.get());
+    }
+
+    private static float angleToEnergy(float k, double degrees) {
+        return k * (1 - Mth.cos((float) Math.toRadians(degrees)));
+    }
+
+    private static float k;
+    private static float maxAngleEnergy;
+    private static float minAngleEnergy;
+
+    public static float getK(){
+        return k;
+    }
+
+    public static float getMaxAngleEnergy() {
+        return maxAngleEnergy;
+    }
+
+    public static float getMinAngleEnergy() {
+        return minAngleEnergy;
     }
 }

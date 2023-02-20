@@ -17,6 +17,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.DismountHelper;
 import net.minecraft.world.item.DyeColor;
@@ -38,6 +39,8 @@ import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.EntityCollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +56,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     public static final VoxelShape SHAPE_NORTH = Block.box(0.0, 3.0, 8.0, 16.0, 6.0, 16.0);
     public static final VoxelShape SHAPE_SOUTH = Block.box(0.0, 3.0, 0.0, 16.0, 6.0, 8);
     public static final VoxelShape SHAPE_WEST = Block.box(8, 3.0, 0.0, 16.0, 6.0, 16.0);
-    public static final VoxelShape SHAPE_EAST = Block.box(0.0, 3.0, 0, 16, 6.0, 8);
+    public static final VoxelShape SHAPE_EAST = Block.box(0.0, 3.0, 0, 8, 6.0, 16);
 
     private final DyeColor color;
 
@@ -143,9 +146,10 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
                     if ((type == Connection.FENCE && i != 1) || type == Connection.BLOCK) {
                         Direction opposite = dir.getOpposite();
                         BlockPos nextPos = p.relative(opposite);
-                        if (!level.getBlockState(nextPos).canBeReplaced(context) || !level.getWorldBorder().isWithinBounds(nextPos)) {
+                        if (!level.getBlockState(p).canBeReplaced(context) || !level.getWorldBorder().isWithinBounds(nextPos)) {
                             continue;
-                        } else if (type == Connection.BLOCK) {
+                        }
+                        if (type == Connection.BLOCK) {
                             nextPos = nextPos.relative(opposite);
                             if (!level.getBlockState(nextPos).canBeReplaced(context) || !level.getWorldBorder().isWithinBounds(nextPos)) {
                                 continue;
@@ -277,7 +281,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
 
     @Override
     public Vec3 getSleepingPosition(BlockState state, BlockPos pos) {
-        Vec3 v = Vec3.atCenterOf(pos).subtract(0, 0, 0);
+        Vec3 v = Vec3.atCenterOf(pos).subtract(0, 0.125, 0);
         float off = 3 / 32f;
         if (!state.getValue(PART).isOnFence()) {
             off += 0.5;

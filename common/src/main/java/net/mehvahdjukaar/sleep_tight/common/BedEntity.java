@@ -127,7 +127,6 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         if (this.hasPassenger(passenger)) {
             if (bedState.getBlock() instanceof IModBed b) {
                 var v = b.getSleepingPosition(bedState, this.blockPosition());
-                v = v.relative(dir, -3 / 32f);
                 passenger.setPos(v.x, v.y, v.z);
             }
         }
@@ -185,6 +184,16 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         // passenger.setPose(Pose.SLEEPING);
         positionRider(passenger);
         passenger.setYRot(this.getYRot());
+        passenger.setOldPosAndRot();
+        passenger.setPose(Pose.SLEEPING);
+    }
+
+    @Override
+    protected void removePassenger(Entity passenger) {
+        super.removePassenger(passenger);
+        this.positionRider(passenger);
+        passenger.setPose(Pose.SLEEPING);
+        passenger.noPhysics = (true);
     }
 
     public void startSleepingOn(Player player) {
@@ -224,7 +233,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         if (jumping) {
             ClientEvents.playerSleepCommit(this);
         } else if (left ^ right) {
-            if (getBedTile() instanceof HammockBlockEntity tile) {
+            if (this.level.getBlockEntity(this.getOnPos()) instanceof HammockBlockEntity tile) {
                 if (left) {
                     tile.accelerateLeft();
                 } else {
@@ -232,10 +241,6 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
                 }
             }
         }
-    }
-
-    public BlockEntity getBedTile() {
-        return this.level.getBlockEntity(this.getOnPos());
     }
 
     @Override
