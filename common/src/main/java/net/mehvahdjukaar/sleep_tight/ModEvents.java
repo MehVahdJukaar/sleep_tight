@@ -15,6 +15,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BedBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.phys.BlockHitResult;
@@ -101,13 +102,17 @@ public class ModEvents {
     }
 
     @EventCalled
-    public static void onWokenUp(Player entity) {
-        var p = entity.getSleepingPos();
+    public static void onWokenUp(Player player) {
+        var p = player.getSleepingPos();
         if(p.isPresent()){
             BlockPos pos = p.get();
-            BlockState state = entity.level.getBlockState(pos);
+            BlockState state = player.level.getBlockState(pos);
             if(state.getBlock() instanceof IModBed bed){
-                bed.onWokenUp(state, pos, entity);
+                bed.onWokenUp(state, pos, player);
+                return;
+            }
+            if(player.level.getBlockEntity(pos) instanceof BedBlockEntity tile){
+                SleepTightPlatformStuff.increaseTimeSleptInBed(player, tile);
             }
         }
     }

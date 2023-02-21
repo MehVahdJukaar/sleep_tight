@@ -6,7 +6,13 @@ import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BedBlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.PlayerSetSpawnEvent;
 import net.minecraftforge.event.entity.player.PlayerWakeUpEvent;
@@ -32,10 +38,30 @@ public class SleepTightForge {
         }
         MinecraftForge.EVENT_BUS.register(this);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(SleepTightForge::setup);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(SleepTightForge::registerCaps);
     }
 
     public static void setup(final FMLCommonSetupEvent event) {
         event.enqueueWork(SleepTight::commonSetup);
+    }
+
+
+    public static void registerCaps(RegisterCapabilitiesEvent event) {
+        event.register(ModBedCapability.class);
+        event.register(PlayerBedCapability.class);
+    }
+
+    @SubscribeEvent
+    public void attachBlockEntityCapabilities(AttachCapabilitiesEvent<BlockEntity> event) {
+        if (event.getObject() instanceof BedBlockEntity) {
+            //TODO: work with modded beds
+            event.addCapability(SleepTight.res("bed_data"), new ModBedCapability());
+        }
+    }
+
+    @SubscribeEvent
+    public void attachPlayerCapabilities(AttachCapabilitiesEvent<Player> event) {
+        event.addCapability(SleepTight.res("player_data"), new PlayerBedCapability());
     }
 
     @SubscribeEvent
