@@ -2,9 +2,7 @@ package net.mehvahdjukaar.sleep_tight;
 
 import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
-import net.mehvahdjukaar.sleep_tight.common.BedEntity;
-import net.mehvahdjukaar.sleep_tight.common.HammockBlock;
-import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
+import net.mehvahdjukaar.sleep_tight.common.*;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
@@ -17,7 +15,12 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MaterialColor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -56,8 +59,20 @@ public class SleepTight {
 
     }
 
+    public static final Supplier<DreamEssenceBlock> DREAMER_ESSENCE = regWithItem("dreamer_essence", ()->
+            new DreamEssenceBlock(BlockBehaviour.Properties.of(Material.AMETHYST, MaterialColor.COLOR_PURPLE)
+                    .sound(SoundType.AMETHYST)),
+            CreativeModeTab.TAB_DECORATIONS
+    );
 
+    public static final Supplier<NightBagBlock> NIGHT_BAG = regBlock("night_bag", ()->
+        new NightBagBlock(BlockBehaviour.Properties.of(Material.WOOL, MaterialColor.TERRACOTTA_BLUE)
+                .sound(SoundType.WOOL).strength(0.1F))
+    );
 
+    public static final Supplier<NightBagItem> NIGHT_BAG_ITEM = regItem("night_bag", ()->
+            new NightBagItem(NIGHT_BAG.get(),new Item.Properties().tab(CreativeModeTab.TAB_DECORATIONS))
+    );
 
     public static final Map<DyeColor, Supplier<Block>> HAMMOCKS = Util.make(() ->
             Arrays.stream(DyeColor.values()).collect(Collectors.toUnmodifiableMap(d -> d, d ->
@@ -91,6 +106,11 @@ public class SleepTight {
     public static <T extends Block> Supplier<T> regBlock(String name, Supplier<T> sup) {
         return RegHelper.registerBlock(res(name), sup);
     }
+
+    public static <T extends Item> Supplier<T> regItem(String name, Supplier<T> sup) {
+        return RegHelper.registerItem(res(name), sup);
+    }
+
 
     public static <T extends Entity> Supplier<EntityType<T>> regEntity(
             String name, EntityType.EntityFactory<T> factory, MobCategory category, float width, float height,

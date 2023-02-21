@@ -1,14 +1,12 @@
 package net.mehvahdjukaar.sleep_tight;
 
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
-import net.mehvahdjukaar.moonlight.api.util.Utils;
 import net.mehvahdjukaar.sleep_tight.common.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.IModBed;
 import net.mehvahdjukaar.sleep_tight.common.NightBagBlock;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
@@ -100,5 +98,23 @@ public class ModEvents {
            return new Vec3(pos.getX() + 0.5, pos.getY() + 9/16f, pos.getZ() + 0.5);
         }
         return null;
+    }
+
+    @EventCalled
+    public static void onWokenUp(Player entity) {
+        var p = entity.getSleepingPos();
+        if(p.isPresent()){
+            BlockPos pos = p.get();
+            BlockState state = entity.level.getBlockState(pos);
+            if(state.getBlock() instanceof IModBed bed){
+                bed.onWokenUp(state, pos, entity);
+            }
+        }
+    }
+
+    //true if spawn should be cancelled
+    @EventCalled
+    public static boolean shouldCancelSetSpawn(Player entity, BlockPos newSpawn) {
+        return entity.getLevel().getBlockState(newSpawn).getBlock() instanceof NightBagBlock;
     }
 }

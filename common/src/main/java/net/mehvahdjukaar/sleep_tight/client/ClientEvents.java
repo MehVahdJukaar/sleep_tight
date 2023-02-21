@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Vector3f;
 import net.mehvahdjukaar.sleep_tight.common.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
+import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
 import net.mehvahdjukaar.sleep_tight.network.ServerBoundCommitSleepMessage;
 import net.minecraft.client.Camera;
@@ -14,6 +15,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.BedBlock;
 
 public class ClientEvents {
 
@@ -31,7 +33,8 @@ public class ClientEvents {
             pos = be.getOnPos();
             bedEntity = be;
         }
-        if (pos != null && entity.getLevel().getBlockEntity(pos) instanceof HammockBlockEntity tile) {
+        if (pos == null) return;
+        if (entity.getLevel().getBlockEntity(pos) instanceof HammockBlockEntity tile) {
 
             float roll = tile.getRoll(partialTicks);
 
@@ -57,28 +60,12 @@ public class ClientEvents {
         } else if (bedEntity != null) {
 
             //bed
-
-            var mc = Minecraft.getInstance();
-
-
-            var dir = entity.getBedOrientation();
-            float f1 = 90 + dir.toYRot();
+            var dir = BedBlock.getBedOrientation(entity.level, pos);
+            float f1 = 90 - dir.toYRot();
             poseStack.mulPose(Vector3f.YP.rotationDegrees(f1));
 
             poseStack.translate(1.5, 0, 0);
-
-            //fixes random offset for local player in third person
-            if (entity == mc.player) {
-                // poseStack.translate(0, 2 / 16f, 0);
-            }
-        } else {
-            var mc = Minecraft.getInstance();
-
-            if (entity == mc.player) {
-              //  poseStack.translate(0, 0.125, 0);
-            }
         }
-
     }
 
 
@@ -86,6 +73,9 @@ public class ClientEvents {
         Minecraft mc = Minecraft.getInstance();
         var e = mc.getCameraEntity();
         if (e == null || !mc.options.getCameraType().isFirstPerson()) return;
+        double intensity = ClientConfigs.CAMERA_ROLL_INTENSITY.get();
+        if (intensity == 0) return;
+
         BlockPos pos = null;
         if (e.getVehicle() instanceof BedEntity bed) {
             pos = bed.getOnPos();
@@ -96,12 +86,12 @@ public class ClientEvents {
             var q = camera.rotation().copy();
             q.conj();
             matrixStack.mulPose(q);
-            var yaw = tile.getRoll(partialTicks);
+            float roll = (float) (tile.getRoll(partialTicks) * intensity);
 
             float o = 6 / 16f - tile.getPivotOffset();
             matrixStack.translate(0, -o, 0);
 
-            matrixStack.mulPose(tile.getDirection().step().rotationDegrees(yaw));
+            matrixStack.mulPose(tile.getDirection().step().rotationDegrees(roll));
 
             matrixStack.translate(0, o, 0);
             matrixStack.mulPose(camera.rotation());

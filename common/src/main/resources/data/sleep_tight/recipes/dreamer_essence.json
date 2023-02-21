@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "111",
+    "#2#",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:tinted_glass"
+    },
+    "1": {
+      "item": "minecraft:phantom_membrane"
+    },
+    "2": {
+      "item": "minecraft:blaze_powder"
+    }
+  },
+  "result": {
+    "item": "sleep_tight:dreamer_essence"
+  }
+}

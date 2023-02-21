@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "111",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:string"
+    },
+    "1": {
+      "item": "minecraft:brown_carpet"
+    }
+  },
+  "result": {
+    "item": "sleep_tight:hammock_brown"
+  }
+}

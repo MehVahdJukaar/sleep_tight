@@ -15,6 +15,8 @@
   "block.sleep_tight.hammock_green": "Green Hammock",
   "block.sleep_tight.hammock_magenta": "Magenta Hammock",
   "block.sleep_tight.hammock_purple": "Purple Hammock",
+  "block.sleep_tight.hammock_orange": "Orange Hammock",
   "block.sleep_tight.night_bag": "Night Bag",
+  "message.sleep_tight.night_bag": "Not a suitable location",
   "block.sleep_tight.dreamer_essence": "Dreamer Essence"
 }

@@ -10,6 +10,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -28,7 +29,7 @@ public class HammockBlockEntity extends BlockEntity {
     private Direction direction;
 
     private float prevYaw;
-    private float angle = 0;
+    private float angle;
     private float angularVel = 0.1f;
     private boolean hasDrag = true;
 
@@ -38,6 +39,7 @@ public class HammockBlockEntity extends BlockEntity {
         this.color = ((HammockBlock) blockState.getBlock()).getColor();
         this.pivotOffset = blockState.getValue(HammockBlock.PART).getPivotOffset();
         this.direction = blockState.getValue(HammockBlock.FACING);
+        this.angle = RandomSource.create().nextFloat();
     }
 
 
@@ -50,7 +52,7 @@ public class HammockBlockEntity extends BlockEntity {
     }
 
     public float getRoll(float partialTicks) {
-        return (180 / Mth.PI) * Mth.rotLerp(partialTicks, prevYaw, angle);//Mth.lerp(partialTicks, prevAmpl, ampl) * Mth.sin((tickCount + partialTicks) * 0.08f);
+        return (180 / Mth.PI) * Mth.rotLerp(partialTicks, prevYaw, angle);
     }
 
     public float getPivotOffset() {
@@ -94,8 +96,6 @@ public class HammockBlockEntity extends BlockEntity {
         boolean hasAcc = (e.accelerateLeft || e.accelerateRight);
         if (hasAcc) e.hasDrag = true;
         if (hasAcc || e.hasDrag) energy = calculateEnergy(k, e.angularVel, e.angle);
-
-
 
 
         if (hasAcc && energy < ClientConfigs.getMaxAngleEnergy()) {

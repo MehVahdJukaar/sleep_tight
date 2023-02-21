@@ -3,7 +3,6 @@ package net.mehvahdjukaar.sleep_tight.configs;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigBuilder;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
-import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
 import net.minecraft.util.Mth;
 
 import java.util.function.Supplier;
@@ -15,6 +14,7 @@ public class ClientConfigs {
     public static final Supplier<Double> HAMMOCK_MIN_ANGLE;
     public static final Supplier<Double> DAMPING;
     public static final Supplier<Double> SWING_FORCE;
+    public static final Supplier<Double> CAMERA_ROLL_INTENSITY;
 
     static{
         ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.CLIENT);
@@ -30,6 +30,8 @@ public class ClientConfigs {
                 .define("damping", 0.2, 0., 10);
         SWING_FORCE = builder.comment("Intensity of velocity increment that is applied when controlling a hammock")
                 .define("swing_force", 0.012, 0., 10);
+        CAMERA_ROLL_INTENSITY = builder.comment("Camera roll intensity when swinging on a hammock. Set to 0 to turn it off entirely")
+                        .define("camera_roll_intensity", 1, 0, 1f);
         builder.pop();
 
         builder.onChange(ClientConfigs::onChange);
