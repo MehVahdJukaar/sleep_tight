@@ -1,6 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.common;
 
-import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -30,20 +30,31 @@ public class NightBagItem extends BlockItem {
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand usedHand) {
-        ItemStack stack = player.getItemInHand(usedHand);
         BlockPos pos = new BlockPos(player.position().add(0, 1 / 16f, 0));
+        ItemStack stack = player.getItemInHand(usedHand);
+
+        //same logic as startSleepingInBed. Performed before actually committing. Hopefully these should match
+        var problem = SleepTightPlatformStuff.invokeSleepChecksEvents(player, pos);
+        if (problem != null) {
+            if (level.isClientSide) {
+                Component m = problem.getMessage();
+                if (m == null) m = Component.translatable("message.sleep_tight.night_bag");
+                player.displayClientMessage(m, true);
+            }
+            return InteractionResultHolder.fail(stack);
+        }
+
         BlockHitResult hit = new BlockHitResult(Vec3.atBottomCenterOf(pos).add(0, 1, 0), Direction.DOWN, pos, false);
         BlockPlaceContext context = new BlockPlaceContext(player, usedHand, stack, hit);
-        var r = this.place(context);
-        //check can sleep here
+        InteractionResult r = this.place(context);
         return switch (r) {
-            case SUCCESS ->InteractionResultHolder.consume(stack); //no swing anim
+            case SUCCESS -> InteractionResultHolder.consume(stack); //no swing anim
             case CONSUME, CONSUME_PARTIAL -> InteractionResultHolder.consume(stack);
             case FAIL -> {
-                if(level.isClientSide) {
-                    player.displayClientMessage(Component.translatable("message.sleep_tight.night_bag"),true);
+                if (level.isClientSide) {
+                    player.displayClientMessage(Component.translatable("message.sleep_tight.night_bag"), true);
                 }
-                yield  InteractionResultHolder.fail(stack);
+                yield InteractionResultHolder.fail(stack);
             }
             default -> InteractionResultHolder.pass(stack);
         };

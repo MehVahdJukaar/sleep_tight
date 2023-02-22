@@ -4,6 +4,8 @@ import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.sleep_tight.ModEvents;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
+import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -54,6 +56,13 @@ public class SleepTightForge {
     }
 
     @SubscribeEvent
+    public void onSleepConditionCheck(PlayerSleepInBedEvent event) {
+        if(!ModEvents.onCheckSleepCondition(event.getEntity())){
+            event.setResult(Player.BedSleepingProblem.OTHER_PROBLEM);
+        }
+    }
+
+    @SubscribeEvent
     public void onSleepTimeCheck(SleepingTimeCheckEvent event) {
         var p = event.getSleepingLocation();
         if (p.isPresent()) {
@@ -63,7 +72,6 @@ public class SleepTightForge {
             }
         }
     }
-
 
     @SubscribeEvent
     public void onPlayerSetSpawn(PlayerSetSpawnEvent evt) {

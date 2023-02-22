@@ -194,5 +194,13 @@ public class ModEvents {
                 new ClientBoundSyncPlayerSleepCapMessage(player));
     }
 
+@EventCalled
+    public static boolean onCheckSleepCondition(Player player) {
+        if(SleepTightPlatformStuff.getPlayerSleepCap(player).getInsomniaCooldown(player.level)>0){
 
+            player.displayClientMessage(Component.translatable("message.sleep_tight.insomina"),true);
+            return false;
+        }
+        return true;
+    }
 }
