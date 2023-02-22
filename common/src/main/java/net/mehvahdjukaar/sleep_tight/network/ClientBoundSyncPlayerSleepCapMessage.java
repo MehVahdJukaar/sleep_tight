@@ -4,6 +4,7 @@ import net.mehvahdjukaar.moonlight.api.platform.network.ChannelHandler;
 import net.mehvahdjukaar.moonlight.api.platform.network.Message;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
+import net.mehvahdjukaar.sleep_tight.common.PlayerSleepCapability;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 
@@ -13,31 +14,42 @@ import java.util.UUID;
 public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     @Nullable
     private final UUID id;
-    private final long time;
+    private final long nightmareTime;
+    private final long sleepTime;
+    private final int consecutiveNights;
 
     public ClientBoundSyncPlayerSleepCapMessage(FriendlyByteBuf buf) {
         if (buf.readBoolean()) this.id = buf.readUUID();
         else id = null;
-        this.time = buf.readLong();
+        this.nightmareTime = buf.readLong();
+        this.sleepTime = buf.readLong();
+        this.consecutiveNights = buf.readInt();
+    }
+
+    public ClientBoundSyncPlayerSleepCapMessage(PlayerSleepCapability c) {
+        this.id = c.getHomeBed();
+        this.nightmareTime = c.getLastNightmareTimestamp();
+        this.sleepTime = c.getLastTimeSleptTimestamp();
+        this.consecutiveNights = c.getConsecutiveNightsSlept();
     }
 
     public ClientBoundSyncPlayerSleepCapMessage(Player player) {
-        var c = SleepTightPlatformStuff.getPlayerBedCap(player);
-        this.id = c.getHomeBed();
-        this.time = c.getLastNightmareTimestamp();
+        this(SleepTightPlatformStuff.getPlayerSleepCap(player));
     }
 
     @Override
     public void writeToBuffer(FriendlyByteBuf buf) {
         buf.writeBoolean(id != null);
         if (id != null) buf.writeUUID(id);
-        buf.writeLong(time);
+        buf.writeLong(nightmareTime);
+        buf.writeLong(sleepTime);
+        buf.writeInt(consecutiveNights);
     }
 
     @Override
     public void handle(ChannelHandler.Context context) {
         Player p = SleepTightClient.getPlayer();
-        var c = SleepTightPlatformStuff.getPlayerBedCap(p);
-        c.acceptFromServer(this.id, this.time);
+        var c = SleepTightPlatformStuff.getPlayerSleepCap(p);
+        c.acceptFromServer(this.id, this.nightmareTime, this.sleepTime, this.consecutiveNights);
     }
 }

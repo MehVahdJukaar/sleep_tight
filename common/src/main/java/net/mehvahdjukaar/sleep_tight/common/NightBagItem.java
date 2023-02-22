@@ -35,7 +35,7 @@ public class NightBagItem extends BlockItem {
         BlockHitResult hit = new BlockHitResult(Vec3.atBottomCenterOf(pos).add(0, 1, 0), Direction.DOWN, pos, false);
         BlockPlaceContext context = new BlockPlaceContext(player, usedHand, stack, hit);
         var r = this.place(context);
-
+        //check can sleep here
         return switch (r) {
             case SUCCESS ->InteractionResultHolder.consume(stack); //no swing anim
             case CONSUME, CONSUME_PARTIAL -> InteractionResultHolder.consume(stack);

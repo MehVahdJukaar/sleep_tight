@@ -13,6 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.*;
@@ -256,5 +257,14 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         this.dir = Direction.from2DDataValue(buf.readInt());
         this.hasOffset = buf.readBoolean();
 
+    }
+
+    public Component getRidingMessage(Component keyMessage) {
+        if (bedState.getBlock() instanceof HammockBlock) {
+            return Component.translatable("message.sleep_tight.start_resting", keyMessage);
+        } else {
+            return Component.translatable("message.sleep_tight.start_sleeping",  keyMessage);
+
+        }
     }
 }

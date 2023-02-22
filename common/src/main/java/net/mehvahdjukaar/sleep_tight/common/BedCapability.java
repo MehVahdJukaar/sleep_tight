@@ -53,7 +53,7 @@ public class BedCapability {
         return id;
     }
 
-    public void increaseTimeSlept(Player player) {
+    public void increaseTimeSleptOn(Player player) {
         this.timeSleptPerPlayer.merge(player.getUUID(), 1, Integer::sum);
     }
 

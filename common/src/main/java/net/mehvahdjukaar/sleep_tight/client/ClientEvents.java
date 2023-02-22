@@ -114,4 +114,7 @@ public class ClientEvents {
             }
         }
     }
+
+    public static void setupNightmareEffect() {
+    }
 }

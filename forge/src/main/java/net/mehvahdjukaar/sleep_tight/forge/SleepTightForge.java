@@ -4,7 +4,6 @@ import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.sleep_tight.ModEvents;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
-import net.mehvahdjukaar.sleep_tight.common.NightBagBlock;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -44,13 +43,13 @@ public class SleepTightForge {
 
 
     public static void registerCaps(RegisterCapabilitiesEvent event) {
-        event.register(ForgePlayerBedCapability.class);
+        event.register(ForgePlayerSleepCapability.class);
     }
 
     @SubscribeEvent
     public void attachPlayerCapabilities(AttachCapabilitiesEvent<Entity> event) {
         if(event.getObject() instanceof Player) {
-            event.addCapability(SleepTight.res("player_data"), new ForgePlayerBedCapability());
+            event.addCapability(SleepTight.res("player_data"), new ForgePlayerSleepCapability());
         }
     }
 
@@ -77,12 +76,13 @@ public class SleepTightForge {
     public void onSleepFinished(SleepFinishedTimeEvent evt) {
         if (evt.getLevel() instanceof ServerLevel serverLevel) {
             long oldTime = evt.getNewTime();
-            long newTime = ModEvents.getWakeTime(serverLevel, oldTime);
+            long newTime = ModEvents.getTimeFromSleepFinished(serverLevel, oldTime);
 
             if (oldTime != newTime) {
                 evt.setTimeAddition(newTime);
             }
         }
+
     }
 
     @SubscribeEvent
