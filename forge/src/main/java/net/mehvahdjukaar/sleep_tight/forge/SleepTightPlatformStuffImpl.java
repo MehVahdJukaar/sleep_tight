@@ -1,7 +1,9 @@
 package net.mehvahdjukaar.sleep_tight.forge;
 
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BedBlockEntity;
@@ -17,8 +19,9 @@ public class SleepTightPlatformStuffImpl {
     public static void increaseTimeSleptInBed(Player player, BedBlockEntity bed) {
         ModBedCapability bedCap = bed.getCapability(ModBedCapability.TOKEN).orElse(null);
         PlayerBedCapability playerCap = player.getCapability(PlayerBedCapability.TOKEN).orElse(null);
-        playerCap.assignHomeBed(player, bedCap.getBedId());
+        playerCap.assignHomeBed(player, bedCap.getId());
         bedCap.increaseTimeSlept(player);
     }
+
 
 }

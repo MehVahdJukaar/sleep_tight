@@ -284,6 +284,10 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
         return v;
     }
 
+    @Override
+    public boolean canSetSpawn() {
+        return false;
+    }
 
     @Override
     public Optional<BlockState> getRotatedState(BlockState state, LevelAccessor world, BlockPos pos, Rotation rotation, Direction axis, @Nullable Vec3 hit) {

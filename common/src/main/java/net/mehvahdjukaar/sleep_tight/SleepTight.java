@@ -49,7 +49,7 @@ public class SleepTight {
         ClientConfigs.init();
         CommonConfigs.init();
 
-
+        RegHelper.addAttributeRegistration(SleepTight::registerEntityAttributes);
 
     }
 
@@ -58,6 +58,19 @@ public class SleepTight {
 
 
     }
+
+    private static void registerEntityAttributes(RegHelper.AttributeEvent event) {
+        event.register(DREAMER_ESSENCE_ENTITY.get(), DreamerEssenceTargetEntity.makeAttributes());
+    }
+
+    public static final Supplier<EntityType<DreamerEssenceTargetEntity>> DREAMER_ESSENCE_ENTITY = RegHelper.registerEntityType(
+            res("dreamer_essence_dummy"), () -> (
+                    EntityType.Builder.of(DreamerEssenceTargetEntity::new, MobCategory.MISC)
+                            //.setTrackingRange(64)
+                            //.setUpdateInterval(3)
+                            .sized(0.7f, 9/16f))
+                    .build("dreamer_essence_dummy"));
+
 
     public static final Supplier<DreamEssenceBlock> DREAMER_ESSENCE = regWithItem("dreamer_essence", ()->
             new DreamEssenceBlock(BlockBehaviour.Properties.of(Material.AMETHYST, MaterialColor.COLOR_PURPLE)

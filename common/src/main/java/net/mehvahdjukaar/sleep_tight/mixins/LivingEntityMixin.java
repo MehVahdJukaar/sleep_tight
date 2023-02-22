@@ -39,7 +39,6 @@ public abstract class LivingEntityMixin extends Entity {
             ci.cancel();
         }
     }
-
     @Inject(method = "isSleeping", at = @At(value = "HEAD"), cancellable = true)
     public void sleepOnEntity(CallbackInfoReturnable<Boolean> cir) {
         if (this.level.isClientSide && !this.isDeadOrDying() && this.getVehicle() instanceof BedEntity && ClientEvents.cameraHack) {

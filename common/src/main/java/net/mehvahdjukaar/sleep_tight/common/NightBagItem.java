@@ -41,7 +41,7 @@ public class NightBagItem extends BlockItem {
             case CONSUME, CONSUME_PARTIAL -> InteractionResultHolder.consume(stack);
             case FAIL -> {
                 if(level.isClientSide) {
-                    player.displayClientMessage(Component.translatable("messages.sleep_tight.night_bag"),true);
+                    player.displayClientMessage(Component.translatable("message.sleep_tight.night_bag"),true);
                 }
                 yield  InteractionResultHolder.fail(stack);
             }

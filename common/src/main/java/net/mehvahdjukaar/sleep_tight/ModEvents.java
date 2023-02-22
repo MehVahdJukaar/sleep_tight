@@ -11,6 +11,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
@@ -120,6 +121,10 @@ public class ModEvents {
     //true if spawn should be cancelled
     @EventCalled
     public static boolean shouldCancelSetSpawn(Player entity, BlockPos newSpawn) {
-        return entity.getLevel().getBlockState(newSpawn).getBlock() instanceof NightBagBlock;
+        if(entity.getLevel().getBlockState(newSpawn).getBlock() instanceof IModBed bed){
+            return !bed.canSetSpawn();
+        }
+        return false;
     }
+
 }

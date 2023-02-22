@@ -1,136 +1,54 @@
 package net.mehvahdjukaar.sleep_tight.forge;
 
-import com.mojang.math.Quaternion;
-import com.mojang.math.Vector3f;
-import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.common.BedEntity;
-import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.InBedChatScreen;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.util.Mth;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Pose;
-import net.minecraftforge.client.event.RenderLivingEvent;
+import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
+import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.client.event.ViewportEvent;
+import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 public class SleepTightForgeClient {
+
+    public static void init() {
+        MinecraftForge.EVENT_BUS.register(SleepTightForgeClient.class);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(SleepTightForgeClient::onAddGuiLayers);
+    }
 
     @SubscribeEvent
     public static void onCameraSetup(ViewportEvent.ComputeCameraAngles event) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
-         if ( player != null && player.getVehicle() instanceof BedEntity && mc.options.getCameraType().isFirstPerson()) {
+        if (player != null && player.getVehicle() instanceof BedEntity && mc.options.getCameraType().isFirstPerson()) {
             //same y offset as camera in bed
             event.getCamera().move(0, 0.3, 0);
         }
     }
 
-    public static float angle(Vector3f v1, Vector3f v2) {
-        float dot = v1.dot(v2);
-        float len1 = len(v1);
-        float len2 = len(v2);
-        float cosAngle = dot / (len1 * len2);
-        return (float) Math.toDegrees(Math.acos(cosAngle));
-    }
-
-    public static float len(Vector3f v) {
-        return Mth.sqrt(v.x() * v.x() + v.y() * v.y() + v.z() * v.z());
-    }
-
-    public static float angle(float angle1, float angle2) {
-        float diff = angle2 - angle1;
-        float angle = diff % 360;
-        if (angle < 0) {
-            angle += 360;
+    @SubscribeEvent
+    public static void onRenderScreen(ScreenEvent.Render.Post event) {
+        if (event.getScreen() instanceof InBedChatScreen s) {
+            SleepGuiOverlay.renderBedScreenOverlay(s, event.getPoseStack());
         }
-        if (angle > 180) {
-            angle = 360 - angle;
-        }
-        return angle;
     }
 
     @SubscribeEvent
-    public static void onRenderLiving(RenderLivingEvent.Pre event) {
-        LivingEntity entity = event.getEntity();
-        /*
-        if (entity.getVehicle() instanceof BedEntity bed) {
-            float partialTicks = event.getPartialTick();
-            var renderer = event.getRenderer();
-            var model = renderer.getModel();
-            var buffer = event.getMultiBufferSource();
-            PoseStack poseStack  =event.getPoseStack();
-            var packedLight = event.getPackedLight();
+    public static void onInitScreen(ScreenEvent.Init.Post event) {
+        if (event.getScreen() instanceof InBedChatScreen s) {
+            SleepGuiOverlay.setupOverlay(s);
+        }
 
-            poseStack.pushPose();
-            model.attackTime = renderer.getAttackAnim(entity, partialTicks);
-            model.riding = false;
-            model.young = entity.isBaby();
-            float f = Mth.rotLerp(partialTicks, entity.yBodyRotO, entity.yBodyRot);
-            float f1 = Mth.rotLerp(partialTicks, entity.yHeadRotO, entity.yHeadRot);
-            float f2 = f1 - f;
-            float f7;
-
-            float f6 = Mth.lerp(partialTicks, entity.xRotO, entity.getXRot());
-            if (isEntityUpsideDown(entity)) {
-                f6 *= -1.0F;
-                f2 *= -1.0F;
-            }
-
-            float f8;
-            if (entity.hasPose(Pose.SLEEPING)) {
-                Direction direction = entity.getBedOrientation();
-                if (direction != null) {
-                    f8 = entity.getEyeHeight(Pose.STANDING) - 0.1F;
-                    poseStack.translate( ( (-direction.getStepX()) * f8), 0.0, ( (-direction.getStepZ()) * f8));
-                }
-            }
-
-            f7 = renderer.getBob(entity, partialTicks);
-            renderer.setupRotations(entity, poseStack, f7, f, partialTicks);
-            poseStack.scale(-1.0F, -1.0F, 1.0F);
-            renderer.scale(entity, poseStack, partialTicks);
-            poseStack.translate(0.0, -1.5010000467300415, 0.0);
-            f8 = 0.0F;
-            float f5 = 0.0F;
-            if (entity.isAlive()) {
-                f8 = Mth.lerp(partialTicks, entity.animationSpeedOld, entity.animationSpeed);
-                f5 = entity.animationPosition - entity.animationSpeed * (1.0F - partialTicks);
-                if (entity.isBaby()) {
-                    f5 *= 3.0F;
-                }
-
-                if (f8 > 1.0F) {
-                    f8 = 1.0F;
-                }
-            }
-
-            model.prepareMobModel(entity, f5, f8, partialTicks);
-            model.setupAnim(entity, f5, f8, f7, f2, f6);
-            Minecraft minecraft = Minecraft.getInstance();
-            boolean flag = renderer.isBodyVisible(entity);
-            boolean flag1 = !flag && !entity.isInvisibleTo(minecraft.player);
-            boolean flag2 = minecraft.shouldEntityAppearGlowing(entity);
-            RenderType rendertype = renderer.getRenderType(entity, flag, flag1, flag2);
-            if (rendertype != null) {
-                VertexConsumer vertexconsumer = buffer.getBuffer(rendertype);
-                int i = getOverlayCoords(entity, renderer.getWhiteOverlayProgress(entity, partialTicks));
-                model.renderToBuffer(poseStack, vertexconsumer, packedLight, i, 1.0F, 1.0F, 1.0F, flag1 ? 0.15F : 1.0F);
-            }
-
-
-            if (!entity.isSpectator()) {
-
-                for (Object o : renderer.layers) {
-                    RenderLayer<T, M> renderlayer = (RenderLayer) o;
-                    renderlayer.render(poseStack, buffer, packedLight, entity, f5, f8, partialTicks, f7, f2, f6);
-                }
-            }
-
-            poseStack.popPose();
-            //no nametag
-            super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
-            MinecraftForge.EVENT_BUS.post(new RenderLivingEvent.Post(entity, this, partialTicks, poseStack, buffer, packedLight));
-        }*/
     }
+
+
+    public static void onAddGuiLayers(RegisterGuiOverlaysEvent event) {
+        event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "sleep_indicator",
+                new SleepGuiOverlay(Minecraft.getInstance()));
+    }
+
+
 }

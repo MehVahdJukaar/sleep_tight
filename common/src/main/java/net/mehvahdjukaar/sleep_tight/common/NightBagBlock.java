@@ -50,7 +50,7 @@ public class NightBagBlock extends BedBlock implements IModBed {
         return state.getValue(PART) == BedPart.HEAD ? SHAPE_HACK : SHAPE;
     }
 
-    @Deprecated
+    @Override
     public VoxelShape getVisualShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
@@ -78,6 +78,11 @@ public class NightBagBlock extends BedBlock implements IModBed {
     @Override
     public Vec3 getSleepingPosition(BlockState state, BlockPos pos) {
         return Vec3.atCenterOf(pos).subtract(0, 0.25, 0);
+    }
+
+    @Override
+    public boolean canSetSpawn() {
+        return false;
     }
 
     @Override

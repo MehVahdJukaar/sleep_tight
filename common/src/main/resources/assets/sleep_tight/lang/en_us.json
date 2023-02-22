@@ -18,5 +18,6 @@
   "block.sleep_tight.hammock_orange": "Orange Hammock",
   "block.sleep_tight.night_bag": "Night Bag",
   "message.sleep_tight.night_bag": "Not a suitable location",
+  "message.sleep_tight.start_sleeping": "Press %s to start sleeping",
   "block.sleep_tight.dreamer_essence": "Dreamer Essence"
 }

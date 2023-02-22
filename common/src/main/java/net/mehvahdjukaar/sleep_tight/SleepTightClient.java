@@ -1,22 +1,11 @@
 package net.mehvahdjukaar.sleep_tight;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Vector3f;
 import net.mehvahdjukaar.moonlight.api.platform.ClientPlatformHelper;
-import net.mehvahdjukaar.sleep_tight.client.BedEntityRenderer;
+import net.mehvahdjukaar.sleep_tight.client.InvisibleEntityRenderer;
 import net.mehvahdjukaar.sleep_tight.client.HammockBlockTileRenderer;
-import net.mehvahdjukaar.sleep_tight.common.BedEntity;
-import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
-import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
-import net.mehvahdjukaar.sleep_tight.network.ServerBoundCommitSleepMessage;
-import net.minecraft.client.Camera;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.resources.model.Material;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.DyeColor;
 
 import java.util.Arrays;
@@ -27,6 +16,8 @@ public class SleepTightClient {
     public static final ModelLayerLocation NIGHT_BAG = loc("night_bag");
     public static final ModelLayerLocation HAMMOCK = loc("hammock");
     public static final ResourceLocation BED_SHEET = new ResourceLocation("textures/atlas/beds.png");
+    public static final ResourceLocation ICONS = SleepTight.res("textures/gui/sleep_icons.png");
+
 
     public static final Material[] HAMMOCK_TEXTURES = Arrays.stream(DyeColor.values())
             .sorted(Comparator.comparingInt(DyeColor::getId))
@@ -57,7 +48,8 @@ public class SleepTightClient {
     }
 
     private static void registerEntityRenderers(ClientPlatformHelper.EntityRendererEvent event) {
-        event.register(SleepTight.BED_ENTITY.get(), BedEntityRenderer::new);
+        event.register(SleepTight.BED_ENTITY.get(), InvisibleEntityRenderer::new);
+        event.register(SleepTight.DREAMER_ESSENCE_ENTITY.get(), InvisibleEntityRenderer::new);
     }
 
     private static void registerBlockEntityRenderers(ClientPlatformHelper.BlockEntityRendererEvent event) {
