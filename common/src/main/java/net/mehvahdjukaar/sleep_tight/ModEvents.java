@@ -1,22 +1,20 @@
 package net.mehvahdjukaar.sleep_tight;
 
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
-import net.mehvahdjukaar.sleep_tight.common.BedEntity;
-import net.mehvahdjukaar.sleep_tight.common.HammockBlock;
-import net.mehvahdjukaar.sleep_tight.common.IModBed;
-import net.mehvahdjukaar.sleep_tight.common.NightBagBlock;
+import net.mehvahdjukaar.sleep_tight.common.*;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
+import net.mehvahdjukaar.sleep_tight.network.ClientBoundSyncPlayerSleepCapMessage;
+import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BedBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.phys.BlockHitResult;
@@ -103,7 +101,7 @@ public class ModEvents {
     }
 
     @EventCalled
-    public static void onWokenUp(Player player) {
+    public static void onWokenUp(Player player, boolean hasWokenUpImmediately) {
         var p = player.getSleepingPos();
         if(p.isPresent()){
             BlockPos pos = p.get();
@@ -112,8 +110,11 @@ public class ModEvents {
                 bed.onWokenUp(state, pos, player);
                 return;
             }
-            if(player.level.getBlockEntity(pos) instanceof BedBlockEntity tile){
-                SleepTightPlatformStuff.increaseTimeSleptInBed(player, tile);
+            if(player.level.getBlockEntity(pos) instanceof ISleepTightBed tile){
+                BedCapability bedCap = tile.getBedCap();
+                PlayerBedCapability playerCap = SleepTightPlatformStuff.getPlayerBedCap(player);
+                playerCap.assignHomeBed(bedCap.getId());
+                bedCap.increaseTimeSlept(player);
             }
         }
     }
@@ -127,4 +128,8 @@ public class ModEvents {
         return false;
     }
 
+    public static void onPlayerLoggedIn(ServerPlayer player) {
+        NetworkHandler.CHANNEL.sendToClientPlayer(player,
+                new ClientBoundSyncPlayerSleepCapMessage(player));
+    }
 }

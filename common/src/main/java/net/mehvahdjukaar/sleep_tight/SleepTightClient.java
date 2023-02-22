@@ -3,10 +3,13 @@ package net.mehvahdjukaar.sleep_tight;
 import net.mehvahdjukaar.moonlight.api.platform.ClientPlatformHelper;
 import net.mehvahdjukaar.sleep_tight.client.InvisibleEntityRenderer;
 import net.mehvahdjukaar.sleep_tight.client.HammockBlockTileRenderer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.MapItem;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -57,4 +60,7 @@ public class SleepTightClient {
     }
 
 
+    public static Player getPlayer() {
+        return Minecraft.getInstance().player;
+    }
 }

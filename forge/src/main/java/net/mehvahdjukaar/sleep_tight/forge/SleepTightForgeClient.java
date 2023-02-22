@@ -41,9 +41,7 @@ public class SleepTightForgeClient {
         if (event.getScreen() instanceof InBedChatScreen s) {
             SleepGuiOverlay.setupOverlay(s);
         }
-
     }
-
 
     public static void onAddGuiLayers(RegisterGuiOverlaysEvent event) {
         event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "sleep_indicator",

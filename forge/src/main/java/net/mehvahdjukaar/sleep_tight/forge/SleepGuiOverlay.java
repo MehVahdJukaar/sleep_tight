@@ -5,7 +5,9 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
+import net.mehvahdjukaar.sleep_tight.common.BedCapability;
 import net.mehvahdjukaar.sleep_tight.common.DreamerEssenceTargetEntity;
+import net.mehvahdjukaar.sleep_tight.common.NightBagBlock;
 import net.minecraft.client.AttackIndicatorStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -38,7 +40,7 @@ public class SleepGuiOverlay extends Gui implements IGuiOverlay {
         }
     }
 
-
+    @Override
     public void renderCrosshair(PoseStack poseStack) {
         poseStack.pushPose();
         this.screenWidth = this.minecraft.getWindow().getGuiScaledWidth();
@@ -70,9 +72,7 @@ public class SleepGuiOverlay extends Gui implements IGuiOverlay {
             }
 
         }
-
         poseStack.popPose();
-
     }
 
 
@@ -100,10 +100,12 @@ public class SleepGuiOverlay extends Gui implements IGuiOverlay {
         var p = player.getSleepingPos();
         if (p.isPresent()) {
             BlockPos pos = p.get();
-            ModBedCapability cap = ModBedCapability.getHomeBedIfHere(player, pos);
+            BedCapability cap = ForgePlayerBedCapability.getHomeBedIfHere(player, pos);
             isHomeBed = cap != null;
 
-            hasDreamerEssence = !player.getLevel().getEntitiesOfClass(DreamerEssenceTargetEntity.class,
+
+            hasDreamerEssence = !(player.getLevel().getBlockState(pos).getBlock() instanceof NightBagBlock) &&
+                    !player.getLevel().getEntitiesOfClass(DreamerEssenceTargetEntity.class,
                     new AABB(pos).inflate(5)).isEmpty();
         }
 

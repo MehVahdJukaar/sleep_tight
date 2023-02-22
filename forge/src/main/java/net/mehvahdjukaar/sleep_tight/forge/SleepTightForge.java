@@ -4,21 +4,16 @@ import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.sleep_tight.ModEvents;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
+import net.mehvahdjukaar.sleep_tight.common.NightBagBlock;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BedBlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.entity.player.PlayerSetSpawnEvent;
-import net.minecraftforge.event.entity.player.PlayerWakeUpEvent;
-import net.minecraftforge.event.entity.player.SleepingTimeCheckEvent;
+import net.minecraftforge.event.entity.player.*;
 import net.minecraftforge.event.level.SleepFinishedTimeEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -49,21 +44,13 @@ public class SleepTightForge {
 
 
     public static void registerCaps(RegisterCapabilitiesEvent event) {
-        event.register(ModBedCapability.class);
-        event.register(PlayerBedCapability.class);
-    }
-
-    @SubscribeEvent
-    public void attachBlockEntityCapabilities(AttachCapabilitiesEvent<BlockEntity> event) {
-        if (event.getObject() instanceof BedBlockEntity) {
-            event.addCapability(SleepTight.res("bed_data"), new ModBedCapability());
-        }
+        event.register(ForgePlayerBedCapability.class);
     }
 
     @SubscribeEvent
     public void attachPlayerCapabilities(AttachCapabilitiesEvent<Entity> event) {
         if(event.getObject() instanceof Player) {
-            event.addCapability(SleepTight.res("player_data"), new PlayerBedCapability());
+            event.addCapability(SleepTight.res("player_data"), new ForgePlayerBedCapability());
         }
     }
 
@@ -100,7 +87,7 @@ public class SleepTightForge {
 
     @SubscribeEvent
     public void onPlayerWakeUp(PlayerWakeUpEvent evt) {
-        ModEvents.onWokenUp(evt.getEntity());
+        ModEvents.onWokenUp(evt.getEntity(), evt.updateLevel());
     }
 
     @SubscribeEvent
@@ -120,6 +107,13 @@ public class SleepTightForge {
                 event.setCanceled(true);
                 event.setCancellationResult(ret);
             }
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            ModEvents.onPlayerLoggedIn(player);
         }
     }
 
