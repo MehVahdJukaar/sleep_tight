@@ -7,6 +7,7 @@ import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.animal.allay.Allay;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -71,8 +72,9 @@ public abstract class PlayerSleepCapability {
 
     //1 max 0 min
     public float getInsomniaCooldown(Level level) {
+
         long dur = CommonConfigs.INSOMNIA_DURATION.get();
-        return (dur - (level.getGameTime() - lastNightmareTimestamp))/(float)dur -1;
+        return (dur - (level.getGameTime() - lastNightmareTimestamp))/(float)dur;
     }
 
     public double getNightmareChance(Player player) {

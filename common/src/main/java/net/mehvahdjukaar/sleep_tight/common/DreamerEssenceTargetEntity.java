@@ -27,10 +27,16 @@ public class DreamerEssenceTargetEntity extends LivingEntity {
     }
 
     @Override
+    protected float getStandingEyeHeight(Pose pose, EntityDimensions dimensions) {
+        return dimensions.height;
+    }
+
+    @Override
     public void tick() {
         if(level.getBlockState(this.blockPosition()).getBlock() != SleepTight.DREAMER_ESSENCE.get()){
             this.discard();
         }
+
     }
 
     @Override

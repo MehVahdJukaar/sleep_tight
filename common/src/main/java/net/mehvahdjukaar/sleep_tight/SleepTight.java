@@ -68,7 +68,7 @@ public class SleepTight {
                     EntityType.Builder.of(DreamerEssenceTargetEntity::new, MobCategory.MISC)
                             //.setTrackingRange(64)
                             //.setUpdateInterval(3)
-                            .sized(0.7f, 9/16f))
+                            .sized(0.2f, 12/16f))
                     .build("dreamer_essence_dummy"));
 
 

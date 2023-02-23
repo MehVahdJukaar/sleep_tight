@@ -32,7 +32,7 @@ public class CommonConfigs {
         NIGHTMARE_CHANCE_INCREMENT_PER_NIGHT = builder.define("nightmare_increment_per_night", 0.15, 0, 1);
         NIGHTMARE_SLEEP_TIME_MULTIPLIER = builder.comment("Multiplier applied to time slept after a nightmare")
                         .define("nightmare_sleep_time_multiplier", 0.5, 0.01, 1);
-        INSOMNIA_DURATION = builder.comment("Refractory preiod after a nightmare in which you won't be able to sleep")
+        INSOMNIA_DURATION = builder.comment("Refractory period after a nightmare in which you won't be able to sleep")
                         .define("insomnia_duration", 24000+12000,0, 1000000);
         HOME_BED_REQUIRED_NIGHTS = builder.comment("Amount of nights needed to mark a bed as home bed")
                         .define("home_bed_required_nights", 8, 1, 50);

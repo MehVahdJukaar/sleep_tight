@@ -13,6 +13,7 @@
     "BedBlockEntityMixin",
     "LevelRendererDeleteMixin",
     "LivingEntityMixin",
+    "PhantomMixin",
     "PlayerMixin"
   ],
   "injectors": {
