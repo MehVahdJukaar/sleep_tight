@@ -32,7 +32,7 @@ public class SleepTightForgeClient {
     @SubscribeEvent
     public static void onRenderScreen(ScreenEvent.Render.Post event) {
         if (event.getScreen() instanceof InBedChatScreen s) {
-            SleepGuiOverlay.renderBedScreenOverlay(s, event.getPoseStack());
+            SleepGuiOverlay.renderBedScreenOverlay(s, event.getPoseStack(), event.getMouseX(), event.getMouseY());
         }
     }
 
@@ -44,8 +44,7 @@ public class SleepTightForgeClient {
     }
 
     public static void onAddGuiLayers(RegisterGuiOverlaysEvent event) {
-        event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "sleep_indicator",
-                new SleepGuiOverlay(Minecraft.getInstance()));
+        event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "sleep_indicator", new SleepGuiOverlay());
     }
 
 

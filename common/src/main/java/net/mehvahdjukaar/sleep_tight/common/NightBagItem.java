@@ -38,8 +38,7 @@ public class NightBagItem extends BlockItem {
         if (problem != null) {
             if (level.isClientSide) {
                 Component m = problem.getMessage();
-                if (m == null) m = Component.translatable("message.sleep_tight.night_bag");
-                player.displayClientMessage(m, true);
+                if(m != null) player.displayClientMessage(m, true);
             }
             return InteractionResultHolder.fail(stack);
         }

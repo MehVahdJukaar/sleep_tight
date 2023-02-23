@@ -14,6 +14,7 @@ public class CommonConfigs {
     public static final Supplier<Double> NIGHTMARE_CHANCE_INCREMENT_PER_NIGHT;
     public static final Supplier<Double> NIGHTMARE_SLEEP_TIME_MULTIPLIER;
     public static final Supplier<Integer> INSOMNIA_DURATION;
+    public static final Supplier<Integer> HOME_BED_REQUIRED_NIGHTS;
 
     static{
         ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.COMMON);
@@ -33,6 +34,8 @@ public class CommonConfigs {
                         .define("nightmare_sleep_time_multiplier", 0.5, 0.01, 1);
         INSOMNIA_DURATION = builder.comment("Refractory preiod after a nightmare in which you won't be able to sleep")
                         .define("insomnia_duration", 24000+12000,0, 1000000);
+        HOME_BED_REQUIRED_NIGHTS = builder.comment("Amount of nights needed to mark a bed as home bed")
+                        .define("home_bed_required_nights", 8, 1, 50);
         builder.pop();
 
         builder.setSynced();

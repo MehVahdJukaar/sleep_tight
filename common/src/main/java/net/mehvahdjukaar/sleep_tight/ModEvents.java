@@ -62,14 +62,14 @@ public class ModEvents {
 
         for (var player : level.players()) {
             if (player.isSleepingLongEnough()) {
-               if(nightmare) onNightmare(player);
-               else onPlayerSleepFinished(player);
+                if (nightmare) onNightmare(player);
+                else onPlayerSleepFinished(player);
             }
         }
 
         if (nightmare) {
             long i = level.getDayTime();
-            return (i + (long) ((newTime-i) * CommonConfigs.NIGHTMARE_SLEEP_TIME_MULTIPLIER.get()));
+            return (i + (long) ((newTime - i) * CommonConfigs.NIGHTMARE_SLEEP_TIME_MULTIPLIER.get()));
         }
 
 
@@ -107,8 +107,8 @@ public class ModEvents {
             Block b = state.getBlock();
             if (state.getBlock() instanceof BedBlock) {
                 var c = SleepTightPlatformStuff.getPlayerSleepCap(player);
-                if(c.getInsomniaCooldown(player.level)>0){
-                    player.displayClientMessage(Component.translatable("message.sleep_tight.insomnia"),true);
+                if (c.getInsomniaCooldown(player.level) > 0) {
+                    player.displayClientMessage(Component.translatable("message.sleep_tight.insomnia"), true);
                     return InteractionResult.sidedSuccess(level.isClientSide);
                 }
 
@@ -144,9 +144,9 @@ public class ModEvents {
         var c = SleepTightPlatformStuff.getPlayerSleepCap(player);
         c.addNightmare(player.level);
         c.syncToClient(player);
-        player.displayClientMessage(Component.translatable("message.sleep_tight.nightmare"),true);
-        player.addEffect(new MobEffectInstance(MobEffects.DARKNESS,20*3, 0, false, false, false,
-              null, Optional.of( new MobEffectInstance.FactorData(20, 10,1,1,20*3,1,true))));
+        player.displayClientMessage(Component.translatable("message.sleep_tight.nightmare"), true);
+        player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 20 * 3, 0, false, false, false,
+                null, Optional.of(new MobEffectInstance.FactorData(20, 10, 1, 1, 20 * 3, 1, true))));
     }
 
     //server sided
@@ -158,9 +158,7 @@ public class ModEvents {
             if (player.level.getBlockEntity(pos) instanceof ISleepTightBed tile) {
                 BedCapability bedCap = tile.getBedCap();
                 PlayerSleepCapability playerCap = SleepTightPlatformStuff.getPlayerSleepCap(player);
-                playerCap.assignHomeBed(bedCap.getId());
-                playerCap.increaseNightSlept(player.level);
-                bedCap.increaseTimeSleptOn(player);
+                playerCap.onNightSleptInto(bedCap, player);
                 playerCap.syncToClient(player);
             }
         }
@@ -194,11 +192,12 @@ public class ModEvents {
                 new ClientBoundSyncPlayerSleepCapMessage(player));
     }
 
-@EventCalled
+    @EventCalled
     public static boolean onCheckSleepCondition(Player player) {
-        if(SleepTightPlatformStuff.getPlayerSleepCap(player).getInsomniaCooldown(player.level)>0){
-
-            player.displayClientMessage(Component.translatable("message.sleep_tight.insomina"),true);
+        if (SleepTightPlatformStuff.getPlayerSleepCap(player).getInsomniaCooldown(player.level) > 0) {
+            if(player.level.isClientSide) {
+                player.displayClientMessage(Component.translatable("message.sleep_tight.insomnia"), true);
+            }
             return false;
         }
         return true;

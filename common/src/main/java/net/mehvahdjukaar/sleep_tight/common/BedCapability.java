@@ -5,27 +5,24 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.world.entity.player.Player;
 
 import javax.annotation.Nullable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class BedCapability {
 
-    private final Map<UUID, Integer> timeSleptPerPlayer = new HashMap<>();
+    private final Set<UUID> homeBedTo = new HashSet<>();
     @Nullable
     private UUID id = null;
 
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
         ListTag listtag = new ListTag();
-        if (!timeSleptPerPlayer.isEmpty()) {
-            for (var e : timeSleptPerPlayer.entrySet()) {
-                CompoundTag t = new CompoundTag();
-                t.putInt("times", e.getValue());
-                t.putUUID("player", e.getKey());
+        if (!homeBedTo.isEmpty()) {
+            for (var e : homeBedTo) {
+                var t = new CompoundTag();
+                t.putUUID("player",e);
                 listtag.add(t);
             }
-            tag.put("sleep_counter", listtag);
+            tag.put("owners", listtag);
         }
         if (id != null) {
             tag.putUUID("id", id);
@@ -35,12 +32,12 @@ public class BedCapability {
 
     public void deserializeNBT(CompoundTag tag) {
         if (tag == null) return;
-        if (tag.contains("data")) {
-            ListTag listTag = tag.getList("data", ListTag.TAG_COMPOUND);
-            this.timeSleptPerPlayer.clear();
+        if (tag.contains("owners")) {
+            ListTag listTag = tag.getList("owners", ListTag.TAG_COMPOUND);
+            this.homeBedTo.clear();
             for (int i = 0; i < listTag.size(); ++i) {
                 CompoundTag c = listTag.getCompound(i);
-                this.timeSleptPerPlayer.put(c.getUUID("player"), c.getInt("times"));
+                this.homeBedTo.add(c.getUUID("player"));
             }
         }
         if (tag.contains("id")) {
@@ -53,16 +50,15 @@ public class BedCapability {
         return id;
     }
 
-    public void increaseTimeSleptOn(Player player) {
-        this.timeSleptPerPlayer.merge(player.getUUID(), 1, Integer::sum);
-    }
-
-    public int getTimeSlept(Player player) {
-        return this.timeSleptPerPlayer.getOrDefault(player.getUUID(), 0);
-    }
-
-
     public boolean isEmpty() {
-        return this.id == null && timeSleptPerPlayer.isEmpty();
+        return this.id == null;
+    }
+
+    public void setHomeBedFor(Player player) {
+        this.homeBedTo.add(player.getUUID());
+    }
+
+    public boolean isHomeBedFor(Player player) {
+        return this.homeBedTo.contains(player.getUUID());
     }
 }

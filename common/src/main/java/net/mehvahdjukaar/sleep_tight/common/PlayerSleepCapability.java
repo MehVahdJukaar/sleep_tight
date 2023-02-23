@@ -18,55 +18,67 @@ public abstract class PlayerSleepCapability {
 
     @Nullable
     private UUID homeBed = null;
-    private long lastNightmareTimestamp = -1;
+    private long lastNightmareTimestamp = -999999;
     private long lastTimeSleptTimestamp = -1;
     private int consecutiveNightsSlept = 0;
+    private int nightsSleptInHomeBed = 0;
 
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
-        if (homeBed != null) tag.putUUID("bed_id", homeBed);
+        if (homeBed != null) tag.putUUID("home_bed_id", homeBed);
         tag.putLong("last_nightmare_time", lastNightmareTimestamp);
         tag.putLong("last_time_slept", lastTimeSleptTimestamp);
         tag.putInt("consecutive_nights", consecutiveNightsSlept);
+        tag.putInt("home_bed_nights", nightsSleptInHomeBed);
         return tag;
     }
 
     public void deserializeNBT(CompoundTag tag) {
-        if (tag.contains("bed_id")) this.homeBed = tag.getUUID("bed_id");
+        if (tag.contains("bed_id")) this.homeBed = tag.getUUID("home_bed_id");
         this.lastNightmareTimestamp = tag.getLong("last_nightmare_time");
         this.lastTimeSleptTimestamp = tag.getLong("last_time_slept");
         this.consecutiveNightsSlept = tag.getInt("consecutive_nights");
+        this.nightsSleptInHomeBed = tag.getInt("home_bed_nights");
     }
 
-    public long getInsomniaCooldown(Level level) {
-        return CommonConfigs.INSOMNIA_DURATION.get() - (level.getGameTime() - lastNightmareTimestamp);
-    }
-
-    //call on boh sides. wont sync. we'll blindly trust the client here
     public void addNightmare(Level level) {
         this.lastNightmareTimestamp = level.getGameTime();
         this.consecutiveNightsSlept = 0;
     }
 
-    public void assignHomeBed(UUID bedId) {
-        this.homeBed = bedId;
-    }
-
-    public void increaseNightSlept(Level level) {
-        long currentStamp = level.getGameTime();
+    public void onNightSleptInto(BedCapability bed, Player player) {
+        long currentStamp = player.level.getGameTime();
         if (currentStamp - this.lastNightmareTimestamp > CommonConfigs.SLEEP_INTERVAL.get()) {
+            //reset when had nightmare
             this.consecutiveNightsSlept = 0;
         } else {
             this.consecutiveNightsSlept += 1;
         }
         this.lastTimeSleptTimestamp = currentStamp;
+
+
+        var bedId = bed.getId();
+        if(bedId.equals(homeBed)){
+            this.nightsSleptInHomeBed++;
+            if(this.nightsSleptInHomeBed>=CommonConfigs.HOME_BED_REQUIRED_NIGHTS.get()){
+                bed.setHomeBedFor(player);
+            }
+        }else {
+            this.homeBed = bedId;
+            this.nightsSleptInHomeBed = 0;
+        }
+    }
+
+    //1 max 0 min
+    public float getInsomniaCooldown(Level level) {
+        long dur = CommonConfigs.INSOMNIA_DURATION.get();
+        return (dur - (level.getGameTime() - lastNightmareTimestamp))/(float)dur -1;
     }
 
     public double getNightmareChance(Player player) {
         int minNights = CommonConfigs.NIGHTMARES_CONSECUTIVE_NIGHTS.get();
-        if(true)return 1;
         if (consecutiveNightsSlept < minNights) return 0;
-        if (isDreamerEssenceInRange(player.getSleepingPos().get(), player.level)) return 0;
+        if (isDreamerEssenceInRange(player.blockPosition(), player.level)) return 0;
         else return CommonConfigs.NIGHTMARE_CHANCE_INCREMENT_PER_NIGHT.get()
                 * (consecutiveNightsSlept - minNights - 1);
     }
@@ -89,16 +101,21 @@ public abstract class PlayerSleepCapability {
         return consecutiveNightsSlept;
     }
 
+    public int getNightsSleptInHomeBed() {
+        return nightsSleptInHomeBed;
+    }
+
     public long getLastTimeSleptTimestamp() {
         return lastTimeSleptTimestamp;
     }
 
-    public void acceptFromServer(UUID id, long nightmareTime, long sleepTimestamp, int nightSlept) {
+    public void acceptFromServer(UUID id, long nightmareTime, long sleepTimestamp, int nightSlept, int homeBedNights) {
         if (lastNightmareTimestamp > nightmareTime) ClientEvents.setupNightmareEffect();
         this.homeBed = id;
         this.lastNightmareTimestamp = nightmareTime;
         this.consecutiveNightsSlept = nightSlept;
         this.lastTimeSleptTimestamp = sleepTimestamp;
+        this.nightsSleptInHomeBed = homeBedNights;
     }
 
     public void syncToClient(ServerPlayer player) {

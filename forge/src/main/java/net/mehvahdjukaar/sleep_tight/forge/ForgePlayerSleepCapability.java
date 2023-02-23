@@ -33,7 +33,7 @@ public class ForgePlayerSleepCapability extends PlayerSleepCapability implements
         ForgePlayerSleepCapability c = player.getCapability(ForgePlayerSleepCapability.TOKEN).orElse(null);
         if (c != null && player.level.getBlockEntity(pos) instanceof ISleepTightBed bed) {
             BedCapability bedCap = bed.getBedCap();
-            if (bedCap.getId().equals(c.getHomeBed())) {
+            if (bedCap.getId().equals(c.getHomeBed()) && bedCap.isHomeBedFor(player)) {
                 return bedCap;
             }
         }
