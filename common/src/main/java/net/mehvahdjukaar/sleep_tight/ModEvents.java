@@ -24,7 +24,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 public class ModEvents {
 
@@ -47,33 +49,67 @@ public class ModEvents {
                 return (i - i % 24000L) - 12001L;
             }
         }
-        //nightmares
-        double chances = 0;
-        int players = 0;
-        for (var player : level.players()) {
-            if (player.isSleepingLongEnough()) {
-                players++;
-                PlayerSleepCapability c = SleepTightPlatformStuff.getPlayerSleepCap(player);
-                chances += c.getNightmareChance(player);
-            }
-        }
-        double chance = players == 0 ? 0 : chances / players;
-        boolean nightmare = level.random.nextFloat() < chance;
 
+        //encounter
+        Set<Player> encounterSpawnedFor = new HashSet<>();
+        WakeReason wakeReason = WakeReason.NONE;
         for (var player : level.players()) {
-            if (player.isSleepingLongEnough()) {
-                if (nightmare) onNightmare(player);
-                else onPlayerSleepFinished(player);
+            if (player.isSleepingLongEnough() && !player.gameMode.isSurvival()) {
+                if (WakeUpEncounterHelper.tryPerformEncounter(player, level, player.getSleepingPos().get())) {
+                    wakeReason = WakeReason.ENCOUNTER;
+                    encounterSpawnedFor.add(player);
+                }
             }
         }
 
-        if (nightmare) {
+        if (wakeReason == WakeReason.NONE) {
+
+            //nightmares
+            double chances = 0;
+            int players = 0;
+            for (var player : level.players()) {
+                if (player.isSleepingLongEnough()) {
+                    players++;
+                    PlayerSleepCapability c = SleepTightPlatformStuff.getPlayerSleepCap(player);
+                    chances += c.getNightmareChance(player);
+                }
+            }
+            double nightmareChance = players == 0 ? 0 : chances / players;
+
+            if (level.random.nextFloat() < nightmareChance) wakeReason = WakeReason.NIGHTMARE;
+        }
+
+        for (var player : level.players()) {
+            boolean wokenByEncounter = encounterSpawnedFor.contains(player);
+            if (player.isSleepingLongEnough() || wokenByEncounter) {
+                switch (wakeReason){
+                    case NONE -> onPlayerSleepFinished(player);
+                    case ENCOUNTER -> onEncounter(player, wokenByEncounter);
+                    case NIGHTMARE -> onNightmare(player);
+                }
+            }
+        }
+
+        Double multiplier = wakeReason.getSleepMultiplier();
+        if (multiplier  !=null) {
             long i = level.getDayTime();
-            return (i + (long) ((newTime - i) * CommonConfigs.NIGHTMARE_SLEEP_TIME_MULTIPLIER.get()));
+            return (i + (long) ((newTime - i) * multiplier));
         }
 
 
         return newTime;
+    }
+
+    private enum WakeReason {
+        NONE, ENCOUNTER, NIGHTMARE;
+
+        Double getSleepMultiplier(){
+            return switch (this){
+                case ENCOUNTER -> CommonConfigs.ENCOUNTER_SLEEP_TIME_MULTIPLIER.get();
+                case NIGHTMARE -> CommonConfigs.NIGHTMARE_SLEEP_TIME_MULTIPLIER.get();
+                default -> null;
+            };
+        }
     }
 
 
@@ -96,7 +132,8 @@ public class ModEvents {
                 return InteractionResult.SUCCESS;
             }
         }
-        return InteractionResult.CONSUME;
+        return InteractionResult.SUCCESS;
+        // return InteractionResult.PASS;
     }
 
     @EventCalled
@@ -109,7 +146,7 @@ public class ModEvents {
                 var c = SleepTightPlatformStuff.getPlayerSleepCap(player);
                 if (c.getInsomniaCooldown(player.level) > 0) {
                     player.displayClientMessage(Component.translatable("message.sleep_tight.insomnia"), true);
-                    return InteractionResult.sidedSuccess(level.isClientSide);
+                    // return InteractionResult.sidedSuccess(level.isClientSide);
                 }
 
                 if (state.getValue(BedBlock.PART) != BedPart.HEAD) {
@@ -140,9 +177,20 @@ public class ModEvents {
     }
 
 
+    private static void onEncounter(ServerPlayer player, boolean mobSpawned) {
+        if(mobSpawned) {
+            var c = SleepTightPlatformStuff.getPlayerSleepCap(player);
+            c.addInsomnia(player.level, CommonConfigs.ENCOUNTER_INSOMNIA_DURATION.get());
+            c.syncToClient(player);
+        }
+        else{
+            player.displayClientMessage(Component.translatable("message.sleep_tight.encounter"), true);
+        }
+    }
+
     private static void onNightmare(ServerPlayer player) {
         var c = SleepTightPlatformStuff.getPlayerSleepCap(player);
-        c.addNightmare(player.level);
+        c.addInsomnia(player.level, CommonConfigs.NIGHTMARE_INSOMNIA_DURATION.get());
         c.syncToClient(player);
         player.displayClientMessage(Component.translatable("message.sleep_tight.nightmare"), true);
         player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 20 * 3, 0, false, false, false,
@@ -155,7 +203,7 @@ public class ModEvents {
         var p = player.getSleepingPos();
         if (p.isPresent()) {
             BlockPos pos = p.get();
-            if (player.level.getBlockEntity(pos) instanceof ISleepTightBed tile) {
+            if (player.level.getBlockEntity(pos) instanceof IVanillaBed tile) {
                 BedCapability bedCap = tile.getBedCap();
                 PlayerSleepCapability playerCap = SleepTightPlatformStuff.getPlayerSleepCap(player);
                 playerCap.onNightSleptInto(bedCap, player);
@@ -195,7 +243,7 @@ public class ModEvents {
     @EventCalled
     public static boolean onCheckSleepCondition(Player player) {
         if (SleepTightPlatformStuff.getPlayerSleepCap(player).getInsomniaCooldown(player.level) > 0) {
-            if(player.level.isClientSide) {
+            if (player.level.isClientSide) {
                 player.displayClientMessage(Component.translatable("message.sleep_tight.insomnia"), true);
             }
             return false;

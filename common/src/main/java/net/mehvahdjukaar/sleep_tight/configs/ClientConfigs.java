@@ -20,7 +20,7 @@ public class ClientConfigs {
         ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.CLIENT);
 
         builder.push("hammock");
-        HAMMOCK_FREQUENCY = builder.comment("Oscillaton frequency of a hammock (oscillations /sec). Exact one will match this on small angles and will increase slightly on big one like a real pendulum")
+        HAMMOCK_FREQUENCY = builder.comment("Oscillation frequency of a hammock (oscillations /sec). Exact one will match this on small angles and will increase slightly on big one like a real pendulum")
                 .define("oscillation_frequency", 0.25, 0, 2);
         HAMMOCK_MAX_ANGLE = builder.comment("Maximum angle a hammock can reach")
                         .define("max_angle", 65, 0., 360);

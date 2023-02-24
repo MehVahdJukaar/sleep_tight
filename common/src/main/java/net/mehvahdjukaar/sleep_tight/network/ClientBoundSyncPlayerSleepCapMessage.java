@@ -14,7 +14,7 @@ import java.util.UUID;
 public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     @Nullable
     private final UUID id;
-    private final long nightmareTime;
+    private final long insomniaElapse;
     private final long sleepTime;
     private final int consecutiveNights;
     private final int homeBedNights;
@@ -22,7 +22,7 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     public ClientBoundSyncPlayerSleepCapMessage(FriendlyByteBuf buf) {
         if (buf.readBoolean()) this.id = buf.readUUID();
         else id = null;
-        this.nightmareTime = buf.readLong();
+        this.insomniaElapse = buf.readLong();
         this.sleepTime = buf.readLong();
         this.consecutiveNights = buf.readInt();
         this.homeBedNights = buf.readInt();
@@ -30,7 +30,7 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
 
     public ClientBoundSyncPlayerSleepCapMessage(PlayerSleepCapability c) {
         this.id = c.getHomeBed();
-        this.nightmareTime = c.getLastNightmareTimestamp();
+        this.insomniaElapse = c.getInsomniaWillElapseTimeStamp();
         this.sleepTime = c.getLastTimeSleptTimestamp();
         this.consecutiveNights = c.getConsecutiveNightsSlept();
         this.homeBedNights = c.getNightsSleptInHomeBed();
@@ -44,7 +44,7 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     public void writeToBuffer(FriendlyByteBuf buf) {
         buf.writeBoolean(id != null);
         if (id != null) buf.writeUUID(id);
-        buf.writeLong(nightmareTime);
+        buf.writeLong(insomniaElapse);
         buf.writeLong(sleepTime);
         buf.writeInt(consecutiveNights);
         buf.writeInt(homeBedNights);
@@ -54,6 +54,6 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     public void handle(ChannelHandler.Context context) {
         Player p = SleepTightClient.getPlayer();
         var c = SleepTightPlatformStuff.getPlayerSleepCap(p);
-        c.acceptFromServer(this.id, this.nightmareTime, this.sleepTime, this.consecutiveNights, this.homeBedNights);
+        c.acceptFromServer(this.id, this.insomniaElapse, this.sleepTime, this.consecutiveNights, this.homeBedNights);
     }
 }

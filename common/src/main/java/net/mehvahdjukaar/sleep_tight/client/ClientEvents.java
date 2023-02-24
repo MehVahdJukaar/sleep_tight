@@ -106,15 +106,4 @@ public class ClientEvents {
         NetworkHandler.CHANNEL.sendToServer(new ServerBoundCommitSleepMessage());
     }
 
-    public static void test(Entity entity, double x, double y, double z) {
-        if (entity instanceof LocalPlayer) {
-            if (y != -59.31248) {
-                int aa = 1;
-                // entity.setPosRaw(x, -60.5, z);
-            }
-        }
-    }
-
-    public static void setupNightmareEffect() {
-    }
 }

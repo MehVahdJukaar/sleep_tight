@@ -7,15 +7,17 @@ import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
 import net.minecraft.Util;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -24,7 +26,6 @@ import net.minecraft.world.level.material.MaterialColor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -63,28 +64,30 @@ public class SleepTight {
         event.register(DREAMER_ESSENCE_ENTITY.get(), DreamerEssenceTargetEntity.makeAttributes());
     }
 
+    public static final TagKey<EntityType<?>> WAKE_UP_BLACKLIST = TagKey.create(Registry.ENTITY_TYPE_REGISTRY, res("wake_up_blacklist"));
+
     public static final Supplier<EntityType<DreamerEssenceTargetEntity>> DREAMER_ESSENCE_ENTITY = RegHelper.registerEntityType(
             res("dreamer_essence_dummy"), () -> (
                     EntityType.Builder.of(DreamerEssenceTargetEntity::new, MobCategory.MISC)
                             //.setTrackingRange(64)
                             //.setUpdateInterval(3)
-                            .sized(0.2f, 12/16f))
+                            .sized(0.2f, 12 / 16f))
                     .build("dreamer_essence_dummy"));
 
 
-    public static final Supplier<DreamEssenceBlock> DREAMER_ESSENCE = regWithItem("dreamer_essence", ()->
-            new DreamEssenceBlock(BlockBehaviour.Properties.of(Material.AMETHYST, MaterialColor.COLOR_PURPLE)
-                    .sound(SoundType.AMETHYST)),
+    public static final Supplier<DreamEssenceBlock> DREAMER_ESSENCE = regWithItem("dreamer_essence", () ->
+                    new DreamEssenceBlock(BlockBehaviour.Properties.of(Material.AMETHYST, MaterialColor.COLOR_PURPLE)
+                            .sound(SoundType.AMETHYST)),
             CreativeModeTab.TAB_DECORATIONS
     );
 
-    public static final Supplier<NightBagBlock> NIGHT_BAG = regBlock("night_bag", ()->
-        new NightBagBlock(BlockBehaviour.Properties.of(Material.WOOL, MaterialColor.TERRACOTTA_BLUE)
-                .sound(SoundType.WOOL).strength(0.1F))
+    public static final Supplier<NightBagBlock> NIGHT_BAG = regBlock("night_bag", () ->
+            new NightBagBlock(BlockBehaviour.Properties.of(Material.WOOL, MaterialColor.TERRACOTTA_BLUE)
+                    .sound(SoundType.WOOL).strength(0.1F))
     );
 
-    public static final Supplier<NightBagItem> NIGHT_BAG_ITEM = regItem("night_bag", ()->
-            new NightBagItem(NIGHT_BAG.get(),new Item.Properties().tab(CreativeModeTab.TAB_DECORATIONS))
+    public static final Supplier<NightBagItem> NIGHT_BAG_ITEM = regItem("night_bag", () ->
+            new NightBagItem(NIGHT_BAG.get(), new Item.Properties().tab(CreativeModeTab.TAB_DECORATIONS))
     );
 
     public static final Map<DyeColor, Supplier<Block>> HAMMOCKS = Util.make(() ->
@@ -99,7 +102,7 @@ public class SleepTight {
     );
 
     public static final Supplier<EntityType<BedEntity>> BED_ENTITY = RegHelper.registerEntityType(res("bed_entity"),
-           BedEntity::new, MobCategory.MISC, 0.5f, 0.5f, 3, Integer.MAX_VALUE );
+            BedEntity::new, MobCategory.MISC, 0.5f, 0.5f, 3, Integer.MAX_VALUE);
 
 
     public static <T extends Block> Supplier<T> regWithItem(String name, Supplier<T> blockFactory, CreativeModeTab tab) {

@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.mixins;
 
 import net.mehvahdjukaar.sleep_tight.common.BedCapability;
-import net.mehvahdjukaar.sleep_tight.common.ISleepTightBed;
+import net.mehvahdjukaar.sleep_tight.common.IVanillaBed;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BedBlockEntity;
@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.Unique;
 
 
 @Mixin(BedBlockEntity.class)
-public abstract class BedBlockEntityMixin extends BlockEntity implements ISleepTightBed {
+public abstract class BedBlockEntityMixin extends BlockEntity implements IVanillaBed {
 
     @Unique
     private final BedCapability bedCapability = new BedCapability();

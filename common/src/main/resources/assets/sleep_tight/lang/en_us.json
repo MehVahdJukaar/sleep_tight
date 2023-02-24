@@ -22,6 +22,7 @@
   "message.sleep_tight.start_resting": "Press %s to start resting",
   "message.sleep_tight.nightmare": "A nightmare wakes you up...",
   "message.sleep_tight.insomnia": "You dont feel like sleeping right now",
+  "message.sleep_tight.encounter": "Somebody is having a bad time",
   "block.sleep_tight.dreamer_essence": "Dreamer Essence",
   "gui.sleep_tight.dreamer_essence": "Dreamer Essence is warding you from nightmares",
   "gui.sleep_tight.home_bed": "Home Bed",
