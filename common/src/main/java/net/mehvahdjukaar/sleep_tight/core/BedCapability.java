@@ -1,4 +1,4 @@
-package net.mehvahdjukaar.sleep_tight.common;
+package net.mehvahdjukaar.sleep_tight.core;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;

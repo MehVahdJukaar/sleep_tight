@@ -1,6 +1,7 @@
-package net.mehvahdjukaar.sleep_tight;
+package net.mehvahdjukaar.sleep_tight.core;
 
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
+import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.*;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.network.ClientBoundSyncPlayerSleepCapMessage;
@@ -25,90 +26,89 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 public class ModEvents {
 
     @EventCalled
-    public static long getTimeFromSleepFinished(ServerLevel level, long newTime) {
+    public static long getWakeUpTimeWhenSlept(ServerLevel level, long newTimeDayTime) {
+        WakeReason wakeReason = WakeReason.DEFAULT;
+
+        List<ServerPlayer> sleepingPlayers = level.players().stream().filter(Player::isSleepingLongEnough).toList();
+
         //hammocks wake time
         if (level.isDay()) {
-            boolean success = false;
 
-            for (Player player : level.players()) {
-                var p = player.getSleepingPos();
-                if (p.isPresent() && player.isSleepingLongEnough() &&
-                        level.getBlockState(p.get()).getBlock() instanceof HammockBlock) {
-                    success = true;
+            for (Player player : sleepingPlayers) {
+                if (level.getBlockState(player.getSleepingPos().get()).getBlock() instanceof HammockBlock) {
+                    wakeReason = WakeReason.SLEPT_IN_HAMMOCK;
                     break;
                 }
             }
-            if (success) {
-                long i = level.getDayTime() + 24000L;
-                return (i - i % 24000L) - 12001L;
-            }
         }
-
-        //encounter
         Set<Player> encounterSpawnedFor = new HashSet<>();
-        WakeReason wakeReason = WakeReason.NONE;
-        for (var player : level.players()) {
-            if (player.isSleepingLongEnough() && !player.gameMode.isSurvival()) {
-                if (WakeUpEncounterHelper.tryPerformEncounter(player, level, player.getSleepingPos().get())) {
-                    wakeReason = WakeReason.ENCOUNTER;
-                    encounterSpawnedFor.add(player);
+
+        if (wakeReason == WakeReason.DEFAULT) {
+
+            //encounter
+            for (var player : sleepingPlayers) {
+                if (player.gameMode.isSurvival()) {
+                    if (WakeUpEncounterHelper.tryPerformEncounter(player, level, player.getSleepingPos().get())) {
+                        wakeReason = WakeReason.ENCOUNTER;
+                        encounterSpawnedFor.add(player);
+                    }
                 }
             }
         }
 
-        if (wakeReason == WakeReason.NONE) {
+        if (wakeReason == WakeReason.DEFAULT) {
 
             //nightmares
             double chances = 0;
             int players = 0;
             for (var player : level.players()) {
-                if (player.isSleepingLongEnough()) {
-                    players++;
-                    PlayerSleepCapability c = SleepTightPlatformStuff.getPlayerSleepCap(player);
-                    chances += c.getNightmareChance(player);
-                }
+                players++;
+                PlayerSleepCapability c = SleepTightPlatformStuff.getPlayerSleepCap(player);
+                chances += c.getNightmareChance(player);
             }
             double nightmareChance = players == 0 ? 0 : chances / players;
 
             if (level.random.nextFloat() < nightmareChance) wakeReason = WakeReason.NIGHTMARE;
         }
 
-        for (var player : level.players()) {
-            boolean wokenByEncounter = encounterSpawnedFor.contains(player);
-            if (player.isSleepingLongEnough() || wokenByEncounter) {
-                switch (wakeReason){
-                    case NONE -> onPlayerSleepFinished(player);
-                    case ENCOUNTER -> onEncounter(player, wokenByEncounter);
-                    case NIGHTMARE -> onNightmare(player);
-                }
+
+        for (var player : sleepingPlayers) {
+            long currentGameTime = level.getGameTime();
+            switch (wakeReason) {
+                case DEFAULT -> onPlayerSleepFinished(player);
+                case SLEPT_IN_HAMMOCK -> onRestedInHammock(player);
+                case ENCOUNTER -> onEncounter(player, encounterSpawnedFor.contains(player));
+                case NIGHTMARE -> onNightmare(player);
             }
         }
 
-        Double multiplier = wakeReason.getSleepMultiplier();
-        if (multiplier  !=null) {
-            long i = level.getDayTime();
-            return (i + (long) ((newTime - i) * multiplier));
-        }
-
-
-        return newTime;
+        return wakeReason.modifyWakeUpTime(newTimeDayTime, level.getDayTime());
     }
 
-    private enum WakeReason {
-        NONE, ENCOUNTER, NIGHTMARE;
 
-        Double getSleepMultiplier(){
-            return switch (this){
-                case ENCOUNTER -> CommonConfigs.ENCOUNTER_SLEEP_TIME_MULTIPLIER.get();
-                case NIGHTMARE -> CommonConfigs.NIGHTMARE_SLEEP_TIME_MULTIPLIER.get();
-                default -> null;
-            };
+
+    private enum WakeReason {
+        DEFAULT, SLEPT_IN_HAMMOCK, ENCOUNTER, NIGHTMARE;
+
+        long modifyWakeUpTime(long newTime, long dayTime) {
+            if (this == ENCOUNTER || this == NIGHTMARE) {
+                double mult = this == ENCOUNTER ? CommonConfigs.ENCOUNTER_SLEEP_TIME_MULTIPLIER.get() :
+                        CommonConfigs.NIGHTMARE_SLEEP_TIME_MULTIPLIER.get();
+
+                return (dayTime + (long) ((newTime - dayTime) * mult));
+
+            } else if (this == SLEPT_IN_HAMMOCK) {
+                long i = dayTime + 24000L;
+                return (i - i % 24000L) - 12001L;
+            }
+            return newTime;
         }
     }
 
@@ -124,17 +124,6 @@ public class ModEvents {
         return true;
     }
 
-    @EventCalled
-    public static InteractionResult onCheckSleepTime(Level level, BlockPos pos) {
-        long t = level.getDayTime() % 24000L;
-        if (level.getBlockState(pos).getBlock() instanceof HammockBlock) {
-            if (t > 500L && t < 11500L) {
-                return InteractionResult.SUCCESS;
-            }
-        }
-        return InteractionResult.SUCCESS;
-        // return InteractionResult.PASS;
-    }
 
     @EventCalled
     public static InteractionResult onRightClickBlock(Player player, Level level, InteractionHand hand, BlockHitResult hitResult) {
@@ -146,7 +135,7 @@ public class ModEvents {
                 var c = SleepTightPlatformStuff.getPlayerSleepCap(player);
                 if (c.getInsomniaCooldown(player.level) > 0) {
                     player.displayClientMessage(Component.translatable("message.sleep_tight.insomnia"), true);
-                    // return InteractionResult.sidedSuccess(level.isClientSide);
+                     return InteractionResult.sidedSuccess(level.isClientSide);
                 }
 
                 if (state.getValue(BedBlock.PART) != BedPart.HEAD) {
@@ -178,27 +167,31 @@ public class ModEvents {
 
 
     private static void onEncounter(ServerPlayer player, boolean mobSpawned) {
-        if(mobSpawned) {
+        if (mobSpawned) {
             var c = SleepTightPlatformStuff.getPlayerSleepCap(player);
-            c.addInsomnia(player.level, CommonConfigs.ENCOUNTER_INSOMNIA_DURATION.get());
+            c.addInsomnia(player, CommonConfigs.ENCOUNTER_INSOMNIA_DURATION.get());
             c.syncToClient(player);
-        }
-        else{
+        } else {
             player.displayClientMessage(Component.translatable("message.sleep_tight.encounter"), true);
         }
     }
 
     private static void onNightmare(ServerPlayer player) {
         var c = SleepTightPlatformStuff.getPlayerSleepCap(player);
-        c.addInsomnia(player.level, CommonConfigs.NIGHTMARE_INSOMNIA_DURATION.get());
+        c.addInsomnia(player, CommonConfigs.NIGHTMARE_INSOMNIA_DURATION.get());
         c.syncToClient(player);
         player.displayClientMessage(Component.translatable("message.sleep_tight.nightmare"), true);
         player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 20 * 3, 0, false, false, false,
                 null, Optional.of(new MobEffectInstance.FactorData(20, 10, 1, 1, 20 * 3, 1, true))));
     }
 
+    private static void onRestedInHammock(ServerPlayer player) {
+        PlayerSleepCapability playerCap = SleepTightPlatformStuff.getPlayerSleepCap(player);
+        playerCap.addInsomnia(player, CommonConfigs.HAMMOCK_COOLDOWN.get());
+        playerCap.syncToClient(player);
+    }
+
     //server sided
-    @EventCalled
     public static void onPlayerSleepFinished(ServerPlayer player) {
         var p = player.getSleepingPos();
         if (p.isPresent()) {
@@ -207,6 +200,8 @@ public class ModEvents {
                 BedCapability bedCap = tile.getBedCap();
                 PlayerSleepCapability playerCap = SleepTightPlatformStuff.getPlayerSleepCap(player);
                 playerCap.onNightSleptInto(bedCap, player);
+                //TODO:account for time skip
+                playerCap.addInsomnia(player, CommonConfigs.BED_COOLDOWN.get());
                 playerCap.syncToClient(player);
             }
         }
@@ -249,5 +244,18 @@ public class ModEvents {
             return false;
         }
         return true;
+    }
+
+    @EventCalled
+    public static InteractionResult onCheckSleepTime(Level level, BlockPos pos) {
+        if (level.getBlockState(pos).getBlock() instanceof HammockBlock) {
+            long t = level.getDayTime() % 24000L;
+            if (t > 500L && t < 11500L) {
+                return InteractionResult.SUCCESS;
+            }
+            return InteractionResult.FAIL;
+        }
+        return InteractionResult.SUCCESS;
+        // return InteractionResult.PASS;
     }
 }

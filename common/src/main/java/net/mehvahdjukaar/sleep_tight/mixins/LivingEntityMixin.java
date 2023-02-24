@@ -1,6 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.mixins;
 
-import net.mehvahdjukaar.sleep_tight.ModEvents;
+import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.mehvahdjukaar.sleep_tight.common.BedEntity;
 import net.minecraft.core.BlockPos;

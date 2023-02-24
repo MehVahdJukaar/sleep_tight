@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.forge;
 
-import net.mehvahdjukaar.sleep_tight.common.BedCapability;
-import net.mehvahdjukaar.sleep_tight.common.PlayerSleepCapability;
+import net.mehvahdjukaar.sleep_tight.core.BedCapability;
+import net.mehvahdjukaar.sleep_tight.core.PlayerSleepCapability;
 import net.mehvahdjukaar.sleep_tight.common.IVanillaBed;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

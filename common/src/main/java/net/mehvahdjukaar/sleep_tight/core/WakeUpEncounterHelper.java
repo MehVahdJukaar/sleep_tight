@@ -1,4 +1,4 @@
-package net.mehvahdjukaar.sleep_tight.common;
+package net.mehvahdjukaar.sleep_tight.core;
 
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
@@ -26,12 +26,11 @@ public class WakeUpEncounterHelper {
     public static boolean tryPerformEncounter(ServerPlayer player, ServerLevel level, BlockPos bedPos) {
 
         BlockPos.MutableBlockPos mutable = bedPos.mutable();
-        int monsterSpawnAttempts = 50;
-        int maxCount = 1;
+        int monsterSpawnAttempts = CommonConfigs.ENCOUNTER_TRIES.get();
+        int maxCount = CommonConfigs.ENCOUNTER_MAX_COUNT.get();
         int count = 0;
 
-        //TODO: change to use local difficulty
-        int maxAttempts = monsterSpawnAttempts * (int) Math.pow(2, level.getDifficulty().getId() - 1);
+        int maxAttempts = (int) (monsterSpawnAttempts * level.getCurrentDifficultyAt(bedPos).getEffectiveDifficulty());
 
         for (int attempt = 0; attempt < maxAttempts && count < maxCount; attempt++) {
             setRandomPos(bedPos, mutable, level.random);
@@ -75,14 +74,14 @@ public class WakeUpEncounterHelper {
 
             if (NaturalSpawner.isValidSpawnPostitionForType(level, category, structureManager, chunkGenerator, spawnerData, pos, f)) {
                 Mob mob = NaturalSpawner.getMobForSpawn(level, spawnerData.type);
-                if (mob == null){
+                if (mob == null) {
                     return false;
                 }
 
                 mob.moveTo(d, pos.getY(), e, level.random.nextFloat() * 360.0F, 0.0F);
 
                 //config
-                if (!mob.hasLineOfSight(player)){
+                if (!mob.hasLineOfSight(player)) {
                     return false;
                 }
                 //we are not checking if it can pathfind too since range mobs dont need to
@@ -121,6 +120,11 @@ public class WakeUpEncounterHelper {
     private static Optional<MobSpawnSettings.SpawnerData> getFilteredRandomSpawnData(
             ServerLevel level, StructureManager structureManager,
             ChunkGenerator chunkGenerator, MobCategory category, BlockPos pos) {
+
+        var list = CommonConfigs.ENCOUNTER_WHITELIST.get();
+        if (!list.isEmpty()) {
+            return list.getRandom(level.random).map(e -> new MobSpawnSettings.SpawnerData(e.getData(), e.getWeight(), 1, 1));
+        }
         return WeightedRandomList.create(NaturalSpawner
                 .mobsAt(level, structureManager, chunkGenerator, category, pos, level.getBiome(pos))
                 .unwrap().stream().filter(e -> !e.type.is(SleepTight.WAKE_UP_BLACKLIST))

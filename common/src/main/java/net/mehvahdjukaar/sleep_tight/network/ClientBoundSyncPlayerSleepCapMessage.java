@@ -4,7 +4,7 @@ import net.mehvahdjukaar.moonlight.api.platform.network.ChannelHandler;
 import net.mehvahdjukaar.moonlight.api.platform.network.Message;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
-import net.mehvahdjukaar.sleep_tight.common.PlayerSleepCapability;
+import net.mehvahdjukaar.sleep_tight.core.PlayerSleepCapability;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 
@@ -31,7 +31,7 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     public ClientBoundSyncPlayerSleepCapMessage(PlayerSleepCapability c) {
         this.id = c.getHomeBed();
         this.insomniaElapse = c.getInsomniaWillElapseTimeStamp();
-        this.sleepTime = c.getLastTimeSleptTimestamp();
+        this.sleepTime = c.getLastWokenUpTimeStamp();
         this.consecutiveNights = c.getConsecutiveNightsSlept();
         this.homeBedNights = c.getNightsSleptInHomeBed();
     }

@@ -1,11 +1,9 @@
 package net.mehvahdjukaar.sleep_tight.forge;
 
 import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
-import net.mehvahdjukaar.sleep_tight.ModEvents;
+import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
-import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -84,7 +82,7 @@ public class SleepTightForge {
     public void onSleepFinished(SleepFinishedTimeEvent evt) {
         if (evt.getLevel() instanceof ServerLevel serverLevel) {
             long oldTime = evt.getNewTime();
-            long newTime = ModEvents.getTimeFromSleepFinished(serverLevel, oldTime);
+            long newTime = ModEvents.getWakeUpTimeWhenSlept(serverLevel, oldTime);
 
             if (oldTime != newTime) {
                 evt.setTimeAddition(newTime);

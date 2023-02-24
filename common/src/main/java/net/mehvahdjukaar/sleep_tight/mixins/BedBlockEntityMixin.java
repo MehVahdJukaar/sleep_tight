@@ -1,6 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.mixins;
 
-import net.mehvahdjukaar.sleep_tight.common.BedCapability;
+import net.mehvahdjukaar.sleep_tight.core.BedCapability;
 import net.mehvahdjukaar.sleep_tight.common.IVanillaBed;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;

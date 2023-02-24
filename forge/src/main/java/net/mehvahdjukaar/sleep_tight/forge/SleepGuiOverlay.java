@@ -7,9 +7,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
-import net.mehvahdjukaar.sleep_tight.common.BedCapability;
+import net.mehvahdjukaar.sleep_tight.core.BedCapability;
 import net.mehvahdjukaar.sleep_tight.common.NightBagBlock;
-import net.mehvahdjukaar.sleep_tight.common.PlayerSleepCapability;
+import net.mehvahdjukaar.sleep_tight.core.PlayerSleepCapability;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.Gui;
@@ -63,12 +63,12 @@ public class SleepGuiOverlay implements IGuiOverlay {
 
 
                         int j = height / 2 - 7 + 16;
-                        int k = width / 2 - 8;
+                        int k = width / 2 - 6;
 
 
-                        int l = (int) (f * 17.0F);
-                        GuiComponent.blit(poseStack, k, j, 0, 18, 16, 5, 48, 48);
-                        GuiComponent.blit(poseStack, k, j, 16, 18, l, 5, 48, 48);
+                        int l = (int) (f * 11.0F);
+                        GuiComponent.blit(poseStack, k, j, 3, 18, 11, 5, 48, 48);
+                        GuiComponent.blit(poseStack, k, j, 16+3, 18, l, 5, 48, 48);
 
 
                         poseStack.popPose();

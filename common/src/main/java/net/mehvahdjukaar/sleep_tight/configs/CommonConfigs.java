@@ -7,6 +7,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.util.random.SimpleWeightedRandomList;
 import net.minecraft.world.entity.EntityType;
 
+import java.net.InetAddress;
 import java.util.function.Supplier;
 
 public class CommonConfigs {
@@ -29,12 +30,18 @@ public class CommonConfigs {
     public static final Supplier<Double> ENCOUNTER_SLEEP_TIME_MULTIPLIER;
     public static final Supplier<Integer> ENCOUNTER_INSOMNIA_DURATION;
 
+    public static final Supplier<Integer> BED_COOLDOWN;
+    public static final Supplier<Integer> HAMMOCK_COOLDOWN;
+
+
     static {
         ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.COMMON);
 
         builder.push("hammock");
         FIX_BED_POSITION = builder.comment("Fixes multiplayer players being positioned 2 pixels above a bed")
                 .define("fix_bed_position", true);
+        HAMMOCK_COOLDOWN = builder.comment("Time before you can sleep/rest again after you've slept in a hammock")
+                        .define("sleep_cooldown", 6000, 0, 1000000);
         builder.pop();
 
         builder.push("bed");
@@ -45,6 +52,9 @@ public class CommonConfigs {
                 .define("sleep_interval", 24000, 0, 1000000);
         HOME_BED_REQUIRED_NIGHTS = builder.comment("Amount of nights needed to mark a bed as home bed")
                 .define("home_bed_required_nights", 8, 1, 50);
+
+        BED_COOLDOWN = builder.comment("Time before you can sleep/rest again after you've successfully slept in a bed")
+                .define("sleep_cooldown", 6000, 0, 1000000);
         builder.pop();
 
         builder.push("nightmares");
@@ -62,11 +72,11 @@ public class CommonConfigs {
 
         ENCOUNTER_TRIES = builder.comment("The game will perform x attempts to spawn a mod around each player every time they sleep." +
                         "Increases likelihood of finding one. Note that actual value will also depend on local difficulty")
-                .define("tries", 50, 0, 1000);
+                .define("tries", 25, 0, 1000);
         ENCOUNTER_MAX_COUNT = builder.comment("Max amount of mobs per encounter")
                 .define("max_count", 1, 0, 20);
         ENCOUNTER_RADIUS = builder.define("spawn_radius", 10, 1, 32);
-        ENCOUNTER_MIN_RADIUS = builder.define("min_radius", 1, 0, 32);
+        ENCOUNTER_MIN_RADIUS = builder.define("min_radius", 2, 0, 32);
         ENCOUNTER_HEIGHT = builder.define("height", 3, 1, 10);
         ENCOUNTER_WHITELIST = builder.comment("""
                         Mobs that can randomly wake up the player if sleeping in a dark place. Leave empty to use default spawning behavior. Add a weighted list in the following format (replace line bellow):

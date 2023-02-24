@@ -1,5 +1,6 @@
-package net.mehvahdjukaar.sleep_tight.common;
+package net.mehvahdjukaar.sleep_tight.core;
 
+import net.mehvahdjukaar.sleep_tight.common.DreamerEssenceTargetEntity;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.network.ClientBoundSyncPlayerSleepCapMessage;
 import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
@@ -18,7 +19,7 @@ public abstract class PlayerSleepCapability {
     @Nullable
     private UUID homeBed = null;
     private long insomniaWillElapseTimeStamp = 0;
-    private long lastTimeSleptTimestamp = -1;
+    private long lastWokenUpTimeStamp = -1;
     private int consecutiveNightsSlept = 0;
     private int nightsSleptInHomeBed = 0;
 
@@ -26,7 +27,7 @@ public abstract class PlayerSleepCapability {
         CompoundTag tag = new CompoundTag();
         if (homeBed != null) tag.putUUID("home_bed_id", homeBed);
         tag.putLong("insomnia_elapses_at", insomniaWillElapseTimeStamp);
-        tag.putLong("last_time_slept", lastTimeSleptTimestamp);
+        tag.putLong("last_time_slept", lastWokenUpTimeStamp);
         tag.putInt("consecutive_nights", consecutiveNightsSlept);
         tag.putInt("home_bed_nights", nightsSleptInHomeBed);
         return tag;
@@ -35,28 +36,29 @@ public abstract class PlayerSleepCapability {
     public void deserializeNBT(CompoundTag tag) {
         if (tag.contains("bed_id")) this.homeBed = tag.getUUID("home_bed_id");
         this.insomniaWillElapseTimeStamp = tag.getLong("insomnia_elapses_at");
-        this.lastTimeSleptTimestamp = tag.getLong("last_time_slept");
+        this.lastWokenUpTimeStamp = tag.getLong("last_time_slept");
         this.consecutiveNightsSlept = tag.getInt("consecutive_nights");
         this.nightsSleptInHomeBed = tag.getInt("home_bed_nights");
     }
 
-    public void addInsomnia(Level level, long duration) {
-        long gameTime = level.getGameTime();
+    public void addInsomnia(Player player, long duration) {
+        long gameTime = player.level.getGameTime();
         this.insomniaWillElapseTimeStamp = gameTime + duration;
         this.consecutiveNightsSlept = 0;
 
-        this.lastTimeSleptTimestamp = gameTime;
+        this.lastWokenUpTimeStamp = gameTime;
     }
 
     public void onNightSleptInto(BedCapability bed, Player player) {
-        long currentStamp = player.level.getGameTime();
-        if (currentStamp - this.insomniaWillElapseTimeStamp > CommonConfigs.SLEEP_INTERVAL.get()) {
-            //reset when had nightmare
+        long gameTime = player.level.getGameTime();
+        long awakeTime = gameTime - this.lastWokenUpTimeStamp;
+        if (awakeTime > CommonConfigs.SLEEP_INTERVAL.get()) {
+            //reset when hasn't slept for a while
             this.consecutiveNightsSlept = 0;
         } else {
             this.consecutiveNightsSlept += 1;
         }
-        this.lastTimeSleptTimestamp = currentStamp;
+        this.lastWokenUpTimeStamp = gameTime;
 
 
         var bedId = bed.getId();
@@ -74,8 +76,10 @@ public abstract class PlayerSleepCapability {
     //1 max 0 min
     public float getInsomniaCooldown(Level level) {
         long currentTime = level.getGameTime();
-        long amountAwake = currentTime - this.lastTimeSleptTimestamp;
-        return 1 - (((float) (amountAwake)) / (insomniaWillElapseTimeStamp - currentTime));
+        long timeLeft = insomniaWillElapseTimeStamp - currentTime;
+        if (timeLeft < 0) return 0;
+        long amountAwake = currentTime - this.lastWokenUpTimeStamp;
+        return 1 - (((float) (amountAwake)) / timeLeft);
     }
 
     public double getNightmareChance(Player player) {
@@ -108,15 +112,15 @@ public abstract class PlayerSleepCapability {
         return nightsSleptInHomeBed;
     }
 
-    public long getLastTimeSleptTimestamp() {
-        return lastTimeSleptTimestamp;
+    public long getLastWokenUpTimeStamp() {
+        return lastWokenUpTimeStamp;
     }
 
     public void acceptFromServer(UUID id, long insominaElapse, long sleepTimestamp, int nightSlept, int homeBedNights) {
         this.homeBed = id;
         this.insomniaWillElapseTimeStamp = insominaElapse;
         this.consecutiveNightsSlept = nightSlept;
-        this.lastTimeSleptTimestamp = sleepTimestamp;
+        this.lastWokenUpTimeStamp = sleepTimestamp;
         this.nightsSleptInHomeBed = homeBedNights;
     }
 
