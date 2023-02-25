@@ -75,12 +75,18 @@ public abstract class PlayerSleepData {
     }
 
     //1 max 0 min
-    public float getInsomniaCooldown(Level level) {
-        long currentTime = level.getGameTime();
+    public float getInsomniaCooldown(Player player) {
+        //creative are immune
+        if (player.getAbilities().instabuild) return 0;
+        long currentTime = player.level.getGameTime();
         long timeLeft = insomniaWillElapseTimeStamp - currentTime;
         if (timeLeft < 0) return 0;
         long amountAwake = currentTime - this.lastWokenUpTimeStamp;
         return 1 - (((float) (amountAwake)) / timeLeft);
+    }
+
+    public long getInsomniaTimeLeft(Player player){
+        return insomniaWillElapseTimeStamp - player.level.getGameTime();
     }
 
     public double getNightmareChance(Player player) {
@@ -129,4 +135,11 @@ public abstract class PlayerSleepData {
         NetworkHandler.CHANNEL.sendToClientPlayer(player, new ClientBoundSyncPlayerSleepCapMessage(this));
     }
 
+    public void setConsecutiveNightsSlept(int consecutiveNightsSlept) {
+        this.consecutiveNightsSlept = consecutiveNightsSlept;
+    }
+
+    public void setNightsSleptInHomeBed(int nightsSleptInHomeBed) {
+        this.nightsSleptInHomeBed = nightsSleptInHomeBed;
+    }
 }

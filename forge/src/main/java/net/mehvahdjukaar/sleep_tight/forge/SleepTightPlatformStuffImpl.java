@@ -13,7 +13,7 @@ public class SleepTightPlatformStuffImpl {
 
 
     @org.jetbrains.annotations.Contract
-    public static PlayerSleepData getPlayerSleepCap(Player player) {
+    public static PlayerSleepData getPlayerSleepData(Player player) {
         return player.getCapability(ForgePlayerSleepCapability.TOKEN).orElse(null);
     }
 

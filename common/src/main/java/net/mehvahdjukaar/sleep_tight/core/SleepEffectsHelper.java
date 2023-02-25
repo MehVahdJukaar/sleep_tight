@@ -2,33 +2,40 @@ package net.mehvahdjukaar.sleep_tight.core;
 
 import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
 import net.mehvahdjukaar.sleep_tight.common.IVanillaBed;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
 import static net.mehvahdjukaar.sleep_tight.configs.CommonConfigs.*;
 
 public class SleepEffectsHelper {
+
     public static void applyEffectsOnWakeUp(PlayerSleepData playerCap, ServerPlayer player,
                                             long dayTimeDelta, BlockEntity blockEntity) {
         if (blockEntity instanceof IVanillaBed bed) {
             applyVanillaBedBonuses(player, dayTimeDelta, bed.getBedData());
         }
-        applySleepPenalties(player, dayTimeDelta, blockEntity);
+        if (player.gameMode.isSurvival()) {
+            applySleepPenalties(player, dayTimeDelta, blockEntity);
+            paySleepRequirements(player, blockEntity);
+        }
     }
 
     private static void applySleepPenalties(ServerPlayer player, long dayTimeDelta, BlockEntity block) {
-        if (block == null && !PENALTIES_HAMMOCK.get()) return; //only hammocks have null tile of our bocks
+        if (block == null && !PENALTIES_NIGHT_BAG.get()) return; //only hammocks have null tile of our bocks
         if (block instanceof HammockBlockEntity && !PENALTIES_HAMMOCK.get()) return;
-        if (PENALTIES_BED.get()) return;
+        if (!PENALTIES_BED.get()) return;
 
-        float hunger = CONSUMED_HUNGER.get();
+        double hunger = CONSUMED_HUNGER.get();
         if (hunger == 0) return;
         HungerMode mode = CONSUME_HUNGER_MODE.get();
         if (mode == HungerMode.DIFFICULTY_BASED || mode == HungerMode.TIME_DIFFICULTY_BASED) {
@@ -40,7 +47,9 @@ public class SleepEffectsHelper {
             hunger = (hunger / 11000) * dayTimeDelta;
         }
 
-        player.causeFoodExhaustion(hunger);
+        int level = player.getFoodData().getFoodLevel();
+        level = (int) Mth.clamp(level - hunger, 0, 20);
+        player.getFoodData().setFoodLevel(level);
     }
 
     private static void applyVanillaBedBonuses(ServerPlayer player, long dayTimeDelta, BedData data) {
@@ -88,4 +97,28 @@ public class SleepEffectsHelper {
             }
         }
     }
+
+    private static void paySleepRequirements(ServerPlayer serverPlayer, BlockEntity tile) {
+        if (tile == null && !REQUIREMENT_NIGHT_BAG.get()) return; //only hammocks have null tile of our bocks
+        if (tile instanceof HammockBlockEntity && !REQUIREMENT_HAMMOCK.get()) return;
+        if (!REQUIREMENT_BED.get()) return;
+
+        serverPlayer.giveExperiencePoints(-XP_COST.get());
+    }
+
+    //true if can sleep
+    public static boolean checkExtraRequirements(Player player, @Nullable BlockPos bedPos) {
+        if (bedPos != null && !player.getAbilities().instabuild) {
+            BlockEntity tile = player.getLevel().getBlockEntity(bedPos);
+            if (tile == null && !REQUIREMENT_NIGHT_BAG.get()) return true; //only hammocks have null tile of our bocks
+            if (tile instanceof HammockBlockEntity && !REQUIREMENT_HAMMOCK.get()) return true;
+            if (!REQUIREMENT_BED.get()) return true;
+
+            int xp = XP_COST.get();
+            if (xp != 0 && player.totalExperience < xp) return false;
+            if (NEED_FULL_HUNGER.get() && player.getFoodData().needsFood()) return false;
+        }
+        return true;
+    }
+
 }

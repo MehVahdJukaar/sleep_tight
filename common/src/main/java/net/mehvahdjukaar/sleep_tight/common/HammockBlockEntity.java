@@ -30,7 +30,7 @@ public class HammockBlockEntity extends BlockEntity {
 
     private float prevYaw;
     private float angle;
-    private float angularVel = 0.1f;
+    private float angularVel = 0.01f;
     private boolean hasDrag = true;
 
 
@@ -39,7 +39,7 @@ public class HammockBlockEntity extends BlockEntity {
         this.color = ((HammockBlock) blockState.getBlock()).getColor();
         this.pivotOffset = blockState.getValue(HammockBlock.PART).getPivotOffset();
         this.direction = blockState.getValue(HammockBlock.FACING);
-        this.angle = RandomSource.create().nextFloat();
+        this.angle = (float) ((RandomSource.create().nextFloat()-0.5)*ClientConfigs.HAMMOCK_MIN_ANGLE.get());
     }
 
 
@@ -52,6 +52,7 @@ public class HammockBlockEntity extends BlockEntity {
     }
 
     public float getRoll(float partialTicks) {
+        if (!ClientConfigs.HAMMOCK_ANIMATION.get()) return 0;
         return (180 / Mth.PI) * Mth.rotLerp(partialTicks, prevYaw, angle);
     }
 

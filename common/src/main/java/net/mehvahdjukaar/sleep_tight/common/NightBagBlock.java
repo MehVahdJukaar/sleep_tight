@@ -86,7 +86,7 @@ public class NightBagBlock extends BedBlock implements IModBed {
     }
 
     @Override
-    public void onWokenUp(BlockState state, BlockPos pos, Player player) {
+    public void onLeftBed(BlockState state, BlockPos pos, Player player) {
         Level level = player.level;
         level.removeBlock(pos, false);
         BlockPos blockPos = pos.relative((state.getValue(FACING)).getOpposite());

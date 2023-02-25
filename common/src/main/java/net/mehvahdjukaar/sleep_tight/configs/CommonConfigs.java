@@ -3,14 +3,11 @@ package net.mehvahdjukaar.sleep_tight.configs;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigBuilder;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
-import net.minecraft.client.renderer.EffectInstance;
 import net.minecraft.core.Registry;
 import net.minecraft.util.random.SimpleWeightedRandomList;
 import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.item.alchemy.Potion;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -67,6 +64,7 @@ public class CommonConfigs {
     public enum BedStatus {
         NONE, ALWAYS, HOME_BED
     }
+
     public enum HungerMode {
         CONSTANT, TIME_BASED, DIFFICULTY_BASED, TIME_DIFFICULTY_BASED
     }
@@ -83,20 +81,18 @@ public class CommonConfigs {
         builder.pop();
 
 
-
         builder.push("sleep_benefits");
         BED_BENEFITS = builder.comment("Which type of beds will apply benefits on wake up")
-                        .define("active_for", BedStatus.HOME_BED);
+                .define("active_for", BedStatus.HOME_BED);
         HEALING = builder.comment("Healing applied on wake up")
-                        .define("healing", EffectIntensity.MAX);
+                .define("healing", EffectIntensity.MAX);
         EFFECT_CLEARING = builder.comment("")
                 .define("effect_clearing", EffectIntensity.MAX);
         EFFECT_CLEARING_TYPE = builder.comment("")
                 .define("effect_clearing_types", PotionClearing.ALL);
         WAKE_UP_EFFECTS = builder.comment("Effects to apply when player wakes up")
-                        .defineObject("wake_up_effects",()-> List.of(MobEffects.MOVEMENT_SPEED),
-                                Registry.MOB_EFFECT.byNameCodec().listOf());
-
+                .defineObject("wake_up_effects", () -> List.of(MobEffects.MOVEMENT_SPEED),
+                        Registry.MOB_EFFECT.byNameCodec().listOf());
         builder.pop();
 
         builder.push("sleep_penalties");
@@ -104,9 +100,9 @@ public class CommonConfigs {
         PENALTIES_HAMMOCK = builder.define("apply_to_hammock", true);
         PENALTIES_NIGHT_BAG = builder.define("apply_to_night_bags", true);
         CONSUME_HUNGER_MODE = builder.comment("Method to calculate hunger loss. Can be based off time slept, difficulty or constant")
-                        .define("consumed_hunger_mode", HungerMode.CONSTANT);
+                .define("consumed_hunger_mode", HungerMode.TIME_DIFFICULTY_BASED);
         CONSUMED_HUNGER = builder.comment("Base hunger decrement value. Depends on other config. Set to 0 to disable")
-                        .define("base_value", 20, 0f, 40);
+                .define("base_value", 5, 0f, 20);
         builder.pop();
 
         builder.push("sleep_requirements");
@@ -115,9 +111,9 @@ public class CommonConfigs {
         REQUIREMENT_NIGHT_BAG = builder.define("apply_to_night_bags", true);
 
         NEED_FULL_HUNGER = builder.comment("Requires player to have full hunger bar before being able to sleep")
-                        .define("require_full_hunger", false);
+                .define("require_full_hunger", false);
         XP_COST = builder.comment("Xp cost for sleeping. Does not affect peaceful")
-                        .define("xp_cost", 0, 0, 200);
+                .define("xp_cost", 0, 0, 200);
         builder.pop();
 
         builder.push("bed");
@@ -142,6 +138,10 @@ public class CommonConfigs {
                 .define("sleep_time_multiplier", 0.5, 0.01, 1);
         NIGHTMARE_INSOMNIA_DURATION = builder.comment("Refractory period after a nightmare in which you won't be able to sleep")
                 .define("insomnia_duration", 24000 + 12000, 0, 1000000);
+
+        builder.pop();
+
+
 
         builder.pop();
 
@@ -170,8 +170,6 @@ public class CommonConfigs {
                 .define("sleep_time_multiplier", 0.5, 0.01, 1);
         ENCOUNTER_INSOMNIA_DURATION = builder.comment("Refractory period after an encounter in which you won't be able to sleep")
                 .define("insomnia_duration", 12000, 0, 1000000);
-
-        builder.pop();
 
         builder.pop();
 

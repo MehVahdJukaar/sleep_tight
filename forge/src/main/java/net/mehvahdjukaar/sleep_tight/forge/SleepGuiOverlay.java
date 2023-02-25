@@ -48,8 +48,8 @@ public class SleepGuiOverlay implements IGuiOverlay {
                 BlockState blockState = mc.level.getBlockState(pos);
                 if (blockState.is(BlockTags.BEDS)) {
 
-                    var c = SleepTightPlatformStuff.getPlayerSleepCap(mc.player);
-                    float f = 1 - c.getInsomniaCooldown(mc.level);
+                    var c = SleepTightPlatformStuff.getPlayerSleepData(mc.player);
+                    float f = 1 - c.getInsomniaCooldown(mc.player);
                     if (f < 1) {
 
                         gui.setupOverlayRenderState(true, false, SleepTightClient.ICONS);
@@ -103,10 +103,10 @@ public class SleepGuiOverlay implements IGuiOverlay {
         if (isHomeBed) {
             int x = s.width / 2 - 120;
             if (MthUtils.isWithinRectangle(x, y, iconSize, iconSize, mouseX, mouseY)) {
-                int a = SleepTightPlatformStuff.getPlayerSleepCap(player).getNightsSleptInHomeBed();
-                var b = SleepTightPlatformStuff.getPlayerSleepCap(player).getInsomniaCooldown(player.level);
-                var c = SleepTightPlatformStuff.getPlayerSleepCap(player).getNightmareChance(player);
-                int nightSlept = SleepTightPlatformStuff.getPlayerSleepCap(player).getNightsSleptInHomeBed();
+                int a = SleepTightPlatformStuff.getPlayerSleepData(player).getNightsSleptInHomeBed();
+                var b = SleepTightPlatformStuff.getPlayerSleepData(player).getInsomniaCooldown(player);
+                var c = SleepTightPlatformStuff.getPlayerSleepData(player).getNightmareChance(player);
+                int nightSlept = SleepTightPlatformStuff.getPlayerSleepData(player).getNightsSleptInHomeBed();
                 var lines = new ArrayList<>(mc.font.split(Component.translatable("gui.sleep_tight.home_bed"), 200));
                 lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.time_slept", nightSlept), 200));
                 lines.addAll(mc.font.split(Component.literal("" + a), 200));

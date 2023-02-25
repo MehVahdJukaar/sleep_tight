@@ -37,7 +37,7 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     }
 
     public ClientBoundSyncPlayerSleepCapMessage(Player player) {
-        this(SleepTightPlatformStuff.getPlayerSleepCap(player));
+        this(SleepTightPlatformStuff.getPlayerSleepData(player));
     }
 
     @Override
@@ -53,7 +53,7 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     @Override
     public void handle(ChannelHandler.Context context) {
         Player p = SleepTightClient.getPlayer();
-        var c = SleepTightPlatformStuff.getPlayerSleepCap(p);
+        var c = SleepTightPlatformStuff.getPlayerSleepData(p);
         c.acceptFromServer(this.id, this.insomniaElapse, this.sleepTime, this.consecutiveNights, this.homeBedNights);
     }
 }

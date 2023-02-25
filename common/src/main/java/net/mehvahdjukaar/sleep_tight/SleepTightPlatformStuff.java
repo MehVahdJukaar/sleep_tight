@@ -10,7 +10,7 @@ public class SleepTightPlatformStuff {
 
     @Contract
     @ExpectPlatform
-    public static PlayerSleepData getPlayerSleepCap(Player player) {
+    public static PlayerSleepData getPlayerSleepData(Player player) {
         throw new AssertionError();
     }
 

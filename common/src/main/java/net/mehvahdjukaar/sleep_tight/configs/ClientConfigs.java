@@ -3,6 +3,7 @@ package net.mehvahdjukaar.sleep_tight.configs;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigBuilder;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.sleep_tight.client.HammockBlockTileRenderer;
 import net.minecraft.util.Mth;
 
 import java.util.function.Supplier;
@@ -15,11 +16,14 @@ public class ClientConfigs {
     public static final Supplier<Double> DAMPING;
     public static final Supplier<Double> SWING_FORCE;
     public static final Supplier<Double> CAMERA_ROLL_INTENSITY;
+    public static final Supplier<Boolean> HAMMOCK_ANIMATION;
 
     static{
         ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.CLIENT);
 
         builder.push("hammock");
+        HAMMOCK_ANIMATION = builder.comment("Completely turns off the animation")
+                .define("animation", true);
         HAMMOCK_FREQUENCY = builder.comment("Oscillation frequency of a hammock (oscillations /sec). Exact one will match this on small angles and will increase slightly on big one like a real pendulum")
                 .define("oscillation_frequency", 0.25, 0, 2);
         HAMMOCK_MAX_ANGLE = builder.comment("Maximum angle a hammock can reach")

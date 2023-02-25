@@ -5,6 +5,7 @@ import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
 import net.mehvahdjukaar.sleep_tight.common.*;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
+import net.mehvahdjukaar.sleep_tight.network.ModCommands;
 import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
 import net.minecraft.Util;
 import net.minecraft.core.Registry;
@@ -51,8 +52,10 @@ public class SleepTight {
         ClientConfigs.init();
         CommonConfigs.init();
 
+        ModCommands.init();
         RegHelper.addAttributeRegistration(SleepTight::registerEntityAttributes);
 
+        //TODO: persist cap after player death. Fix dismount from bed entity. Fix bed entity mount pos
     }
 
 

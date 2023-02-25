@@ -9,7 +9,7 @@ public interface IModBed {
 
     Vec3 getSleepingPosition(BlockState state, BlockPos pos);
 
-   default void onWokenUp(BlockState state, BlockPos pos, Player entity){}
+   default void onLeftBed(BlockState state, BlockPos pos, Player entity){}
 
     boolean canSetSpawn();
 }
