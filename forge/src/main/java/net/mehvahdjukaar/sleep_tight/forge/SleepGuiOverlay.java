@@ -7,9 +7,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
-import net.mehvahdjukaar.sleep_tight.core.BedCapability;
+import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.common.NightBagBlock;
-import net.mehvahdjukaar.sleep_tight.core.PlayerSleepCapability;
+import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.Gui;
@@ -131,12 +131,12 @@ public class SleepGuiOverlay implements IGuiOverlay {
         var p = player.getSleepingPos();
         if (p.isPresent()) {
             BlockPos pos = p.get();
-            BedCapability cap = ForgePlayerSleepCapability.getHomeBedIfHere(player, pos);
+            BedData cap = ForgePlayerSleepCapability.getHomeBedIfHere(player, pos);
             isHomeBed = cap != null;
 
 
             hasDreamerEssence = !(player.getLevel().getBlockState(pos).getBlock() instanceof NightBagBlock) &&
-                    PlayerSleepCapability.isDreamerEssenceInRange(pos, player.level);
+                    PlayerSleepData.isDreamerEssenceInRange(pos, player.level);
         }
 
     }

@@ -19,8 +19,6 @@ credits="Mehvahdjukaar, Plantkillable" #optional
 
 authors="MehVahdJukaar, Plantkillable" #optional
 
-itemIcon="minecraft:goat_horn" #catalogue icon
-
 description='''
 Balanced sleep
 '''
@@ -28,7 +26,7 @@ Balanced sleep
 
 [modproperties.sleep_tight]
     catalogueItemIcon = "sleep_tight:dream_essence" #catalogue icon
-    configuredBackground = "minecraft:textures/block/snow.png"
+    configuredBackground = "minecraft:textures/block/blue_wool.png"
 
 
 [[dependencies.sleep_tight]] #optional

@@ -56,7 +56,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
 
     public HammockBlock(DyeColor color) {
         super(Properties.of(Material.WOOL, color.getMaterialColor())
-                .sound(SoundType.WOOL).strength(0.1F).noOcclusion());
+                .sound(SoundType.WOOL).strength(0.2F).noOcclusion());
         this.color = color;
         this.registerDefaultState(this.stateDefinition.any().setValue(PART, HammockPart.MIDDLE).setValue(OCCUPIED, false));
     }

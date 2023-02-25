@@ -1,6 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.mixins;
 
-import net.mehvahdjukaar.sleep_tight.core.BedCapability;
+import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.common.IVanillaBed;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.Unique;
 public abstract class BedBlockEntityMixin extends BlockEntity implements IVanillaBed {
 
     @Unique
-    private final BedCapability bedCapability = new BedCapability();
+    private final BedData bedCapability = new BedData();
 
     protected BedBlockEntityMixin(BlockEntityType<?> blockEntityType, BlockPos blockPos, BlockState blockState) {
         super(blockEntityType, blockPos, blockState);
@@ -41,7 +41,7 @@ public abstract class BedBlockEntityMixin extends BlockEntity implements IVanill
     }
 
     @Override
-    public BedCapability getBedCap() {
+    public BedData getBedData() {
         return bedCapability;
     }
 }

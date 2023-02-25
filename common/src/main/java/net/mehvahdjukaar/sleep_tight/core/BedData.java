@@ -5,9 +5,12 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.world.entity.player.Player;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
-public class BedCapability {
+//only data associated with a vanilla bed here
+public class BedData {
 
     private final Set<UUID> homeBedTo = new HashSet<>();
     @Nullable
@@ -19,7 +22,7 @@ public class BedCapability {
         if (!homeBedTo.isEmpty()) {
             for (var e : homeBedTo) {
                 var t = new CompoundTag();
-                t.putUUID("player",e);
+                t.putUUID("player", e);
                 listtag.add(t);
             }
             tag.put("owners", listtag);
@@ -61,4 +64,5 @@ public class BedCapability {
     public boolean isHomeBedFor(Player player) {
         return this.homeBedTo.contains(player.getUUID());
     }
+
 }

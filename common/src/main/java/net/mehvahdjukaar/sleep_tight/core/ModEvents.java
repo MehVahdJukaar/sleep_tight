@@ -19,6 +19,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.phys.BlockHitResult;
@@ -70,7 +71,7 @@ public class ModEvents {
             int players = 0;
             for (var player : level.players()) {
                 players++;
-                PlayerSleepCapability c = SleepTightPlatformStuff.getPlayerSleepCap(player);
+                PlayerSleepData c = SleepTightPlatformStuff.getPlayerSleepCap(player);
                 chances += c.getNightmareChance(player);
             }
             double nightmareChance = players == 0 ? 0 : chances / players;
@@ -78,20 +79,23 @@ public class ModEvents {
             if (level.random.nextFloat() < nightmareChance) wakeReason = WakeReason.NIGHTMARE;
         }
 
+        long sleepDayTime = level.getDayTime();
+        long newWakeTime = wakeReason.modifyWakeUpTime(newTimeDayTime, sleepDayTime);
 
         for (var player : sleepingPlayers) {
-            long currentGameTime = level.getGameTime();
             switch (wakeReason) {
-                case DEFAULT -> onPlayerSleepFinished(player);
+                case DEFAULT -> {
+                    long dayTimeDelta = ((newWakeTime + 24000) - sleepDayTime) % 24000;
+                    onPlayerSleepFinished(player, dayTimeDelta);
+                }
                 case SLEPT_IN_HAMMOCK -> onRestedInHammock(player);
                 case ENCOUNTER -> onEncounter(player, encounterSpawnedFor.contains(player));
                 case NIGHTMARE -> onNightmare(player);
             }
         }
 
-        return wakeReason.modifyWakeUpTime(newTimeDayTime, level.getDayTime());
+        return newWakeTime;
     }
-
 
 
     private enum WakeReason {
@@ -135,7 +139,7 @@ public class ModEvents {
                 var c = SleepTightPlatformStuff.getPlayerSleepCap(player);
                 if (c.getInsomniaCooldown(player.level) > 0) {
                     player.displayClientMessage(Component.translatable("message.sleep_tight.insomnia"), true);
-                     return InteractionResult.sidedSuccess(level.isClientSide);
+                    return InteractionResult.sidedSuccess(level.isClientSide);
                 }
 
                 if (state.getValue(BedBlock.PART) != BedPart.HEAD) {
@@ -186,24 +190,25 @@ public class ModEvents {
     }
 
     private static void onRestedInHammock(ServerPlayer player) {
-        PlayerSleepCapability playerCap = SleepTightPlatformStuff.getPlayerSleepCap(player);
+        PlayerSleepData playerCap = SleepTightPlatformStuff.getPlayerSleepCap(player);
         playerCap.addInsomnia(player, CommonConfigs.HAMMOCK_COOLDOWN.get());
         playerCap.syncToClient(player);
     }
 
     //server sided
-    public static void onPlayerSleepFinished(ServerPlayer player) {
+    public static void onPlayerSleepFinished(ServerPlayer player, long dayTimeDelta) {
         var p = player.getSleepingPos();
         if (p.isPresent()) {
             BlockPos pos = p.get();
-            if (player.level.getBlockEntity(pos) instanceof IVanillaBed tile) {
-                BedCapability bedCap = tile.getBedCap();
-                PlayerSleepCapability playerCap = SleepTightPlatformStuff.getPlayerSleepCap(player);
-                playerCap.onNightSleptInto(bedCap, player);
-                //TODO:account for time skip
-                playerCap.addInsomnia(player, CommonConfigs.BED_COOLDOWN.get());
-                playerCap.syncToClient(player);
+            PlayerSleepData playerCap = SleepTightPlatformStuff.getPlayerSleepCap(player);
+            BlockEntity blockEntity = player.level.getBlockEntity(pos);
+            if (blockEntity instanceof IVanillaBed tile) {
+                playerCap.onNightSleptInto(tile.getBedData(), player);
             }
+            playerCap.addInsomnia(player, CommonConfigs.BED_COOLDOWN.get());
+            playerCap.syncToClient(player);
+
+            SleepEffectsHelper.applyEffectsOnWakeUp(playerCap, player, dayTimeDelta,blockEntity);
         }
     }
 

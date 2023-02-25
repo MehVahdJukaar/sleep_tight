@@ -14,7 +14,8 @@ import net.minecraft.world.phys.AABB;
 import javax.annotation.Nullable;
 import java.util.UUID;
 
-public abstract class PlayerSleepCapability {
+//ideally only data associated with a player here. Does contain some logic...
+public abstract class PlayerSleepData {
 
     @Nullable
     private UUID homeBed = null;
@@ -49,7 +50,7 @@ public abstract class PlayerSleepCapability {
         this.lastWokenUpTimeStamp = gameTime;
     }
 
-    public void onNightSleptInto(BedCapability bed, Player player) {
+    public void onNightSleptInto(BedData bed, Player player) {
         long gameTime = player.level.getGameTime();
         long awakeTime = gameTime - this.lastWokenUpTimeStamp;
         if (awakeTime > CommonConfigs.SLEEP_INTERVAL.get()) {

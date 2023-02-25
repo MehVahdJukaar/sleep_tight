@@ -1,0 +1,47 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:alternatives",
+          "children": [
+            {
+              "type": "minecraft:item",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "sleep_tight:hammock_purple",
+                  "properties": {
+                    "part": "head"
+                  }
+                }
+              ],
+              "name": "sleep_tight:hammock_purple"
+            },
+            {
+              "type": "minecraft:item",
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "sleep_tight:hammock_purple",
+                  "properties": {
+                    "part": "middle"
+                  }
+                }
+              ],
+              "name": "sleep_tight:hammock_purple"
+            }
+          ]
+        }
+      ],
+      "rolls": 1.0
+    }
+  ]
+}

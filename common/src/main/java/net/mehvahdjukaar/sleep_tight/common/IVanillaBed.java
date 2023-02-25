@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.common;
 
-import net.mehvahdjukaar.sleep_tight.core.BedCapability;
+import net.mehvahdjukaar.sleep_tight.core.BedData;
 
 public interface IVanillaBed {
-    BedCapability getBedCap();
+    BedData getBedData();
 }

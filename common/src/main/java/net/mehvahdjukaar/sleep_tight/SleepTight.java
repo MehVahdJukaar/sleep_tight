@@ -8,6 +8,7 @@ import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
 import net.minecraft.Util;
 import net.minecraft.core.Registry;
+import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
@@ -66,6 +67,9 @@ public class SleepTight {
 
     public static final TagKey<EntityType<?>> WAKE_UP_BLACKLIST = TagKey.create(Registry.ENTITY_TYPE_REGISTRY, res("wake_up_blacklist"));
 
+    public static final Supplier<SimpleParticleType> DREAM_PARTICLE = RegHelper.registerParticle(res("dream"));
+
+
     public static final Supplier<EntityType<DreamerEssenceTargetEntity>> DREAMER_ESSENCE_ENTITY = RegHelper.registerEntityType(
             res("dreamer_essence_dummy"), () -> (
                     EntityType.Builder.of(DreamerEssenceTargetEntity::new, MobCategory.MISC)
@@ -77,7 +81,7 @@ public class SleepTight {
 
     public static final Supplier<DreamEssenceBlock> DREAMER_ESSENCE = regWithItem("dreamer_essence", () ->
                     new DreamEssenceBlock(BlockBehaviour.Properties.of(Material.AMETHYST, MaterialColor.COLOR_PURPLE)
-                            .sound(SoundType.AMETHYST)),
+                            .sound(SoundType.AMETHYST).strength(1)),
             CreativeModeTab.TAB_DECORATIONS
     );
 

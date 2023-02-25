@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.forge;
 
 
-import net.mehvahdjukaar.sleep_tight.core.PlayerSleepCapability;
+import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.ForgeEventFactory;
@@ -13,7 +13,7 @@ public class SleepTightPlatformStuffImpl {
 
 
     @org.jetbrains.annotations.Contract
-    public static PlayerSleepCapability getPlayerSleepCap(Player player) {
+    public static PlayerSleepData getPlayerSleepCap(Player player) {
         return player.getCapability(ForgePlayerSleepCapability.TOKEN).orElse(null);
     }
 

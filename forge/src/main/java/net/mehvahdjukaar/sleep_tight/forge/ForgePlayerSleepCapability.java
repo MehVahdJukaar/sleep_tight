@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.forge;
 
-import net.mehvahdjukaar.sleep_tight.core.BedCapability;
-import net.mehvahdjukaar.sleep_tight.core.PlayerSleepCapability;
+import net.mehvahdjukaar.sleep_tight.core.BedData;
+import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.mehvahdjukaar.sleep_tight.common.IVanillaBed;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,7 +17,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 //actual capability provider (which provides itself as a cap instance)
-public class ForgePlayerSleepCapability extends PlayerSleepCapability implements ICapabilitySerializable<CompoundTag> {
+public class ForgePlayerSleepCapability extends PlayerSleepData implements ICapabilitySerializable<CompoundTag> {
 
     public static final Capability<ForgePlayerSleepCapability> TOKEN = CapabilityManager.get(new CapabilityToken<>() {
     });
@@ -29,10 +29,10 @@ public class ForgePlayerSleepCapability extends PlayerSleepCapability implements
     }
 
     @Nullable
-    public static BedCapability getHomeBedIfHere(Player player, BlockPos pos) {
+    public static BedData getHomeBedIfHere(Player player, BlockPos pos) {
         ForgePlayerSleepCapability c = player.getCapability(ForgePlayerSleepCapability.TOKEN).orElse(null);
         if (c != null && player.level.getBlockEntity(pos) instanceof IVanillaBed bed) {
-            BedCapability bedCap = bed.getBedCap();
+            BedData bedCap = bed.getBedData();
             if (bedCap.getId().equals(c.getHomeBed()) && bedCap.isHomeBedFor(player)) {
                 return bedCap;
             }

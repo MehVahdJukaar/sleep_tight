@@ -1,6 +1,7 @@
 package net.mehvahdjukaar.sleep_tight;
 
 import net.mehvahdjukaar.moonlight.api.platform.ClientPlatformHelper;
+import net.mehvahdjukaar.sleep_tight.client.DreamParticle;
 import net.mehvahdjukaar.sleep_tight.client.InvisibleEntityRenderer;
 import net.mehvahdjukaar.sleep_tight.client.HammockBlockTileRenderer;
 import net.minecraft.client.Minecraft;
@@ -32,7 +33,9 @@ public class SleepTightClient {
         ClientPlatformHelper.addEntityRenderersRegistration(SleepTightClient::registerEntityRenderers);
         ClientPlatformHelper.addBlockEntityRenderersRegistration(SleepTightClient::registerBlockEntityRenderers);
         ClientPlatformHelper.addAtlasTextureCallback(BED_SHEET, SleepTightClient::addTextures);
+        ClientPlatformHelper.addParticleRegistration(SleepTightClient::registerParticles);
     }
+
 
 
     public static void setup() {
@@ -44,6 +47,10 @@ public class SleepTightClient {
 
     private static void addTextures(ClientPlatformHelper.AtlasTextureEvent event) {
         Arrays.stream(HAMMOCK_TEXTURES).forEach(e -> event.addSprite(e.texture()));
+    }
+
+    private static void registerParticles(ClientPlatformHelper.ParticleEvent event) {
+        event.register(SleepTight.DREAM_PARTICLE.get(), DreamParticle.Factory::new);
     }
 
     private static void registerLayers(ClientPlatformHelper.ModelLayerEvent event) {
