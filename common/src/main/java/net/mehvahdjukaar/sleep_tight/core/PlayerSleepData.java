@@ -1,6 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
 import net.mehvahdjukaar.sleep_tight.common.DreamerEssenceTargetEntity;
+import net.mehvahdjukaar.sleep_tight.common.IModBed;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.network.ClientBoundSyncPlayerSleepCapMessage;
 import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
@@ -9,6 +10,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
 import javax.annotation.Nullable;
@@ -85,15 +87,20 @@ public abstract class PlayerSleepData {
         return 1 - (((float) (amountAwake)) / timeLeft);
     }
 
-    public long getInsomniaTimeLeft(Player player){
+    public long getInsomniaTimeLeft(Player player) {
         return insomniaWillElapseTimeStamp - player.level.getGameTime();
     }
 
-    public double getNightmareChance(Player player) {
+    public double getNightmareChance(Player player, BlockPos pos) {
         int minNights = CommonConfigs.NIGHTMARES_CONSECUTIVE_NIGHTS.get();
         if (consecutiveNightsSlept < minNights) return 0;
         if (isDreamerEssenceInRange(player.blockPosition(), player.level)) return 0;
-        else return CommonConfigs.NIGHTMARE_CHANCE_INCREMENT_PER_NIGHT.get()
+        BlockState state = player.level.getBlockState(pos);
+        if (state.getBlock() instanceof IModBed bed){
+            if(!bed.canHaveNightmares()) return 0;
+        }else if(!CommonConfigs.NIGHTMARES_BED.get())return 0;
+
+        return CommonConfigs.NIGHTMARE_CHANCE_INCREMENT_PER_NIGHT.get()
                 * (consecutiveNightsSlept - minNights - 1);
     }
 
@@ -141,5 +148,13 @@ public abstract class PlayerSleepData {
 
     public void setNightsSleptInHomeBed(int nightsSleptInHomeBed) {
         this.nightsSleptInHomeBed = nightsSleptInHomeBed;
+    }
+
+    public void copyFrom(PlayerSleepData oldData) {
+        this.consecutiveNightsSlept = oldData.consecutiveNightsSlept;
+        this.homeBed = oldData.homeBed;
+        this.nightsSleptInHomeBed = oldData.nightsSleptInHomeBed;
+        this.insomniaWillElapseTimeStamp = oldData.insomniaWillElapseTimeStamp;
+        this.lastWokenUpTimeStamp = oldData.lastWokenUpTimeStamp;
     }
 }

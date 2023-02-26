@@ -12,4 +12,6 @@ public interface IModBed {
    default void onLeftBed(BlockState state, BlockPos pos, Player entity){}
 
     boolean canSetSpawn();
+
+    boolean canHaveNightmares();
 }

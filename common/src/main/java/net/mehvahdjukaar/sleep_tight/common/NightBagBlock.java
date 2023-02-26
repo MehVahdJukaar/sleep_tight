@@ -1,5 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.common;
 
+import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
@@ -83,6 +84,11 @@ public class NightBagBlock extends BedBlock implements IModBed {
     @Override
     public boolean canSetSpawn() {
         return false;
+    }
+
+    @Override
+    public boolean canHaveNightmares() {
+        return CommonConfigs.NIGHTMARES_NIGHT_BAG.get();
     }
 
     @Override

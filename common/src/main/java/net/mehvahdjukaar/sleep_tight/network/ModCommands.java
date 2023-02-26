@@ -33,7 +33,10 @@ public class ModCommands {
                                 .then(GetHomeBedNights.register(dispatcher))
                                 .then(SetHomeBedNights.register(dispatcher))
                         )
+                        .then(Commands.literal("nightmare_chance")
+                                .then(GetNightmareChance.register(dispatcher))
 
+                        )
         );
     }
 
@@ -159,6 +162,24 @@ public class ModCommands {
                 context.getSource().sendSuccess(Component.translatable("message.sleep_tight.command.get_home_bed_nights", timeLeft), false);
 
                 return timeLeft;
+            }
+            return 0;
+        }
+    }
+
+    private static class GetNightmareChance implements Command<CommandSourceStack> {
+
+        public static ArgumentBuilder<CommandSourceStack, ?> register(CommandDispatcher<CommandSourceStack> dispatcher) {
+            return Commands.literal("get").executes(new GetHomeBedNights());
+        }
+
+        @Override
+        public int run(CommandContext<CommandSourceStack> context) {
+            if (context.getSource().getEntity() instanceof ServerPlayer serverPlayer) {
+                var cap = SleepTightPlatformStuff.getPlayerSleepData(serverPlayer);
+
+                double nightmareChance = cap.getNightmareChance(serverPlayer, serverPlayer.getOnPos());
+                context.getSource().sendSuccess(Component.translatable("message.sleep_tight.command.nightmare_chance", String.format("%.3f", nightmareChance)), false);
             }
             return 0;
         }

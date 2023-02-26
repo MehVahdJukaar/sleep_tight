@@ -9,6 +9,7 @@ import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.mehvahdjukaar.sleep_tight.network.AccelerateHammockMessage;
 import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.network.ServerBoundCommitSleepMessage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -234,7 +235,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     @Override
     public void onInputUpdate(boolean left, boolean right, boolean up, boolean down, boolean sprint, boolean jumping) {
         if (jumping) {
-            ClientEvents.playerSleepCommit(this);
+            NetworkHandler.CHANNEL.sendToServer(new ServerBoundCommitSleepMessage());
         } else if (left ^ right) {
             if (this.level.getBlockEntity(this.getOnPos()) instanceof HammockBlockEntity tile) {
                 if (left) {

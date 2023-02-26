@@ -1,9 +1,10 @@
 package net.mehvahdjukaar.sleep_tight.forge;
 
 import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
-import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
+import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
+import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -48,14 +49,14 @@ public class SleepTightForge {
 
     @SubscribeEvent
     public void attachPlayerCapabilities(AttachCapabilitiesEvent<Entity> event) {
-        if(event.getObject() instanceof Player) {
+        if (event.getObject() instanceof Player) {
             event.addCapability(SleepTight.res("player_data"), new ForgePlayerSleepCapability());
         }
     }
 
     @SubscribeEvent
     public void onSleepConditionCheck(PlayerSleepInBedEvent event) {
-        if(!ModEvents.checkExtraSleepConditions(event.getEntity(), event.getPos())){
+        if (!ModEvents.checkExtraSleepConditions(event.getEntity(), event.getPos())) {
             event.setResult(Player.BedSleepingProblem.OTHER_PROBLEM);
         }
     }
@@ -88,7 +89,6 @@ public class SleepTightForge {
                 evt.setTimeAddition(newTime);
             }
         }
-
     }
 
     @SubscribeEvent
@@ -120,6 +120,18 @@ public class SleepTightForge {
     public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             ModEvents.onPlayerLoggedIn(player);
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerClone(PlayerEvent.Clone event) {
+        if (event.isWasDeath()) {
+            Player old = event.getOriginal();
+            old.reviveCaps();
+            var oldData = SleepTightPlatformStuff.getPlayerSleepData(old);
+            var newData = SleepTightPlatformStuff.getPlayerSleepData(event.getEntity());
+            newData.copyFrom(oldData);
+            old.invalidateCaps();
         }
     }
 

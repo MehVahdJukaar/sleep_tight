@@ -72,7 +72,7 @@ public class ModEvents {
             for (var player : level.players()) {
                 players++;
                 PlayerSleepData c = SleepTightPlatformStuff.getPlayerSleepData(player);
-                chances += c.getNightmareChance(player);
+                chances += c.getNightmareChance(player, player.getSleepingPos().get());
             }
             double nightmareChance = players == 0 ? 0 : chances / players;
 
@@ -87,7 +87,7 @@ public class ModEvents {
                 case DEFAULT -> {
                     long dayTimeDelta = ((newWakeTime + 24000) - sleepDayTime) % 24000;
                     onPlayerSleepFinished(player, dayTimeDelta);
-                }
+                }//todo fix up with bed type and standardize
                 case SLEPT_IN_HAMMOCK -> onRestedInHammock(player);
                 case ENCOUNTER -> onEncounter(player, encounterSpawnedFor.contains(player));
                 case NIGHTMARE -> onNightmare(player);

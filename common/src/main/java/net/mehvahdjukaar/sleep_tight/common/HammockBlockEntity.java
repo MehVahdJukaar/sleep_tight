@@ -39,7 +39,7 @@ public class HammockBlockEntity extends BlockEntity {
         this.color = ((HammockBlock) blockState.getBlock()).getColor();
         this.pivotOffset = blockState.getValue(HammockBlock.PART).getPivotOffset();
         this.direction = blockState.getValue(HammockBlock.FACING);
-        this.angle = (float) ((RandomSource.create().nextFloat()-0.5)*ClientConfigs.HAMMOCK_MIN_ANGLE.get());
+        this.angle = (float) ((RandomSource.create().nextFloat() - 0.5) * Math.toRadians(ClientConfigs.HAMMOCK_MIN_ANGLE.get()));
     }
 
 

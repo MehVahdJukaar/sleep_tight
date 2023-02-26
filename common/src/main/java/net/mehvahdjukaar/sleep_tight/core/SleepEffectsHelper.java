@@ -4,6 +4,7 @@ import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
 import net.mehvahdjukaar.sleep_tight.common.IVanillaBed;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectCategory;
@@ -115,8 +116,18 @@ public class SleepEffectsHelper {
             if (!REQUIREMENT_BED.get()) return true;
 
             int xp = XP_COST.get();
-            if (xp != 0 && player.totalExperience < xp) return false;
-            if (NEED_FULL_HUNGER.get() && player.getFoodData().needsFood()) return false;
+            if (xp != 0 && player.totalExperience < xp){
+                if(player.level.isClientSide){
+                    player.displayClientMessage(Component.translatable("message.sleep_tight.xp"), true);
+                }
+                return false;
+            }
+            if (NEED_FULL_HUNGER.get() && player.getFoodData().needsFood()){
+                if(player.level.isClientSide){
+                    player.displayClientMessage(Component.translatable("message.sleep_tight.hunger"), true);
+                }
+                return false;
+            }
         }
         return true;
     }

@@ -98,12 +98,5 @@ public class ClientEvents {
         }
     }
 
-    public static void playerSleepCommit(BedEntity bedEntity) {
-        var player = Minecraft.getInstance().player;
-        if (player != null) {
-            bedEntity.startSleepingOn(player);
-        }
-        NetworkHandler.CHANNEL.sendToServer(new ServerBoundCommitSleepMessage());
-    }
 
 }

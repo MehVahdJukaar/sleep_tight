@@ -5,6 +5,7 @@ import net.mehvahdjukaar.moonlight.api.block.IRotatable;
 import net.mehvahdjukaar.moonlight.api.set.BlocksColorAPI;
 import net.mehvahdjukaar.moonlight.api.util.Utils;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.integration.SupplementariesCompat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -287,6 +288,11 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     @Override
     public boolean canSetSpawn() {
         return false;
+    }
+
+    @Override
+    public boolean canHaveNightmares() {
+        return CommonConfigs.NIGHTMARES_HAMMOCK.get();
     }
 
     @Override

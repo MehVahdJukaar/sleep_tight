@@ -13,11 +13,17 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class CommonConfigs {
-    public static final Supplier<Integer> SLEEP_INTERVAL;
 
     public static final Supplier<Boolean> FIX_BED_POSITION;
-    public static final Supplier<Integer> HOME_BED_REQUIRED_NIGHTS;
+    public static final Supplier<Boolean> DISABLE_BIG_EXPLOSION;
 
+    public static final Supplier<Integer> HOME_BED_REQUIRED_NIGHTS;
+    public static final Supplier<Integer> SLEEP_INTERVAL;
+
+
+    public static final Supplier<Boolean> NIGHTMARES_BED;
+    public static final Supplier<Boolean> NIGHTMARES_HAMMOCK;
+    public static final Supplier<Boolean> NIGHTMARES_NIGHT_BAG;
     public static final Supplier<Integer> NIGHTMARES_CONSECUTIVE_NIGHTS;
     public static final Supplier<Double> NIGHTMARE_CHANCE_INCREMENT_PER_NIGHT;
     public static final Supplier<Double> NIGHTMARE_SLEEP_TIME_MULTIPLIER;
@@ -34,6 +40,7 @@ public class CommonConfigs {
 
     public static final Supplier<Integer> BED_COOLDOWN;
     public static final Supplier<Integer> HAMMOCK_COOLDOWN;
+    public static final Supplier<Integer> NIGHT_BAG_COOLDOWN;
 
     public static final Supplier<BedStatus> BED_BENEFITS;
     public static final Supplier<EffectIntensity> HEALING;
@@ -73,11 +80,20 @@ public class CommonConfigs {
     static {
         ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.COMMON);
 
-        builder.push("hammock");
+        builder.push("misc");
         FIX_BED_POSITION = builder.comment("Fixes multiplayer players being positioned 2 pixels above a bed")
                 .define("fix_bed_position", true);
+        DISABLE_BIG_EXPLOSION = builder.comment("Disables damage from bed explosion when used in another dimension")
+                        .define("disable_explosion_damage", true);
+        builder.pop();
+
+        builder.push("sleep_cooldown");
         HAMMOCK_COOLDOWN = builder.comment("Time before you can sleep/rest again after you've slept in a hammock")
-                .define("sleep_cooldown", 6000, 0, 1000000);
+                .define("hammock", 6000, 0, 1000000);
+        NIGHT_BAG_COOLDOWN = builder.comment("Time before you can sleep/rest again after you've successfully slept in a bed")
+                .define("night_bag", 6000, 0, 1000000);
+        BED_COOLDOWN = builder.comment("Time before you can sleep/rest again after you've successfully slept in a bed")
+                .define("bed", 6000, 0, 1000000);
         builder.pop();
 
 
@@ -124,15 +140,17 @@ public class CommonConfigs {
         HOME_BED_REQUIRED_NIGHTS = builder.comment("Amount of nights needed to mark a bed as home bed")
                 .define("home_bed_required_nights", 8, 1, 50);
 
-        BED_COOLDOWN = builder.comment("Time before you can sleep/rest again after you've successfully slept in a bed")
-                .define("sleep_cooldown", 6000, 0, 1000000);
 
 
         builder.pop();
 
         builder.push("nightmares");
+        NIGHTMARES_BED = builder.define("apply_to_beds", true);
+        NIGHTMARES_HAMMOCK = builder.define("apply_to_hammock", false);
+        NIGHTMARES_NIGHT_BAG = builder.define("apply_to_night_bags", false);
+
         NIGHTMARES_CONSECUTIVE_NIGHTS = builder.comment("Amount of consecutive nights from which nightmares could start to happen")
-                .define("minimum_nights_cutoff", 4, 0, 100);
+                .define("appear_after_consecutive_nights", 4, 0, 100);
         NIGHTMARE_CHANCE_INCREMENT_PER_NIGHT = builder.define("nightmare_increment_per_night", 0.15, 0, 1);
         NIGHTMARE_SLEEP_TIME_MULTIPLIER = builder.comment("Multiplier applied to time slept after a nightmare")
                 .define("sleep_time_multiplier", 0.5, 0.01, 1);
