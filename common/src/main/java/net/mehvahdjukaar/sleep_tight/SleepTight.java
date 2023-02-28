@@ -12,8 +12,11 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
@@ -61,7 +64,6 @@ public class SleepTight {
 
     public static void commonSetup() {
 
-
     }
 
     private static void registerEntityAttributes(RegHelper.AttributeEvent event) {
@@ -71,6 +73,10 @@ public class SleepTight {
     public static final TagKey<EntityType<?>> WAKE_UP_BLACKLIST = TagKey.create(Registry.ENTITY_TYPE_REGISTRY, res("wake_up_blacklist"));
 
     public static final Supplier<SimpleParticleType> DREAM_PARTICLE = RegHelper.registerParticle(res("dream"));
+
+    public static final Supplier<MobEffect> HEAD_START = RegHelper.registerEffect(res("head_start"), () ->
+            new MobEffect(MobEffectCategory.BENEFICIAL, 0x11ff22) {
+            });
 
 
     public static final Supplier<EntityType<DreamerEssenceTargetEntity>> DREAMER_ESSENCE_ENTITY = RegHelper.registerEntityType(

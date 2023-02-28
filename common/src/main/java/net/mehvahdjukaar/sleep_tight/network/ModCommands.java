@@ -170,7 +170,7 @@ public class ModCommands {
     private static class GetNightmareChance implements Command<CommandSourceStack> {
 
         public static ArgumentBuilder<CommandSourceStack, ?> register(CommandDispatcher<CommandSourceStack> dispatcher) {
-            return Commands.literal("get").executes(new GetHomeBedNights());
+            return Commands.literal("get").executes(new GetNightmareChance());
         }
 
         @Override

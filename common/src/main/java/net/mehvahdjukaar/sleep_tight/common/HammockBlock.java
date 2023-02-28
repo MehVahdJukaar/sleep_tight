@@ -296,6 +296,11 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
+    public long getCooldown() {
+        return CommonConfigs.HAMMOCK_COOLDOWN.get();
+    }
+
+    @Override
     public Optional<BlockState> getRotatedState(BlockState state, LevelAccessor world, BlockPos pos, Rotation rotation, Direction axis, @Nullable Vec3 hit) {
         return Optional.empty();
     }

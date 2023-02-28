@@ -24,6 +24,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.player.PlayerXpEvent;
 
 import java.util.ArrayList;
 
@@ -103,15 +105,15 @@ public class SleepGuiOverlay implements IGuiOverlay {
         if (isHomeBed) {
             int x = s.width / 2 - 120;
             if (MthUtils.isWithinRectangle(x, y, iconSize, iconSize, mouseX, mouseY)) {
-                int a = SleepTightPlatformStuff.getPlayerSleepData(player).getNightsSleptInHomeBed();
+                int a = SleepTightPlatformStuff.getPlayerSleepData(player).getConsecutiveNightsSlept();
                 var b = SleepTightPlatformStuff.getPlayerSleepData(player).getInsomniaCooldown(player);
-                var c = SleepTightPlatformStuff.getPlayerSleepData(player).getNightmareChance(player);
+                var nc = SleepTightPlatformStuff.getPlayerSleepData(player).getNightmareChance(player, player.getSleepingPos().orElse(BlockPos.ZERO));
                 int nightSlept = SleepTightPlatformStuff.getPlayerSleepData(player).getNightsSleptInHomeBed();
                 var lines = new ArrayList<>(mc.font.split(Component.translatable("gui.sleep_tight.home_bed"), 200));
                 lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.time_slept", nightSlept), 200));
-                lines.addAll(mc.font.split(Component.literal("" + a), 200));
-                lines.addAll(mc.font.split(Component.literal("" + b), 200));
-                lines.addAll(mc.font.split(Component.literal("" + c), 200));
+                lines.addAll(mc.font.split(Component.literal("consecutive nights" + a), 200));
+                lines.addAll(mc.font.split(Component.literal("sleep cooldown" + b), 200));
+                lines.addAll(mc.font.split(Component.literal("nightmare chance" + nc), 200));
                 s.renderTooltip(poseStack, lines, mouseX, mouseY);
             }
         }

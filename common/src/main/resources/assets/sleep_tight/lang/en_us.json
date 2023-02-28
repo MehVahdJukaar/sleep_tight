@@ -1,6 +1,5 @@
 {
   "block.sleep_tight.hammock_red": "Red Hammock",
-  "block.sleep_tight.hammock_orane": "Orange Hammock",
   "block.sleep_tight.hammock_yellow": "Yellow Hammock",
   "block.sleep_tight.hammock_lime": "Lime Hammock",
   "block.sleep_tight.hammock_brown": "Brown Hammock",
@@ -25,6 +24,7 @@
   "message.sleep_tight.encounter": "Somebody is having a bad time",
   "message.sleep_tight.xp": "You don't have enough xp",
   "message.sleep_tight.hunger": "You feel too hungry to sleep",
+  "message.sleep_tight.bedbug": "This bed is infested!",
   "message.sleep_tight.command.get_home_bed_nights": "Time slept in home bed: %s",
   "message.sleep_tight.command.set_home_bed_nights": "Set time slept in home bed",
   "message.sleep_tight.command.get_nights": "Consecutive night slept: %s",
@@ -35,5 +35,8 @@
   "block.sleep_tight.dreamer_essence": "Dreamer Essence",
   "gui.sleep_tight.dreamer_essence": "Dreamer Essence is warding you from nightmares",
   "gui.sleep_tight.home_bed": "Home Bed",
-  "gui.sleep_tight.time_slept": "Time Slept: %s"
+  "gui.sleep_tight.time_slept": "Time Slept: %s",
+  "effect.sleep_tight.head_start": "Head Start",
+  "effect.sleep_tight.head_start.description": "Slightly increases XP gain on mob kill",
+  "entity.sleep_right.bedbug": "Bedbug"
 }

@@ -92,6 +92,11 @@ public class NightBagBlock extends BedBlock implements IModBed {
     }
 
     @Override
+    public long getCooldown() {
+        return CommonConfigs.NIGHT_BAG_COOLDOWN.get();
+    }
+
+    @Override
     public void onLeftBed(BlockState state, BlockPos pos, Player player) {
         Level level = player.level;
         level.removeBlock(pos, false);

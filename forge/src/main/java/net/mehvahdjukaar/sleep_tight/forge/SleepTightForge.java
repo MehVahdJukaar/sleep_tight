@@ -9,10 +9,12 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.*;
 import net.minecraftforge.event.level.SleepFinishedTimeEvent;
 import net.minecraftforge.eventbus.api.Event;
@@ -132,6 +134,17 @@ public class SleepTightForge {
             var newData = SleepTightPlatformStuff.getPlayerSleepData(event.getEntity());
             newData.copyFrom(oldData);
             old.invalidateCaps();
+        }
+    }
+
+    @SubscribeEvent
+    public void onLivingDeath(LivingDeathEvent event) {
+        LivingEntity entity = event.getEntity();
+        if (!entity.isRemoved() && entity.level instanceof ServerLevel serverLevel) {
+            Entity killer = event.getSource().getEntity();
+            if (killer instanceof LivingEntity le && killer.wasKilled(serverLevel, entity)) {
+                ModEvents.onLivingDeath(serverLevel, entity, le);
+            }
         }
     }
 

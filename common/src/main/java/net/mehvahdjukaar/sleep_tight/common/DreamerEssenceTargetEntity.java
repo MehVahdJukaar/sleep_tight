@@ -27,6 +27,16 @@ public class DreamerEssenceTargetEntity extends LivingEntity {
     }
 
     @Override
+    public boolean isAttackable() {
+        return true;
+    }
+
+    @Override
+    public boolean skipAttackInteraction(Entity entity) {
+        return true;
+    }
+
+    @Override
     protected float getStandingEyeHeight(Pose pose, EntityDimensions dimensions) {
         return dimensions.height;
     }

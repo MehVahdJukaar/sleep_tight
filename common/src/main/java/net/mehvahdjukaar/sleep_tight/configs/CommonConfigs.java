@@ -15,10 +15,11 @@ import java.util.function.Supplier;
 public class CommonConfigs {
 
     public static final Supplier<Boolean> FIX_BED_POSITION;
-    public static final Supplier<Boolean> DISABLE_BIG_EXPLOSION;
+    public static final Supplier<Boolean> DISABLE_BIG_EXPLOSION; //TODO
+    public static final Supplier<Integer> SLEEP_INTERVAL;
 
     public static final Supplier<Integer> HOME_BED_REQUIRED_NIGHTS;
-    public static final Supplier<Integer> SLEEP_INTERVAL;
+    public static final Supplier<Double> HEAD_START_XP;
 
 
     public static final Supplier<Boolean> NIGHTMARES_BED;
@@ -40,7 +41,7 @@ public class CommonConfigs {
 
     public static final Supplier<Integer> BED_COOLDOWN;
     public static final Supplier<Integer> HAMMOCK_COOLDOWN;
-    public static final Supplier<Integer> NIGHT_BAG_COOLDOWN;
+    public static final Supplier<Integer> NIGHT_BAG_COOLDOWN; //TODO
 
     public static final Supplier<BedStatus> BED_BENEFITS;
     public static final Supplier<EffectIntensity> HEALING;
@@ -85,6 +86,8 @@ public class CommonConfigs {
                 .define("fix_bed_position", true);
         DISABLE_BIG_EXPLOSION = builder.comment("Disables damage from bed explosion when used in another dimension")
                         .define("disable_explosion_damage", true);
+        SLEEP_INTERVAL = builder.comment("Interval between two consecutive sleep times for them to not be considered consecutive")
+                .define("sleep_interval", 24000, 0, 1000000);
         builder.pop();
 
         builder.push("sleep_cooldown");
@@ -135,11 +138,11 @@ public class CommonConfigs {
         builder.push("bed");
 
         builder.push("home_bed");
-        SLEEP_INTERVAL = builder.comment("Interval between two consecutive sleep times for them to not be considered consecutive")
-                .define("sleep_interval", 24000, 0, 1000000);
+
         HOME_BED_REQUIRED_NIGHTS = builder.comment("Amount of nights needed to mark a bed as home bed")
                 .define("home_bed_required_nights", 8, 1, 50);
-
+        HEAD_START_XP = builder.comment("Percentage of xp added per tier of the effect. Setting to 1 doubles the effect")
+                        .define("xp_addition",0.05, 0, 1);
 
 
         builder.pop();

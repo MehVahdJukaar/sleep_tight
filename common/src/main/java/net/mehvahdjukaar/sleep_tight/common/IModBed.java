@@ -14,4 +14,6 @@ public interface IModBed {
     boolean canSetSpawn();
 
     boolean canHaveNightmares();
+
+    long getCooldown();
 }

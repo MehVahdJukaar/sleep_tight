@@ -1,6 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
+import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.*;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
@@ -13,9 +14,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
@@ -158,8 +163,8 @@ public class ModEvents {
 
     @EventCalled
     public static Vec3 getSleepingPosition(BlockState state, BlockPos pos) {
-        if (state.getBlock() instanceof IModBed hammockBlock) {
-            return hammockBlock.getSleepingPosition(state, pos);
+        if (state.getBlock() instanceof IModBed iModBed) {
+            return iModBed.getSleepingPosition(state, pos);
         } else if (state.is(BlockTags.BEDS) && CommonConfigs.FIX_BED_POSITION.get()) {
             //vanilla places player 2 pixels above bed. Player then falls down
             return new Vec3(pos.getX() + 0.5, pos.getY() + 9 / 16f, pos.getZ() + 0.5);
@@ -203,10 +208,11 @@ public class ModEvents {
             if (blockEntity instanceof IVanillaBed tile) {
                 playerCap.onNightSleptInto(tile.getBedData(), player);
             }
+            SleepEffectsHelper.applyEffectsOnWakeUp(playerCap, player, dayTimeDelta, blockEntity);
+
             playerCap.addInsomnia(player, CommonConfigs.BED_COOLDOWN.get());
             playerCap.syncToClient(player);
 
-            SleepEffectsHelper.applyEffectsOnWakeUp(playerCap, player, dayTimeDelta, blockEntity);
         }
     }
 
@@ -261,5 +267,18 @@ public class ModEvents {
         }
         return InteractionResult.SUCCESS;
         // return InteractionResult.PASS;
+    }
+
+    @EventCalled
+    public static void onLivingDeath(ServerLevel serverLevel, LivingEntity entity, LivingEntity killer) {
+        MobEffectInstance i = killer.getEffect(SleepTight.HEAD_START.get());
+        if (i != null) {
+            if (entity.lastHurtByPlayerTime > 0 && !entity.wasExperienceConsumed() && !(entity instanceof Player)  &&
+                    entity.shouldDropExperience() && serverLevel.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
+
+                double xp = entity.getExperienceReward() * CommonConfigs.HEAD_START_XP.get() * (i.getAmplifier() + 1);
+                ExperienceOrb.award(serverLevel, entity.position(), (int) xp);
+            }
+        }
     }
 }
