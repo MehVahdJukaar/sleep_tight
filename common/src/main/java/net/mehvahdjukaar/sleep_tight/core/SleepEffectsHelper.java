@@ -1,5 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
+import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
 import net.mehvahdjukaar.sleep_tight.common.IVanillaBed;
 import net.minecraft.core.BlockPos;
@@ -58,7 +59,7 @@ public class SleepEffectsHelper {
         BedStatus status = BED_BENEFITS.get();
         if (status == BedStatus.NONE) return;
         if (status == BedStatus.HOME_BED && !data.isHomeBedFor(player)) return;
-
+        //healing
         EffectIntensity healing = HEALING.get();
         if (healing != EffectIntensity.NONE) {
             float maxHealth = player.getMaxHealth();
@@ -68,7 +69,7 @@ public class SleepEffectsHelper {
             }
             player.heal(heal);
         }
-
+        //potion clearing
         EffectIntensity potionClearing = EFFECT_CLEARING.get();
         if (potionClearing != EffectIntensity.NONE) {
             var type = EFFECT_CLEARING_TYPE.get();
@@ -96,6 +97,11 @@ public class SleepEffectsHelper {
                     }
                 }
             }
+        }
+        //effects
+        for(var e : WAKE_UP_EFFECTS.get()){
+            var d = SleepTightPlatformStuff.getPlayerSleepData(player);
+            player.addEffect(e.createInstance(d.getHomeBedLevel()));
         }
     }
 

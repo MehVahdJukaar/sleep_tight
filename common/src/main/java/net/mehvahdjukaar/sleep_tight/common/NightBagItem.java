@@ -38,6 +38,9 @@ public class NightBagItem extends BlockItem {
         if (problem != null) {
             if (level.isClientSide) {
                 Component m = problem.getMessage();
+                if(problem == Player.BedSleepingProblem.NOT_POSSIBLE_HERE){
+                    m = Component.translatable("sleep_tight.message.not_possible_here");
+                }
                 if(m != null) player.displayClientMessage(m, true);
             }
             return InteractionResultHolder.fail(stack);

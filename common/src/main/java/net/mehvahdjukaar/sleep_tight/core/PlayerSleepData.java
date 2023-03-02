@@ -96,9 +96,9 @@ public abstract class PlayerSleepData {
         if (consecutiveNightsSlept < minNights) return 0;
         if (isDreamerEssenceInRange(player.blockPosition(), player.level)) return 0;
         BlockState state = player.level.getBlockState(pos);
-        if (state.getBlock() instanceof IModBed bed){
-            if(!bed.canHaveNightmares()) return 0;
-        }else if(!CommonConfigs.NIGHTMARES_BED.get())return 0;
+        if (state.getBlock() instanceof IModBed bed) {
+            if (!bed.canHaveNightmares()) return 0;
+        } else if (!CommonConfigs.NIGHTMARES_BED.get()) return 0;
 
         return CommonConfigs.NIGHTMARE_CHANCE_INCREMENT_PER_NIGHT.get()
                 * (consecutiveNightsSlept - minNights - 1);
@@ -156,5 +156,9 @@ public abstract class PlayerSleepData {
         this.nightsSleptInHomeBed = oldData.nightsSleptInHomeBed;
         this.insomniaWillElapseTimeStamp = oldData.insomniaWillElapseTimeStamp;
         this.lastWokenUpTimeStamp = oldData.lastWokenUpTimeStamp;
+    }
+
+    public int getHomeBedLevel() {
+        return Math.max(0, this.nightsSleptInHomeBed - CommonConfigs.HOME_BED_REQUIRED_NIGHTS.get());
     }
 }

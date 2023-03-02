@@ -268,4 +268,19 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
 
         }
     }
+
+    @Override
+    public boolean isAttackable() {
+        return false;
+    }
+
+    @Override
+    public boolean skipAttackInteraction(Entity entity) {
+        return true;
+    }
+
+    @Override
+    public boolean isInvulnerable() {
+        return true;
+    }
 }

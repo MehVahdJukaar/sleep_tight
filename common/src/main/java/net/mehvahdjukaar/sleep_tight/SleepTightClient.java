@@ -2,8 +2,10 @@ package net.mehvahdjukaar.sleep_tight;
 
 import net.mehvahdjukaar.moonlight.api.platform.ClientPlatformHelper;
 import net.mehvahdjukaar.sleep_tight.client.DreamParticle;
+import net.mehvahdjukaar.sleep_tight.client.InfestedBedRenderer;
 import net.mehvahdjukaar.sleep_tight.client.InvisibleEntityRenderer;
 import net.mehvahdjukaar.sleep_tight.client.HammockBlockTileRenderer;
+import net.mehvahdjukaar.sleep_tight.common.InfestedBedTile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.resources.model.Material;
@@ -64,6 +66,7 @@ public class SleepTightClient {
 
     private static void registerBlockEntityRenderers(ClientPlatformHelper.BlockEntityRendererEvent event) {
         event.register(SleepTight.HAMMOCK_TILE.get(), HammockBlockTileRenderer::new);
+        event.register(SleepTight.INFESTED_BED_TILE.get(), InfestedBedRenderer::new);
     }
 
 

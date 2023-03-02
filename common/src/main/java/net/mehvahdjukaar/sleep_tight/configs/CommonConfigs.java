@@ -47,7 +47,7 @@ public class CommonConfigs {
     public static final Supplier<EffectIntensity> HEALING;
     public static final Supplier<EffectIntensity> EFFECT_CLEARING;
     public static final Supplier<PotionClearing> EFFECT_CLEARING_TYPE;
-    public static final Supplier<List<MobEffect>> WAKE_UP_EFFECTS;
+    public static final Supplier<List<EffectData>> WAKE_UP_EFFECTS;
 
     public static final Supplier<Boolean> REQUIREMENT_BED;
     public static final Supplier<Boolean> REQUIREMENT_HAMMOCK;
@@ -109,9 +109,10 @@ public class CommonConfigs {
                 .define("effect_clearing", EffectIntensity.MAX);
         EFFECT_CLEARING_TYPE = builder.comment("")
                 .define("effect_clearing_types", PotionClearing.ALL);
-        WAKE_UP_EFFECTS = builder.comment("Effects to apply when player wakes up")
-                .defineObject("wake_up_effects", () -> List.of(MobEffects.MOVEMENT_SPEED),
-                        Registry.MOB_EFFECT.byNameCodec().listOf());
+        WAKE_UP_EFFECTS = builder.comment("Effects to apply when player wakes up. You can add more entries, this is a list")
+                .defineObject("wake_up_effects", () -> List.of(
+                        new EffectData(SleepTight.HEAD_START.get(), 0.1f,2*60*20,30*20,0)),
+                        EffectData.CODEC.listOf());
         builder.pop();
 
         builder.push("sleep_penalties");

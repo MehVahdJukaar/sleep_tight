@@ -1,5 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.common;
 
+import dev.architectury.injectables.annotations.PlatformOnly;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
@@ -11,6 +12,7 @@ import net.minecraft.world.entity.monster.Phantom;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -24,6 +26,12 @@ public class DreamerEssenceTargetEntity extends LivingEntity {
     protected DreamerEssenceTargetEntity(Level level, BlockPos pos) {
         super(SleepTight.DREAMER_ESSENCE_ENTITY.get(), level);
         this.setPos(Vec3.atBottomCenterOf(pos));
+    }
+
+    //@Override
+    @PlatformOnly(PlatformOnly.FORGE)
+    public ItemStack getPickedResult(HitResult target) {
+        return new ItemStack(SleepTight.DREAMER_ESSENCE.get());
     }
 
     @Override

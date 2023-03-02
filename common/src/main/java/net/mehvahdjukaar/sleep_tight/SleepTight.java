@@ -23,6 +23,8 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.InfestedBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -113,6 +115,20 @@ public class SleepTight {
             res("hammock"), () -> PlatformHelper.newBlockEntityType(HammockBlockEntity::new,
                     HAMMOCKS.values().stream().map(Supplier::get).toArray(Block[]::new))
     );
+
+
+    public static final Supplier<InfestedBedBlock> INFESTED_BED = regBlock("infested_bed", () ->
+            new InfestedBedBlock(BlockBehaviour.Properties.copy(Blocks.BROWN_BED))
+    );
+
+    public static final Supplier<BlockEntityType<InfestedBedTile>> INFESTED_BED_TILE = RegHelper.registerBlockEntityType(
+            res("infested_bed"), () -> PlatformHelper.newBlockEntityType(InfestedBedTile::new, INFESTED_BED.get())
+    );
+
+    public static final Supplier<BedbugEggsItem> BED_BUG_EGGS = regItem("bedbug_eggs", () ->
+            new BedbugEggsItem(new Item.Properties().tab(CreativeModeTab.TAB_MISC))
+    );
+
 
     public static final Supplier<EntityType<BedEntity>> BED_ENTITY = RegHelper.registerEntityType(res("bed_entity"),
             BedEntity::new, MobCategory.MISC, 0.5f, 0.5f, 3, Integer.MAX_VALUE);

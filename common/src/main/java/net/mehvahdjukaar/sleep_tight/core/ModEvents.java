@@ -140,7 +140,8 @@ public class ModEvents {
             BlockPos pos = hitResult.getBlockPos();
             var state = level.getBlockState(pos);
             Block b = state.getBlock();
-            if (state.getBlock() instanceof BedBlock) {
+            //fallsback on bed logic for non sleep action
+            if (state.getBlock() instanceof BedBlock && BedBlock.canSetSpawn(level) && !state.getValue(BedBlock.OCCUPIED)) {
 
                 boolean extraConditions = checkExtraSleepConditions(player, pos);
                 if (!extraConditions) return InteractionResult.sidedSuccess(level.isClientSide);

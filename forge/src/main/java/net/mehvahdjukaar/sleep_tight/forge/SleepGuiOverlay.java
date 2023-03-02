@@ -18,10 +18,14 @@ import net.minecraft.client.gui.screens.InBedChatScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -146,5 +150,6 @@ public class SleepGuiOverlay implements IGuiOverlay {
     //random static global state yay
     private static boolean isHomeBed = false;
     private static boolean hasDreamerEssence = false;
+
 }
 

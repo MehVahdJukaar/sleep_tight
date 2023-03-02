@@ -46,7 +46,7 @@ public class DreamParticle extends TextureSheetParticle {
 
     @Override
     public ParticleRenderType getRenderType() {
-        return ParticleUtil.;
+        return ParticleUtil.ADDITIVE_TRANSLUCENCY_RENDER_TYPE;
     }
 
     @Override
@@ -58,10 +58,10 @@ public class DreamParticle extends TextureSheetParticle {
 
     @Override
     public void render(VertexConsumer buffer, Camera renderInfo, float partialTicks) {
-        Vec3 vec3 = renderInfo.getPosition();
-        float f = (float)(Mth.lerp(partialTicks, this.xo, this.x) - vec3.x());
-        float g = (float)(Mth.lerp(partialTicks, this.yo, this.y) - vec3.y());
-        float h = (float)(Mth.lerp(partialTicks, this.zo, this.z) - vec3.z());
+        Vec3 pos = renderInfo.getPosition();
+        float x = (float)(Mth.lerp(partialTicks, this.xo, this.x) - pos.x());
+        float y = (float)(Mth.lerp(partialTicks, this.yo, this.y) - pos.y());
+        float z = (float)(Mth.lerp(partialTicks, this.zo, this.z) - pos.z());
         Quaternion quaternion;
         if (this.roll == 0.0F) {
             quaternion = renderInfo.rotation();
@@ -71,27 +71,25 @@ public class DreamParticle extends TextureSheetParticle {
             quaternion.mul(Vector3f.ZP.rotation(i));
         }
 
-        Vector3f vector3f = new Vector3f(-1.0F, -1.0F, 0.0F);
-        vector3f.transform(quaternion);
         Vector3f[] vector3fs = new Vector3f[]{new Vector3f(-1.0F, -1.0F, 0.0F), new Vector3f(-1.0F, 1.0F, 0.0F), new Vector3f(1.0F, 1.0F, 0.0F), new Vector3f(1.0F, -1.0F, 0.0F)};
-        float j = this.getQuadSize(partialTicks);
+        float size = this.getQuadSize(partialTicks);
 
         for(int k = 0; k < 4; ++k) {
             Vector3f vector3f2 = vector3fs[k];
             vector3f2.transform(quaternion);
-            vector3f2.mul(j);
-            vector3f2.add(f, g, h);
+            vector3f2.mul(size);
+            vector3f2.add(x, y, z);
         }
 
-        float l = this.getU0();
-        float m = this.getU1();
-        float n = this.getV0();
-        float o = this.getV1();
-        int p = this.getLightColor(partialTicks);
-        buffer.vertex(vector3fs[0].x(), vector3fs[0].y(),vector3fs[0].z()).uv(m, o).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(p).endVertex();
-        buffer.vertex(vector3fs[1].x(), vector3fs[1].y(),vector3fs[1].z()).uv(m, n).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(p).endVertex();
-        buffer.vertex(vector3fs[2].x(), vector3fs[2].y(),vector3fs[2].z()).uv(l, n).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(p).endVertex();
-        buffer.vertex(vector3fs[3].x(), vector3fs[3].y(),vector3fs[3].z()).uv(l, o).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(p).endVertex();
+        float u0 = this.getU0();
+        float u1 = this.getU1();
+        float v0 = this.getV0();
+        float v1 = this.getV1();
+        int light = this.getLightColor(partialTicks);
+        buffer.vertex(vector3fs[0].x(), vector3fs[0].y(),vector3fs[0].z()).uv(u1, v1).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
+        buffer.vertex(vector3fs[1].x(), vector3fs[1].y(),vector3fs[1].z()).uv(u1, v0).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
+        buffer.vertex(vector3fs[2].x(), vector3fs[2].y(),vector3fs[2].z()).uv(u0, v0).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
+        buffer.vertex(vector3fs[3].x(), vector3fs[3].y(),vector3fs[3].z()).uv(u0, v1).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
 
     }
 
@@ -114,27 +112,4 @@ public class DreamParticle extends TextureSheetParticle {
         }
     }
 
-    @Deprecated
-    public static final ParticleRenderType GLOW_LIGHT_PARTICLE_RENDER_TYPE = new ParticleRenderType() {
-        @Override
-        public void begin(BufferBuilder builder, TextureManager textureManager) {
-            RenderSystem.depthMask(false);
-            RenderSystem.setShaderTexture(0, TextureAtlas.LOCATION_PARTICLES);
-            RenderSystem.enableBlend();
-            RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
-            builder.begin(VertexFormat.Mode.QUADS, PARTICLE);
-        }
-
-        @Override
-        public void end(Tesselator tesselator) {
-            tesselator.end();
-            RenderSystem.depthMask(true);
-            RenderSystem.disableBlend();
-            RenderSystem.defaultBlendFunc();
-        }
-
-        public String toString() {
-            return "PARTICLE_SHEET_ADDITIVE_TRANSLUCENT";
-        }
-    };
 }

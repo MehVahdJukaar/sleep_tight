@@ -17,6 +17,7 @@
   "block.sleep_tight.hammock_orange": "Orange Hammock",
   "block.sleep_tight.night_bag": "Night Bag",
   "message.sleep_tight.night_bag": "Not a suitable location",
+  "message.sleep_tight.not_possible_here": "You cant sleep here",
   "message.sleep_tight.start_sleeping": "Press %s to start sleeping",
   "message.sleep_tight.start_resting": "Press %s to start resting",
   "message.sleep_tight.nightmare": "A nightmare wakes you up...",
@@ -38,5 +39,7 @@
   "gui.sleep_tight.time_slept": "Time Slept: %s",
   "effect.sleep_tight.head_start": "Head Start",
   "effect.sleep_tight.head_start.description": "Slightly increases XP gain on mob kill",
-  "entity.sleep_right.bedbug": "Bedbug"
+  "entity.sleep_right.bedbug": "Bedbug",
+  "item.sleep_right.bedbug_egg": "Bedbug Eggs",
+  "item.sleep_right.bedbug_spawn_egg": "Bedbug Spawn Egg"
 }

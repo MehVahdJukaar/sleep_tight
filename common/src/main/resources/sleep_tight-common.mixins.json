@@ -11,6 +11,7 @@
   ],
   "mixins": [
     "BedBlockEntityMixin",
+    "BedBlockMixin",
     "LivingEntityMixin",
     "PhantomMixin",
     "PlayerMixin"
