@@ -5,8 +5,6 @@ import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.core.Registry;
 import net.minecraft.util.random.SimpleWeightedRandomList;
-import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 
 import java.util.List;
@@ -15,8 +13,10 @@ import java.util.function.Supplier;
 public class CommonConfigs {
 
     public static final Supplier<Boolean> FIX_BED_POSITION;
-    public static final Supplier<Boolean> DISABLE_BIG_EXPLOSION; //TODO
+    public static final Supplier<Boolean> DISABLE_BIG_EXPLOSION;
     public static final Supplier<Integer> SLEEP_INTERVAL;
+    public static final Supplier<Boolean> DOUBLE_BED;
+    public static final Supplier<Boolean> LAY_WHEN_ON_COOLDOWN;
 
     public static final Supplier<Integer> HOME_BED_REQUIRED_NIGHTS;
     public static final Supplier<Double> HEAD_START_XP;
@@ -84,8 +84,12 @@ public class CommonConfigs {
         builder.push("misc");
         FIX_BED_POSITION = builder.comment("Fixes multiplayer players being positioned 2 pixels above a bed")
                 .define("fix_bed_position", true);
+        LAY_WHEN_ON_COOLDOWN = builder.comment("Allows laying on a bed when you are on sleeping cooldown")
+                .define("lay_when_on_cooldown",true);
+        DOUBLE_BED = builder.comment("Allows player to sleep in the middle of two beds")
+                .define("queen_size_bed", true);
         DISABLE_BIG_EXPLOSION = builder.comment("Disables damage from bed explosion when used in another dimension")
-                        .define("disable_explosion_damage", true);
+                .define("disable_explosion_damage", true);
         SLEEP_INTERVAL = builder.comment("Interval between two consecutive sleep times for them to not be considered consecutive")
                 .define("sleep_interval", 24000, 0, 1000000);
         builder.pop();
@@ -111,7 +115,7 @@ public class CommonConfigs {
                 .define("effect_clearing_types", PotionClearing.ALL);
         WAKE_UP_EFFECTS = builder.comment("Effects to apply when player wakes up. You can add more entries, this is a list")
                 .defineObject("wake_up_effects", () -> List.of(
-                        new EffectData(SleepTight.HEAD_START.get(), 0.1f,2*60*20,30*20,0)),
+                                new EffectData(SleepTight.HEAD_START.get(), 0.1f, 2 * 60 * 20, 30 * 20, 0)),
                         EffectData.CODEC.listOf());
         builder.pop();
 
@@ -143,7 +147,7 @@ public class CommonConfigs {
         HOME_BED_REQUIRED_NIGHTS = builder.comment("Amount of nights needed to mark a bed as home bed")
                 .define("home_bed_required_nights", 8, 1, 50);
         HEAD_START_XP = builder.comment("Percentage of xp added per tier of the effect. Setting to 1 doubles the effect")
-                        .define("xp_addition",0.05, 0, 1);
+                .define("xp_addition", 0.05, 0, 1);
 
 
         builder.pop();
@@ -162,7 +166,6 @@ public class CommonConfigs {
                 .define("insomnia_duration", 24000 + 12000, 0, 1000000);
 
         builder.pop();
-
 
 
         builder.pop();

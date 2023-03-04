@@ -1,5 +1,8 @@
 package net.mehvahdjukaar.sleep_tight;
 
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.Maps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
 import net.mehvahdjukaar.sleep_tight.common.*;
@@ -33,8 +36,7 @@ import net.minecraft.world.level.material.MaterialColor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -60,6 +62,7 @@ public class SleepTight {
         ModCommands.init();
         RegHelper.addAttributeRegistration(SleepTight::registerEntityAttributes);
 
+        //sleep next to eachother bonus
         //TODO: persist cap after player death. Fix dismount from bed entity. Fix bed entity mount pos
     }
 

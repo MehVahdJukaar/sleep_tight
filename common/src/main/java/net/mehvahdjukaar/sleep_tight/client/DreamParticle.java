@@ -32,6 +32,7 @@ public class DreamParticle extends TextureSheetParticle {
         this.rCol = Math.max(0.0F, Mth.sin((g + 0.0F) * 6.2831855F) * 0.65F + 0.35F);
         this.gCol = Math.max(0.0F, Mth.sin((g + 0.33333334F) * 6.2831855F) * 0.65F + 0.35F);
         this.bCol = Math.max(0.0F, Mth.sin((g + 0.6666667F) * 6.2831855F) * 0.65F + 0.35F);
+
         this.lifetime = (int) MthUtils.nextWeighted(this.random,90, 1, 70);
         this.alpha = 0.5f;
         this.deltaRot = MthUtils.nextWeighted(this.random, 0.03f, 500);

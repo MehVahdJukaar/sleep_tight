@@ -14,9 +14,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -143,7 +143,8 @@ public class ModEvents {
             //fallsback on bed logic for non sleep action
             if (state.getBlock() instanceof BedBlock && BedBlock.canSetSpawn(level) && !state.getValue(BedBlock.OCCUPIED)) {
 
-                boolean extraConditions = checkExtraSleepConditions(player, pos);
+                boolean extraConditions = CommonConfigs.LAY_WHEN_ON_COOLDOWN.get() ||
+                        checkExtraSleepConditions(player, pos);
                 if (!extraConditions) return InteractionResult.sidedSuccess(level.isClientSide);
 
                 if (state.getValue(BedBlock.PART) != BedPart.HEAD) {
@@ -163,12 +164,22 @@ public class ModEvents {
     }
 
     @EventCalled
-    public static Vec3 getSleepingPosition(BlockState state, BlockPos pos) {
+    public static Vec3 getSleepingPosition(Entity entity, BlockState state, BlockPos pos) {
         if (state.getBlock() instanceof IModBed iModBed) {
             return iModBed.getSleepingPosition(state, pos);
-        } else if (state.is(BlockTags.BEDS) && CommonConfigs.FIX_BED_POSITION.get()) {
+        } else if (state.is(BlockTags.BEDS)) {
+            Vec3 c = Vec3.ZERO;
             //vanilla places player 2 pixels above bed. Player then falls down
-            return new Vec3(pos.getX() + 0.5, pos.getY() + 9 / 16f, pos.getZ() + 0.5);
+            if (CommonConfigs.FIX_BED_POSITION.get()) {
+                c = c.add(pos.getX() + 0.5, pos.getY() + 9 / 16f, pos.getZ() + 0.5);
+            }
+            if (entity instanceof Player player) {
+                PlayerSleepData data = SleepTightPlatformStuff.getPlayerSleepData(player);
+                if (data.usingDoubleBed()) {
+                    c = BedEntity.getDoubleBedOffset(state.getValue(BedBlock.FACING), c);
+                }
+            }
+            if (c != Vec3.ZERO) return c;
         }
         return null;
     }
@@ -248,7 +259,7 @@ public class ModEvents {
     @EventCalled
     public static boolean checkExtraSleepConditions(Player player, @Nullable BlockPos bedPos) {
         if (SleepTightPlatformStuff.getPlayerSleepData(player).getInsomniaCooldown(player) > 0) {
-            if (player.level.isClientSide) {
+            if (!player.level.isClientSide) {
                 player.displayClientMessage(Component.translatable("message.sleep_tight.insomnia"), true);
             }
             return false;
@@ -274,7 +285,7 @@ public class ModEvents {
     public static void onLivingDeath(ServerLevel serverLevel, LivingEntity entity, LivingEntity killer) {
         MobEffectInstance i = killer.getEffect(SleepTight.HEAD_START.get());
         if (i != null) {
-            if (entity.lastHurtByPlayerTime > 0 && !entity.wasExperienceConsumed() && !(entity instanceof Player)  &&
+            if (entity.lastHurtByPlayerTime > 0 && !entity.wasExperienceConsumed() && !(entity instanceof Player) &&
                     entity.shouldDropExperience() && serverLevel.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
 
                 double xp = entity.getExperienceReward() * CommonConfigs.HEAD_START_XP.get() * (i.getAmplifier() + 1);

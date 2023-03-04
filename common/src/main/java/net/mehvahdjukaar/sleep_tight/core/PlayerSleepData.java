@@ -25,6 +25,7 @@ public abstract class PlayerSleepData {
     private long lastWokenUpTimeStamp = -1;
     private int consecutiveNightsSlept = 0;
     private int nightsSleptInHomeBed = 0;
+    private boolean usingDoubleBed = false;
 
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
@@ -33,6 +34,7 @@ public abstract class PlayerSleepData {
         tag.putLong("last_time_slept", lastWokenUpTimeStamp);
         tag.putInt("consecutive_nights", consecutiveNightsSlept);
         tag.putInt("home_bed_nights", nightsSleptInHomeBed);
+        tag.putBoolean("using_double_bed",usingDoubleBed);
         return tag;
     }
 
@@ -42,6 +44,7 @@ public abstract class PlayerSleepData {
         this.lastWokenUpTimeStamp = tag.getLong("last_time_slept");
         this.consecutiveNightsSlept = tag.getInt("consecutive_nights");
         this.nightsSleptInHomeBed = tag.getInt("home_bed_nights");
+        this.usingDoubleBed = tag.getBoolean("using_double_bed");
     }
 
     public void addInsomnia(Player player, long duration) {
@@ -130,12 +133,13 @@ public abstract class PlayerSleepData {
         return lastWokenUpTimeStamp;
     }
 
-    public void acceptFromServer(UUID id, long insominaElapse, long sleepTimestamp, int nightSlept, int homeBedNights) {
+    public void acceptFromServer(UUID id, long insominaElapse, long sleepTimestamp, int nightSlept, int homeBedNights, boolean doubleBed) {
         this.homeBed = id;
         this.insomniaWillElapseTimeStamp = insominaElapse;
         this.consecutiveNightsSlept = nightSlept;
         this.lastWokenUpTimeStamp = sleepTimestamp;
         this.nightsSleptInHomeBed = homeBedNights;
+        this.usingDoubleBed = doubleBed;
     }
 
     public void syncToClient(ServerPlayer player) {
@@ -156,9 +160,18 @@ public abstract class PlayerSleepData {
         this.nightsSleptInHomeBed = oldData.nightsSleptInHomeBed;
         this.insomniaWillElapseTimeStamp = oldData.insomniaWillElapseTimeStamp;
         this.lastWokenUpTimeStamp = oldData.lastWokenUpTimeStamp;
+        this.usingDoubleBed = oldData.usingDoubleBed;
     }
 
     public int getHomeBedLevel() {
         return Math.max(0, this.nightsSleptInHomeBed - CommonConfigs.HOME_BED_REQUIRED_NIGHTS.get());
+    }
+
+    public boolean usingDoubleBed() {
+        return usingDoubleBed;
+    }
+
+    public void setDoubleBed(boolean doubleBed) {
+        this.usingDoubleBed = doubleBed;
     }
 }

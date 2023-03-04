@@ -7,8 +7,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
-import net.mehvahdjukaar.sleep_tight.core.BedData;
+import net.mehvahdjukaar.sleep_tight.common.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.NightBagBlock;
+import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -18,18 +19,11 @@ import net.minecraft.client.gui.screens.InBedChatScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.player.PlayerXpEvent;
 
 import java.util.ArrayList;
 
@@ -49,36 +43,35 @@ public class SleepGuiOverlay implements IGuiOverlay {
 
         if (options.getCameraType().isFirstPerson() && (mc.gameMode.getPlayerMode() != GameType.SPECTATOR ||
                 gui.canRenderCrosshairForSpectator(hit))) {
-            if (hit instanceof BlockHitResult blockHitResult) {
-                BlockPos pos = blockHitResult.getBlockPos();
-                BlockState blockState = mc.level.getBlockState(pos);
-                if (blockState.is(BlockTags.BEDS)) {
+            Player player = mc.player;
+            if ((hit instanceof BlockHitResult bh &&
+                    mc.level.getBlockState(bh.getBlockPos()).is(BlockTags.BEDS)) ||
+                    player.getVehicle() instanceof BedEntity) {
 
-                    var c = SleepTightPlatformStuff.getPlayerSleepData(mc.player);
-                    float f = 1 - c.getInsomniaCooldown(mc.player);
-                    if (f < 1) {
+                var c = SleepTightPlatformStuff.getPlayerSleepData(player);
+                float f = 1 - c.getInsomniaCooldown(player);
+                if (f < 1) {
 
-                        gui.setupOverlayRenderState(true, false, SleepTightClient.ICONS);
-                        gui.setBlitOffset(-90);
+                    gui.setupOverlayRenderState(true, false, SleepTightClient.ICONS);
+                    gui.setBlitOffset(-90);
 
-                        poseStack.pushPose();
+                    poseStack.pushPose();
 
-                        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR,
-                                GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR, GlStateManager.SourceFactor.ONE,
-                                GlStateManager.DestFactor.ZERO);
-
-
-                        int j = height / 2 - 7 + 16;
-                        int k = width / 2 - 6;
+                    RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR,
+                            GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR, GlStateManager.SourceFactor.ONE,
+                            GlStateManager.DestFactor.ZERO);
 
 
-                        int l = (int) (f * 11.0F);
-                        GuiComponent.blit(poseStack, k, j, 3, 18, 11, 5, 48, 48);
-                        GuiComponent.blit(poseStack, k, j, 16+3, 18, l, 5, 48, 48);
+                    int j = height / 2 - 7 + 16;
+                    int k = width / 2 - 6;
 
 
-                        poseStack.popPose();
-                    }
+                    int l = (int) (f * 11.0F);
+                    GuiComponent.blit(poseStack, k, j, 3, 18, 11, 5, 48, 48);
+                    GuiComponent.blit(poseStack, k, j, 16 + 3, 18, l, 5, 48, 48);
+
+
+                    poseStack.popPose();
                 }
             }
         }

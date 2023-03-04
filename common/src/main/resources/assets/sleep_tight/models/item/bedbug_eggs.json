@@ -1,3 +1,6 @@
 {
-  "parent": "sleep_tight:item/bedbug_eggs"
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "sleep_tight:item/bedbug_eggs"
+  }
 }

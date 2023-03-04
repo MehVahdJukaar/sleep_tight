@@ -18,6 +18,7 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     private final long sleepTime;
     private final int consecutiveNights;
     private final int homeBedNights;
+    private final boolean doubleBed;
 
     public ClientBoundSyncPlayerSleepCapMessage(FriendlyByteBuf buf) {
         if (buf.readBoolean()) this.id = buf.readUUID();
@@ -26,6 +27,7 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
         this.sleepTime = buf.readLong();
         this.consecutiveNights = buf.readInt();
         this.homeBedNights = buf.readInt();
+        this.doubleBed = buf.readBoolean();
     }
 
     public ClientBoundSyncPlayerSleepCapMessage(PlayerSleepData c) {
@@ -34,6 +36,7 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
         this.sleepTime = c.getLastWokenUpTimeStamp();
         this.consecutiveNights = c.getConsecutiveNightsSlept();
         this.homeBedNights = c.getNightsSleptInHomeBed();
+        this.doubleBed = c.usingDoubleBed();
     }
 
     public ClientBoundSyncPlayerSleepCapMessage(Player player) {
@@ -48,12 +51,13 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
         buf.writeLong(sleepTime);
         buf.writeInt(consecutiveNights);
         buf.writeInt(homeBedNights);
+        buf.writeBoolean(doubleBed);
     }
 
     @Override
     public void handle(ChannelHandler.Context context) {
         Player p = SleepTightClient.getPlayer();
         var c = SleepTightPlatformStuff.getPlayerSleepData(p);
-        c.acceptFromServer(this.id, this.insomniaElapse, this.sleepTime, this.consecutiveNights, this.homeBedNights);
+        c.acceptFromServer(this.id, this.insomniaElapse, this.sleepTime, this.consecutiveNights, this.homeBedNights, this.doubleBed);
     }
 }
