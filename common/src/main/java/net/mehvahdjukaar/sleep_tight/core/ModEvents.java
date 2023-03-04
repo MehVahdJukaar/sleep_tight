@@ -20,6 +20,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
@@ -27,6 +28,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -140,13 +142,8 @@ public class ModEvents {
             BlockPos pos = hitResult.getBlockPos();
             var state = level.getBlockState(pos);
             Block b = state.getBlock();
-            //fallsback on bed logic for non sleep action
-            if (state.getBlock() instanceof BedBlock && BedBlock.canSetSpawn(level) && !state.getValue(BedBlock.OCCUPIED)) {
-
-                boolean extraConditions = CommonConfigs.LAY_WHEN_ON_COOLDOWN.get() ||
-                        checkExtraSleepConditions(player, pos);
-                if (!extraConditions) return InteractionResult.sidedSuccess(level.isClientSide);
-
+            if (state.getBlock() instanceof BedBlock) {
+                //get head
                 if (state.getValue(BedBlock.PART) != BedPart.HEAD) {
                     pos = pos.relative(state.getValue(BedBlock.FACING));
                     state = level.getBlockState(pos);
@@ -154,10 +151,55 @@ public class ModEvents {
                         return InteractionResult.PASS;
                     }
                 }
+                //bed bug egg infestation
+                ItemStack itemInHand = player.getItemInHand(hand);
+                if (itemInHand.getItem() instanceof BedbugEggsItem bb) {
+                    return bb.useOnBed(player, hand, itemInHand, state, pos);
+                }
 
-                BedEntity.layDown(state, level, pos, player);
-                //always success to prevent use action
-                return InteractionResult.SUCCESS;
+                //fallsback on bed logic for non sleep action
+                if (BedBlock.canSetSpawn(level)) {
+
+
+                    //tries clearing double bed
+                    boolean occupied = state.getValue(BedBlock.OCCUPIED);
+                    if (occupied) {
+                        var list = level.getEntitiesOfClass(BedEntity.class, new AABB(pos));
+                        if (list.size() > 1) {
+                            BedEntity bedEntity = list.get(0);
+                            if (!bedEntity.isDoubleBed()) return InteractionResult.PASS;
+
+                            bedEntity.clearDoubleBed();
+                            pos = bedEntity.getDoubleBedPos();
+                            //assumes other state is valid because bed would have noticed otherwise
+                            state = state.setValue(BedBlock.OCCUPIED, false);
+                            level.setBlockAndUpdate(pos, state);
+                            occupied = false;
+
+                        } else {
+                            BlockPos doublePos = BedEntity.getInverseDoubleBedPos(pos, state);
+                            list = level.getEntitiesOfClass(BedEntity.class, new AABB(doublePos));
+                            if (list.size() > 1) {
+                                BedEntity bedEntity = list.get(0);
+                                if (!bedEntity.isDoubleBed()) return InteractionResult.PASS;
+                                bedEntity.clearDoubleBed();
+                                level.setBlockAndUpdate(pos, state.setValue(BedBlock.OCCUPIED, false));
+                                occupied = false;
+                            }
+                        }
+                    }
+
+                    if (!occupied) {
+
+                        boolean extraConditions = CommonConfigs.LAY_WHEN_ON_COOLDOWN.get() ||
+                                checkExtraSleepConditions(player, pos);
+                        if (!extraConditions) return InteractionResult.sidedSuccess(level.isClientSide);
+
+                        BedEntity.layDown(state, level, pos, player);
+                        //always success to prevent use action
+                        return InteractionResult.SUCCESS;
+                    }
+                }
             }
         }
         return InteractionResult.PASS;
@@ -238,8 +280,25 @@ public class ModEvents {
             if (state.getBlock() instanceof IModBed bed) {
                 bed.onLeftBed(state, pos, player);
             }
+            //clears double beds
+            else if (state.is(BlockTags.BEDS) && player instanceof ServerPlayer serverPlayer) {
+                var data = SleepTightPlatformStuff.getPlayerSleepData(player);
+                if (data.usingDoubleBed()) {
+                    BlockPos doublePos = BedEntity.getDoubleBedPos(pos, state);
+                    BlockState doubleState = player.level.getBlockState(doublePos);
+                    if (doubleState.is(BlockTags.BEDS)) {
+                        doubleState = doubleState.setValue(BedBlock.OCCUPIED, false);
+                        if (doubleState == state) {
+                            player.level.setBlockAndUpdate(doublePos, doubleState);
+                        }
+                    }
+                    data.setDoubleBed(false);
+                    data.syncToClient(serverPlayer);
+                }
+            }
         }
     }
+
 
     //true if spawn should be cancelled
     @EventCalled
@@ -256,6 +315,7 @@ public class ModEvents {
                 new ClientBoundSyncPlayerSleepCapMessage(player));
     }
 
+    //similar to what below but isnt time related
     @EventCalled
     public static boolean checkExtraSleepConditions(Player player, @Nullable BlockPos bedPos) {
         if (SleepTightPlatformStuff.getPlayerSleepData(player).getInsomniaCooldown(player) > 0) {
@@ -268,6 +328,7 @@ public class ModEvents {
         return true;
     }
 
+    //this is responsible to check if player can sleep at this precise time
     @EventCalled
     public static InteractionResult onCheckSleepTime(Level level, BlockPos pos) {
         if (level.getBlockState(pos).getBlock() instanceof HammockBlock) {

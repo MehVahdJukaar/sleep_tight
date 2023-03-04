@@ -1,7 +1,7 @@
 {
   "variants": {
     "": {
-      "model": "block/brown_bed"
+      "model": "block/bed"
     }
   }
 }

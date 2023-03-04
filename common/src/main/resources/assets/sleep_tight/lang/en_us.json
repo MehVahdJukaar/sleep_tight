@@ -40,6 +40,6 @@
   "effect.sleep_tight.head_start": "Head Start",
   "effect.sleep_tight.head_start.description": "Slightly increases XP gain on mob kill",
   "entity.sleep_right.bedbug": "Bedbug",
-  "item.sleep_right.bedbug_egg": "Bedbug Eggs",
+  "item.sleep_right.bedbug_eggs": "Bedbug Eggs",
   "item.sleep_right.bedbug_spawn_egg": "Bedbug Spawn Egg"
 }

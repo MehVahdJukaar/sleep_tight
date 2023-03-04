@@ -259,14 +259,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
             return InteractionResult.FAIL;
         }
 
-        if (!BedBlock.canSetSpawn(level)) {
-            if(!level.isClientSide) {
-                level.removeBlock(pos, false);
-                float size = CommonConfigs.DISABLE_BIG_EXPLOSION.get() ? 0 : 5.0F;
-                level.explode(null, DamageSource.badRespawnPointExplosion(), null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, size, true, Explosion.BlockInteraction.DESTROY);
-            }
-            return InteractionResult.sidedSuccess(level.isClientSide);
-        }
+        if (tryExploding(level, pos)) return InteractionResult.sidedSuccess(level.isClientSide);
 
         if (state.getValue(OCCUPIED)) {
             //TODO: make nitwids use hammocks if available
@@ -279,6 +272,18 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
             BedEntity.layDown(state, level, pos, player);
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
+    }
+
+    public static boolean tryExploding(Level level, BlockPos pos) {
+        if (!BedBlock.canSetSpawn(level)) {
+            if(!level.isClientSide) {
+                level.removeBlock(pos, false);
+                float size = CommonConfigs.DISABLE_BIG_EXPLOSION.get() ? 0 : 5.0F;
+                level.explode(null, DamageSource.badRespawnPointExplosion(), null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, size, true, Explosion.BlockInteraction.DESTROY);
+            }
+            return true;
+        }
+        return false;
     }
 
     @Override

@@ -56,6 +56,10 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         this.setPos(mainPos.getX() + 0.5, mainPos.getY() + 0.25, mainPos.getZ() + 0.5);
     }
 
+    public boolean isDoubleBed(){
+        return offsetMode == OffsetMode.DOUBLE_BED;
+    }
+
     public void clearDoubleBed() {
         if (offsetMode == OffsetMode.DOUBLE_BED) offsetMode = OffsetMode.NONE;
     }
@@ -129,7 +133,21 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         }
     }
 
-    private BlockPos getDoubleBedPos() {
+
+    public static Vec3 getDoubleBedOffset(Direction dir, Vec3 vec3) {
+        Direction d = dir.getCounterClockWise();
+        return vec3.add(d.getStepX() * -0.5, 0, d.getStepZ() * -0.5);
+    }
+
+    public static BlockPos getDoubleBedPos(BlockPos pos, BlockState state) {
+        return pos.relative(state.getValue(BedBlock.FACING).getClockWise());
+    }
+
+    public static BlockPos getInverseDoubleBedPos(BlockPos pos, BlockState state) {
+        return pos.relative(state.getValue(BedBlock.FACING).getCounterClockWise());
+    }
+
+    public BlockPos getDoubleBedPos() {
         return this.blockPosition().relative(dir.getCounterClockWise());
     }
 
@@ -201,10 +219,6 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         }
     }
 
-    public static Vec3 getDoubleBedOffset(Direction dir, Vec3 vec3) {
-        Direction d = dir.getCounterClockWise();
-        return vec3.add(d.getStepX() * -0.5, 0, d.getStepZ() * -0.5);
-    }
 
     @Override
     public void onPassengerTurned(Entity entity) {

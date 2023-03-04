@@ -5,10 +5,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.InBedChatScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
+import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
@@ -43,9 +45,19 @@ public class SleepTightForgeClient {
         }
     }
 
+    @SubscribeEvent
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event){
+        if(event.phase == TickEvent.Phase.END){
+            if(event.player.isSleeping()){
+
+            }
+        }
+    }
+
     public static void onAddGuiLayers(RegisterGuiOverlaysEvent event) {
         event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "sleep_indicator", new SleepGuiOverlay());
     }
+
 
 
 }
