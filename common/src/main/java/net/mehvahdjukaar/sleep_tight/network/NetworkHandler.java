@@ -11,6 +11,7 @@ public class NetworkHandler {
         CHANNEL.register(NetworkDir.PLAY_TO_SERVER, ServerBoundCommitSleepMessage.class, ServerBoundCommitSleepMessage::new);
         CHANNEL.register(NetworkDir.BOTH, AccelerateHammockMessage.class, AccelerateHammockMessage::new);
         CHANNEL.register(NetworkDir.PLAY_TO_CLIENT, ClientBoundSyncPlayerSleepCapMessage.class, ClientBoundSyncPlayerSleepCapMessage::new);
+        CHANNEL.register(NetworkDir.PLAY_TO_CLIENT, ClientBoundParticlePacket.class, ClientBoundParticlePacket::new);
     }
 
 }

@@ -344,12 +344,12 @@ public class ModEvents {
 
     @EventCalled
     public static void onLivingDeath(ServerLevel serverLevel, LivingEntity entity, LivingEntity killer) {
-        MobEffectInstance i = killer.getEffect(SleepTight.HEAD_START.get());
+        MobEffectInstance i = killer.getEffect(SleepTight.INVIGORATING.get());
         if (i != null) {
             if (entity.lastHurtByPlayerTime > 0 && !entity.wasExperienceConsumed() && !(entity instanceof Player) &&
                     entity.shouldDropExperience() && serverLevel.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
 
-                double xp = entity.getExperienceReward() * CommonConfigs.HEAD_START_XP.get() * (i.getAmplifier() + 1);
+                double xp = entity.getExperienceReward() * CommonConfigs.INVIGORATING_XP.get() * (i.getAmplifier() + 1);
                 ExperienceOrb.award(serverLevel, entity.position(), (int) xp);
             }
         }

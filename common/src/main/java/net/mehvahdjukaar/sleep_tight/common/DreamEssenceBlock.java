@@ -1,7 +1,9 @@
 package net.mehvahdjukaar.sleep_tight.common;
 
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.minecraft.client.renderer.blockentity.BannerRenderer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.Phantom;
@@ -48,8 +50,14 @@ public class DreamEssenceBlock extends Block {
 
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+      if(true)return;;
         super.animateTick(state, level, pos, random);
-
-        level.addParticle(SleepTight.DREAM_PARTICLE.get(), pos.getX() + 0.5f, pos.getY() + 0.5f, pos.getZ() + 0.5f, 0, 0, 0);
+        long l = level.getGameTime();
+        float freq = 100;
+        float h = (Math.floorMod((pos.getX() * 7L + pos.getY() * 9L + pos.getZ() * 13L) + l, (long)freq)) / freq;
+        float ampl = 0.5f;
+        float dx =( ampl * Mth.sin(6.2831855F * h));
+        float dz =( ampl * Mth.cos(6.2831855F * h));
+        level.addParticle(SleepTight.DREAM_PARTICLE.get(), pos.getX() + 0.5f+dx, pos.getY() + 10/16f, pos.getZ() + 0.5f+dz, 0, 0, 0);
     }
 }

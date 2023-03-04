@@ -1,8 +1,5 @@
 package net.mehvahdjukaar.sleep_tight;
 
-import com.google.common.base.Stopwatch;
-import com.google.common.collect.Maps;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
 import net.mehvahdjukaar.sleep_tight.common.*;
@@ -19,7 +16,6 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
@@ -27,7 +23,6 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.InfestedBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -79,7 +74,7 @@ public class SleepTight {
 
     public static final Supplier<SimpleParticleType> DREAM_PARTICLE = RegHelper.registerParticle(res("dream"));
 
-    public static final Supplier<MobEffect> HEAD_START = RegHelper.registerEffect(res("head_start"), () ->
+    public static final Supplier<MobEffect> INVIGORATING = RegHelper.registerEffect(res("invigorating"), () ->
             new MobEffect(MobEffectCategory.BENEFICIAL, 0x11ff22) {
             });
 

@@ -1,9 +1,12 @@
 package net.mehvahdjukaar.sleep_tight.common;
 
 import dev.architectury.injectables.annotations.PlatformOnly;
+import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -51,8 +54,21 @@ public class DreamerEssenceTargetEntity extends LivingEntity {
 
     @Override
     public void tick() {
-        if(level.getBlockState(this.blockPosition()).getBlock() != SleepTight.DREAMER_ESSENCE.get()){
+        if (level.getBlockState(this.blockPosition()).getBlock() != SleepTight.DREAMER_ESSENCE.get()) {
             this.discard();
+        }
+        if (level.isClientSide && random.nextFloat()<0.2f) {
+            if (Minecraft.getInstance().cameraEntity.distanceToSqr(this) < 28 * 28) {
+                BlockPos pos = this.blockPosition();
+                long l = level.getGameTime();
+                float period = 100;
+                float h = (Math.floorMod((pos.getX() * 7L + pos.getY() * 9L + pos.getZ() * 13L) + l, (long) period)) / period;
+                float ampl = 0.001f;
+                float dx = (ampl * Mth.sin(6.2831855F * h));
+                float dz = (ampl * Mth.cos(6.2831855F * h));
+                float vy = 0.003f + MthUtils.nextWeighted(random, 0.004f, 10);
+                level.addParticle(SleepTight.DREAM_PARTICLE.get(), pos.getX() + 0.5f, pos.getY() + 10 / 16f, pos.getZ() + 0.5f, dx, vy, dz);
+            }
         }
 
     }

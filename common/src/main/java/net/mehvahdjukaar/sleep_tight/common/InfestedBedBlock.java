@@ -1,8 +1,12 @@
 package net.mehvahdjukaar.sleep_tight.common;
 
+import net.mehvahdjukaar.moonlight.api.client.util.ParticleUtil;
 import net.mehvahdjukaar.moonlight.api.set.BlocksColorAPI;
+import net.mehvahdjukaar.sleep_tight.network.ClientBoundParticlePacket;
+import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -167,6 +171,9 @@ public class InfestedBedBlock extends HorizontalDirectionalBlock implements Enti
     public void convertToBed(Level level, BlockState state, BlockPos blockPos) {
         if (level.getBlockEntity(blockPos) instanceof InfestedBedTile tile) {
             BlockPos neighbor = blockPos.relative(getNeighbourDirection(state.getValue(PART), state.getValue(FACING)));
+            if (!level.isClientSide) {
+                NetworkHandler.CHANNEL.sendToAllClientPlayersInRange(level, blockPos,32, new ClientBoundParticlePacket(neighbor, blockPos));
+            }
             Block bed = BlocksColorAPI.getColoredBlock("bed", tile.getColor());
             if (bed != null) {
                 level.setBlock(blockPos, bed.withPropertiesOf(state), 2 | Block.UPDATE_KNOWN_SHAPE);

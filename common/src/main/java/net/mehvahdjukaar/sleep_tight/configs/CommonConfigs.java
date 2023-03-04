@@ -19,7 +19,7 @@ public class CommonConfigs {
     public static final Supplier<Boolean> LAY_WHEN_ON_COOLDOWN;
 
     public static final Supplier<Integer> HOME_BED_REQUIRED_NIGHTS;
-    public static final Supplier<Double> HEAD_START_XP;
+    public static final Supplier<Double> INVIGORATING_XP;
 
 
     public static final Supplier<Boolean> NIGHTMARES_BED;
@@ -61,6 +61,14 @@ public class CommonConfigs {
     public static final Supplier<HungerMode> CONSUME_HUNGER_MODE;
     public static final Supplier<Double> CONSUMED_HUNGER;
 
+    public static final Supplier<Boolean> BEDBUGS_ENABLED;
+    public static final Supplier<Double> BEDBUG_SPAWN_CHANCE;
+    public static final Supplier<Integer> BEDBUG_SPAWN_MAX_RANGE;
+    public static final Supplier<Integer> BEDBUG_SPAWN_MIN_RANGE;
+    public static final Supplier<Integer> BEDBUG_MAX_LIGHT;
+    public static final Supplier<Boolean> PREVENTED_BY_DREAM_CATCHER;
+
+
     public enum EffectIntensity {
         NONE, TIME_BASED, MAX
     }
@@ -94,6 +102,21 @@ public class CommonConfigs {
                 .define("sleep_interval", 24000, 0, 1000000);
         builder.pop();
 
+        builder.push("bedbugs");
+        BEDBUGS_ENABLED = builder.comment("Enable bedbugs").define("enabled",true);
+        BEDBUG_SPAWN_CHANCE = builder.comment("Base spawn chance every time you wake up, increases with difficulty")
+                .define("spawn_chance", 0.1, 0,1);
+        BEDBUG_SPAWN_MAX_RANGE = builder.comment("max radius at which they can spawn")
+                        .define("max_spawn_radius", 10, 1, 64);
+        BEDBUG_SPAWN_MIN_RANGE = builder.comment("max radius at which they can spawn")
+                .define("min_spawn_radius", 6, 1, 64);
+        //BEDBUG_REQUIRE_PATH = builder.comment("Only spawn a bedbug when they can reach your bed")
+        BEDBUG_MAX_LIGHT = builder.comment("Max light level that a bedbug can spawn at")
+                        .define("max_allowed_light_level", 15, 0, 15);
+        PREVENTED_BY_DREAM_CATCHER = builder.comment("Prevents bedbugs when using dream essence")
+                        .define("prevented_by_dream_essence", false);
+        builder.pop();
+
         builder.push("sleep_cooldown");
         HAMMOCK_COOLDOWN = builder.comment("Time before you can sleep/rest again after you've slept in a hammock")
                 .define("hammock", 6000, 0, 1000000);
@@ -115,7 +138,7 @@ public class CommonConfigs {
                 .define("effect_clearing_types", PotionClearing.ALL);
         WAKE_UP_EFFECTS = builder.comment("Effects to apply when player wakes up. You can add more entries, this is a list")
                 .defineObject("wake_up_effects", () -> List.of(
-                                new EffectData(SleepTight.HEAD_START.get(), 0.1f, 2 * 60 * 20, 30 * 20, 0)),
+                                new EffectData(SleepTight.INVIGORATING.get(), 0.1f, 2 * 60 * 20, 30 * 20, 0)),
                         EffectData.CODEC.listOf());
         builder.pop();
 
@@ -146,8 +169,8 @@ public class CommonConfigs {
 
         HOME_BED_REQUIRED_NIGHTS = builder.comment("Amount of nights needed to mark a bed as home bed")
                 .define("home_bed_required_nights", 8, 1, 50);
-        HEAD_START_XP = builder.comment("Percentage of xp added per tier of the effect. Setting to 1 doubles the effect")
-                .define("xp_addition", 0.05, 0, 1);
+        INVIGORATING_XP = builder.comment("Percentage of xp added per tier of the effect. Setting to 1 doubles the effect")
+                .define("invigorating_effect_xp", 0.05, 0, 1);
 
 
         builder.pop();
