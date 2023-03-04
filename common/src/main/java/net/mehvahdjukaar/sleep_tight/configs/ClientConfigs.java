@@ -6,6 +6,7 @@ import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.client.HammockBlockTileRenderer;
 import net.minecraft.util.Mth;
 
+import java.net.InetAddress;
 import java.util.function.Supplier;
 
 public class ClientConfigs {
@@ -17,6 +18,11 @@ public class ClientConfigs {
     public static final Supplier<Double> SWING_FORCE;
     public static final Supplier<Double> CAMERA_ROLL_INTENSITY;
     public static final Supplier<Boolean> HAMMOCK_ANIMATION;
+
+    public static final Supplier<Double> PARTICLE_ALPHA;
+    public static final Supplier<Integer> PARTICLE_LIFETIME;
+    public static final Supplier<Double> PARTICLE_SPAWN_FREQUENCY;
+
 
     static{
         ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.CLIENT);
@@ -38,6 +44,13 @@ public class ClientConfigs {
                         .define("camera_roll_intensity", 1, 0, 1f);
         builder.pop();
 
+        builder.push("dream_essence");
+        PARTICLE_ALPHA = builder.comment("How subtle the effect will be essentially. Set to one for bring fancy particles")
+                        .define("particle_alpha", 0.1, 0, 1);
+        PARTICLE_LIFETIME = builder.comment("Affects the plume height. lower to make the plume shorter")
+                .define("particle_lifetime", 380, 1, 10000);
+        PARTICLE_SPAWN_FREQUENCY = builder.comment("Makes particles spawn more often. Set to 0 to disable")
+                        .define("particle_spawn_chance",0.15, 0, 1);
         builder.onChange(ClientConfigs::onChange);
         builder.buildAndRegister();
     }

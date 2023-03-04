@@ -29,11 +29,13 @@ public class ClientBoundRideImmediatelyPacket implements Message {
         Player player = SleepTightClient.getPlayer();
         Level level = player.level;
         Entity entity = level.getEntity(id);
-        player.startRiding(entity);
-        player.setYRot(entity.getYRot());
-        player.setYHeadRot(entity.getYRot());
-        player.yRotO = player.getYRot();
-        player.yHeadRotO = player.yHeadRot;
+        if (entity != null) {
+            player.startRiding(entity);
+            player.setYRot(entity.getYRot());
+            player.setYHeadRot(entity.getYRot());
+            player.yRotO = player.getYRot();
+            player.yHeadRotO = player.yHeadRot;
+        }
     }
 
 

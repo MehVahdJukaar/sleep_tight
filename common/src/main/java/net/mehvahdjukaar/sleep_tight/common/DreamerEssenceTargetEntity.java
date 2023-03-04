@@ -3,6 +3,7 @@ package net.mehvahdjukaar.sleep_tight.common;
 import dev.architectury.injectables.annotations.PlatformOnly;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
@@ -57,7 +58,7 @@ public class DreamerEssenceTargetEntity extends LivingEntity {
         if (level.getBlockState(this.blockPosition()).getBlock() != SleepTight.DREAMER_ESSENCE.get()) {
             this.discard();
         }
-        if (level.isClientSide && random.nextFloat()<0.2f) {
+        if (level.isClientSide && random.nextFloat() < ClientConfigs.PARTICLE_SPAWN_FREQUENCY.get()) {
             if (Minecraft.getInstance().cameraEntity.distanceToSqr(this) < 28 * 28) {
                 BlockPos pos = this.blockPosition();
                 long l = level.getGameTime();

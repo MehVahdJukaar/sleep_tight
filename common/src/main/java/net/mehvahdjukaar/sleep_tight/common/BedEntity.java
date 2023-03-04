@@ -78,7 +78,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         this.bedState = level.getBlockState(pos);
         boolean isBed = isValidBed(bedState);
 
-        if (offsetMode == OffsetMode.DOUBLE_BED) {
+        if (offsetMode == OffsetMode.DOUBLE_BED && tickCount>2) {
             BlockPos otherPos = getDoubleBedPos();
             if (level.getBlockState(otherPos) != bedState) {
                 this.clearDoubleBed();

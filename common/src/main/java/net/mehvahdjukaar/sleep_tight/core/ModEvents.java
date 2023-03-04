@@ -3,6 +3,7 @@ package net.mehvahdjukaar.sleep_tight.core;
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
+import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.mehvahdjukaar.sleep_tight.common.*;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.network.ClientBoundSyncPlayerSleepCapMessage;
@@ -206,6 +207,8 @@ public class ModEvents {
 
     @EventCalled
     public static Vec3 getSleepingPosition(Entity entity, BlockState state, BlockPos pos) {
+        //sleep started
+        if (entity.level.isClientSide) ClientEvents.onSleepStarted(entity, state, pos);
         if (state.getBlock() instanceof IModBed iModBed) {
             return iModBed.getSleepingPosition(state, pos);
         } else if (state.is(BlockTags.BEDS)) {

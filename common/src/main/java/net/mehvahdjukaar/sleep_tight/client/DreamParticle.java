@@ -5,10 +5,10 @@ import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3f;
 import net.mehvahdjukaar.moonlight.api.client.util.ParticleUtil;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
+import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
@@ -18,31 +18,34 @@ import org.jetbrains.annotations.Nullable;
 
 public class DreamParticle extends TextureSheetParticle {
 
-    private static final float MAX_ALPHA = 0.15f;
+    private final double maxAlpha;
     private final float deltaRot;
 
     protected DreamParticle(ClientLevel clientLevel, double x, double y, double z, double vx, double vy, double vz) {
         super(clientLevel, x, y, z, vx, vy, vz);
-        float g = this.random.nextFloat();
+        float g = 0.3f+this.random.nextFloat()*0.35f;
         this.rCol = Math.max(0.0F, Mth.sin((g + 0.0F) * 6.2831855F) * 0.65F + 0.35F);
         this.gCol = Math.max(0.0F, Mth.sin((g + 0.33333334F) * 6.2831855F) * 0.65F + 0.35F);
         this.bCol = Math.max(0.0F, Mth.sin((g + 0.6666667F) * 6.2831855F) * 0.65F + 0.35F);
 
-        this.lifetime = 150 + (int) MthUtils.nextWeighted(this.random, 160, 1);
-        this.alpha = 0.1f;
+        int l = ClientConfigs.PARTICLE_LIFETIME.get();
+        this.lifetime = l + (int) MthUtils.nextWeighted(this.random, l*0.6f, 1);
+        this.alpha = 0.01f;
         this.deltaRot = (0.002f + MthUtils.nextWeighted(this.random, 0.05f, 10)) * (this.random.nextBoolean() ? -1 : 1);
         this.quadSize = 0.04f + MthUtils.nextWeighted(this.random, 0.08f, 200);
         this.roll = (float) (Math.PI * this.random.nextFloat());
         this.friction = 0.995f;
         this.gravity = 0;
-        this.xd *= 0.02;
+        this.xd *= 0.005;
         this.xd += vx;
-        this.zd *= 0.02;
+        this.zd *= 0.005;
         this.zd += vz;
 
         this.yd = vy;
 
         this.setSize(0.1f, 0.1f);
+
+        this.maxAlpha = ClientConfigs.PARTICLE_ALPHA.get()*7;
     }
 
     @Override
@@ -57,7 +60,7 @@ public class DreamParticle extends TextureSheetParticle {
         this.roll += this.deltaRot;
         int alphaFadeTime = 40;
         if (this.age < alphaFadeTime) {
-            this.alpha += MAX_ALPHA / alphaFadeTime;
+            this.alpha += maxAlpha / alphaFadeTime;
             this.alpha = Math.min(this.alpha, 1);
         } else if (this.lifetime - this.age < alphaFadeTime) {
             this.alpha *=0.95;
@@ -68,6 +71,7 @@ public class DreamParticle extends TextureSheetParticle {
     @Override
     public void render(VertexConsumer buffer, Camera renderInfo, float partialTicks) {
         Vec3 pos = renderInfo.getPosition();
+
         float x = (float) (Mth.lerp(partialTicks, this.xo, this.x) - pos.x());
         float y = (float) (Mth.lerp(partialTicks, this.yo, this.y) - pos.y());
         float z = (float) (Mth.lerp(partialTicks, this.zo, this.z) - pos.z());

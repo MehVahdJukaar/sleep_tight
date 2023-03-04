@@ -43,6 +43,7 @@ public class SleepTight {
     public static final String MOD_ID = "sleep_tight";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
     public static final boolean SUPP = PlatformHelper.isModLoaded("supplementaries");
+    public static final boolean HS = PlatformHelper.isModLoaded("heartstone");
 
     public static ResourceLocation res(String name) {
         return new ResourceLocation(MOD_ID, name);
@@ -71,6 +72,7 @@ public class SleepTight {
     }
 
     public static final TagKey<EntityType<?>> WAKE_UP_BLACKLIST = TagKey.create(Registry.ENTITY_TYPE_REGISTRY, res("wake_up_blacklist"));
+    public static final TagKey<Block> VANILLA_BEDS = TagKey.create(Registry.BLOCK_REGISTRY, res("vanilla_beds"));
 
     public static final Supplier<SimpleParticleType> DREAM_PARTICLE = RegHelper.registerParticle(res("dream"));
 

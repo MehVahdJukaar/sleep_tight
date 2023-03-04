@@ -1,0 +1,23 @@
+{
+  "replace": false,
+  "values": [
+    "red_bed",
+    "yellow_bed",
+    "lime_bed",
+    "brown_bed",
+    "blue_bed",
+    "light_blue_bed",
+    "pink_bed",
+    "white_bed",
+    "light_gray_bed",
+    "gray_bed",
+    "black_bed",
+    "cyan_bed",
+    "green_bed",
+    "magenta_bed",
+    "purple_bed",
+    "orange_bed"
+  ]
+}
+
+

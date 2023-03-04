@@ -2,25 +2,32 @@ package net.mehvahdjukaar.sleep_tight.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Vector3f;
+import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
 import net.mehvahdjukaar.sleep_tight.common.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
-import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
-import net.mehvahdjukaar.sleep_tight.network.ServerBoundCommitSleepMessage;
+import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
+import net.mehvahdjukaar.sleep_tight.core.SleepEffectsHelper;
+import net.mehvahdjukaar.sleep_tight.integration.HeartstoneCompat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import org.jetbrains.annotations.Nullable;
 
 public class ClientEvents {
 
     public static boolean cameraHack;
 
+    @EventCalled
     public static <T extends LivingEntity> void rotatePlayerInBed(T entity, PoseStack poseStack, float partialTicks,
                                                                   MultiBufferSource bufferSource) {
         BlockPos pos = null;
@@ -68,7 +75,7 @@ public class ClientEvents {
         }
     }
 
-
+    @EventCalled
     public static void rotateCameraOverHammockAxis(float partialTicks, PoseStack matrixStack, Camera camera) {
         Minecraft mc = Minecraft.getInstance();
         var e = mc.getCameraEntity();
@@ -95,6 +102,19 @@ public class ClientEvents {
 
             matrixStack.translate(0, o, 0);
             matrixStack.mulPose(camera.rotation());
+        }
+    }
+
+
+    public static void onSleepStarted(Entity entity, BlockState state, BlockPos pos) {
+        if(entity instanceof Player player) {
+            BlockPos partnerPos = SleepEffectsHelper.getPartnerPos(player, state, pos);
+            if (partnerPos != null) {
+                entity.level.addParticle(ParticleTypes.HEART,
+                        0.5 + (pos.getX() + partnerPos.getX()) / 2f,
+                        0.6 + (pos.getY() + partnerPos.getY()) / 2f,
+                        0.5 + (pos.getZ() + partnerPos.getZ()) / 2f, 0, 0, 0);
+            }
         }
     }
 

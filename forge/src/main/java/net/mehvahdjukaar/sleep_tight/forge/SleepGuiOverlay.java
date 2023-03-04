@@ -102,15 +102,12 @@ public class SleepGuiOverlay implements IGuiOverlay {
         if (isHomeBed) {
             int x = s.width / 2 - 120;
             if (MthUtils.isWithinRectangle(x, y, iconSize, iconSize, mouseX, mouseY)) {
-                int a = SleepTightPlatformStuff.getPlayerSleepData(player).getConsecutiveNightsSlept();
-                var b = SleepTightPlatformStuff.getPlayerSleepData(player).getInsomniaCooldown(player);
-                var nc = SleepTightPlatformStuff.getPlayerSleepData(player).getNightmareChance(player, player.getSleepingPos().orElse(BlockPos.ZERO));
-                int nightSlept = SleepTightPlatformStuff.getPlayerSleepData(player).getNightsSleptInHomeBed();
+                var data = SleepTightPlatformStuff.getPlayerSleepData(player);
+                double nightmare = data.getNightmareChance(player, player.getSleepingPos().orElse(BlockPos.ZERO));
+                int bedLevel = data.getHomeBedLevel();
                 var lines = new ArrayList<>(mc.font.split(Component.translatable("gui.sleep_tight.home_bed"), 200));
-                lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.time_slept", nightSlept), 200));
-                lines.addAll(mc.font.split(Component.literal("consecutive nights" + a), 200));
-                lines.addAll(mc.font.split(Component.literal("sleep cooldown" + b), 200));
-                lines.addAll(mc.font.split(Component.literal("nightmare chance" + nc), 200));
+                lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.bed_level", bedLevel), 200));
+                lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.nightmare", nightmare), 200));
                 s.renderTooltip(poseStack, lines, mouseX, mouseY);
             }
         }
