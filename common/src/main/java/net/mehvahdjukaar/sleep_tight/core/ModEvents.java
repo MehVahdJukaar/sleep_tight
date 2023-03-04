@@ -158,8 +158,7 @@ public class ModEvents {
                 }
 
                 //fallsback on bed logic for non sleep action
-                if (BedBlock.canSetSpawn(level)) {
-
+                if (BedBlock.canSetSpawn(level) && !player.isSecondaryUseActive()) {
 
                     //tries clearing double bed
                     boolean occupied = state.getValue(BedBlock.OCCUPIED);
@@ -320,7 +319,9 @@ public class ModEvents {
     public static boolean checkExtraSleepConditions(Player player, @Nullable BlockPos bedPos) {
         if (SleepTightPlatformStuff.getPlayerSleepData(player).getInsomniaCooldown(player) > 0) {
             if (!player.level.isClientSide) {
-                player.displayClientMessage(Component.translatable("message.sleep_tight.insomnia"), true);
+                String s = isDayTime(player.level) ? "message.sleep_tight.insomnia.day" :
+                        "message.sleep_tight_insomnia.night";
+                player.displayClientMessage(Component.translatable(s), true);
             }
             return false;
         }
@@ -332,14 +333,18 @@ public class ModEvents {
     @EventCalled
     public static InteractionResult onCheckSleepTime(Level level, BlockPos pos) {
         if (level.getBlockState(pos).getBlock() instanceof HammockBlock) {
-            long t = level.getDayTime() % 24000L;
-            if (t > 500L && t < 11500L) {
-                return InteractionResult.SUCCESS;
-            }
+            if (isDayTime(level)) return InteractionResult.SUCCESS;
             return InteractionResult.FAIL;
         }
-        return InteractionResult.SUCCESS;
-        // return InteractionResult.PASS;
+        return InteractionResult.PASS;
+    }
+
+    private static boolean isDayTime(Level level) {
+        long t = level.getDayTime() % 24000L;
+        if (t > 500L && t < 11500L) {
+            return true;
+        }
+        return false;
     }
 
     @EventCalled

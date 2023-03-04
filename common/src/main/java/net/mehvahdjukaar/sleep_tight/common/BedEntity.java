@@ -9,8 +9,10 @@ import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
+import net.mehvahdjukaar.sleep_tight.network.ClientBoundRideImmediatelyPacket;
 import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
 import net.mehvahdjukaar.sleep_tight.network.ServerBoundCommitSleepMessage;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -282,26 +284,30 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
                     BlockState s = level.getBlockState(relative);
                     if (s == state) {
                         mode = OffsetMode.DOUBLE_BED;
+                        level.setBlockAndUpdate(relative, state.setValue(BedBlock.OCCUPIED, true));
                     } else {
                         //move pos on double bed left one
                         dir = dir.getOpposite();
                         relative = pos.relative(dir);
                         s = level.getBlockState(relative);
                         if (s == state) {
+                            level.setBlockAndUpdate(pos, state.setValue(BedBlock.OCCUPIED, true));
                             pos = relative;
                             mode = OffsetMode.DOUBLE_BED;
                         }
                     }
-                    if (mode == OffsetMode.DOUBLE_BED) {
-                        level.setBlockAndUpdate(relative, state.setValue(BedBlock.OCCUPIED, true));
-                    }
                 }
             }
+            level.setBlockAndUpdate(pos, state.setValue(BedBlock.OCCUPIED, true));
+
             BedEntity entity = new BedEntity(level, pos, state, mode);
 
             level.addFreshEntity(entity);
             player.startRiding(entity);
-            level.setBlockAndUpdate(pos, state.setValue(BedBlock.OCCUPIED, true));
+            if(player instanceof ServerPlayer serverPlayer) {
+                //dont ask me why this is needed
+               NetworkHandler.CHANNEL.sendToClientPlayer(serverPlayer, new ClientBoundRideImmediatelyPacket(entity));
+            }
 
         } else if (level.getBlockEntity(pos) instanceof HammockBlockEntity tile) {
 
@@ -341,6 +347,9 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     public Component getRidingMessage(Component keyMessage) {
+        this.bedState = level.getBlockState(this.blockPosition());
+       // this.positionRider(Minecraft.getInstance().player);
+
         if (bedState.getBlock() instanceof HammockBlock) {
             return Component.translatable("message.sleep_tight.start_resting", keyMessage);
         } else {

@@ -55,12 +55,12 @@ public class DreamParticle extends TextureSheetParticle {
         super.tick();
         this.oRoll = this.roll;
         this.roll += this.deltaRot;
-        int alphaFadeTime = 15;
+        int alphaFadeTime = 40;
         if (this.age < alphaFadeTime) {
             this.alpha += MAX_ALPHA / alphaFadeTime;
             this.alpha = Math.min(this.alpha, 1);
         } else if (this.lifetime - this.age < alphaFadeTime) {
-            this.alpha -= MAX_ALPHA / alphaFadeTime;
+            this.alpha *=0.95;
         }
 
     }
@@ -98,7 +98,7 @@ public class DreamParticle extends TextureSheetParticle {
         buffer.vertex(vector3fs[0].x(), vector3fs[0].y(), vector3fs[0].z()).uv(u1, v1).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
         buffer.vertex(vector3fs[1].x(), vector3fs[1].y(), vector3fs[1].z()).uv(u1, v0).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
         buffer.vertex(vector3fs[2].x(), vector3fs[2].y(), vector3fs[2].z()).uv(u0, v0).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
-        buffer.vertex(vector3fs[3].x(), vector3fs[3].y(), vector3fs[3].z()).uv(u0, v1).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
+        buffer.vertex(vector3fs[3].x(), vector3fs[3].y(), vector3fs[3].z()).uv(u0, v1).color(1, 1, 1, this.alpha).uv2(light).endVertex();
 
     }
 

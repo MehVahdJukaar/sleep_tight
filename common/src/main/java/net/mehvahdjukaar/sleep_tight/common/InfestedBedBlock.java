@@ -1,5 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.common;
 
+import net.mehvahdjukaar.moonlight.api.block.IColored;
+import net.mehvahdjukaar.moonlight.api.block.IWashable;
 import net.mehvahdjukaar.moonlight.api.client.util.ParticleUtil;
 import net.mehvahdjukaar.moonlight.api.set.BlocksColorAPI;
 import net.mehvahdjukaar.sleep_tight.network.ClientBoundParticlePacket;
@@ -21,6 +23,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ThrownPotion;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.LingeringPotionItem;
 import net.minecraft.world.item.SplashPotionItem;
@@ -44,7 +47,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 
-public class InfestedBedBlock extends HorizontalDirectionalBlock implements EntityBlock {
+public class InfestedBedBlock extends HorizontalDirectionalBlock implements EntityBlock , IWashable {
     public static final EnumProperty<BedPart> PART = BlockStateProperties.BED_PART;
     public static final VoxelShape NORTH_SHAPE = Blocks.WHITE_BED.defaultBlockState().setValue(FACING, Direction.SOUTH).getShape(null, null);
     public static final VoxelShape SOUTH_SHAPE = Blocks.WHITE_BED.defaultBlockState().setValue(FACING, Direction.NORTH).getShape(null, null);
@@ -186,5 +189,14 @@ public class InfestedBedBlock extends HorizontalDirectionalBlock implements Enti
     @Override
     public void spawnAfterBreak(BlockState state, ServerLevel level, BlockPos pos, ItemStack stack, boolean bl) {
         super.spawnAfterBreak(state, level, pos, stack, bl);
+    }
+
+    @Override
+    public boolean tryWash(Level level, BlockPos pos, BlockState state) {
+        if(level.getBlockEntity(pos) instanceof InfestedBedTile tile){
+            tile.setColor(DyeColor.WHITE);
+            return true;
+        }
+        return false;
     }
 }
