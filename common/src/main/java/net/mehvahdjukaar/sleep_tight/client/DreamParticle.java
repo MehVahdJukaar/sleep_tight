@@ -18,18 +18,18 @@ import org.jetbrains.annotations.Nullable;
 
 public class DreamParticle extends TextureSheetParticle {
 
-    private final double maxAlpha;
+    private final float maxAlpha;
     private final float deltaRot;
 
     protected DreamParticle(ClientLevel clientLevel, double x, double y, double z, double vx, double vy, double vz) {
         super(clientLevel, x, y, z, vx, vy, vz);
-        float g = 0.3f+this.random.nextFloat()*0.35f;
+        float g = 0.3f + this.random.nextFloat() * 0.35f;
         this.rCol = Math.max(0.0F, Mth.sin((g + 0.0F) * 6.2831855F) * 0.65F + 0.35F);
         this.gCol = Math.max(0.0F, Mth.sin((g + 0.33333334F) * 6.2831855F) * 0.65F + 0.35F);
         this.bCol = Math.max(0.0F, Mth.sin((g + 0.6666667F) * 6.2831855F) * 0.65F + 0.35F);
 
         int l = ClientConfigs.PARTICLE_LIFETIME.get();
-        this.lifetime = l + (int) MthUtils.nextWeighted(this.random, l*0.6f, 1);
+        this.lifetime = l + (int) MthUtils.nextWeighted(this.random, l * 0.6f, 1);
         this.alpha = 0.01f;
         this.deltaRot = (0.002f + MthUtils.nextWeighted(this.random, 0.05f, 10)) * (this.random.nextBoolean() ? -1 : 1);
         this.quadSize = 0.04f + MthUtils.nextWeighted(this.random, 0.08f, 200);
@@ -45,7 +45,7 @@ public class DreamParticle extends TextureSheetParticle {
 
         this.setSize(0.1f, 0.1f);
 
-        this.maxAlpha = ClientConfigs.PARTICLE_ALPHA.get()*7;
+        this.maxAlpha = (float) (double) ClientConfigs.PARTICLE_ALPHA.get() * 7;
     }
 
     @Override
@@ -61,9 +61,10 @@ public class DreamParticle extends TextureSheetParticle {
         int alphaFadeTime = 40;
         if (this.age < alphaFadeTime) {
             this.alpha += maxAlpha / alphaFadeTime;
-            this.alpha = Math.min(this.alpha, 1);
-        } else if (this.lifetime - this.age < alphaFadeTime) {
-            this.alpha *=0.95;
+            this.alpha = Math.min(this.alpha, this.maxAlpha);
+        }
+        if (this.lifetime - this.age < alphaFadeTime) {
+            this.alpha *= 0.95;
         }
 
     }
@@ -126,11 +127,33 @@ public class DreamParticle extends TextureSheetParticle {
 
         @Nullable
         @Override
-        public Particle createParticle(SimpleParticleType pType, ClientLevel pLevel, double pX, double pY, double pZ,
-                                       double pXSpeed, double pYSpeed, double pZSpeed) {
-            var p = new DreamParticle(pLevel, pX, pY, pZ, pXSpeed, pYSpeed, pZSpeed);
-            p.setSpriteFromAge(sprite);
+        public Particle createParticle(SimpleParticleType pType, ClientLevel level, double pX, double pY, double pZ,
+                                       double period, double unused, double mode) {
 
+            DreamParticle p;
+            //floaty particles
+            if (mode == 1) {
+                float h = (float) period;
+                float ampl = 0.001f;
+                float dx = (ampl * Mth.sin(6.2831855F * h));
+                float dz = (ampl * Mth.cos(6.2831855F * h));
+                float vy = 0.003f + MthUtils.nextWeighted(level.random, 0.004f, 10);
+                p = new DreamParticle(level, pX, pY, pZ, dx, vy, dz);
+
+            } else if (mode == 2) {
+                float yaw = level.random.nextFloat() * 2 * Mth.PI;
+                float pitch = Mth.randomBetween(level.random, -0.1f, 0.5f) * Mth.PI;
+                float len = 0.4f+level.random.nextFloat()*0.3f;
+                Vec3 v = new Vec3(0, 0, len).xRot(pitch).yRot(yaw);
+                p = new DreamParticle(level, pX, pY, pZ, v.x, v.y * 0.75, v.z);
+                p.friction = 0.78f;
+                p.alpha = p.maxAlpha;
+                p.setLifetime(60 + level.random.nextInt(180));
+            } else {
+                p = new DreamParticle(level, pX, pY, pZ, period, unused, mode);
+            }
+
+            p.setSpriteFromAge(sprite);
             return p;
         }
     }

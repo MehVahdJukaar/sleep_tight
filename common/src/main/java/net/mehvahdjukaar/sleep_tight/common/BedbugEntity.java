@@ -1,10 +1,12 @@
 package net.mehvahdjukaar.sleep_tight.common;
 
+import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.RandomSource;
@@ -14,7 +16,6 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
@@ -22,12 +23,8 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
-import net.minecraft.world.entity.animal.IronGolem;
-import net.minecraft.world.entity.animal.goat.Goat;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.monster.Silverfish;
 import net.minecraft.world.entity.monster.Spider;
-import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -39,8 +36,11 @@ import org.jetbrains.annotations.Nullable;
 public class BedbugEntity extends Monster {
     private static final EntityDataAccessor<Byte> DATA_FLAGS_ID = SynchedEntityData.defineId(BedbugEntity.class, EntityDataSerializers.BYTE);
 
-    public BedbugEntity(EntityType<? extends Spider> entityType, Level level) {
+    public BedbugEntity(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
+    }
+    public BedbugEntity( Level level) {
+        super(SleepTight.BEDBUG_ENTITY.get(), level);
     }
 
     @Override
@@ -51,7 +51,7 @@ public class BedbugEntity extends Monster {
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this, new Class[0]));
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         //this.targetSelector.addGoal(2, new BedbugEntity.SpiderTargetGoal(this, Player.class));
         //this.targetSelector.addGoal(3, new BedbugEntity.SpiderTargetGoal(this, IronGolem.class));
     }
@@ -127,7 +127,7 @@ public class BedbugEntity extends Monster {
      * Returns true if the WatchableObject (Byte) is 0x01 otherwise returns false. The WatchableObject is updated using setBesideClimableBlock.
      */
     public boolean isClimbing() {
-        return ((Byte) this.entityData.get(DATA_FLAGS_ID) & 1) != 0;
+        return ( this.entityData.get(DATA_FLAGS_ID) & 1) != 0;
     }
 
     /**
@@ -140,32 +140,7 @@ public class BedbugEntity extends Monster {
         } else {
             b &= -2;
         }
-
         this.entityData.set(DATA_FLAGS_ID, b);
-    }
-
-    @Override
-    @Nullable
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType reason, @Nullable SpawnGroupData groupData, @Nullable CompoundTag dataTag) {
-        SpawnGroupData spawnData = super.finalizeSpawn(level, difficulty, reason, groupData, dataTag);
-        RandomSource randomSource = level.getRandom();
-
-
-        if (spawnData == null) {
-            spawnData = new Spider.SpiderEffectsGroupData();
-            if (level.getDifficulty() == Difficulty.HARD && randomSource.nextFloat() < 0.1F * difficulty.getSpecialMultiplier()) {
-                ((Spider.SpiderEffectsGroupData) spawnData).setRandomEffect(randomSource);
-            }
-        }
-
-        if (spawnData instanceof Spider.SpiderEffectsGroupData) {
-            MobEffect mobEffect = ((Spider.SpiderEffectsGroupData) spawnData).effect;
-            if (mobEffect != null) {
-                this.addEffect(new MobEffectInstance(mobEffect, Integer.MAX_VALUE));
-            }
-        }
-
-        return spawnData;
     }
 
     @Override
@@ -207,5 +182,10 @@ public class BedbugEntity extends Monster {
             float f = this.mob.getLightLevelDependentMagicValue();
             return f >= 0.5F ? false : super.canUse();
         }
+    }
+
+
+    public static void trySpawning(BlockPos pos, ServerPlayer player) {
+
     }
 }

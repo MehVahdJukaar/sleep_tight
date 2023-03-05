@@ -3,19 +3,21 @@ package net.mehvahdjukaar.sleep_tight.network;
 import net.mehvahdjukaar.moonlight.api.platform.network.ChannelHandler;
 import net.mehvahdjukaar.moonlight.api.platform.network.Message;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
+import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
+import net.mehvahdjukaar.sleep_tight.common.BedEntity;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
-public class ClientBoundRideImmediatelyPacket implements Message {
+public class ClientBoundRideImmediatelyMessage implements Message {
     private final int id;
 
-    public ClientBoundRideImmediatelyPacket(FriendlyByteBuf buf) {
+    public ClientBoundRideImmediatelyMessage(FriendlyByteBuf buf) {
         this.id = buf.readInt();
     }
 
-    public ClientBoundRideImmediatelyPacket(Entity entity) {
+    public ClientBoundRideImmediatelyMessage(Entity entity) {
         this.id = entity.getId();
     }
 
@@ -35,6 +37,9 @@ public class ClientBoundRideImmediatelyPacket implements Message {
             player.setYHeadRot(entity.getYRot());
             player.yRotO = player.getYRot();
             player.yHeadRotO = player.yHeadRot;
+        }
+        if(entity instanceof BedEntity bed){
+           ClientEvents. displayRidingMessage(bed);
         }
     }
 

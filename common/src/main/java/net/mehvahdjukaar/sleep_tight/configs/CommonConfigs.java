@@ -3,12 +3,11 @@ package net.mehvahdjukaar.sleep_tight.configs;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigBuilder;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
-import net.minecraft.client.renderer.EffectInstance;
 import net.minecraft.core.Registry;
 import net.minecraft.util.random.SimpleWeightedRandomList;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.monster.Phantom;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -71,6 +70,7 @@ public class CommonConfigs {
     public static final Supplier<Double> BEDBUG_SPAWN_CHANCE;
     public static final Supplier<Integer> BEDBUG_SPAWN_MAX_RANGE;
     public static final Supplier<Integer> BEDBUG_SPAWN_MIN_RANGE;
+    public static final Supplier<Integer> BEDBUG_TRIES;
     public static final Supplier<Integer> BEDBUG_MAX_LIGHT;
     public static final Supplier<Boolean> PREVENTED_BY_DREAM_CATCHER;
 
@@ -104,6 +104,7 @@ public class CommonConfigs {
         ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.COMMON);
 
         builder.push("misc");
+
         FIX_BED_POSITION = builder.comment("Fixes multiplayer players being positioned 2 pixels above a bed")
                 .define("fix_bed_position", true);
         LAY_WHEN_ON_COOLDOWN = builder.comment("Allows laying on a bed when you are on sleeping cooldown")
@@ -118,9 +119,10 @@ public class CommonConfigs {
         HEARTSTONE_MODE = builder.comment("Gives some benefit when sleeping next to somebody else. By default only works in conjunction with heartstone mod")
                 .define("enabled", HeartstoneMode.WITH_MOD);
         HEARTSTONE_EFFECT = builder.comment("Effect to give to players when they wake up")
-                        .defineObjectList("effects", ()->List.of(new EffectData(MobEffects.REGENERATION,
-                                0, 0,20*60, 20)), EffectData.CODEC);
+                .defineObjectList("effects", () -> List.of(new EffectData(MobEffects.REGENERATION,
+                        0, 0, 20 * 60, 20)), EffectData.CODEC);
         builder.pop();
+
         builder.pop();
 
         builder.push("bedbugs");
@@ -131,9 +133,11 @@ public class CommonConfigs {
                 .define("max_spawn_radius", 10, 1, 64);
         BEDBUG_SPAWN_MIN_RANGE = builder.comment("max radius at which they can spawn")
                 .define("min_spawn_radius", 6, 1, 64);
-        //BEDBUG_REQUIRE_PATH = builder.comment("Only spawn a bedbug when they can reach your bed")
         BEDBUG_MAX_LIGHT = builder.comment("Max light level that a bedbug can spawn at")
                 .define("max_allowed_light_level", 15, 0, 15);
+        BEDBUG_TRIES = builder.comment("The game will perform x attempts to spawn a bedbug around each player when they wake up. This already takes into account the chance config." +
+                        "High values will decrease failed attempts")
+                .define("tries", 25, 0, 1000);
         PREVENTED_BY_DREAM_CATCHER = builder.comment("Prevents bedbugs when using dream essence")
                 .define("prevented_by_dream_essence", false);
         builder.pop();
@@ -159,7 +163,7 @@ public class CommonConfigs {
                 .define("effect_clearing_types", PotionClearing.ALL);
         WAKE_UP_EFFECTS = builder.comment("Effects to apply when player wakes up. You can add more entries, this is a list")
                 .defineObject("wake_up_effects", () -> List.of(
-                                new EffectData(SleepTight.INVIGORATING.get(),0, 0.1f, 2 * 60 * 20, 30 * 20 )),
+                                new EffectData(SleepTight.INVIGORATING.get(), 0, 0.1f, 2 * 60 * 20, 30 * 20)),
                         EffectData.CODEC.listOf());
         builder.pop();
 

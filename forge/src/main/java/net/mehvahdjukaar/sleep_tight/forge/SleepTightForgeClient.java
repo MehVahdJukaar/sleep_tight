@@ -4,6 +4,11 @@ import net.mehvahdjukaar.sleep_tight.common.BedEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.InBedChatScreen;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
 import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.client.event.ScreenEvent;
@@ -46,11 +51,13 @@ public class SleepTightForgeClient {
     }
 
     @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event){
-        if(event.phase == TickEvent.Phase.END){
-            if(event.player.isSleeping()){
-
-            }
+    public static void renderPlayer(RenderPlayerEvent.Pre event){
+        Player player = event.getEntity();
+        Minecraft mc = Minecraft.getInstance();
+        if(player == mc.player &&
+                mc.options.getCameraType().isFirstPerson() &&
+                player.getVehicle() instanceof BedEntity ){
+            event.getRenderer().getModel().head.visible = false;
         }
     }
 

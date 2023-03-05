@@ -1,9 +1,10 @@
 package net.mehvahdjukaar.sleep_tight.common;
 
 import dev.architectury.injectables.annotations.PlatformOnly;
-import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
+import net.mehvahdjukaar.sleep_tight.network.ClientBoundParticleMessage;
+import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
@@ -59,19 +60,32 @@ public class DreamerEssenceTargetEntity extends LivingEntity {
             this.discard();
         }
         if (level.isClientSide && random.nextFloat() < ClientConfigs.PARTICLE_SPAWN_FREQUENCY.get()) {
-            if (Minecraft.getInstance().cameraEntity.distanceToSqr(this) < 28 * 28) {
+            if (Minecraft.getInstance().cameraEntity.distanceToSqr(this) < 30 * 30d) {
                 BlockPos pos = this.blockPosition();
                 long l = level.getGameTime();
                 float period = 100;
                 float h = (Math.floorMod((pos.getX() * 7L + pos.getY() * 9L + pos.getZ() * 13L) + l, (long) period)) / period;
-                float ampl = 0.001f;
-                float dx = (ampl * Mth.sin(6.2831855F * h));
-                float dz = (ampl * Mth.cos(6.2831855F * h));
-                float vy = 0.003f + MthUtils.nextWeighted(random, 0.004f, 10);
-                level.addParticle(SleepTight.DREAM_PARTICLE.get(), pos.getX() + 0.5f, pos.getY() + 10 / 16f, pos.getZ() + 0.5f, dx, vy, dz);
+                level.addParticle(SleepTight.DREAM_PARTICLE.get(), pos.getX() + 0.5f,
+                        pos.getY() + 10 / 16f, pos.getZ() + 0.5f, h, 0, 1);
             }
         }
+    }
 
+    @Override
+    public void remove(RemovalReason reason) {
+        if (!this.isRemoved() && !level.isClientSide) {
+            NetworkHandler.CHANNEL.sentToAllClientPlayersTrackingEntity(this, ClientBoundParticleMessage.dreamEssence(this.blockPosition()));
+        }
+        super.remove(reason);
+    }
+
+    public static void spawnDeathParticles(Level level, BlockPos pos) {
+        if (level.isClientSide()) {
+            for (int i = 0; i < Mth.randomBetween(level.getRandom(), 30, 50); i++) {
+                level.addParticle(SleepTight.DREAM_PARTICLE.get(), pos.getX() + 0.5,
+                        pos.getY() + 0.3125, pos.getZ() + 0.5, 0, 0, 2);
+            }
+        }
     }
 
     @Override

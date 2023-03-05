@@ -129,9 +129,14 @@ public class SleepTight {
             new BedbugEggsItem(new Item.Properties().tab(CreativeModeTab.TAB_MISC))
     );
 
+    public static final Supplier<EntityType<BedbugEntity>> BEDBUG_ENTITY = RegHelper.registerEntityType(res("bedbug"),
+            BedbugEntity::new, MobCategory.MONSTER, 0.75f, 0.75f, 3, Integer.MAX_VALUE);
+
 
     public static final Supplier<EntityType<BedEntity>> BED_ENTITY = RegHelper.registerEntityType(res("bed_entity"),
             BedEntity::new, MobCategory.MISC, 0.5f, 0.5f, 3, Integer.MAX_VALUE);
+
+
 
 
     public static <T extends Block> Supplier<T> regWithItem(String name, Supplier<T> blockFactory, CreativeModeTab tab) {

@@ -269,6 +269,8 @@ public class ModEvents {
             playerCap.addInsomnia(player, CommonConfigs.BED_COOLDOWN.get());
             playerCap.syncToClient(player);
 
+
+            BedbugEntity.trySpawning(pos, player);
         }
     }
 
@@ -323,7 +325,7 @@ public class ModEvents {
         if (SleepTightPlatformStuff.getPlayerSleepData(player).getInsomniaCooldown(player) > 0) {
             if (!player.level.isClientSide) {
                 String s = isDayTime(player.level) ? "message.sleep_tight.insomnia.day" :
-                        "message.sleep_tight_insomnia.night";
+                        "message.sleep_tight.insomnia.night";
                 player.displayClientMessage(Component.translatable(s), true);
             }
             return false;

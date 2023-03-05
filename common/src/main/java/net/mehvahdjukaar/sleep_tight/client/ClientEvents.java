@@ -6,22 +6,18 @@ import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
 import net.mehvahdjukaar.sleep_tight.common.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
-import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.core.SleepEffectsHelper;
-import net.mehvahdjukaar.sleep_tight.integration.HeartstoneCompat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
-import org.jetbrains.annotations.Nullable;
 
 public class ClientEvents {
 
@@ -107,7 +103,7 @@ public class ClientEvents {
 
 
     public static void onSleepStarted(Entity entity, BlockState state, BlockPos pos) {
-        if(entity instanceof Player player) {
+        if (entity instanceof Player player) {
             BlockPos partnerPos = SleepEffectsHelper.getPartnerPos(player, state, pos);
             if (partnerPos != null) {
                 entity.level.addParticle(ParticleTypes.HEART,
@@ -118,5 +114,10 @@ public class ClientEvents {
         }
     }
 
-
+    public static void displayRidingMessage(BedEntity bed) {
+        Minecraft mc = Minecraft.getInstance();
+        Component component = bed.getRidingMessage(mc.options.keyJump.getTranslatedKeyMessage());
+        mc.gui.setOverlayMessage(component, false);
+        mc.getNarrator().sayNow(component);
+    }
 }

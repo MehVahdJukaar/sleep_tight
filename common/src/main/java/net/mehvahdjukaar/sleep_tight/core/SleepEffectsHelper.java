@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
@@ -175,13 +176,16 @@ public class SleepEffectsHelper {
     private static boolean hasPartnerAt(Player player, CommonConfigs.HeartstoneMode mode, Level level, BlockPos otherPos) {
         BlockState leftState = level.getBlockState(otherPos);
         if (leftState.getBlock() instanceof BedBlock && leftState.getValue(BedBlock.OCCUPIED)) {
-            for (var p : level.getEntitiesOfClass(Player.class, new AABB(otherPos))) {
-                if (p.getSleepingPos().orElse(null) == otherPos) {
-                    if (mode == CommonConfigs.HeartstoneMode.WITH_MOD) {
-                        return HeartstoneCompat.isFren(player, p);
-                    } else return true;
-                }
+            AABB bb = new AABB(otherPos);
+            for (var p : level.getEntitiesOfClass(Player.class, bb,
+                    e -> e.getSleepingPos().orElse(null) == otherPos)) {
+                if (mode == CommonConfigs.HeartstoneMode.WITH_MOD) {
+                    return HeartstoneCompat.isFren(player, p);
+                } else return true;
             }
+            var vl = level.getEntitiesOfClass(Villager.class, bb,
+                    v -> v.getSleepingPos().orElse(null) == otherPos);
+            return !vl.isEmpty();
         }
         return false;
     }

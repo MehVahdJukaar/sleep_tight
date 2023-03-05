@@ -9,10 +9,10 @@ import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
-import net.mehvahdjukaar.sleep_tight.network.ClientBoundRideImmediatelyPacket;
+import net.mehvahdjukaar.sleep_tight.network.ClientBoundRideImmediatelyMessage;
+import net.mehvahdjukaar.sleep_tight.network.ClientBoundSleepImmediatelyMessage;
 import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
 import net.mehvahdjukaar.sleep_tight.network.ServerBoundCommitSleepMessage;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -181,15 +181,16 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
 
     @Override
     protected void defineSynchedData() {
-
     }
 
     @Override
     protected void readAdditionalSaveData(@Nonnull CompoundTag compound) {
+        this.offsetMode = OffsetMode.values()[compound.getByte("mode")];
     }
 
     @Override
     protected void addAdditionalSaveData(@Nonnull CompoundTag compound) {
+        compound.putByte("mode", (byte) offsetMode.ordinal());
     }
 
     @Nonnull
@@ -221,7 +222,6 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         }
     }
 
-
     @Override
     public void onPassengerTurned(Entity entity) {
         float diff = Mth.wrapDegrees(entity.getYHeadRot() - this.getYRot());
@@ -250,9 +250,71 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         passenger.setPose(Pose.SLEEPING);
     }
 
+    @Override
+    public void onInputUpdate(boolean left, boolean right, boolean up, boolean down, boolean sprint, boolean jumping) {
+        if (jumping) {
+            NetworkHandler.CHANNEL.sendToServer(new ServerBoundCommitSleepMessage());
+        } else if (left ^ right) {
+            if (this.level.getBlockEntity(this.getOnPos()) instanceof HammockBlockEntity tile) {
+                if (left) {
+                    tile.accelerateLeft();
+                } else {
+                    tile.accelerateRight();
+                }
+            }
+        }
+    }
+
+    @Override
+    public void writeSpawnData(FriendlyByteBuf buf) {
+        buf.writeInt(this.dir.get2DDataValue());
+        buf.writeInt(this.offsetMode.ordinal());
+    }
+
+    @Override
+    public void readSpawnData(FriendlyByteBuf buf) {
+        this.dir = Direction.from2DDataValue(buf.readInt());
+        this.offsetMode = OffsetMode.values()[buf.readInt()];
+
+    }
+
+    public Component getRidingMessage(Component keyMessage) {
+        this.bedState = level.getBlockState(this.blockPosition());
+        if (bedState.getBlock() instanceof HammockBlock) {
+            return Component.translatable("message.sleep_tight.start_resting", keyMessage);
+        } else {
+            return Component.translatable("message.sleep_tight.start_sleeping", keyMessage);
+        }
+    }
+
+    @Override
+    public boolean isAttackable() {
+        return false;
+    }
+
+    @Override
+    public boolean skipAttackInteraction(Entity entity) {
+        return true;
+    }
+
+    @Override
+    public boolean isInvulnerable() {
+        return true;
+    }
+
+    private enum OffsetMode {
+        NONE, HAMMOCK_3L, DOUBLE_BED;
+    }
+
+    private static boolean isHammock3L(BlockState state) {
+        return state.getBlock() instanceof HammockBlock && !state.getValue(HammockBlock.PART).isOnFence();
+    }
+
+
     public void startSleepingOn(ServerPlayer player) {
 
-        var r = player.startSleepInBed(this.getOnPos());
+        BlockPos pos = this.blockPosition();
+        var r = player.startSleepInBed(pos);
         if (r.left().isPresent()) {
             Component m = r.left().get().getMessage();
             if (m != null) {
@@ -267,6 +329,8 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             PlayerSleepData data = SleepTightPlatformStuff.getPlayerSleepData(player);
             data.setDoubleBed(offsetMode == OffsetMode.DOUBLE_BED);
             data.syncToClient(player);
+
+            NetworkHandler.CHANNEL.sendToClientPlayer(player, new ClientBoundSleepImmediatelyMessage(pos));
         }
     }
 
@@ -306,7 +370,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             player.startRiding(entity);
             if(player instanceof ServerPlayer serverPlayer) {
                 //dont ask me why this is needed
-               NetworkHandler.CHANNEL.sendToClientPlayer(serverPlayer, new ClientBoundRideImmediatelyPacket(entity));
+                NetworkHandler.CHANNEL.sendToClientPlayer(serverPlayer, new ClientBoundRideImmediatelyMessage(entity));
             }
 
         } else if (level.getBlockEntity(pos) instanceof HammockBlockEntity tile) {
@@ -318,66 +382,4 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         }
     }
 
-    @Override
-    public void onInputUpdate(boolean left, boolean right, boolean up, boolean down, boolean sprint, boolean jumping) {
-        if (jumping) {
-            NetworkHandler.CHANNEL.sendToServer(new ServerBoundCommitSleepMessage());
-        } else if (left ^ right) {
-            if (this.level.getBlockEntity(this.getOnPos()) instanceof HammockBlockEntity tile) {
-                if (left) {
-                    tile.accelerateLeft();
-                } else {
-                    tile.accelerateRight();
-                }
-            }
-        }
-    }
-
-    @Override
-    public void writeSpawnData(FriendlyByteBuf buf) {
-        buf.writeInt(this.dir.get2DDataValue());
-        buf.writeInt(this.offsetMode.ordinal());
-    }
-
-    @Override
-    public void readSpawnData(FriendlyByteBuf buf) {
-        this.dir = Direction.from2DDataValue(buf.readInt());
-        this.offsetMode = OffsetMode.values()[buf.readInt()];
-
-    }
-
-    public Component getRidingMessage(Component keyMessage) {
-        this.bedState = level.getBlockState(this.blockPosition());
-       // this.positionRider(Minecraft.getInstance().player);
-
-        if (bedState.getBlock() instanceof HammockBlock) {
-            return Component.translatable("message.sleep_tight.start_resting", keyMessage);
-        } else {
-            return Component.translatable("message.sleep_tight.start_sleeping", keyMessage);
-
-        }
-    }
-
-    @Override
-    public boolean isAttackable() {
-        return false;
-    }
-
-    @Override
-    public boolean skipAttackInteraction(Entity entity) {
-        return true;
-    }
-
-    @Override
-    public boolean isInvulnerable() {
-        return true;
-    }
-
-    private enum OffsetMode {
-        NONE, HAMMOCK_3L, DOUBLE_BED;
-    }
-
-    private static boolean isHammock3L(BlockState state) {
-        return state.getBlock() instanceof HammockBlock && !state.getValue(HammockBlock.PART).isOnFence();
-    }
 }

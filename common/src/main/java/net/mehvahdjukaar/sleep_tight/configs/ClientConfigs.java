@@ -24,6 +24,11 @@ public class ClientConfigs {
     public static final Supplier<Double> PARTICLE_SPAWN_FREQUENCY;
 
 
+    public static final Supplier<Boolean> INSOMNIA_TIMER;
+    public static final Supplier<Boolean> INSOMNIA_COOLDOWN;
+    public static final Supplier<Boolean> SHOW_TIME;
+    public static final Supplier<Boolean> TIME_FORMAT_24H;
+
     static{
         ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.CLIENT);
 
@@ -51,6 +56,19 @@ public class ClientConfigs {
                 .define("particle_lifetime", 380, 1, 10000);
         PARTICLE_SPAWN_FREQUENCY = builder.comment("Makes particles spawn more often. Set to 0 to disable")
                         .define("particle_spawn_chance",0.15, 0, 1);
+        TIME_FORMAT_24H =builder.define("24h_time_format", true);
+        builder.pop();
+
+
+        builder.push("misc");
+        INSOMNIA_TIMER = builder.comment("Show insomnia missing time when laying on a bed")
+                .define("show_insomnia_timer", false);
+        INSOMNIA_COOLDOWN = builder.comment("Show insomnia cooldown as a small bed icon above crossair when aiming at a bed or in one")
+                .define("crossair_insomnia_cooldown", true);
+        SHOW_TIME = builder.comment("Displays current time when sleeping")
+                .define("show_time_when_sleeping", true);
+        builder.pop();
+
         builder.onChange(ClientConfigs::onChange);
         builder.buildAndRegister();
     }
