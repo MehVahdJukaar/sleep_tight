@@ -8,6 +8,7 @@ import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.BedEntity;
+import net.mehvahdjukaar.sleep_tight.common.ILayDownBlock;
 import net.mehvahdjukaar.sleep_tight.common.NightBagBlock;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
@@ -56,7 +57,7 @@ public class SleepGuiOverlay implements IGuiOverlay {
 
             boolean laying = player.getVehicle() instanceof BedEntity;
             if (laying || (cooldown && hit instanceof BlockHitResult bh &&
-                    mc.level.getBlockState(bh.getBlockPos()).is(BlockTags.BEDS))) {
+                    mc.level.getBlockState(bh.getBlockPos()).getBlock() instanceof ILayDownBlock)) {
 
 
                 var c = SleepTightPlatformStuff.getPlayerSleepData(player);

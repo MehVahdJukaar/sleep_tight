@@ -2,7 +2,7 @@ package net.mehvahdjukaar.sleep_tight.core;
 
 import net.mehvahdjukaar.sleep_tight.common.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
-import net.mehvahdjukaar.sleep_tight.common.IVanillaBed;
+import net.mehvahdjukaar.sleep_tight.common.IExtraBedDataProvider;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.integration.HeartstoneCompat;
 import net.minecraft.core.BlockPos;
@@ -30,7 +30,7 @@ public class SleepEffectsHelper {
 
     public static void applyEffectsOnWakeUp(PlayerSleepData playerCap, ServerPlayer player,
                                             long dayTimeDelta, BlockEntity blockEntity) {
-        if (blockEntity instanceof IVanillaBed bed) {
+        if (blockEntity instanceof IExtraBedDataProvider bed) {
             applyVanillaBedBonuses(player, dayTimeDelta, bed.getBedData(), playerCap);
             applyHeartstoneBonuses(player, blockEntity, bed.getBedData(), playerCap);
 

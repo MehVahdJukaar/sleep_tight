@@ -2,6 +2,6 @@ package net.mehvahdjukaar.sleep_tight.common;
 
 import net.mehvahdjukaar.sleep_tight.core.BedData;
 
-public interface IVanillaBed {
+public interface IExtraBedDataProvider extends ILayDownBlock{
     BedData getBedData();
 }

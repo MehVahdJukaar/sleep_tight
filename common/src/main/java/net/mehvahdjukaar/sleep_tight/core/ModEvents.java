@@ -1,7 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
-import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.mehvahdjukaar.sleep_tight.common.*;
@@ -18,11 +17,8 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.ExperienceOrb;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
@@ -118,7 +114,7 @@ public class ModEvents {
 
             } else if (this == SLEPT_IN_HAMMOCK) {
                 long i = dayTime + 24000L;
-                return (i - i % 24000L) - 12001L;
+                return (i - i % 24000L) - 11001L;
             }
             return newTime;
         }
@@ -155,7 +151,7 @@ public class ModEvents {
                 //bed bug egg infestation
                 ItemStack itemInHand = player.getItemInHand(hand);
                 if (itemInHand.getItem() instanceof BedbugEggsItem bb) {
-                    return bb.useOnBed(player, hand, itemInHand, state, pos);
+                    return bb.useOnBed(player, hand, itemInHand, state, pos, hitResult);
                 }
 
                 //fallsback on bed logic for non sleep action
@@ -261,7 +257,7 @@ public class ModEvents {
             BlockPos pos = p.get();
             PlayerSleepData playerCap = SleepTightPlatformStuff.getPlayerSleepData(player);
             BlockEntity blockEntity = player.level.getBlockEntity(pos);
-            if (blockEntity instanceof IVanillaBed tile) {
+            if (blockEntity instanceof IExtraBedDataProvider tile) {
                 playerCap.onNightSleptInto(tile.getBedData(), player);
             }
             SleepEffectsHelper.applyEffectsOnWakeUp(playerCap, player, dayTimeDelta, blockEntity);
@@ -344,7 +340,7 @@ public class ModEvents {
         return InteractionResult.PASS;
     }
 
-    private static boolean isDayTime(Level level) {
+    public static boolean isDayTime(Level level) {
         long t = level.getDayTime() % 24000L;
         if (t > 500L && t < 11500L) {
             return true;
@@ -352,16 +348,5 @@ public class ModEvents {
         return false;
     }
 
-    @EventCalled
-    public static void onLivingDeath(ServerLevel serverLevel, LivingEntity entity, LivingEntity killer) {
-        MobEffectInstance i = killer.getEffect(SleepTight.INVIGORATING.get());
-        if (i != null) {
-            if (entity.lastHurtByPlayerTime > 0 && !entity.wasExperienceConsumed() && !(entity instanceof Player) &&
-                    entity.shouldDropExperience() && serverLevel.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
 
-                double xp = entity.getExperienceReward() * CommonConfigs.INVIGORATING_XP.get() * (i.getAmplifier() + 1);
-                ExperienceOrb.award(serverLevel, entity.position(), (int) xp);
-            }
-        }
-    }
 }

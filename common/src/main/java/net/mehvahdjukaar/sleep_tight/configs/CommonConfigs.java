@@ -45,7 +45,7 @@ public class CommonConfigs {
     public static final Supplier<Integer> ENCOUNTER_INSOMNIA_DURATION;
 
     public static final Supplier<Integer> BED_COOLDOWN;
-    public static final Supplier<Integer> HAMMOCK_COOLDOWN;
+    public static final Supplier<Integer> HAMMOCK_COOLDOWN; //TODO
     public static final Supplier<Integer> NIGHT_BAG_COOLDOWN; //TODO
 
     public static final Supplier<BedStatus> BED_BENEFITS;
@@ -195,7 +195,7 @@ public class CommonConfigs {
         HOME_BED_REQUIRED_NIGHTS = builder.comment("Amount of nights needed to mark a bed as home bed")
                 .define("home_bed_required_nights", 8, 1, 50);
         INVIGORATING_XP = builder.comment("Percentage of xp added per tier of the effect. Setting to 1 doubles the effect")
-                .define("invigorating_effect_xp", 0.05, 0, 1);
+                .define("invigorating_effect_xp", 0.1, 0, 1);
 
 
         builder.pop();

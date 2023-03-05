@@ -2,7 +2,7 @@ package net.mehvahdjukaar.sleep_tight.forge;
 
 import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
-import net.mehvahdjukaar.sleep_tight.common.IVanillaBed;
+import net.mehvahdjukaar.sleep_tight.common.IExtraBedDataProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -31,7 +31,7 @@ public class ForgePlayerSleepCapability extends PlayerSleepData implements ICapa
     @Nullable
     public static BedData getHomeBedIfHere(Player player, BlockPos pos) {
         ForgePlayerSleepCapability c = player.getCapability(ForgePlayerSleepCapability.TOKEN).orElse(null);
-        if (c != null && player.level.getBlockEntity(pos) instanceof IVanillaBed bed) {
+        if (c != null && player.level.getBlockEntity(pos) instanceof IExtraBedDataProvider bed) {
             BedData bedCap = bed.getBedData();
             if (bedCap.getId().equals(c.getHomeBed()) && bedCap.isHomeBedFor(player)) {
                 return bedCap;

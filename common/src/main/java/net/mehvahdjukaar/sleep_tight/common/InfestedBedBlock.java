@@ -44,7 +44,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 
-public class InfestedBedBlock extends HorizontalDirectionalBlock implements EntityBlock , IWashable {
+public class InfestedBedBlock extends HorizontalDirectionalBlock implements EntityBlock, IWashable {
     public static final EnumProperty<BedPart> PART = BlockStateProperties.BED_PART;
     public static final VoxelShape NORTH_SHAPE = Blocks.WHITE_BED.defaultBlockState().setValue(FACING, Direction.SOUTH).getShape(null, null);
     public static final VoxelShape SOUTH_SHAPE = Blocks.WHITE_BED.defaultBlockState().setValue(FACING, Direction.NORTH).getShape(null, null);
@@ -173,8 +173,8 @@ public class InfestedBedBlock extends HorizontalDirectionalBlock implements Enti
             Direction dir = getNeighbourDirection(state.getValue(PART), state.getValue(FACING));
             BlockPos neighbor = blockPos.relative(dir);
             if (!level.isClientSide) {
-                NetworkHandler.CHANNEL.sendToAllClientPlayersInRange(level, blockPos,32,
-                         ClientBoundParticleMessage.bedbug(blockPos, dir));
+                NetworkHandler.CHANNEL.sendToAllClientPlayersInRange(level, blockPos, 32,
+                        ClientBoundParticleMessage.bedbug(blockPos, dir));
             }
             Block bed = BlocksColorAPI.getColoredBlock("bed", tile.getColor());
             if (bed != null) {
@@ -192,10 +192,18 @@ public class InfestedBedBlock extends HorizontalDirectionalBlock implements Enti
 
     @Override
     public boolean tryWash(Level level, BlockPos pos, BlockState state) {
-        if(level.getBlockEntity(pos) instanceof InfestedBedTile tile){
+        if (level.getBlockEntity(pos) instanceof InfestedBedTile tile) {
             tile.setColor(DyeColor.WHITE);
             return true;
         }
         return false;
+    }
+
+    @Override
+    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
+        if (level.getBlockEntity(pos) instanceof InfestedBedTile tile) {
+            return BlocksColorAPI.getColoredItem("bed", tile.getColor()).getDefaultInstance();
+        }
+        return getCloneItemStack(level, pos, state);
     }
 }

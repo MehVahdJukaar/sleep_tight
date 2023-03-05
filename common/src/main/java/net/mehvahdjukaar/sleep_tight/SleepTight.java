@@ -77,8 +77,7 @@ public class SleepTight {
     public static final Supplier<SimpleParticleType> DREAM_PARTICLE = RegHelper.registerParticle(res("dream"));
 
     public static final Supplier<MobEffect> INVIGORATING = RegHelper.registerEffect(res("invigorating"), () ->
-            new MobEffect(MobEffectCategory.BENEFICIAL, 0x11ff22) {
-            });
+            new InvigoratingEffect(MobEffectCategory.BENEFICIAL, 0x11ff22));
 
 
     public static final Supplier<EntityType<DreamerEssenceTargetEntity>> DREAMER_ESSENCE_ENTITY = RegHelper.registerEntityType(

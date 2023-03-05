@@ -8,6 +8,7 @@ import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
+import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.mehvahdjukaar.sleep_tight.network.ClientBoundRideImmediatelyMessage;
 import net.mehvahdjukaar.sleep_tight.network.ClientBoundSleepImmediatelyMessage;
@@ -58,7 +59,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         this.setPos(mainPos.getX() + 0.5, mainPos.getY() + 0.25, mainPos.getZ() + 0.5);
     }
 
-    public boolean isDoubleBed(){
+    public boolean isDoubleBed() {
         return offsetMode == OffsetMode.DOUBLE_BED;
     }
 
@@ -78,7 +79,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         this.bedState = level.getBlockState(pos);
         boolean isBed = isValidBed(bedState);
 
-        if (offsetMode == OffsetMode.DOUBLE_BED && tickCount>2) {
+        if (offsetMode == OffsetMode.DOUBLE_BED && tickCount > 2) {
             BlockPos otherPos = getDoubleBedPos();
             if (level.getBlockState(otherPos) != bedState) {
                 this.clearDoubleBed();
@@ -315,12 +316,17 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
 
         BlockPos pos = this.blockPosition();
         var r = player.startSleepInBed(pos);
-        if (r.left().isPresent()) {
-            Component m = r.left().get().getMessage();
+        var op = r.left();
+        if (op.isPresent()) {
+            Player.BedSleepingProblem problem = op.get();
+            Component m;
+            if (problem == Player.BedSleepingProblem.NOT_POSSIBLE_NOW && this.bedState.getBlock() instanceof IModBed mb) {
+                m = mb.getSleepingProblemMessage();
+            } else m = problem.getMessage();
             if (m != null) {
                 player.displayClientMessage(m, true);
             }
-        }else{
+        } else {
             var e = player.getVehicle();
             if (e instanceof BedEntity) {
                 player.removeVehicle();
@@ -368,7 +374,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
 
             level.addFreshEntity(entity);
             player.startRiding(entity);
-            if(player instanceof ServerPlayer serverPlayer) {
+            if (player instanceof ServerPlayer serverPlayer) {
                 //dont ask me why this is needed
                 NetworkHandler.CHANNEL.sendToClientPlayer(serverPlayer, new ClientBoundRideImmediatelyMessage(entity));
             }

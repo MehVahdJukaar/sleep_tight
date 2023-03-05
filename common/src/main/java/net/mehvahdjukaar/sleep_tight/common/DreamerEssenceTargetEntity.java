@@ -95,8 +95,6 @@ public class DreamerEssenceTargetEntity extends LivingEntity {
     @Override
     public boolean hurt(DamageSource source, float amount) {
         if (source.getEntity() instanceof Phantom) {
-
-
             return true;
         }
         return false;
