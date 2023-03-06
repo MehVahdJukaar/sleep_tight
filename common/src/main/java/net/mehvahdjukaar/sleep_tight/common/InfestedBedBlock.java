@@ -2,6 +2,7 @@ package net.mehvahdjukaar.sleep_tight.common;
 
 import net.mehvahdjukaar.moonlight.api.block.IWashable;
 import net.mehvahdjukaar.moonlight.api.set.BlocksColorAPI;
+import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.integration.network.ClientBoundParticleMessage;
 import net.mehvahdjukaar.sleep_tight.integration.network.NetworkHandler;
 import net.minecraft.core.BlockPos;
@@ -27,6 +28,7 @@ import net.minecraft.world.item.SplashPotionItem;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.*;
@@ -90,8 +92,19 @@ public class InfestedBedBlock extends HorizontalDirectionalBlock implements Enti
     }
 
     @Override
-    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        super.animateTick(state, level, pos, random);
+    public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide && player.isCreative()) {
+            BedPart bedPart = state.getValue(PART);
+            if (bedPart == BedPart.FOOT) {
+                BlockPos blockPos = pos.relative(getNeighbourDirection(bedPart, state.getValue(FACING)));
+                BlockState blockState = level.getBlockState(blockPos);
+                if (blockState.is(this) && blockState.getValue(PART) == BedPart.HEAD) {
+                    level.setBlock(blockPos, Blocks.AIR.defaultBlockState(), 35);
+                    level.levelEvent(player, 2001, blockPos, Block.getId(blockState));
+                }
+            }
+        }
+        super.playerWillDestroy(level, pos, state, player);
     }
 
     @Override
@@ -142,6 +155,11 @@ public class InfestedBedBlock extends HorizontalDirectionalBlock implements Enti
     }
 
     @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        super.animateTick(state, level, pos, random);
+    }
+
+    @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (HammockBlock.tryExploding(level, pos)) {
             return InteractionResult.sidedSuccess(level.isClientSide);
@@ -188,6 +206,12 @@ public class InfestedBedBlock extends HorizontalDirectionalBlock implements Enti
     @Override
     public void spawnAfterBreak(BlockState state, ServerLevel level, BlockPos pos, ItemStack stack, boolean bl) {
         super.spawnAfterBreak(state, level, pos, stack, bl);
+        if (state.getValue(PART) == BedPart.FOOT && level.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS)) {
+            BedbugEntity entity = SleepTight.BEDBUG_ENTITY.get().create(level);
+            entity.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
+            level.addFreshEntity(entity);
+            entity.spawnAnim();
+        }
     }
 
     @Override
@@ -206,4 +230,6 @@ public class InfestedBedBlock extends HorizontalDirectionalBlock implements Enti
         }
         return getCloneItemStack(level, pos, state);
     }
+
+
 }

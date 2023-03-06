@@ -17,10 +17,7 @@ import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.Item;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
@@ -42,6 +39,7 @@ public class SleepTight {
 
     public static final String MOD_ID = "sleep_tight";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
+
     public static final boolean SUPP = PlatformHelper.isModLoaded("supplementaries");
     public static final boolean HS = PlatformHelper.isModLoaded("heartstone");
 
@@ -74,6 +72,7 @@ public class SleepTight {
 
     public static final TagKey<EntityType<?>> WAKE_UP_BLACKLIST = TagKey.create(Registry.ENTITY_TYPE_REGISTRY, res("wake_up_blacklist"));
     public static final TagKey<Block> VANILLA_BEDS = TagKey.create(Registry.BLOCK_REGISTRY, res("vanilla_beds"));
+    public static final TagKey<Block> BEDBUG_WALK_THROUGH = TagKey.create(Registry.BLOCK_REGISTRY, res("bedbug_walk_through"));
 
     public static final Supplier<SimpleParticleType> DREAM_PARTICLE = RegHelper.registerParticle(res("dream"));
 
@@ -130,8 +129,11 @@ public class SleepTight {
     );
 
     public static final Supplier<EntityType<BedbugEntity>> BEDBUG_ENTITY = RegHelper.registerEntityType(res("bedbug"),
-            BedbugEntity::new, MobCategory.MONSTER, 0.75f, 0.75f, 3, Integer.MAX_VALUE);
+            BedbugEntity::new, MobCategory.MONSTER, 11/16f, 6/16f, 3, Integer.MAX_VALUE);
 
+    public static final Supplier<Item> BEDBUG_SPAWN_EGG = regItem("bedbug_spawn_egg", () ->
+            PlatformHelper.newSpawnEgg(BEDBUG_ENTITY,0,0, new Item.Properties().tab(CreativeModeTab.TAB_MISC))
+    );
 
     public static final Supplier<EntityType<BedEntity>> BED_ENTITY = RegHelper.registerEntityType(res("bed_entity"),
             BedEntity::new, MobCategory.MISC, 0.5f, 0.5f, 3, Integer.MAX_VALUE);

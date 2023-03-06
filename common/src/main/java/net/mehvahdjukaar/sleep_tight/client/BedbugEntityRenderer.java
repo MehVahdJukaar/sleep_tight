@@ -4,17 +4,19 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.common.BedbugEntity;
 import net.minecraft.client.model.geom.PartPose;
-import net.minecraft.client.model.geom.builders.*;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.client.renderer.entity.RabbitRenderer;
 import net.minecraft.resources.ResourceLocation;
 
 public class BedbugEntityRenderer<T extends BedbugEntity> extends MobRenderer<T, BedbugModel<T>> {
 
     public BedbugEntityRenderer(EntityRendererProvider.Context context) {
-        super(context, new BedbugModel<>(context.bakeLayer(SleepTightClient.BEDBUG)), 7/16f);
+        super(context, new BedbugModel<>(context.bakeLayer(SleepTightClient.BEDBUG)), 7 / 16f);
     }
 
     @Override
@@ -42,20 +44,20 @@ public class BedbugEntityRenderer<T extends BedbugEntity> extends MobRenderer<T,
     public static LayerDefinition createLayer() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition main = mesh.getRoot();
-        int h = 24-5;
+        float h = 24 - 5.5f;
         var head = main.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 8)
-                .addBox(-2.5F, 0.0F, -3F, 5.0F, 2.0F, 3.0F),
-                PartPose.offsetAndRotation(0.0F, h-1.5f, -9.0F, (float) Math.toRadians(27.5),0,0));
+                        .addBox(-2.5F, 0.0F, -3F, 5.0F, 2.0F, 3.0F),
+                PartPose.offsetAndRotation(0.0F, h - 1.5f, -9.0F, (float) Math.toRadians(27.5), 0, 0));
 
         head.addOrReplaceChild("antenna", CubeListBuilder.create().texOffs(41, 0)
-                        .addBox(-4.5F, 0.0F, 0F, 9.0F, 2.0F, 0.0F),
-                PartPose.offsetAndRotation(0.0F, -2, -2.5f, (float) 0,0,0));
+                        .addBox(-4.5F, -2.0F, 0F, 9.0F, 2.0F, 0.0F),
+                PartPose.offset(0.0F, 0, -2.5f));
 
         main.addOrReplaceChild("body0", CubeListBuilder.create().texOffs(0, 0
-        ).addBox(-3.5F, -2, -1.5F, 7.0F, 4.0F, 3.0F),
-                PartPose.offset(0.0F, h-0.5f, -7.5F));
+                ).addBox(-3.5F, -2, -1.5F, 7.0F, 4.0F, 3.0F),
+                PartPose.offset(0.0F, h - 0.5f, -7.5F));
         main.addOrReplaceChild("body1", CubeListBuilder.create().texOffs(0, 15)
-                .addBox(-5.0F, -2.5F, -6.0F, 10, 5, 12.0F),
+                        .addBox(-5.5F, -2.5F, -6.0F, 11, 5, 12.0F),
                 PartPose.offset(0.0F, h, 0.0F));
 
         CubeListBuilder rightLeg = CubeListBuilder.create().texOffs(20, 0)
@@ -63,17 +65,17 @@ public class BedbugEntityRenderer<T extends BedbugEntity> extends MobRenderer<T,
         CubeListBuilder leftLeg = CubeListBuilder.create().texOffs(20, 0)
                 .mirror().addBox(-1.0F, -1.0F, -1.0F, 8, 2.0F, 2.0F);
 
-        float w = 5f;
-        float z1 = 2;
-        float z2 = 2;
+        float w = 5.5f;
+        float z2 = 3.5f;
         float z3 = 0;
-        float z4 = -2;
-        main.addOrReplaceChild("right_hind_leg", rightLeg, PartPose.offset(-w, h, z1));
-        main.addOrReplaceChild("left_hind_leg", leftLeg, PartPose.offset(w, h, z1));
-        main.addOrReplaceChild("right_middle_hind_leg", rightLeg, PartPose.offset(-w, h, z2));
-        main.addOrReplaceChild("left_middle_hind_leg", leftLeg, PartPose.offset(w, h, z2));
-        main.addOrReplaceChild("right_middle_front_leg", rightLeg, PartPose.offset(-w, h, z3));
-        main.addOrReplaceChild("left_middle_front_leg", leftLeg, PartPose.offset(w, h, z3));
+        float z4 = -3.5f;
+
+        h+=0.5f;
+
+        main.addOrReplaceChild("right_hind_leg", rightLeg, PartPose.offset(-w, h, z2));
+        main.addOrReplaceChild("left_hind_leg", leftLeg, PartPose.offset(w, h, z2));
+        main.addOrReplaceChild("right_middle_leg", rightLeg, PartPose.offset(-w, h, z3));
+        main.addOrReplaceChild("left_middle_leg", leftLeg, PartPose.offset(w, h, z3));
         main.addOrReplaceChild("right_front_leg", rightLeg, PartPose.offset(-w, h, z4));
         main.addOrReplaceChild("left_front_leg", leftLeg, PartPose.offset(w, h, z4));
         return LayerDefinition.create(mesh, 64, 32);
