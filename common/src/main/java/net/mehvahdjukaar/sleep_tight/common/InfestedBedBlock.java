@@ -2,8 +2,8 @@ package net.mehvahdjukaar.sleep_tight.common;
 
 import net.mehvahdjukaar.moonlight.api.block.IWashable;
 import net.mehvahdjukaar.moonlight.api.set.BlocksColorAPI;
-import net.mehvahdjukaar.sleep_tight.network.ClientBoundParticleMessage;
-import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.integration.network.ClientBoundParticleMessage;
+import net.mehvahdjukaar.sleep_tight.integration.network.NetworkHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;

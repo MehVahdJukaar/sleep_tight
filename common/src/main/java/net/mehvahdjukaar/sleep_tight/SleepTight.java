@@ -5,8 +5,8 @@ import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
 import net.mehvahdjukaar.sleep_tight.common.*;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
-import net.mehvahdjukaar.sleep_tight.network.ModCommands;
-import net.mehvahdjukaar.sleep_tight.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.integration.network.ModCommands;
+import net.mehvahdjukaar.sleep_tight.integration.network.NetworkHandler;
 import net.minecraft.Util;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.SimpleParticleType;
@@ -69,6 +69,7 @@ public class SleepTight {
 
     private static void registerEntityAttributes(RegHelper.AttributeEvent event) {
         event.register(DREAMER_ESSENCE_ENTITY.get(), DreamerEssenceTargetEntity.makeAttributes());
+        event.register(BEDBUG_ENTITY.get(), BedbugEntity.makeAttributes());
     }
 
     public static final TagKey<EntityType<?>> WAKE_UP_BLACKLIST = TagKey.create(Registry.ENTITY_TYPE_REGISTRY, res("wake_up_blacklist"));

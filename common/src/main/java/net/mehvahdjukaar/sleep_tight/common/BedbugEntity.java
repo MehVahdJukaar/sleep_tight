@@ -75,6 +75,7 @@ public class BedbugEntity extends Monster {
     @Override
     public void tick() {
         super.tick();
+
         if (!this.level.isClientSide) {
             this.setClimbing(this.horizontalCollision);
         }
@@ -184,8 +185,19 @@ public class BedbugEntity extends Monster {
         }
     }
 
+    public static AttributeSupplier.Builder makeAttributes() {
+        return Mob.createMobAttributes()
+                .add(Attributes.FOLLOW_RANGE, 16.0D)
+                .add(Attributes.MOVEMENT_SPEED, 0D)
+                .add(Attributes.MAX_HEALTH, 40D)
+                .add(Attributes.ARMOR, 0D)
+                .add(Attributes.ATTACK_DAMAGE, 0D)
+                .add(Attributes.FLYING_SPEED, 0D);
+    }
 
     public static void trySpawning(BlockPos pos, ServerPlayer player) {
 
     }
+
+
 }
