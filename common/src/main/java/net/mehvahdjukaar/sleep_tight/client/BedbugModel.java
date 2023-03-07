@@ -1,7 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.client;
 
 import net.minecraft.client.model.HierarchicalModel;
-import net.minecraft.client.model.SpiderModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -39,12 +38,12 @@ public class BedbugModel<T extends Entity> extends HierarchicalModel<T> {
     @Override
     public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
 
-        this.head.xRot = (27.5f+headPitch) * 0.017453292F;
+        this.head.xRot = (27.5f + headPitch) * 0.017453292F;
 
-        float fortyFive = 0.7853982F+0.1f; //45
-        float thirtyThree = 0.58119464F+0.1f; //33.3
+        float fortyFive = 0.7853982F + 0.1f; //45
+        float thirtyThree = 0.58119464F + 0.1f; //33.3
 
-        float fortyFive2 = 0.7853982F-0.2f; //45
+        float fortyFive2 = 0.7853982F - 0.2f; //45
         float h = 0.3926991F; //22.5
 
 
@@ -62,25 +61,25 @@ public class BedbugModel<T extends Entity> extends HierarchicalModel<T> {
         this.rightFrontLeg.yRot = -fortyFive2;
         this.leftFrontLeg.yRot = fortyFive2;
 
-        float speed = 0.6662F+1.2f;
-        float ampl = 0.4f;
+        float speed = 0.6662F + 1.2f;
+        float ampl = 0.4f + 0.1f;
+        float ampl2 = 0.4f;
 
-      //  limbSwingAmount = 0.5f;
-       // limbSwing = entity.tickCount/20f;
+        //  limbSwingAmount = 0.5f;
+        // limbSwing = entity.tickCount/20f;
 
-        float a1   = (Mth.cos(ageInTicks*1.5f)) * (0.3f+  limbSwingAmount)*0.3f;
+        float a1 = (Mth.cos(ageInTicks * 1.5f)) * (0.3f + limbSwingAmount) * 0.3f;
 
-        this.antenna.xRot = 0.4f+a1;
+        this.antenna.xRot = 0.4f + a1;
 
 
         float c0 = -(Mth.cos(limbSwing * speed * 2.0F + 0) * ampl) * limbSwingAmount;
-        float c1 = -(Mth.cos(limbSwing * speed * 2.0F + Mth.PI*4/3f) * ampl) * limbSwingAmount;
-        float c2 = -(Mth.cos(limbSwing * speed * 2.0F + Mth.PI*2/3f) * ampl) * limbSwingAmount;
+        float c1 = -(Mth.cos(limbSwing * speed * 2.0F + Mth.PI * 4 / 3f) * ampl) * limbSwingAmount;
+        float c2 = -(Mth.cos(limbSwing * speed * 2.0F + Mth.PI * 2 / 3f) * ampl) * limbSwingAmount;
 
-        float s0 = Math.abs(Mth.sin(limbSwing * speed + 0) * ampl) * limbSwingAmount;
-        float s1 = Math.abs(Mth.sin(limbSwing * speed + Mth.PI*4/3f) * ampl) * limbSwingAmount;
-        float s2 = Math.abs(Mth.sin(limbSwing * speed + Mth.PI*2/3f) * ampl) * limbSwingAmount;
-
+        float s0 = Math.abs(Mth.sin(limbSwing * speed + 0) * ampl2) * limbSwingAmount;
+        float s1 = Math.abs(Mth.sin(limbSwing * speed + Mth.PI * 4 / 3f) * ampl2) * limbSwingAmount;
+        float s2 = Math.abs(Mth.sin(limbSwing * speed + Mth.PI * 2 / 3f) * ampl2) * limbSwingAmount;
 
 
         ModelPart leg = this.rightHindLeg;

@@ -66,7 +66,6 @@ public class CommonConfigs {
     public static final Supplier<HungerMode> CONSUME_HUNGER_MODE;
     public static final Supplier<Double> CONSUMED_HUNGER;
 
-    public static final Supplier<Boolean> BEDBUGS_ENABLED;
     public static final Supplier<Double> BEDBUG_SPAWN_CHANCE;
     public static final Supplier<Integer> BEDBUG_SPAWN_MAX_RANGE;
     public static final Supplier<Integer> BEDBUG_SPAWN_MIN_RANGE;
@@ -126,7 +125,6 @@ public class CommonConfigs {
         builder.pop();
 
         builder.push("bedbugs");
-        BEDBUGS_ENABLED = builder.comment("Enable bedbugs").define("enabled", true);
         BEDBUG_SPAWN_CHANCE = builder.comment("Base spawn chance every time you wake up, increases with difficulty")
                 .define("spawn_chance", 0.1, 0, 1);
         BEDBUG_SPAWN_MAX_RANGE = builder.comment("max radius at which they can spawn")

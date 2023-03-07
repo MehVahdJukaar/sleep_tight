@@ -266,7 +266,7 @@ public class ModEvents {
             playerCap.syncToClient(player);
 
 
-            BedbugEntity.trySpawning(pos, player);
+            WakeUpEncounterHelper.trySpawningBedbug(pos, (ServerLevel) player.level);
         }
     }
 

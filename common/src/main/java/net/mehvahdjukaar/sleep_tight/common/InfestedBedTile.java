@@ -44,4 +44,9 @@ public class InfestedBedTile extends BlockEntity {
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
     }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        return this.saveWithoutMetadata();
+    }
 }

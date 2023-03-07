@@ -17,12 +17,15 @@ import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.SpawnPlacements;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.material.MaterialColor;
 import org.apache.logging.log4j.LogManager;
@@ -55,14 +58,21 @@ public class SleepTight {
 
         ModCommands.init();
         RegHelper.addAttributeRegistration(SleepTight::registerEntityAttributes);
+        RegHelper.addSpawnPlacementsRegistration(SleepTight::registerSpawnPlacements);
 
         //sleep next to eachother bonus
         //TODO: persist cap after player death. Fix dismount from bed entity. Fix bed entity mount pos
     }
 
 
+
     public static void commonSetup() {
 
+    }
+
+
+    private static void registerSpawnPlacements(RegHelper.SpawnPlacementEvent event) {
+        event.register(BEDBUG_ENTITY.get(),SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BedbugEntity::checkMonsterSpawnRules);
     }
 
     private static void registerEntityAttributes(RegHelper.AttributeEvent event) {
@@ -132,7 +142,7 @@ public class SleepTight {
             BedbugEntity::new, MobCategory.MONSTER, 11/16f, 6/16f, 3, Integer.MAX_VALUE);
 
     public static final Supplier<Item> BEDBUG_SPAWN_EGG = regItem("bedbug_spawn_egg", () ->
-            PlatformHelper.newSpawnEgg(BEDBUG_ENTITY,0,0, new Item.Properties().tab(CreativeModeTab.TAB_MISC))
+            PlatformHelper.newSpawnEgg(BEDBUG_ENTITY,0x4b1813,0x922c09, new Item.Properties().tab(CreativeModeTab.TAB_MISC))
     );
 
     public static final Supplier<EntityType<BedEntity>> BED_ENTITY = RegHelper.registerEntityType(res("bed_entity"),

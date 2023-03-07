@@ -95,10 +95,10 @@ public class InfestedBedBlock extends HorizontalDirectionalBlock implements Enti
     public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide && player.isCreative()) {
             BedPart bedPart = state.getValue(PART);
-            if (bedPart == BedPart.FOOT) {
+            if (bedPart == BedPart.HEAD) {
                 BlockPos blockPos = pos.relative(getNeighbourDirection(bedPart, state.getValue(FACING)));
                 BlockState blockState = level.getBlockState(blockPos);
-                if (blockState.is(this) && blockState.getValue(PART) == BedPart.HEAD) {
+                if (blockState.is(this) && blockState.getValue(PART) == BedPart.FOOT) {
                     level.setBlock(blockPos, Blocks.AIR.defaultBlockState(), 35);
                     level.levelEvent(player, 2001, blockPos, Block.getId(blockState));
                 }
