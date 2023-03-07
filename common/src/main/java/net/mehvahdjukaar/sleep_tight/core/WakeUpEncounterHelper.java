@@ -155,7 +155,7 @@ public class WakeUpEncounterHelper {
         if (!level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) return false;
 
         double spawnChance = CommonConfigs.BEDBUG_SPAWN_CHANCE.get();
-        if (true || level.random.nextFloat() < spawnChance) {
+        if (level.random.nextFloat() < spawnChance) {
 
             BlockPos.MutableBlockPos mutable = bedPos.mutable();
             int monsterSpawnAttempts = CommonConfigs.BEDBUG_TRIES.get();

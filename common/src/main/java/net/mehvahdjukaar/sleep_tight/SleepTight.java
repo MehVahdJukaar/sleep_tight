@@ -64,8 +64,6 @@ public class SleepTight {
         //TODO: persist cap after player death. Fix dismount from bed entity. Fix bed entity mount pos
     }
 
-
-
     public static void commonSetup() {
 
     }
@@ -80,15 +78,29 @@ public class SleepTight {
         event.register(BEDBUG_ENTITY.get(), BedbugEntity.makeAttributes());
     }
 
+    //tags
+
     public static final TagKey<EntityType<?>> WAKE_UP_BLACKLIST = TagKey.create(Registry.ENTITY_TYPE_REGISTRY, res("wake_up_blacklist"));
     public static final TagKey<Block> VANILLA_BEDS = TagKey.create(Registry.BLOCK_REGISTRY, res("vanilla_beds"));
     public static final TagKey<Block> BEDBUG_WALK_THROUGH = TagKey.create(Registry.BLOCK_REGISTRY, res("bedbug_walk_through"));
 
+    //particles
+
     public static final Supplier<SimpleParticleType> DREAM_PARTICLE = RegHelper.registerParticle(res("dream"));
+    public static final Supplier<SimpleParticleType> BEDBUG_PARTICLE = RegHelper.registerParticle(res("bedbug"));
+
+    //effects
 
     public static final Supplier<MobEffect> INVIGORATING = RegHelper.registerEffect(res("invigorating"), () ->
             new InvigoratingEffect(MobEffectCategory.BENEFICIAL, 0x11ff22));
 
+    //entities
+
+    public static final Supplier<EntityType<BedEntity>> BED_ENTITY = RegHelper.registerEntityType(res("bed_entity"),
+            BedEntity::new, MobCategory.MISC, 0.5f, 0.5f, 3, Integer.MAX_VALUE);
+
+    public static final Supplier<EntityType<BedbugEntity>> BEDBUG_ENTITY = RegHelper.registerEntityType(res("bedbug"),
+            BedbugEntity::new, MobCategory.MONSTER, 11/16f, 6/16f, 3, Integer.MAX_VALUE);
 
     public static final Supplier<EntityType<DreamerEssenceTargetEntity>> DREAMER_ESSENCE_ENTITY = RegHelper.registerEntityType(
             res("dreamer_essence_dummy"), () -> (
@@ -98,6 +110,7 @@ public class SleepTight {
                             .sized(0.2f, 12 / 16f))
                     .build("dreamer_essence_dummy"));
 
+    //blocks
 
     public static final Supplier<DreamEssenceBlock> DREAMER_ESSENCE = regWithItem("dreamer_essence", () ->
                     new DreamEssenceBlock(BlockBehaviour.Properties.of(Material.AMETHYST, MaterialColor.COLOR_PURPLE)
@@ -110,8 +123,8 @@ public class SleepTight {
                     .sound(SoundType.WOOL).strength(0.1F))
     );
 
-    public static final Supplier<NightBagItem> NIGHT_BAG_ITEM = regItem("night_bag", () ->
-            new NightBagItem(NIGHT_BAG.get(), new Item.Properties().tab(CreativeModeTab.TAB_DECORATIONS))
+    public static final Supplier<InfestedBedBlock> INFESTED_BED = regBlock("infested_bed", () ->
+            new InfestedBedBlock(BlockBehaviour.Properties.copy(Blocks.BROWN_BED))
     );
 
     public static final Map<DyeColor, Supplier<Block>> HAMMOCKS = Util.make(() ->
@@ -120,33 +133,31 @@ public class SleepTight {
                             new HammockBlock(d), CreativeModeTab.TAB_DECORATIONS)))
     );
 
+    //tile
+
     public static final Supplier<BlockEntityType<HammockBlockEntity>> HAMMOCK_TILE = RegHelper.registerBlockEntityType(
             res("hammock"), () -> PlatformHelper.newBlockEntityType(HammockBlockEntity::new,
                     HAMMOCKS.values().stream().map(Supplier::get).toArray(Block[]::new))
-    );
-
-
-    public static final Supplier<InfestedBedBlock> INFESTED_BED = regBlock("infested_bed", () ->
-            new InfestedBedBlock(BlockBehaviour.Properties.copy(Blocks.BROWN_BED))
     );
 
     public static final Supplier<BlockEntityType<InfestedBedTile>> INFESTED_BED_TILE = RegHelper.registerBlockEntityType(
             res("infested_bed"), () -> PlatformHelper.newBlockEntityType(InfestedBedTile::new, INFESTED_BED.get())
     );
 
+    //items
+
+    public static final Supplier<NightBagItem> NIGHT_BAG_ITEM = regItem("night_bag", () ->
+            new NightBagItem(NIGHT_BAG.get(), new Item.Properties().tab(CreativeModeTab.TAB_DECORATIONS))
+    );
+
     public static final Supplier<BedbugEggsItem> BED_BUG_EGGS = regItem("bedbug_eggs", () ->
             new BedbugEggsItem(new Item.Properties().tab(CreativeModeTab.TAB_MISC))
     );
-
-    public static final Supplier<EntityType<BedbugEntity>> BEDBUG_ENTITY = RegHelper.registerEntityType(res("bedbug"),
-            BedbugEntity::new, MobCategory.MONSTER, 11/16f, 6/16f, 3, Integer.MAX_VALUE);
 
     public static final Supplier<Item> BEDBUG_SPAWN_EGG = regItem("bedbug_spawn_egg", () ->
             PlatformHelper.newSpawnEgg(BEDBUG_ENTITY,0x4b1813,0x922c09, new Item.Properties().tab(CreativeModeTab.TAB_MISC))
     );
 
-    public static final Supplier<EntityType<BedEntity>> BED_ENTITY = RegHelper.registerEntityType(res("bed_entity"),
-            BedEntity::new, MobCategory.MISC, 0.5f, 0.5f, 3, Integer.MAX_VALUE);
 
 
 

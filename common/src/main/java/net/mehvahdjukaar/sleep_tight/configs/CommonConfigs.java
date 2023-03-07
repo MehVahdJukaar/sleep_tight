@@ -128,9 +128,9 @@ public class CommonConfigs {
         BEDBUG_SPAWN_CHANCE = builder.comment("Base spawn chance every time you wake up, increases with difficulty")
                 .define("spawn_chance", 0.1, 0, 1);
         BEDBUG_SPAWN_MAX_RANGE = builder.comment("max radius at which they can spawn")
-                .define("max_spawn_radius", 10, 1, 64);
-        BEDBUG_SPAWN_MIN_RANGE = builder.comment("max radius at which they can spawn")
-                .define("min_spawn_radius", 6, 1, 64);
+                .define("max_spawn_radius", 20, 1, 64);
+        BEDBUG_SPAWN_MIN_RANGE = builder.comment("min radius from which they can spawn")
+                .define("min_spawn_radius", 10, 1, 64);
         BEDBUG_MAX_LIGHT = builder.comment("Max light level that a bedbug can spawn at")
                 .define("max_allowed_light_level", 15, 0, 15);
         BEDBUG_TRIES = builder.comment("The game will perform x attempts to spawn a bedbug around each player when they wake up. This already takes into account the chance config." +

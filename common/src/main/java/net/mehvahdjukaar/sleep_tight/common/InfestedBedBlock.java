@@ -157,6 +157,12 @@ public class InfestedBedBlock extends HorizontalDirectionalBlock implements Enti
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         super.animateTick(state, level, pos, random);
+        if (random.nextFloat() < 0.3) {
+            float x = pos.getX() + level.random.nextFloat();
+            float z = pos.getZ() + level.random.nextFloat();
+            float y = pos.getY() + 9 / 16f;
+            level.addParticle(SleepTight.BEDBUG_PARTICLE.get(), x, y + 0.01, z, 0, 0, 0);
+        }
     }
 
     @Override

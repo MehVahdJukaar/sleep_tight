@@ -49,6 +49,7 @@ public class SleepTightClient {
 
     private static void registerParticles(ClientPlatformHelper.ParticleEvent event) {
         event.register(SleepTight.DREAM_PARTICLE.get(), DreamParticle.Factory::new);
+        event.register(SleepTight.BEDBUG_PARTICLE.get(), BedbugParticle.Factory::new);
     }
 
     private static void registerLayers(ClientPlatformHelper.ModelLayerEvent event) {
