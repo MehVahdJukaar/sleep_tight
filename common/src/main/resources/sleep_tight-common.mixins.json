@@ -13,6 +13,7 @@
     "BedBlockEntityMixin",
     "BedBlockMixin",
     "BlockMixin",
+    "DoorBlockMixin",
     "LivingEntityMixin",
     "PhantomMixin",
     "PlayerMixin"

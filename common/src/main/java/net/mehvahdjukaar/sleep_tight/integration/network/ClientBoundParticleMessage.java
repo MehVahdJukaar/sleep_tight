@@ -24,8 +24,12 @@ public class ClientBoundParticleMessage implements Message {
         this.data = data;
     }
 
-    public static ClientBoundParticleMessage bedbug(BlockPos pos, Direction direction){
+    public static ClientBoundParticleMessage bedbugInfest(BlockPos pos, Direction direction){
        return new ClientBoundParticleMessage(pos, direction.get2DDataValue());
+    }
+
+    public static ClientBoundParticleMessage bedbugDoor(BlockPos pos){
+        return new ClientBoundParticleMessage(pos, 5);
     }
 
     public static ClientBoundParticleMessage dreamEssence(BlockPos pos){
@@ -42,11 +46,13 @@ public class ClientBoundParticleMessage implements Message {
     public void handle(ChannelHandler.Context context) {
         Level level = SleepTightClient.getPlayer().level;
 
-        if(data != 4) {
+        if(data < 4) {
             spawnParticleOn(pos, level);
             spawnParticleOn(pos.relative(Direction.from2DDataValue(data)), level);
-        }else{
+        }else if(data == 4){
             DreamerEssenceTargetEntity.spawnDeathParticles(level, pos);
+        }else{
+            level.addDestroyBlockEffect(pos, level.getBlockState(pos));
         }
     }
 

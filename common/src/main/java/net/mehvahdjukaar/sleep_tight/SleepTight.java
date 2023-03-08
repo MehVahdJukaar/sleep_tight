@@ -18,7 +18,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacements;
+import net.minecraft.world.entity.animal.Bee;
 import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.Silverfish;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -77,6 +79,8 @@ public class SleepTight {
         event.register(DREAMER_ESSENCE_ENTITY.get(), DreamerEssenceTargetEntity.makeAttributes());
         event.register(BEDBUG_ENTITY.get(), BedbugEntity.makeAttributes());
     }
+
+
 
     //tags
 
@@ -155,7 +159,7 @@ public class SleepTight {
     );
 
     public static final Supplier<Item> BEDBUG_SPAWN_EGG = regItem("bedbug_spawn_egg", () ->
-            PlatformHelper.newSpawnEgg(BEDBUG_ENTITY,0x4b1813,0x922c09, new Item.Properties().tab(CreativeModeTab.TAB_MISC))
+            PlatformHelper.newSpawnEgg(BEDBUG_ENTITY,0x4b1813,0xce5438, new Item.Properties().tab(CreativeModeTab.TAB_MISC))
     );
 
 

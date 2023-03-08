@@ -2,6 +2,11 @@ package net.mehvahdjukaar.sleep_tight.common;
 
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
+import net.mehvahdjukaar.sleep_tight.integration.network.ClientBoundParticleMessage;
+import net.mehvahdjukaar.sleep_tight.integration.network.NetworkHandler;
+import net.minecraft.CrashReport;
+import net.minecraft.CrashReportCategory;
+import net.minecraft.ReportedException;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -9,36 +14,42 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.MobType;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
+import net.minecraft.world.entity.ai.village.poi.PoiManager;
+import net.minecraft.world.entity.ai.village.poi.PoiRecord;
+import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.monster.Silverfish;
-import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.PathFinder;
 import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
+import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.List;
+import java.util.stream.Stream;
 
 public class BedbugEntity extends Monster {
     private static final EntityDataAccessor<Byte> DATA_FLAGS_ID = SynchedEntityData.defineId(BedbugEntity.class, EntityDataSerializers.BYTE);
@@ -204,6 +215,62 @@ public class BedbugEntity extends Monster {
         }
     }
 
+    protected void onInsideBlock(BlockState state, BlockPos pos) {
+        if(state.getBlock() instanceof DoorBlock){
+            //gets full shape
+            VoxelShape voxelShape = state.getCollisionShape(this.level, pos);
+            VoxelShape voxelShape2 = voxelShape.move(pos.getX(), pos.getY(), pos.getZ());
+            if(Shapes.joinIsNotEmpty(voxelShape2, Shapes.create(this.getBoundingBox()), BooleanOp.AND)) {
+
+                NetworkHandler.CHANNEL.sentToAllClientPlayersTrackingEntity(this, ClientBoundParticleMessage.bedbugDoor(pos));
+                this.makeStuckInBlock(state, new Vec3(0.5, 0.5, 0.5));
+            }
+        }
+        super.onInsideBlock(state);
+    }
+
+    @Override
+    protected void checkInsideBlocks() {
+        AABB aABB = this.getBoundingBox();
+        BlockPos blockPos = new BlockPos(aABB.minX + 0.001, aABB.minY + 0.001, aABB.minZ + 0.001);
+        BlockPos blockPos2 = new BlockPos(aABB.maxX - 0.001, aABB.maxY - 0.001, aABB.maxZ - 0.001);
+        if (this.level.hasChunksAt(blockPos, blockPos2)) {
+            BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
+
+            for(int i = blockPos.getX(); i <= blockPos2.getX(); ++i) {
+                for(int j = blockPos.getY(); j <= blockPos2.getY(); ++j) {
+                    for(int k = blockPos.getZ(); k <= blockPos2.getZ(); ++k) {
+                        mutableBlockPos.set(i, j, k);
+                        BlockState blockState = this.level.getBlockState(mutableBlockPos);
+
+                        try {
+                            blockState.entityInside(this.level, mutableBlockPos, this);
+                            this.onInsideBlock(blockState, mutableBlockPos);
+                        } catch (Exception e) {
+                            CrashReport crashReport = CrashReport.forThrowable(e, "Colliding entity with block");
+                            CrashReportCategory crashReportCategory = crashReport.addCategory("Block being collided with");
+                            CrashReportCategory.populateBlockDetails(crashReportCategory, this.level, mutableBlockPos, blockState);
+                            throw new ReportedException(crashReport);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public boolean canCollideWith(Entity entity) {
+        return super.canCollideWith(entity);
+    }
+
+    @Override
+    public boolean isColliding(BlockPos pos, BlockState state) {
+        if(state.getBlock() instanceof DoorBlock){
+            return false;
+        }
+        return super.isColliding(pos, state);
+    }
+
     static class BedbugLeapGoal extends LeapAtTargetGoal {
 
         private final Mob mob;
@@ -224,11 +291,13 @@ public class BedbugEntity extends Monster {
     static class InfestBedGoal extends MoveToBlockGoal {
 
         private final BedbugEntity bedBug;
+        private final int searchRange;
 
-        public InfestBedGoal(BedbugEntity pathfinderMob, double d, int i) {
-            super(pathfinderMob, d, i);
+        public InfestBedGoal(BedbugEntity pathfinderMob, double speed, int searchRange) {
+            super(pathfinderMob, speed, searchRange);
             this.setFlags(EnumSet.of(Flag.MOVE, Flag.JUMP, Flag.LOOK, Flag.TARGET));
             this.bedBug = pathfinderMob;
+            this.searchRange = searchRange;
         }
 
         @Override
@@ -237,12 +306,27 @@ public class BedbugEntity extends Monster {
         }
 
         @Override
+        protected int nextStartTick(PathfinderMob creature) {
+            return super.nextStartTick(creature)*100;
+        }
+
+        @Override
         protected boolean findNearestBlock() {
             if (bedBug.targetBed != null && this.isValidTarget(this.mob.level, bedBug.targetBed)) {
                 this.blockPos = bedBug.targetBed;
                 return true;
             }
+
             return super.findNearestBlock();
+        }
+
+        private List<BlockPos> findNearestBed() {
+            BlockPos pos = bedBug.blockPosition();
+            PoiManager poiManager = ((ServerLevel)bedBug.level).getPoiManager();
+            Stream<PoiRecord> stream = poiManager.getInRange((h) ->
+                    h.is(PoiTypes.HOME), pos, searchRange, PoiManager.Occupancy.ANY);
+            return stream.map(PoiRecord::getPos).sorted(Comparator.comparingDouble((p) ->
+                    p.distSqr(pos))).toList();
         }
     }
 
@@ -324,4 +408,7 @@ public class BedbugEntity extends Monster {
         }
         return Monster.checkMonsterSpawnRules(type, level, spawnType, pos, random);
     }
+
+
+
 }

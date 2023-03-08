@@ -198,7 +198,7 @@ public class InfestedBedBlock extends HorizontalDirectionalBlock implements Enti
             BlockPos neighbor = blockPos.relative(dir);
             if (!level.isClientSide) {
                 NetworkHandler.CHANNEL.sendToAllClientPlayersInRange(level, blockPos, 32,
-                        ClientBoundParticleMessage.bedbug(blockPos, dir));
+                        ClientBoundParticleMessage.bedbugInfest(blockPos, dir));
             }
             Block bed = BlocksColorAPI.getColoredBlock("bed", tile.getColor());
             if (bed != null) {
