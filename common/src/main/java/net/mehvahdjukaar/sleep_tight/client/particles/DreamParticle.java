@@ -1,4 +1,4 @@
-package net.mehvahdjukaar.sleep_tight.client;
+package net.mehvahdjukaar.sleep_tight.client.particles;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Quaternion;
@@ -23,7 +23,10 @@ public class DreamParticle extends TextureSheetParticle {
 
     protected DreamParticle(ClientLevel clientLevel, double x, double y, double z, double vx, double vy, double vz) {
         super(clientLevel, x, y, z, vx, vy, vz);
-        float g = 0.3f + this.random.nextFloat() * 0.35f;
+        //float g = 0.4f + ((System.currentTimeMillis()%1000))/1000f * 0.25f;
+        float g = 0.4f + this.random.nextFloat() * 0.25f;
+        //g = this.random.nextFloat();
+       // g = System.currentTimeMillis()/10f;
         this.rCol = Math.max(0.0F, Mth.sin((g + 0.0F) * 6.2831855F) * 0.65F + 0.35F);
         this.gCol = Math.max(0.0F, Mth.sin((g + 0.33333334F) * 6.2831855F) * 0.65F + 0.35F);
         this.bCol = Math.max(0.0F, Mth.sin((g + 0.6666667F) * 6.2831855F) * 0.65F + 0.35F);
@@ -45,7 +48,7 @@ public class DreamParticle extends TextureSheetParticle {
 
         this.setSize(0.1f, 0.1f);
 
-        this.maxAlpha = (float) (double) ClientConfigs.PARTICLE_ALPHA.get() * 7;
+        this.maxAlpha = (float) (double) ClientConfigs.PARTICLE_ALPHA.get();
     }
 
     @Override
@@ -103,7 +106,8 @@ public class DreamParticle extends TextureSheetParticle {
         buffer.vertex(vector3fs[0].x(), vector3fs[0].y(), vector3fs[0].z()).uv(u1, v1).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
         buffer.vertex(vector3fs[1].x(), vector3fs[1].y(), vector3fs[1].z()).uv(u1, v0).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
         buffer.vertex(vector3fs[2].x(), vector3fs[2].y(), vector3fs[2].z()).uv(u0, v0).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
-        buffer.vertex(vector3fs[3].x(), vector3fs[3].y(), vector3fs[3].z()).uv(u0, v1).color(1, 1, 1, this.alpha).uv2(light).endVertex();
+        buffer.vertex(vector3fs[3].x(), vector3fs[3].y(), vector3fs[3].z()).uv(u0, v1).color(this.rCol, this.gCol, this.bCol,    this.alpha).uv2(light).endVertex();
+
 
     }
 
@@ -145,7 +149,7 @@ public class DreamParticle extends TextureSheetParticle {
                 float pitch = Mth.randomBetween(level.random, -0.1f, 0.5f) * Mth.PI;
                 float len = 0.4f+level.random.nextFloat()*0.3f;
                 Vec3 v = new Vec3(0, 0, len).xRot(pitch).yRot(yaw);
-                p = new DreamParticle(level, pX, pY, pZ, v.x, v.y * 0.75, v.z);
+                p = new DreamParticle(level, pX+v.x*0.5, pY+v.y*0.5, pZ+v.z*0.5, v.x, v.y * 0.75, v.z);
                 p.friction = 0.78f;
                 p.alpha = p.maxAlpha;
                 p.setLifetime(60 + level.random.nextInt(180));

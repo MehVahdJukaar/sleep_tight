@@ -3,6 +3,17 @@ package net.mehvahdjukaar.sleep_tight;
 import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
 import net.mehvahdjukaar.sleep_tight.common.*;
+import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
+import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
+import net.mehvahdjukaar.sleep_tight.common.blocks.InfestedBedBlock;
+import net.mehvahdjukaar.sleep_tight.common.blocks.NightBagBlock;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedbugEntity;
+import net.mehvahdjukaar.sleep_tight.common.entities.DreamerEssenceTargetEntity;
+import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
+import net.mehvahdjukaar.sleep_tight.common.items.NightBagItem;
+import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
+import net.mehvahdjukaar.sleep_tight.common.tiles.InfestedBedTile;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.integration.network.ModCommands;
@@ -18,9 +29,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacements;
-import net.minecraft.world.entity.animal.Bee;
-import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.monster.Silverfish;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -101,18 +109,13 @@ public class SleepTight {
     //entities
 
     public static final Supplier<EntityType<BedEntity>> BED_ENTITY = RegHelper.registerEntityType(res("bed_entity"),
-            BedEntity::new, MobCategory.MISC, 0.5f, 0.5f, 3, Integer.MAX_VALUE);
+            BedEntity::new, MobCategory.MISC, 0.5f, 0.5f, 4, Integer.MAX_VALUE);
 
     public static final Supplier<EntityType<BedbugEntity>> BEDBUG_ENTITY = RegHelper.registerEntityType(res("bedbug"),
-            BedbugEntity::new, MobCategory.MONSTER, 11/16f, 6/16f, 3, Integer.MAX_VALUE);
+            BedbugEntity::new, MobCategory.MONSTER, 11/16f, 6/16f, 7, 3);
 
-    public static final Supplier<EntityType<DreamerEssenceTargetEntity>> DREAMER_ESSENCE_ENTITY = RegHelper.registerEntityType(
-            res("dreamer_essence_dummy"), () -> (
-                    EntityType.Builder.of(DreamerEssenceTargetEntity::new, MobCategory.MISC)
-                            //.setTrackingRange(64)
-                            //.setUpdateInterval(3)
-                            .sized(0.2f, 12 / 16f))
-                    .build("dreamer_essence_dummy"));
+    public static final Supplier<EntityType<DreamerEssenceTargetEntity>> DREAMER_ESSENCE_ENTITY = RegHelper.registerEntityType(res("dreamer_essence_dummy"),
+            DreamerEssenceTargetEntity::new, MobCategory.MISC, 0.2f, 12 / 16f, 5, Integer.MAX_VALUE);
 
     //blocks
 
@@ -139,8 +142,8 @@ public class SleepTight {
 
     //tile
 
-    public static final Supplier<BlockEntityType<HammockBlockEntity>> HAMMOCK_TILE = RegHelper.registerBlockEntityType(
-            res("hammock"), () -> PlatformHelper.newBlockEntityType(HammockBlockEntity::new,
+    public static final Supplier<BlockEntityType<HammockTile>> HAMMOCK_TILE = RegHelper.registerBlockEntityType(
+            res("hammock"), () -> PlatformHelper.newBlockEntityType(HammockTile::new,
                     HAMMOCKS.values().stream().map(Supplier::get).toArray(Block[]::new))
     );
 

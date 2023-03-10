@@ -1,8 +1,8 @@
-package net.mehvahdjukaar.sleep_tight.client;
+package net.mehvahdjukaar.sleep_tight.client.renderers;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
-import net.mehvahdjukaar.sleep_tight.common.BedbugEntity;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedbugEntity;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
@@ -12,6 +12,8 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 
 public class BedbugEntityRenderer<T extends BedbugEntity> extends MobRenderer<T, BedbugModel<T>> {
 
@@ -22,6 +24,11 @@ public class BedbugEntityRenderer<T extends BedbugEntity> extends MobRenderer<T,
     @Override
     protected float getFlipDegrees(T livingEntity) {
         return 180.0F;
+    }
+
+    @Override
+    public Vec3 getRenderOffset(T entity, float partialTicks) {
+        return super.getRenderOffset(entity, partialTicks).add(0,-0.01*entity.getBurrowing(partialTicks),0);
     }
 
     /**
@@ -70,7 +77,7 @@ public class BedbugEntityRenderer<T extends BedbugEntity> extends MobRenderer<T,
         float z3 = 0;
         float z4 = -3.5f;
 
-        h+=0.5f;
+        h += 0.5f;
 
         main.addOrReplaceChild("right_hind_leg", rightLeg, PartPose.offset(-w, h, z2));
         main.addOrReplaceChild("left_hind_leg", leftLeg, PartPose.offset(w, h, z2));

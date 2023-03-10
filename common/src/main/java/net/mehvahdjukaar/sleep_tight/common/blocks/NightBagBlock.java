@@ -1,5 +1,6 @@
-package net.mehvahdjukaar.sleep_tight.common;
+package net.mehvahdjukaar.sleep_tight.common.blocks;
 
+import net.mehvahdjukaar.sleep_tight.common.blocks.IModBed;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -87,13 +88,28 @@ public class NightBagBlock extends BedBlock implements IModBed {
     }
 
     @Override
-    public boolean canHaveNightmares() {
-        return CommonConfigs.NIGHTMARES_NIGHT_BAG.get();
+    public boolean st_canCauseNightmares() {
+        return CommonConfigs.NIGHTMARES_HAMMOCK.get();
     }
 
     @Override
-    public long getCooldown() {
+    public long st_getCooldown() {
         return CommonConfigs.NIGHT_BAG_COOLDOWN.get();
+    }
+
+    @Override
+    public boolean st_hasPenalties() {
+        return CommonConfigs.PENALTIES_NIGHT_BAG.get();
+    }
+
+    @Override
+    public boolean st_hasRequirements() {
+        return CommonConfigs.REQUIREMENT_NIGHT_BAG.get();
+    }
+
+    @Override
+    public boolean st_canSpawnBedbugs() {
+        return false;
     }
 
     @Override
@@ -143,6 +159,8 @@ public class NightBagBlock extends BedBlock implements IModBed {
             level.setBlock(blockPos, state.setValue(PART, BedPart.FOOT), 3);
             level.blockUpdated(pos, Blocks.AIR);
             state.updateNeighbourShapes(level, pos, 3);
+
+            if(CommonConfigs.NIGHT_BAG_BORING.get())return;
 
             if (placer instanceof Player player) {
                 this.use(state, level, pos, player, placer.getUsedItemHand(), new BlockHitResult(Vec3.atBottomCenterOf(pos), Direction.DOWN, pos, false));

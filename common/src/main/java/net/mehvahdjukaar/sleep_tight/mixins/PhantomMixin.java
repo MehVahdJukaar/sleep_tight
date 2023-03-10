@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.mixins;
 
 import com.google.common.collect.Lists;
-import net.mehvahdjukaar.sleep_tight.common.DreamerEssenceTargetEntity;
+import net.mehvahdjukaar.sleep_tight.common.entities.DreamerEssenceTargetEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;

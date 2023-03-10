@@ -1,11 +1,14 @@
-package net.mehvahdjukaar.sleep_tight.client;
+package net.mehvahdjukaar.sleep_tight.client.renderers;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedbugEntity;
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 
-public class BedbugModel<T extends Entity> extends HierarchicalModel<T> {
+public class BedbugModel<T extends BedbugEntity> extends HierarchicalModel<T> {
     private final ModelPart head;
     private final ModelPart rightHindLeg;
     private final ModelPart leftHindLeg;
@@ -60,6 +63,8 @@ public class BedbugModel<T extends Entity> extends HierarchicalModel<T> {
         this.leftMiddleLeg.yRot = 0;
         this.rightFrontLeg.yRot = -fortyFive2;
         this.leftFrontLeg.yRot = fortyFive2;
+
+        int b = entity.burrowingTicks;
 
         float speed = 0.6662F + 1.2f;
         float ampl = 0.4f + 0.1f;

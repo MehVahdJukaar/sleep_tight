@@ -1,6 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.mixins;
 
-import net.mehvahdjukaar.sleep_tight.common.BedbugEntity;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedbugEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
@@ -11,7 +11,6 @@ import net.minecraft.world.phys.shapes.EntityCollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.Inject;
 
 @Mixin(DoorBlock.class)
 public abstract class DoorBlockMixin extends Block {

@@ -3,11 +3,17 @@ package net.mehvahdjukaar.sleep_tight.core;
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
-import net.mehvahdjukaar.sleep_tight.common.*;
+import net.mehvahdjukaar.sleep_tight.common.blocks.IModBed;
+import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
+import net.mehvahdjukaar.sleep_tight.common.blocks.NightBagBlock;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
+import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
+import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.integration.network.ClientBoundSyncPlayerSleepCapMessage;
 import net.mehvahdjukaar.sleep_tight.integration.network.NetworkHandler;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,6 +28,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
@@ -39,37 +46,32 @@ public class ModEvents {
 
     @EventCalled
     public static long getWakeUpTimeWhenSlept(ServerLevel level, long newTimeDayTime) {
-        WakeReason wakeReason = WakeReason.DEFAULT;
+        WakeReason wakeReason = WakeReason.SLEPT_SUCCESSFULLY;
 
         List<ServerPlayer> sleepingPlayers = level.players().stream().filter(Player::isSleepingLongEnough).toList();
 
-        //hammocks wake time
-        if (level.isDay()) {
-
-            for (Player player : sleepingPlayers) {
-                if (level.getBlockState(player.getSleepingPos().get()).getBlock() instanceof HammockBlock) {
-                    wakeReason = WakeReason.SLEPT_IN_HAMMOCK;
-                    break;
-                }
+        //find first valid. Assumes they are all the same
+        ISleepTightBed firstValid = (ISleepTightBed) Blocks.RED_BED;
+        for (Player player : sleepingPlayers) {
+            if (level.getBlockState(player.getSleepingPos().get()).getBlock() instanceof ISleepTightBed st) {
+                firstValid = st;
+                break;
             }
         }
+
         Set<Player> encounterSpawnedFor = new HashSet<>();
 
-        if (wakeReason == WakeReason.DEFAULT) {
-
-            //encounter
-            for (var player : sleepingPlayers) {
-                if (player.gameMode.isSurvival()) {
-                    if (WakeUpEncounterHelper.tryPerformEncounter(player, level, player.getSleepingPos().get())) {
-                        wakeReason = WakeReason.ENCOUNTER;
-                        encounterSpawnedFor.add(player);
-                    }
+        //encounter
+        for (var player : sleepingPlayers) {
+            if (player.gameMode.isSurvival()) {
+                if (WakeUpEncounterHelper.tryPerformEncounter(player, level, player.getSleepingPos().get())) {
+                    wakeReason = WakeReason.ENCOUNTER;
+                    encounterSpawnedFor.add(player);
                 }
             }
         }
 
-        if (wakeReason == WakeReason.DEFAULT) {
-
+        if (wakeReason == WakeReason.SLEPT_SUCCESSFULLY) {
             //nightmares
             double chances = 0;
             int players = 0;
@@ -84,15 +86,12 @@ public class ModEvents {
         }
 
         long sleepDayTime = level.getDayTime();
-        long newWakeTime = wakeReason.modifyWakeUpTime(newTimeDayTime, sleepDayTime);
+        long newWakeTime = firstValid.st_modifyWakeUpTime(wakeReason, newTimeDayTime, sleepDayTime);
+        long dayTimeDelta = ((newWakeTime + 24000) - sleepDayTime) % 24000;
 
         for (var player : sleepingPlayers) {
             switch (wakeReason) {
-                case DEFAULT -> {
-                    long dayTimeDelta = ((newWakeTime + 24000) - sleepDayTime) % 24000;
-                    onPlayerSleepFinished(player, dayTimeDelta);
-                }//todo fix up with bed type and standardize
-                case SLEPT_IN_HAMMOCK -> onRestedInHammock(player);
+                case SLEPT_SUCCESSFULLY -> onPlayerSleepFinished(player, dayTimeDelta);
                 case ENCOUNTER -> onEncounter(player, encounterSpawnedFor.contains(player));
                 case NIGHTMARE -> onNightmare(player);
             }
@@ -100,26 +99,6 @@ public class ModEvents {
 
         return newWakeTime;
     }
-
-
-    private enum WakeReason {
-        DEFAULT, SLEPT_IN_HAMMOCK, ENCOUNTER, NIGHTMARE;
-
-        long modifyWakeUpTime(long newTime, long dayTime) {
-            if (this == ENCOUNTER || this == NIGHTMARE) {
-                double mult = this == ENCOUNTER ? CommonConfigs.ENCOUNTER_SLEEP_TIME_MULTIPLIER.get() :
-                        CommonConfigs.NIGHTMARE_SLEEP_TIME_MULTIPLIER.get();
-
-                return (dayTime + (long) ((newTime - dayTime) * mult));
-
-            } else if (this == SLEPT_IN_HAMMOCK) {
-                long i = dayTime + 24000L;
-                return (i - i % 24000L) - 11001L;
-            }
-            return newTime;
-        }
-    }
-
 
     @EventCalled
     public static boolean canSetSpawn(Player player, @Nullable BlockPos pos) {
@@ -140,9 +119,11 @@ public class ModEvents {
             var state = level.getBlockState(pos);
             Block b = state.getBlock();
             if (state.getBlock() instanceof BedBlock) {
+                Direction dir = state.getValue(BedBlock.FACING);
+
                 //get head
                 if (state.getValue(BedBlock.PART) != BedPart.HEAD) {
-                    pos = pos.relative(state.getValue(BedBlock.FACING));
+                    pos = pos.relative(dir);
                     state = level.getBlockState(pos);
                     if (!state.is(b)) {
                         return InteractionResult.PASS;
@@ -155,7 +136,7 @@ public class ModEvents {
                 }
 
                 //fallsback on bed logic for non sleep action
-                if (BedBlock.canSetSpawn(level) && !player.isSecondaryUseActive()) {
+                if (BedBlock.canSetSpawn(level) && !player.isSecondaryUseActive() && !bedBlocked(level, pos, dir)) {
 
                     //tries clearing double bed
                     boolean occupied = state.getValue(BedBlock.OCCUPIED);
@@ -199,6 +180,16 @@ public class ModEvents {
             }
         }
         return InteractionResult.PASS;
+    }
+
+    private static boolean bedBlocked(Level level, BlockPos pos, Direction direction) {
+        BlockPos blockPos = pos.above();
+        return !freeAt(level, blockPos) || !freeAt(level, blockPos.relative(direction.getOpposite()));
+    }
+
+
+    protected static boolean freeAt(Level level, BlockPos pos) {
+        return !level.getBlockState(pos).isSuffocating(level, pos);
     }
 
     @EventCalled
@@ -257,16 +248,24 @@ public class ModEvents {
             BlockPos pos = p.get();
             PlayerSleepData playerCap = SleepTightPlatformStuff.getPlayerSleepData(player);
             BlockEntity blockEntity = player.level.getBlockEntity(pos);
-            if (blockEntity instanceof IExtraBedDataProvider tile) {
-                playerCap.onNightSleptInto(tile.getBedData(), player);
+
+            ISleepTightBed bed = (ISleepTightBed) Blocks.RED_BED;
+            if (blockEntity.getBlockState() instanceof ISleepTightBed b) {
+                bed = b;
             }
-            SleepEffectsHelper.applyEffectsOnWakeUp(playerCap, player, dayTimeDelta, blockEntity);
+            if (blockEntity instanceof IExtraBedDataProvider tile) {
+                playerCap.onNightSleptIntoBed(tile.st_getBedData(), player);
 
-            playerCap.addInsomnia(player, CommonConfigs.BED_COOLDOWN.get());
+            }
+
+            if (bed.st_canSpawnBedbugs()) {
+                WakeUpEncounterHelper.trySpawningBedbug(pos, (ServerLevel) player.level);
+            }
+
+            SleepEffectsHelper.applyEffectsOnWakeUp(playerCap, player, dayTimeDelta, blockEntity, bed);
+
+            playerCap.addInsomnia(player, bed.st_getCooldown());
             playerCap.syncToClient(player);
-
-
-            WakeUpEncounterHelper.trySpawningBedbug(pos, (ServerLevel) player.level);
         }
     }
 
@@ -333,16 +332,16 @@ public class ModEvents {
     //this is responsible to check if player can sleep at this precise time
     @EventCalled
     public static InteractionResult onCheckSleepTime(Level level, BlockPos pos) {
-        if (level.getBlockState(pos).getBlock() instanceof HammockBlock) {
-            if (isDayTime(level)) return InteractionResult.SUCCESS;
-            return InteractionResult.FAIL;
+        if (level.getBlockState(pos).getBlock() instanceof IModBed bed) {
+            return bed.canSleepAtTime(level);
         }
         return InteractionResult.PASS;
     }
 
+
     public static boolean isDayTime(Level level) {
-        long t = level.getDayTime() % 24000L;
-        if (t > 500L && t < 11500L) {
+        long dayTime = level.getDayTime() % 24000L;
+        if (dayTime > 500L && dayTime < 11500L) {
             return true;
         }
         return false;

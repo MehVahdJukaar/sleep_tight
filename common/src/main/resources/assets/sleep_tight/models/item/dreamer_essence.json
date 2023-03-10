@@ -1,3 +1,6 @@
 {
-  "parent": "sleep_tight:block/dreamer_essence"
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "sleep_tight:item/dream_essence"
+  }
 }

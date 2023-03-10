@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.mixins;
 
 import net.mehvahdjukaar.sleep_tight.core.BedData;
-import net.mehvahdjukaar.sleep_tight.common.IExtraBedDataProvider;
+import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BedBlockEntity;
@@ -41,7 +41,7 @@ public abstract class BedBlockEntityMixin extends BlockEntity implements IExtraB
     }
 
     @Override
-    public BedData getBedData() {
+    public BedData st_getBedData() {
         return bedCapability;
     }
 }

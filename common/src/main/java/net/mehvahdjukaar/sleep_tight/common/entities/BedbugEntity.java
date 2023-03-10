@@ -1,14 +1,17 @@
-package net.mehvahdjukaar.sleep_tight.common;
+package net.mehvahdjukaar.sleep_tight.common.entities;
 
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.sleep_tight.common.blocks.InfestedBedBlock;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.integration.network.ClientBoundParticleMessage;
 import net.mehvahdjukaar.sleep_tight.integration.network.NetworkHandler;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -17,6 +20,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
@@ -42,10 +46,10 @@ import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BooleanOp;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
@@ -54,6 +58,10 @@ import java.util.stream.Stream;
 public class BedbugEntity extends Monster {
     private static final EntityDataAccessor<Byte> DATA_FLAGS_ID = SynchedEntityData.defineId(BedbugEntity.class, EntityDataSerializers.BYTE);
     private BlockPos targetBed;
+
+    //client
+    private int burrowingTicks = 0;
+    private int prevBurrowingTicks = 0;
 
     public BedbugEntity(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
@@ -83,6 +91,10 @@ public class BedbugEntity extends Monster {
         this.entityData.define(DATA_FLAGS_ID, (byte) 0);
     }
 
+    public float getBurrowing(float partialTicks) {
+        return Mth.lerp(partialTicks, prevBurrowingTicks, burrowingTicks);
+    }
+
     @Override
     public int getMaxHeadYRot() {
         return 0;
@@ -100,9 +112,40 @@ public class BedbugEntity extends Monster {
             this.getLookControl().setLookAt(this.getTarget());
         this.setYRot(this.yHeadRot);
 
+
         if (!this.level.isClientSide) {
             this.setClimbing(this.horizontalCollision);
+        } else {
+            this.prevBurrowingTicks = burrowingTicks;
         }
+
+        if (this.isBurrowing()) {
+            if (!this.getFeetBlockState().is(SleepTight.VANILLA_BEDS)) {
+                this.setBurrowing(false);
+            }else {
+                burrowingTicks++;
+                if(level.isClientSide){
+                    BlockPos pos = this.blockPosition();
+                    for (int i = 0; i < 6 + level.random.nextInt(10); i++) {
+                        float x = pos.getX() + level.random.nextFloat();
+                        float z = pos.getZ() + level.random.nextFloat();
+                        float y = pos.getY() + 9 / 16f;
+                        //TODO: finish
+                        LevelRenderer
+                        level.addParticle(ParticleTypes.SMOKE, x, y, z, 0, 0, 0);
+                    }
+                }
+            }
+        }
+        else if (burrowingTicks > 0) {
+            this.burrowingTicks = Math.max(0, this.burrowingTicks - 2);
+        }
+
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
     }
 
     @Override
@@ -216,11 +259,11 @@ public class BedbugEntity extends Monster {
     }
 
     protected void onInsideBlock(BlockState state, BlockPos pos) {
-        if(state.getBlock() instanceof DoorBlock){
+        if (state.getBlock() instanceof DoorBlock) {
             //gets full shape
             VoxelShape voxelShape = state.getCollisionShape(this.level, pos);
             VoxelShape voxelShape2 = voxelShape.move(pos.getX(), pos.getY(), pos.getZ());
-            if(Shapes.joinIsNotEmpty(voxelShape2, Shapes.create(this.getBoundingBox()), BooleanOp.AND)) {
+            if (Shapes.joinIsNotEmpty(voxelShape2, Shapes.create(this.getBoundingBox()), BooleanOp.AND)) {
 
                 NetworkHandler.CHANNEL.sentToAllClientPlayersTrackingEntity(this, ClientBoundParticleMessage.bedbugDoor(pos));
                 this.makeStuckInBlock(state, new Vec3(0.5, 0.5, 0.5));
@@ -237,9 +280,9 @@ public class BedbugEntity extends Monster {
         if (this.level.hasChunksAt(blockPos, blockPos2)) {
             BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
 
-            for(int i = blockPos.getX(); i <= blockPos2.getX(); ++i) {
-                for(int j = blockPos.getY(); j <= blockPos2.getY(); ++j) {
-                    for(int k = blockPos.getZ(); k <= blockPos2.getZ(); ++k) {
+            for (int i = blockPos.getX(); i <= blockPos2.getX(); ++i) {
+                for (int j = blockPos.getY(); j <= blockPos2.getY(); ++j) {
+                    for (int k = blockPos.getZ(); k <= blockPos2.getZ(); ++k) {
                         mutableBlockPos.set(i, j, k);
                         BlockState blockState = this.level.getBlockState(mutableBlockPos);
 
@@ -265,7 +308,7 @@ public class BedbugEntity extends Monster {
 
     @Override
     public boolean isColliding(BlockPos pos, BlockState state) {
-        if(state.getBlock() instanceof DoorBlock){
+        if (state.getBlock() instanceof DoorBlock) {
             return false;
         }
         return super.isColliding(pos, state);
@@ -290,8 +333,11 @@ public class BedbugEntity extends Monster {
 
     static class InfestBedGoal extends MoveToBlockGoal {
 
+        private final List<BlockPos> blacklist = new ArrayList<>();
+
         private final BedbugEntity bedBug;
         private final int searchRange;
+        private int ticksOnTarget = 0;
 
         public InfestBedGoal(BedbugEntity pathfinderMob, double speed, int searchRange) {
             super(pathfinderMob, speed, searchRange);
@@ -301,13 +347,32 @@ public class BedbugEntity extends Monster {
         }
 
         @Override
+        public void tick() {
+            boolean reached = this.isReachedTarget();
+            super.tick();
+            if (this.isReachedTarget()) {
+                ticksOnTarget++;
+                if (!reached) {
+                    this.bedBug.setBurrowing(true);
+                }
+                if (this.bedBug.burrowingTicks>40) {
+                    Level level = this.mob.level;
+                    if (InfestedBedBlock.convertBed(level, level.getBlockState(blockPos), blockPos)) {
+                        this.mob.spawnAnim();
+                        this.mob.discard();
+                    }
+                }
+            } else ticksOnTarget = 0;
+        }
+
+        @Override
         protected boolean isValidTarget(LevelReader level, BlockPos pos) {
             return level.getBlockState(pos).is(SleepTight.VANILLA_BEDS);
         }
 
         @Override
         protected int nextStartTick(PathfinderMob creature) {
-            return super.nextStartTick(creature)*100;
+            return super.nextStartTick(creature) * 100;
         }
 
         @Override
@@ -316,13 +381,19 @@ public class BedbugEntity extends Monster {
                 this.blockPos = bedBug.targetBed;
                 return true;
             }
+            var v = findNearestBed();
+            if (!v.isEmpty()) {
+                bedBug.targetBed = v.get(0);
+                this.blockPos = v.get(0);
+                return true;
+            }
 
-            return super.findNearestBlock();
+            return false;// super.findNearestBlock();
         }
 
         private List<BlockPos> findNearestBed() {
             BlockPos pos = bedBug.blockPosition();
-            PoiManager poiManager = ((ServerLevel)bedBug.level).getPoiManager();
+            PoiManager poiManager = ((ServerLevel) bedBug.level).getPoiManager();
             Stream<PoiRecord> stream = poiManager.getInRange((h) ->
                     h.is(PoiTypes.HOME), pos, searchRange, PoiManager.Occupancy.ANY);
             return stream.map(PoiRecord::getPos).sorted(Comparator.comparingDouble((p) ->
@@ -408,7 +479,6 @@ public class BedbugEntity extends Monster {
         }
         return Monster.checkMonsterSpawnRules(type, level, spawnType, pos, random);
     }
-
 
 
 }

@@ -1,11 +1,16 @@
-package net.mehvahdjukaar.sleep_tight.common;
+package net.mehvahdjukaar.sleep_tight.common.blocks;
 
 import dev.architectury.injectables.annotations.PlatformOnly;
 import net.mehvahdjukaar.moonlight.api.block.IRotatable;
 import net.mehvahdjukaar.moonlight.api.set.BlocksColorAPI;
 import net.mehvahdjukaar.moonlight.api.util.Utils;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
+import net.mehvahdjukaar.sleep_tight.common.HammockPart;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
+import net.mehvahdjukaar.sleep_tight.core.ModEvents;
+import net.mehvahdjukaar.sleep_tight.core.WakeReason;
 import net.mehvahdjukaar.sleep_tight.integration.SupplementariesCompat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -229,13 +234,13 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
 
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return state.getValue(PART).isMaster() ? new HammockBlockEntity(pos, state) : null;
+        return state.getValue(PART).isMaster() ? new HammockTile(pos, state) : null;
     }
 
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide ? Utils.getTicker(type, SleepTight.HAMMOCK_TILE.get(), HammockBlockEntity::tick) : null;
+        return level.isClientSide ? Utils.getTicker(type, SleepTight.HAMMOCK_TILE.get(), HammockTile::tick) : null;
     }
 
     @Override
@@ -259,7 +264,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
             return InteractionResult.FAIL;
         }
 
-        if (tryExploding(level, pos)) return InteractionResult.sidedSuccess(level.isClientSide);
+        if (IModBed. tryExploding(level, pos)) return InteractionResult.sidedSuccess(level.isClientSide);
 
         if (state.getValue(OCCUPIED)) {
             //TODO: make nitwids use hammocks if available
@@ -269,23 +274,11 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
 
             return InteractionResult.SUCCESS;
         } else {
-            if(!player.isSecondaryUseActive()) {
+            if (!player.isSecondaryUseActive()) {
                 BedEntity.layDown(state, level, pos, player);
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
-    }
-
-    public static boolean tryExploding(Level level, BlockPos pos) {
-        if (!BedBlock.canSetSpawn(level)) {
-            if(!level.isClientSide) {
-                level.removeBlock(pos, false);
-                float size = CommonConfigs.DISABLE_BIG_EXPLOSION.get() ? 0 : 5.0F;
-                level.explode(null, DamageSource.badRespawnPointExplosion(), null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, size, true, Explosion.BlockInteraction.DESTROY);
-            }
-            return true;
-        }
-        return false;
     }
 
     @Override
@@ -305,18 +298,46 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
-    public boolean canHaveNightmares() {
-        return CommonConfigs.NIGHTMARES_HAMMOCK.get();
-    }
-
-    @Override
-    public long getCooldown() {
-        return CommonConfigs.HAMMOCK_COOLDOWN.get();
+    public InteractionResult canSleepAtTime(Level level) {
+        return ModEvents.isDayTime(level) ? InteractionResult.SUCCESS : InteractionResult.FAIL;
     }
 
     @Override
     public Component getSleepingProblemMessage() {
         return Component.translatable("message.sleep_tight.cant_rest");
+    }
+
+    @Override
+    public boolean st_canCauseNightmares() {
+        return CommonConfigs.NIGHTMARES_HAMMOCK.get();
+    }
+
+    @Override
+    public long st_getCooldown() {
+        return CommonConfigs.HAMMOCK_COOLDOWN.get();
+    }
+
+    @Override
+    public boolean st_hasPenalties() {
+        return CommonConfigs.PENALTIES_HAMMOCK.get();
+    }
+
+    @Override
+    public boolean st_hasRequirements() {
+        return CommonConfigs.REQUIREMENT_HAMMOCK.get();
+    }
+
+    @Override
+    public boolean st_canSpawnBedbugs() {
+        return false;
+    }
+
+    @Override
+    public long st_modifyWakeUpTime(WakeReason reason, long newTime, long dayTime) {
+        if (reason == WakeReason.SLEPT_SUCCESSFULLY) {
+            long i = dayTime + 24000L;
+            return (i - i % 24000L) - 11001L;
+        } else return IModBed.super.st_modifyWakeUpTime(reason, newTime, dayTime);
     }
 
     @Override

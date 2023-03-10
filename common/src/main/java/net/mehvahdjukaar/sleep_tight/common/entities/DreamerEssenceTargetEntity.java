@@ -1,4 +1,4 @@
-package net.mehvahdjukaar.sleep_tight.common;
+package net.mehvahdjukaar.sleep_tight.common.entities;
 
 import dev.architectury.injectables.annotations.PlatformOnly;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
@@ -24,13 +24,14 @@ import java.util.List;
 
 public class DreamerEssenceTargetEntity extends LivingEntity {
 
-    public DreamerEssenceTargetEntity(EntityType<? extends LivingEntity> entityType, Level level) {
-        super(entityType, level);
-    }
 
-    protected DreamerEssenceTargetEntity(Level level, BlockPos pos) {
+    public DreamerEssenceTargetEntity(Level level, BlockPos pos) {
         super(SleepTight.DREAMER_ESSENCE_ENTITY.get(), level);
         this.setPos(Vec3.atBottomCenterOf(pos));
+    }
+
+    public DreamerEssenceTargetEntity(EntityType<? extends LivingEntity> entityEntityType, Level level) {
+        super(entityEntityType, level);
     }
 
     //@Override
@@ -197,4 +198,5 @@ public class DreamerEssenceTargetEntity extends LivingEntity {
                 .add(Attributes.ATTACK_DAMAGE, 0D)
                 .add(Attributes.FLYING_SPEED, 0D);
     }
+
 }

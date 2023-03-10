@@ -1,7 +1,12 @@
 package net.mehvahdjukaar.sleep_tight;
 
 import net.mehvahdjukaar.moonlight.api.platform.ClientPlatformHelper;
-import net.mehvahdjukaar.sleep_tight.client.*;
+import net.mehvahdjukaar.sleep_tight.client.particles.BedbugParticle;
+import net.mehvahdjukaar.sleep_tight.client.particles.DreamParticle;
+import net.mehvahdjukaar.sleep_tight.client.renderers.BedbugEntityRenderer;
+import net.mehvahdjukaar.sleep_tight.client.renderers.HammockBlockTileRenderer;
+import net.mehvahdjukaar.sleep_tight.client.renderers.InfestedBedRenderer;
+import net.mehvahdjukaar.sleep_tight.client.renderers.InvisibleEntityRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.resources.model.Material;

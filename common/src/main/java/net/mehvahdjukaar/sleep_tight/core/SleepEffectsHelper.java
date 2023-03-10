@@ -1,8 +1,9 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
-import net.mehvahdjukaar.sleep_tight.common.BedEntity;
-import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
-import net.mehvahdjukaar.sleep_tight.common.IExtraBedDataProvider;
+import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
+import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
+import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.integration.HeartstoneCompat;
 import net.minecraft.core.BlockPos;
@@ -29,22 +30,19 @@ import static net.mehvahdjukaar.sleep_tight.configs.CommonConfigs.*;
 public class SleepEffectsHelper {
 
     public static void applyEffectsOnWakeUp(PlayerSleepData playerCap, ServerPlayer player,
-                                            long dayTimeDelta, BlockEntity blockEntity) {
-        if (blockEntity instanceof IExtraBedDataProvider bed) {
-            applyVanillaBedBonuses(player, dayTimeDelta, bed.getBedData(), playerCap);
-            applyHeartstoneBonuses(player, blockEntity, bed.getBedData(), playerCap);
+                                            long dayTimeDelta, BlockEntity blockEntity, ISleepTightBed bed) {
+        if (blockEntity instanceof IExtraBedDataProvider provider) { //just for vanilla bed
+            applyVanillaBedBonuses(player, dayTimeDelta, provider.st_getBedData(), playerCap);
+            applyHeartstoneBonuses(player, blockEntity, provider.st_getBedData(), playerCap);
 
         }
         if (player.gameMode.isSurvival()) {
-            applySleepPenalties(player, dayTimeDelta, blockEntity);
-            paySleepRequirements(player, blockEntity);
+            if (bed.st_hasPenalties()) applySleepPenalties(player, dayTimeDelta);
+            if (bed.st_hasRequirements()) paySleepRequirements(player);
         }
     }
 
-    private static void applySleepPenalties(ServerPlayer player, long dayTimeDelta, BlockEntity block) {
-        if (block == null && !PENALTIES_NIGHT_BAG.get()) return; //only hammocks have null tile of our bocks
-        if (block instanceof HammockBlockEntity && !PENALTIES_HAMMOCK.get()) return;
-        if (!PENALTIES_BED.get()) return;
+    private static void applySleepPenalties(ServerPlayer player, long dayTimeDelta) {
 
         double hunger = CONSUMED_HUNGER.get();
         if (hunger == 0) return;
@@ -122,11 +120,7 @@ public class SleepEffectsHelper {
         }
     }
 
-    private static void paySleepRequirements(ServerPlayer serverPlayer, BlockEntity tile) {
-        if (tile == null && !REQUIREMENT_NIGHT_BAG.get()) return; //only hammocks have null tile of our bocks
-        if (tile instanceof HammockBlockEntity && !REQUIREMENT_HAMMOCK.get()) return;
-        if (!REQUIREMENT_BED.get()) return;
-
+    private static void paySleepRequirements(ServerPlayer serverPlayer) {
         serverPlayer.giveExperiencePoints(-XP_COST.get());
     }
 
@@ -135,7 +129,7 @@ public class SleepEffectsHelper {
         if (bedPos != null && !player.getAbilities().instabuild) {
             BlockEntity tile = player.getLevel().getBlockEntity(bedPos);
             if (tile == null && !REQUIREMENT_NIGHT_BAG.get()) return true; //only hammocks have null tile of our bocks
-            if (tile instanceof HammockBlockEntity && !REQUIREMENT_HAMMOCK.get()) return true;
+            if (tile instanceof HammockTile && !REQUIREMENT_HAMMOCK.get()) return true;
             if (!REQUIREMENT_BED.get()) return true;
 
             int xp = XP_COST.get();

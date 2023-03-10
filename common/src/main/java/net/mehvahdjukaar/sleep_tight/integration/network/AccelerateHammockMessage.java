@@ -3,7 +3,7 @@ package net.mehvahdjukaar.sleep_tight.integration.network;
 import net.mehvahdjukaar.moonlight.api.platform.network.ChannelHandler;
 import net.mehvahdjukaar.moonlight.api.platform.network.Message;
 import net.mehvahdjukaar.moonlight.api.platform.network.NetworkDir;
-import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
+import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
@@ -35,7 +35,7 @@ public class AccelerateHammockMessage implements Message {
     public void handle(ChannelHandler.Context context) {
         if (context.getDirection() == NetworkDir.PLAY_TO_CLIENT) {
             Level level = Minecraft.getInstance().cameraEntity.getLevel();
-            if (level.getBlockEntity(pos) instanceof HammockBlockEntity tile) {
+            if (level.getBlockEntity(pos) instanceof HammockTile tile) {
                 if (leftPressed) {
                     tile.accelerateLeft();
                 } else {

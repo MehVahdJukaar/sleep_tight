@@ -2,7 +2,7 @@ package net.mehvahdjukaar.sleep_tight.mixins;
 
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
-import net.mehvahdjukaar.sleep_tight.common.BedEntity;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;

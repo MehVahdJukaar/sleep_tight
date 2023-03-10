@@ -1,7 +1,8 @@
-package net.mehvahdjukaar.sleep_tight.common;
+package net.mehvahdjukaar.sleep_tight.common.tiles;
 
 import dev.architectury.injectables.annotations.PlatformOnly;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.integration.network.AccelerateHammockMessage;
 import net.mehvahdjukaar.sleep_tight.integration.network.NetworkHandler;
@@ -17,7 +18,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
-public class HammockBlockEntity extends BlockEntity {
+public class HammockTile extends BlockEntity {
 
     private final DyeColor color;
 
@@ -30,16 +31,16 @@ public class HammockBlockEntity extends BlockEntity {
 
     private float prevYaw;
     private float angle;
-    private float angularVel = 0.01f;
+    private float angularVel = 0f;
     private boolean hasDrag = true;
 
 
-    public HammockBlockEntity(BlockPos blockPos, BlockState blockState) {
+    public HammockTile(BlockPos blockPos, BlockState blockState) {
         super(SleepTight.HAMMOCK_TILE.get(), blockPos, blockState);
         this.color = ((HammockBlock) blockState.getBlock()).getColor();
         this.pivotOffset = blockState.getValue(HammockBlock.PART).getPivotOffset();
         this.direction = blockState.getValue(HammockBlock.FACING);
-        this.angle = (float) ((RandomSource.create().nextFloat() - 0.5) * Math.toRadians(ClientConfigs.HAMMOCK_MIN_ANGLE.get()));
+        this.angle = 0 * (float) ((RandomSource.create().nextFloat() - 0.5) * Math.toRadians(ClientConfigs.HAMMOCK_MIN_ANGLE.get()));
     }
 
 
@@ -84,11 +85,10 @@ public class HammockBlockEntity extends BlockEntity {
         super.load(tag);
     }
 
-    public static void tick(Level level, BlockPos pos, BlockState state, HammockBlockEntity e) {
+    public static void tick(Level level, BlockPos pos, BlockState state, HammockTile e) {
         e.prevYaw = e.angle;
 
-        double damping = ClientConfigs.DAMPING.get();
-        float dt = 1 / 20f;
+        float dt = 1 / 20f; //time step
 
         double energy = 0;
 
@@ -96,12 +96,15 @@ public class HammockBlockEntity extends BlockEntity {
 
         boolean hasAcc = (e.accelerateLeft || e.accelerateRight);
         if (hasAcc) e.hasDrag = true;
-        if (hasAcc || e.hasDrag) energy = calculateEnergy(k, e.angularVel, e.angle);
+        if (e.hasDrag) energy = calculateEnergy(k, e.angularVel, e.angle);
 
 
         if (hasAcc && energy < ClientConfigs.getMaxAngleEnergy()) {
-            double dec = ClientConfigs.SWING_FORCE.get();
-            e.angularVel += dec * (e.accelerateLeft ? -1 : 1);
+            double push = ClientConfigs.SWING_FORCE.get();
+            e.angularVel += push * (e.accelerateLeft ? -1 : 1);
+            if (energy != 0) {
+                int aa = 1;
+            }
 
             //update other clients
             NetworkHandler.CHANNEL.sendToServer(new AccelerateHammockMessage(pos, e.accelerateLeft));
@@ -110,7 +113,10 @@ public class HammockBlockEntity extends BlockEntity {
         float acc = -k * Mth.sin(e.angle);
 
         if (e.hasDrag) {
+            //note that since its proportional to speed this effectively limits the max angle
             if (energy > ClientConfigs.getMinAngleEnergy()) {
+                double damping = ClientConfigs.DAMPING.get();
+
                 float drag = (float) (-damping * e.angularVel);
                 acc += drag;
             } else {
@@ -118,9 +124,26 @@ public class HammockBlockEntity extends BlockEntity {
             }
         }
 
+        /* //more precise method
+        float k1v, k2v, k3v =0;
+        k1v =  e.angularVel;
+
+        float  k1a =  -k * Mth.sin(e.angle);
+
+        k2v = e.angularVel + 0.5f * dt * k1a;
+        float   k2a =  -k * Mth.sin(e.angle + 0.5f * dt * k1v);
+
+        k3v = e.angularVel + dt * k2a;
+        float  k3a = -k * Mth.sin(e.angle + dt * k2v);
+
+        e.angle += (dt / 4.0) * (k1v + 2.0 * k2v + k3v);
+        e.angularVel += (dt / 4.0) * (k1a + 2 * k2a + k3a);
+        */
+
         e.angularVel += dt * acc;
 
         e.angle += (e.angularVel * dt);
+
 
         //float max_yaw = max_swing_angle(self.yaw, self.angular_velocity, ff)
 

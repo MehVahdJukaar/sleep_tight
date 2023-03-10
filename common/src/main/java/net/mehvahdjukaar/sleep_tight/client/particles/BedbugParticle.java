@@ -1,4 +1,4 @@
-package net.mehvahdjukaar.sleep_tight.client;
+package net.mehvahdjukaar.sleep_tight.client.particles;
 
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.minecraft.client.multiplayer.ClientLevel;

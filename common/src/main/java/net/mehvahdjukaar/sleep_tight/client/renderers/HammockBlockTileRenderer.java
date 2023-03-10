@@ -1,4 +1,4 @@
-package net.mehvahdjukaar.sleep_tight.client;
+package net.mehvahdjukaar.sleep_tight.client.renderers;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -6,8 +6,8 @@ import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
-import net.mehvahdjukaar.sleep_tight.common.HammockBlock;
-import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
+import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
+import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.common.HammockPart;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -22,7 +22,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class HammockBlockTileRenderer implements BlockEntityRenderer<HammockBlockEntity> {
+public class HammockBlockTileRenderer implements BlockEntityRenderer<HammockTile> {
 
     private final ModelPart model;
     private final ModelPart ropeF;
@@ -46,7 +46,7 @@ public class HammockBlockTileRenderer implements BlockEntityRenderer<HammockBloc
     }
 
     @Override
-    public void render(HammockBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+    public void render(HammockTile blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
 
         BlockState state = blockEntity.getBlockState();
         HammockPart value = state.getValue(HammockBlock.PART);

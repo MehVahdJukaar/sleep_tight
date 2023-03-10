@@ -1,4 +1,4 @@
-package net.mehvahdjukaar.sleep_tight.common;
+package net.mehvahdjukaar.sleep_tight.common.entities;
 
 import dev.architectury.injectables.annotations.PlatformOnly;
 import net.mehvahdjukaar.moonlight.api.entity.IControllableVehicle;
@@ -7,6 +7,9 @@ import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
+import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
+import net.mehvahdjukaar.sleep_tight.common.blocks.IModBed;
+import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.mehvahdjukaar.sleep_tight.integration.network.ClientBoundRideImmediatelyMessage;
@@ -42,6 +45,8 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     private Direction dir = Direction.NORTH;
     private OffsetMode offsetMode = OffsetMode.NONE;
     private BlockState bedState = Blocks.AIR.defaultBlockState();
+
+    private boolean dismountOnTheSpot = false;
 
     public BedEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -255,7 +260,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         if (jumping) {
             NetworkHandler.CHANNEL.sendToServer(new ServerBoundCommitSleepMessage());
         } else if (left ^ right) {
-            if (this.level.getBlockEntity(this.getOnPos()) instanceof HammockBlockEntity tile) {
+            if (this.level.getBlockEntity(this.getOnPos()) instanceof HammockTile tile) {
                 if (left) {
                     tile.accelerateLeft();
                 } else {
@@ -278,12 +283,12 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
 
     }
 
-    public Component getRidingMessage(Component keyMessage) {
+    public Component getRidingMessage(Component keyMessage, Component shiftMessage) {
         this.bedState = level.getBlockState(this.blockPosition());
         if (bedState.getBlock() instanceof HammockBlock) {
-            return Component.translatable("message.sleep_tight.start_resting", keyMessage);
+            return Component.translatable("message.sleep_tight.start_resting", keyMessage, shiftMessage);
         } else {
-            return Component.translatable("message.sleep_tight.start_sleeping", keyMessage);
+            return Component.translatable("message.sleep_tight.start_sleeping", keyMessage, shiftMessage);
         }
     }
 
@@ -304,6 +309,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
 
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
+        if (dismountOnTheSpot) return super.getDismountLocationForPassenger(passenger);
         var o = BedBlock.findStandUpPosition(passenger.getType(), passenger.level, this.blockPosition(), passenger.getYRot());
         //this will not quite work for hammocks but its good enough
         return o.orElseGet(() -> super.getDismountLocationForPassenger(passenger));
@@ -321,9 +327,13 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     public void startSleepingOn(ServerPlayer player) {
 
         BlockPos pos = this.blockPosition();
+        this.dismountOnTheSpot = true;
         var r = player.startSleepInBed(pos);
+        this.dismountOnTheSpot = false;
+
         var op = r.left();
         if (op.isPresent()) {
+            player.startRiding(this, true);
             Player.BedSleepingProblem problem = op.get();
             Component m;
             if (problem == Player.BedSleepingProblem.NOT_POSSIBLE_NOW && this.bedState.getBlock() instanceof IModBed mb) {
@@ -385,7 +395,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
                 NetworkHandler.CHANNEL.sendToClientPlayer(serverPlayer, new ClientBoundRideImmediatelyMessage(entity));
             }
 
-        } else if (level.getBlockEntity(pos) instanceof HammockBlockEntity tile) {
+        } else if (level.getBlockEntity(pos) instanceof HammockTile tile) {
 
             var d = player.getDeltaMovement();
             double vel = d.dot(MthUtils.V3itoV3(tile.getDirection().getClockWise().getNormal())) / d.length();

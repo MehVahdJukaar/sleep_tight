@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
-import net.mehvahdjukaar.sleep_tight.common.DreamerEssenceTargetEntity;
-import net.mehvahdjukaar.sleep_tight.common.IModBed;
+import net.mehvahdjukaar.sleep_tight.common.entities.DreamerEssenceTargetEntity;
+import net.mehvahdjukaar.sleep_tight.common.blocks.IModBed;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.integration.network.ClientBoundSyncPlayerSleepCapMessage;
 import net.mehvahdjukaar.sleep_tight.integration.network.NetworkHandler;
@@ -55,7 +55,8 @@ public abstract class PlayerSleepData {
         this.lastWokenUpTimeStamp = gameTime;
     }
 
-    public void onNightSleptInto(BedData bed, Player player) {
+    //for home bed calculations
+    public void onNightSleptIntoBed(BedData bed, Player player) {
         long gameTime = player.level.getGameTime();
         long awakeTime = gameTime - this.lastWokenUpTimeStamp;
         if (awakeTime > CommonConfigs.SLEEP_INTERVAL.get()) {
@@ -100,7 +101,7 @@ public abstract class PlayerSleepData {
         if (isDreamerEssenceInRange(player.blockPosition(), player.level)) return 0;
         BlockState state = player.level.getBlockState(pos);
         if (state.getBlock() instanceof IModBed bed) {
-            if (!bed.canHaveNightmares()) return 0;
+            if (!bed.st_canCauseNightmares()) return 0;
         } else if (!CommonConfigs.NIGHTMARES_BED.get()) return 0;
 
         return CommonConfigs.NIGHTMARE_CHANCE_INCREMENT_PER_NIGHT.get()

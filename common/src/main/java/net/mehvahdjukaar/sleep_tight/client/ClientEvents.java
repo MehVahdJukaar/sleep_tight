@@ -3,8 +3,8 @@ package net.mehvahdjukaar.sleep_tight.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Vector3f;
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
-import net.mehvahdjukaar.sleep_tight.common.BedEntity;
-import net.mehvahdjukaar.sleep_tight.common.HammockBlockEntity;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
+import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.core.SleepEffectsHelper;
 import net.minecraft.client.Camera;
@@ -37,7 +37,7 @@ public class ClientEvents {
             bedEntity = be;
         }
         if (pos == null) return;
-        if (entity.getLevel().getBlockEntity(pos) instanceof HammockBlockEntity tile) {
+        if (entity.getLevel().getBlockEntity(pos) instanceof HammockTile tile) {
 
             float roll = tile.getRoll(partialTicks);
 
@@ -85,7 +85,7 @@ public class ClientEvents {
         } else if (e instanceof Player p) {
             pos = p.getSleepingPos().orElse(null);
         }
-        if (pos != null && e.getLevel().getBlockEntity(pos) instanceof HammockBlockEntity tile) {
+        if (pos != null && e.getLevel().getBlockEntity(pos) instanceof HammockTile tile) {
             var q = camera.rotation().copy();
             q.conj();
             matrixStack.mulPose(q);
@@ -116,7 +116,8 @@ public class ClientEvents {
 
     public static void displayRidingMessage(BedEntity bed) {
         Minecraft mc = Minecraft.getInstance();
-        Component component = bed.getRidingMessage(mc.options.keyJump.getTranslatedKeyMessage());
+        Component component = bed.getRidingMessage(mc.options.keyJump.getTranslatedKeyMessage(),
+                mc.options.keyShift.getTranslatedKeyMessage());
         mc.gui.setOverlayMessage(component, false);
         mc.getNarrator().sayNow(component);
     }

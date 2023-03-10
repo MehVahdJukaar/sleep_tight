@@ -7,7 +7,6 @@ import net.minecraft.core.Registry;
 import net.minecraft.util.random.SimpleWeightedRandomList;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.monster.Phantom;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -19,6 +18,7 @@ public class CommonConfigs {
     public static final Supplier<Integer> SLEEP_INTERVAL;
     public static final Supplier<Boolean> DOUBLE_BED;
     public static final Supplier<Boolean> LAY_WHEN_ON_COOLDOWN;
+    public static final Supplier<Boolean> NIGHT_BAG_BORING;
 
     public static final Supplier<HeartstoneMode> HEARTSTONE_MODE;
     public static final Supplier<List<EffectData>> HEARTSTONE_EFFECT;
@@ -99,6 +99,7 @@ public class CommonConfigs {
     }
 
 
+
     static {
         ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.COMMON);
 
@@ -120,6 +121,8 @@ public class CommonConfigs {
         HEARTSTONE_EFFECT = builder.comment("Effect to give to players when they wake up")
                 .defineObjectList("effects", () -> List.of(new EffectData(MobEffects.REGENERATION,
                         0, 0, 20 * 60, 20)), EffectData.CODEC);
+        NIGHT_BAG_BORING = builder.comment("Makes night bag less unique by allowing you to place them normally")
+                        .define("boring_night_bags", false);
         builder.pop();
 
         builder.pop();

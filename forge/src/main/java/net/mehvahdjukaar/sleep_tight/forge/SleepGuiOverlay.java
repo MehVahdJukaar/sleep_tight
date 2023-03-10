@@ -7,9 +7,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
-import net.mehvahdjukaar.sleep_tight.common.BedEntity;
-import net.mehvahdjukaar.sleep_tight.common.ILayDownBlock;
-import net.mehvahdjukaar.sleep_tight.common.NightBagBlock;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
+import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
+import net.mehvahdjukaar.sleep_tight.common.blocks.NightBagBlock;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
@@ -20,7 +20,6 @@ import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.screens.InBedChatScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
@@ -57,7 +56,7 @@ public class SleepGuiOverlay implements IGuiOverlay {
 
             boolean laying = player.getVehicle() instanceof BedEntity;
             if (laying || (cooldown && hit instanceof BlockHitResult bh &&
-                    mc.level.getBlockState(bh.getBlockPos()).getBlock() instanceof ILayDownBlock)) {
+                    mc.level.getBlockState(bh.getBlockPos()).getBlock() instanceof ISleepTightBed)) {
 
 
                 var c = SleepTightPlatformStuff.getPlayerSleepData(player);

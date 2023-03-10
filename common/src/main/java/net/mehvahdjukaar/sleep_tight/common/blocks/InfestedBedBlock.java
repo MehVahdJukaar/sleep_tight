@@ -1,10 +1,13 @@
-package net.mehvahdjukaar.sleep_tight.common;
+package net.mehvahdjukaar.sleep_tight.common.blocks;
 
 import net.mehvahdjukaar.moonlight.api.block.IWashable;
 import net.mehvahdjukaar.moonlight.api.set.BlocksColorAPI;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.sleep_tight.common.tiles.InfestedBedTile;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedbugEntity;
 import net.mehvahdjukaar.sleep_tight.integration.network.ClientBoundParticleMessage;
 import net.mehvahdjukaar.sleep_tight.integration.network.NetworkHandler;
+import net.mehvahdjukaar.supplementaries.reg.ModTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -167,7 +170,7 @@ public class InfestedBedBlock extends HorizontalDirectionalBlock implements Enti
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (HammockBlock.tryExploding(level, pos)) {
+        if (IModBed.tryExploding(level, pos)) {
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
         ItemStack stack = player.getItemInHand(hand);
@@ -237,5 +240,22 @@ public class InfestedBedBlock extends HorizontalDirectionalBlock implements Enti
         return getCloneItemStack(level, pos, state);
     }
 
+    public static boolean convertBed(Level level, BlockState state, BlockPos pos) {
+        if(state.is(SleepTight.VANILLA_BEDS)) {
+            level.setBlock(pos, SleepTight.INFESTED_BED.get().withPropertiesOf(state), Block.UPDATE_KNOWN_SHAPE | 2);
+            BlockPos pos2 = pos.relative(state.getValue(BedBlock.FACING).getOpposite());
+            level.setBlock(pos2, SleepTight.INFESTED_BED.get().withPropertiesOf(state.setValue(BedBlock.PART, BedPart.FOOT)), 2);
+
+            DyeColor color = ((BedBlock) state.getBlock()).getColor();
+            if (level.getBlockEntity(pos) instanceof InfestedBedTile tile) {
+                tile.setColor(color);
+            }
+            if (level.getBlockEntity(pos2) instanceof InfestedBedTile tile) {
+                tile.setColor(color);
+            }
+            return true;
+        }
+        return false;
+    }
 
 }

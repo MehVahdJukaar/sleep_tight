@@ -3,7 +3,7 @@ package net.mehvahdjukaar.sleep_tight.integration.network;
 import net.mehvahdjukaar.moonlight.api.platform.network.ChannelHandler;
 import net.mehvahdjukaar.moonlight.api.platform.network.Message;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
-import net.mehvahdjukaar.sleep_tight.common.DreamerEssenceTargetEntity;
+import net.mehvahdjukaar.sleep_tight.common.entities.DreamerEssenceTargetEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -47,8 +47,8 @@ public class ClientBoundParticleMessage implements Message {
         Level level = SleepTightClient.getPlayer().level;
 
         if(data < 4) {
-            spawnParticleOn(pos, level);
-            spawnParticleOn(pos.relative(Direction.from2DDataValue(data)), level);
+            spawnParticleOnBed(pos, level);
+            spawnParticleOnBed(pos.relative(Direction.from2DDataValue(data)), level);
         }else if(data == 4){
             DreamerEssenceTargetEntity.spawnDeathParticles(level, pos);
         }else{
@@ -56,7 +56,7 @@ public class ClientBoundParticleMessage implements Message {
         }
     }
 
-    private void spawnParticleOn(BlockPos pos, Level level) {
+    private void spawnParticleOnBed(BlockPos pos, Level level) {
         for (int i = 0; i < 6 + level.random.nextInt(10); i++) {
             float x = pos.getX() + level.random.nextFloat();
             float z = pos.getZ() + level.random.nextFloat();

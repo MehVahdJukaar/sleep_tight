@@ -3,10 +3,8 @@ package net.mehvahdjukaar.sleep_tight.configs;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigBuilder;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
-import net.mehvahdjukaar.sleep_tight.client.HammockBlockTileRenderer;
 import net.minecraft.util.Mth;
 
-import java.net.InetAddress;
 import java.util.function.Supplier;
 
 public class ClientConfigs {
