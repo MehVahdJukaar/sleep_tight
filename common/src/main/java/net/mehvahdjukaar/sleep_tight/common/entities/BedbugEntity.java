@@ -3,12 +3,11 @@ package net.mehvahdjukaar.sleep_tight.common.entities;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.blocks.InfestedBedBlock;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
-import net.mehvahdjukaar.sleep_tight.integration.network.ClientBoundParticleMessage;
-import net.mehvahdjukaar.sleep_tight.integration.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundParticleMessage;
+import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -131,7 +130,7 @@ public class BedbugEntity extends Monster {
                         float z = pos.getZ() + level.random.nextFloat();
                         float y = pos.getY() + 9 / 16f;
                         //TODO: finish
-                        LevelRenderer
+
                         level.addParticle(ParticleTypes.SMOKE, x, y, z, 0, 0, 0);
                     }
                 }

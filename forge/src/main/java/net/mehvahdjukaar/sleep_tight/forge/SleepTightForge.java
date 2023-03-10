@@ -6,19 +6,11 @@ import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratingEffect;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
@@ -149,13 +141,7 @@ public class SleepTightForge {
 
     @SubscribeEvent
     public void onLivingDeath(LivingDeathEvent event) {
-        LivingEntity entity = event.getEntity();
-        if (!entity.isRemoved() && entity.level instanceof ServerLevel serverLevel) {
-            Entity killer = event.getSource().getEntity();
-            if (killer instanceof LivingEntity le && killer.wasKilled(serverLevel, entity)) {
-                InvigoratingEffect.onLivingDeath(serverLevel, entity, le);
-            }
-        }
+        ModEvents.onEntityKilled(event.getEntity(), event.getSource().getEntity());
     }
 
     @SubscribeEvent

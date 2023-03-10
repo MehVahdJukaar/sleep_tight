@@ -1,4 +1,4 @@
-package net.mehvahdjukaar.sleep_tight.integration.network;
+package net.mehvahdjukaar.sleep_tight.common.network;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;

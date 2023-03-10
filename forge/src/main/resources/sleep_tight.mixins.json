@@ -4,6 +4,7 @@
   "package": "net.mehvahdjukaar.sleep_tight.mixins.forge",
   "compatibilityLevel": "JAVA_16",
   "client": [
+    "ClientPacketListenerMixin"
   ],
   "mixins": [
   ],

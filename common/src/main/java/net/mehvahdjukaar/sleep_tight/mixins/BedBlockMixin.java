@@ -1,5 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.mixins;
 
+import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -13,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 @Mixin(BedBlock.class)
-public abstract class BedBlockMixin extends Block {
+public abstract class BedBlockMixin extends Block implements ISleepTightBed {
 
 
     protected BedBlockMixin(Properties properties) {

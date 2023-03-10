@@ -162,7 +162,7 @@ public class WakeUpEncounterHelper {
             int min = CommonConfigs.BEDBUG_SPAWN_MIN_RANGE.get();
             int max = CommonConfigs.BEDBUG_SPAWN_MAX_RANGE.get();
 
-            int maxAttempts = (int) (monsterSpawnAttempts * level.getCurrentDifficultyAt(bedPos).getEffectiveDifficulty());
+            int maxAttempts = (int) ( monsterSpawnAttempts*(1+ level.getCurrentDifficultyAt(bedPos).getSpecialMultiplier()));
 
             for (int attempt = 0; attempt < maxAttempts; attempt++) {
                 setRandomPosCircle(bedPos, mutable, level.random, min, max);

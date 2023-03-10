@@ -1,4 +1,4 @@
-package net.mehvahdjukaar.sleep_tight.integration.network;
+package net.mehvahdjukaar.sleep_tight.common.network;
 
 import net.mehvahdjukaar.moonlight.api.platform.network.ChannelHandler;
 import net.mehvahdjukaar.moonlight.api.platform.network.NetworkDir;
