@@ -3,10 +3,10 @@ package net.mehvahdjukaar.sleep_tight.core;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
 import net.mehvahdjukaar.sleep_tight.common.entities.DreamerEssenceTargetEntity;
-import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
-import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncPlayerSleepCapMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
+import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -36,7 +36,7 @@ public abstract class PlayerSleepData {
         tag.putLong("last_time_slept", lastWokenUpTimeStamp);
         tag.putInt("consecutive_nights", consecutiveNightsSlept);
         tag.putInt("home_bed_nights", nightsSleptInHomeBed);
-        tag.putBoolean("using_double_bed",usingDoubleBed);
+        tag.putBoolean("using_double_bed", usingDoubleBed);
         return tag;
     }
 
@@ -72,8 +72,10 @@ public abstract class PlayerSleepData {
 
         var bedId = bed.getId();
         if (bedId.equals(homeBed)) {
-            this.nightsSleptInHomeBed++;
-            if (this.nightsSleptInHomeBed >= CommonConfigs.HOME_BED_REQUIRED_NIGHTS.get()) {
+            int required = CommonConfigs.HOME_BED_REQUIRED_NIGHTS.get();
+
+            this.nightsSleptInHomeBed = Math.min(required + CommonConfigs.HOME_BED_MAX_LEVEL.get(), nightsSleptInHomeBed + 1);
+            if (this.nightsSleptInHomeBed >= required) {
                 bed.setHomeBedFor(player);
             }
         } else {

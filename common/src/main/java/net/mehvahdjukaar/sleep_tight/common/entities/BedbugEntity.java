@@ -83,7 +83,7 @@ public class BedbugEntity extends Monster {
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
 
-        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, true));
+       // this.targetSelector.addGoal(8, new NearestAttackableTargetGoal<>(this, Player.class, true));
     }
 
     @Override
@@ -135,19 +135,18 @@ public class BedbugEntity extends Monster {
                         level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, feetBlockState),
                                 x, y, z, 0, 0, 0);
                     }
-                }
-                else {
+                } else {
                     if (burrowingTicks > 40) {
                         if (InfestedBedBlock.convertBed(level, feetBlockState, pos)) {
                             this.spawnAnim();
                             this.discard();
-                            level.playSound(null, pos, SoundEvents.WOOL_BREAK, SoundSource.HOSTILE, 1,1);
-                        }else{
+                            level.playSound(null, pos, SoundEvents.WOOL_BREAK, SoundSource.HOSTILE, 1, 1);
+                        } else {
                             this.setBurrowing(false);
                         }
-                    }else{
-                        if(burrowingTicks%4==0)
-                            level.playSound(null, pos, SoundEvents.WOOL_HIT, SoundSource.HOSTILE, 0.5f,1.2f);
+                    } else {
+                        if (burrowingTicks % 4 == 0)
+                            level.playSound(null, pos, SoundEvents.WOOL_HIT, SoundSource.HOSTILE, 0.5f, 1.2f);
                     }
                 }
             }
@@ -164,17 +163,17 @@ public class BedbugEntity extends Monster {
 
     @Override
     protected SoundEvent getAmbientSound() {
-        return SoundEvents.SILVERFISH_AMBIENT;
+        return SleepTight.BEDBUG_AMBIENT.get();
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource damageSource) {
-        return SoundEvents.SILVERFISH_HURT;
+        return SleepTight.BEDBUG_HURT.get();
     }
 
     @Override
     protected SoundEvent getDeathSound() {
-        return SoundEvents.SILVERFISH_DEATH;
+        return SleepTight.BEDBUG_DEATH.get();
     }
 
     @Override
@@ -375,7 +374,7 @@ public class BedbugEntity extends Monster {
                 ++this.tryTicks;
                 if (this.shouldRecalculatePath()) {
                     double s = this.speedModifier;
-                    if (dist < (1.5*1.5)) s /= 2;
+                    if (dist < (1.5 * 1.5)) s /= 2;
                     this.mob.getNavigation().moveTo((blockPos.getX()) + 0.5, blockPos.getY(),
                             (blockPos.getZ()) + 0.5, s);
                 }

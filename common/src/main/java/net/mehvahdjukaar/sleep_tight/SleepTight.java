@@ -96,6 +96,9 @@ public class SleepTight {
     //sound events
 
     public static final Supplier<SoundEvent> NIGHTMARE_SOUND = RegHelper.registerSound(res("nightmare"));
+    public static final Supplier<SoundEvent> BEDBUG_AMBIENT = RegHelper.registerSound(res("bedbug.ambient"));
+    public static final Supplier<SoundEvent> BEDBUG_DEATH = RegHelper.registerSound(res("bedbug.death"));
+    public static final Supplier<SoundEvent> BEDBUG_HURT = RegHelper.registerSound(res("bedbug.hurt"));
 
     //tags
 

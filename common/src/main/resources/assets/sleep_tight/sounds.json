@@ -1,0 +1,65 @@
+{
+  "bedbug.ambient": {
+    "sounds": [
+      {
+        "name": "mob/silverfish/say1",
+        "pitch": 1.1,
+        "volume": 0.5
+      },
+      {
+        "name": "mob/silverfish/say2",
+        "pitch": 1.1,
+        "volume": 0.5
+      },
+      {
+        "name": "mob/silverfish/say3",
+        "pitch": 1.1,
+        "volume": 0.5
+      },
+      {
+        "name": "mob/silverfish/say4",
+        "pitch": 1.1,
+        "volume": 0.5
+      }
+    ],
+    "subtitle": "subtitles.sleep_tight.bedbug.ambient"
+  },
+  "bedbug.death": {
+    "sounds": [
+      {
+        "name": "mob/silverfish/kill",
+        "pitch": 1.1,
+        "volume": 0.5
+      }
+    ],
+    "subtitle": "subtitles.sleep_tight.bedbug.death"
+  },
+  "bedbug.hurt": {
+    "sounds": [
+      {
+        "name": "mob/silverfish/hit1",
+        "pitch": 1.1,
+        "volume": 0.5
+      },
+      {
+        "name": "mob/silverfish/hit2",
+        "pitch": 1.1,
+        "volume": 0.5
+      },
+      {
+        "name": "mob/silverfish/hit3",
+        "pitch": 1.1,
+        "volume": 0.5
+      }
+    ],
+    "subtitle": "subtitles.sleep_tight.bedbug.hurt"
+  },
+  "nightmare": {
+    "sounds": [
+      {
+        "name": "sleep_tight:nightmare"
+      }
+    ]
+  }
+}
+

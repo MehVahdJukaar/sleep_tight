@@ -1,6 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
+import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratingEffect;
@@ -9,6 +10,7 @@ import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
 import net.mehvahdjukaar.sleep_tight.common.blocks.NightBagBlock;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
+import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundNightmarePacket;
 import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncPlayerSleepCapMessage;
@@ -235,12 +237,7 @@ public class ModEvents {
         player.displayClientMessage(Component.translatable("message.sleep_tight.nightmare"), true);
         player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 20 * 3, 0, false, false, false,
                 null, Optional.of(new MobEffectInstance.FactorData(20, 10, 1, 1, 20 * 3, 1, true))));
-    }
-
-    private static void onRestedInHammock(ServerPlayer player) {
-        PlayerSleepData playerCap = SleepTightPlatformStuff.getPlayerSleepData(player);
-        playerCap.addInsomnia(player, CommonConfigs.HAMMOCK_COOLDOWN.get());
-        playerCap.syncToClient(player);
+        NetworkHandler.CHANNEL.sendToClientPlayer(player, new ClientBoundNightmarePacket());
     }
 
     //server sided

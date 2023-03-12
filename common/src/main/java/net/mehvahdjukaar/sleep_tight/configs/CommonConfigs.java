@@ -158,7 +158,7 @@ public class CommonConfigs {
         BED_BENEFITS = builder.comment("Which type of beds will apply benefits on wake up")
                 .define("active_for", BedStatus.HOME_BED);
         HEALING = builder.comment("Healing applied on wake up")
-                .define("healing", EffectIntensity.MAX);
+                    .define("healing", EffectIntensity.MAX);
         EFFECT_CLEARING = builder.comment("")
                 .define("effect_clearing", EffectIntensity.MAX);
         EFFECT_CLEARING_TYPE = builder.comment("")

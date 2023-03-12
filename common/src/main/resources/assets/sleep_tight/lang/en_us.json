@@ -44,5 +44,8 @@
   "effect.sleep_tight.invigorating.description": "Slightly increases XP gain on mob kill",
   "entity.sleep_tight.bedbug": "Bedbug",
   "item.sleep_tight.bedbug_eggs": "Bedbug Eggs",
-  "item.sleep_tight.bedbug_spawn_egg": "Bedbug Spawn Egg"
+  "item.sleep_tight.bedbug_spawn_egg": "Bedbug Spawn Egg",
+  "subtitles.sleep_tight.bedbug.death": "Bedbug dies",
+  "subtitles.sleep_tight.bedbug.ambient": "Bedbug noises",
+  "subtitle.sleep_tight.bedbug.hurt": "Bedbug hurts"
 }
