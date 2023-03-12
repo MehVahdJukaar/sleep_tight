@@ -25,6 +25,7 @@ public class SleepTightFabric implements ModInitializer {
 
         if (PlatformHelper.getEnv().isClient()) {
             FabricSetupCallbacks.CLIENT_SETUP.add(SleepTightClient::init);
+            SleepTightFabricClient.init();
         }
 
         FabricSetupCallbacks.COMMON_SETUP.add(SleepTight::commonSetup);

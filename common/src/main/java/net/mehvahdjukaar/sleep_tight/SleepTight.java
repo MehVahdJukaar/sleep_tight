@@ -2,7 +2,7 @@ package net.mehvahdjukaar.sleep_tight;
 
 import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
-import net.mehvahdjukaar.sleep_tight.common.*;
+import net.mehvahdjukaar.sleep_tight.common.InvigoratingEffect;
 import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.InfestedBedBlock;
@@ -12,16 +12,17 @@ import net.mehvahdjukaar.sleep_tight.common.entities.BedbugEntity;
 import net.mehvahdjukaar.sleep_tight.common.entities.DreamerEssenceTargetEntity;
 import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
 import net.mehvahdjukaar.sleep_tight.common.items.NightBagItem;
+import net.mehvahdjukaar.sleep_tight.common.network.ModCommands;
+import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.common.tiles.InfestedBedTile;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
-import net.mehvahdjukaar.sleep_tight.common.network.ModCommands;
-import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
 import net.minecraft.Util;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
@@ -29,7 +30,10 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacements;
-import net.minecraft.world.item.*;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
@@ -41,7 +45,8 @@ import net.minecraft.world.level.material.MaterialColor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -80,7 +85,7 @@ public class SleepTight {
 
 
     private static void registerSpawnPlacements(RegHelper.SpawnPlacementEvent event) {
-        event.register(BEDBUG_ENTITY.get(),SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BedbugEntity::checkMonsterSpawnRules);
+        event.register(BEDBUG_ENTITY.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BedbugEntity::checkMonsterSpawnRules);
     }
 
     private static void registerEntityAttributes(RegHelper.AttributeEvent event) {
@@ -88,7 +93,9 @@ public class SleepTight {
         event.register(BEDBUG_ENTITY.get(), BedbugEntity.makeAttributes());
     }
 
+    //sound events
 
+    public static final Supplier<SoundEvent> NIGHTMARE_SOUND = RegHelper.registerSound(res("nightmare"));
 
     //tags
 
@@ -112,7 +119,7 @@ public class SleepTight {
             BedEntity::new, MobCategory.MISC, 0.5f, 0.5f, 4, Integer.MAX_VALUE);
 
     public static final Supplier<EntityType<BedbugEntity>> BEDBUG_ENTITY = RegHelper.registerEntityType(res("bedbug"),
-            BedbugEntity::new, MobCategory.MONSTER, 11/16f, 6/16f, 7, 3);
+            BedbugEntity::new, MobCategory.MONSTER, 11 / 16f, 6 / 16f, 7, 3);
 
     public static final Supplier<EntityType<DreamerEssenceTargetEntity>> DREAMER_ESSENCE_ENTITY = RegHelper.registerEntityType(res("dreamer_essence_dummy"),
             DreamerEssenceTargetEntity::new, MobCategory.MISC, 0.2f, 12 / 16f, 5, Integer.MAX_VALUE);
@@ -162,11 +169,8 @@ public class SleepTight {
     );
 
     public static final Supplier<Item> BEDBUG_SPAWN_EGG = regItem("bedbug_spawn_egg", () ->
-            PlatformHelper.newSpawnEgg(BEDBUG_ENTITY,0x4b1813,0xce5438, new Item.Properties().tab(CreativeModeTab.TAB_MISC))
+            PlatformHelper.newSpawnEgg(BEDBUG_ENTITY, 0x4b1813, 0xce5438, new Item.Properties().tab(CreativeModeTab.TAB_MISC))
     );
-
-
-
 
 
     public static <T extends Block> Supplier<T> regWithItem(String name, Supplier<T> blockFactory, CreativeModeTab tab) {
@@ -189,15 +193,6 @@ public class SleepTight {
 
     public static <T extends Item> Supplier<T> regItem(String name, Supplier<T> sup) {
         return RegHelper.registerItem(res(name), sup);
-    }
-
-
-    public static <T extends Entity> Supplier<EntityType<T>> regEntity(
-            String name, EntityType.EntityFactory<T> factory, MobCategory category, float width, float height,
-            int clientTrackingRange, boolean velocityUpdates, int updateInterval) {
-        return RegHelper.registerEntityType(res(name), () ->
-                PlatformHelper.newEntityType(name, factory, category, width, height,
-                        clientTrackingRange, velocityUpdates, updateInterval));
     }
 
 

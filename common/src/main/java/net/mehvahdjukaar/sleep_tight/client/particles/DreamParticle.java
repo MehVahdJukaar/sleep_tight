@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class DreamParticle extends TextureSheetParticle {
 
-    private final float maxAlpha;
+    private float maxAlpha;
     private final float deltaRot;
 
     private final ParticleRenderType renderType;
@@ -158,6 +158,7 @@ public class DreamParticle extends TextureSheetParticle {
                 Vec3 v = new Vec3(0, 0, len).xRot(pitch).yRot(yaw);
                 p = new DreamParticle(level, pX + v.x * 0.5, pY + v.y * 0.5, pZ + v.z * 0.5, v.x, v.y * 0.75, v.z);
                 p.friction = 0.78f;
+                p.maxAlpha*=2f;
                 p.alpha = p.maxAlpha;
                 p.setLifetime(60 + level.random.nextInt(180));
             } else {

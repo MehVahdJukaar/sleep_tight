@@ -7,6 +7,7 @@ import net.mehvahdjukaar.sleep_tight.common.tiles.InfestedBedTile;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedbugEntity;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundParticleMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
+import net.mehvahdjukaar.supplementaries.common.misc.SoapWashableHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -202,7 +203,7 @@ public class InfestedBedBlock extends HorizontalDirectionalBlock implements Enti
                 NetworkHandler.CHANNEL.sendToAllClientPlayersInRange(level, blockPos, 32,
                         ClientBoundParticleMessage.bedbugInfest(blockPos, dir));
             }
-            Block bed = BlocksColorAPI.getColoredBlock("bed", tile.getColor());
+            Block bed = tile.getBed().getBlock();
             if (bed != null) {
                 level.setBlock(blockPos, bed.withPropertiesOf(state), 2 | Block.UPDATE_KNOWN_SHAPE);
                 level.setBlock(neighbor, bed.withPropertiesOf(level.getBlockState(neighbor)), 2 | Block.UPDATE_KNOWN_SHAPE);

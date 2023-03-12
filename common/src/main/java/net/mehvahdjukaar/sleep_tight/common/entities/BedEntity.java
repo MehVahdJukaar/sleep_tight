@@ -169,11 +169,6 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         return false;
     }
 
-    @PlatformOnly(PlatformOnly.FORGE)
-    boolean shoul1dRiderSit() {
-        return false;
-    }
-
     @Override
     public boolean shouldRender(double x, double y, double z) {
         return false;

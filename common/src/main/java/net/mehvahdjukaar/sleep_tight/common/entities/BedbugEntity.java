@@ -2,14 +2,15 @@ package net.mehvahdjukaar.sleep_tight.common.entities;
 
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.blocks.InfestedBedBlock;
-import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundParticleMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -19,6 +20,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
@@ -107,9 +109,9 @@ public class BedbugEntity extends Monster {
     @Override
     public void tick() {
         super.tick();
+
         if (this.getTarget() != null)
             this.getLookControl().setLookAt(this.getTarget());
-        this.setYRot(this.yHeadRot);
 
 
         if (!this.level.isClientSide) {
@@ -119,25 +121,38 @@ public class BedbugEntity extends Monster {
         }
 
         if (this.isBurrowing()) {
-            if (!this.getFeetBlockState().is(SleepTight.VANILLA_BEDS)) {
+            BlockState feetBlockState = this.getFeetBlockState();
+            if (!feetBlockState.is(SleepTight.VANILLA_BEDS)) {
                 this.setBurrowing(false);
-            }else {
+            } else {
                 burrowingTicks++;
-                if(level.isClientSide){
-                    BlockPos pos = this.blockPosition();
+                BlockPos pos = this.blockPosition();
+                if (level.isClientSide) {
                     for (int i = 0; i < 6 + level.random.nextInt(10); i++) {
                         float x = pos.getX() + level.random.nextFloat();
                         float z = pos.getZ() + level.random.nextFloat();
                         float y = pos.getY() + 9 / 16f;
-                        //TODO: finish
-
-                        level.addParticle(ParticleTypes.SMOKE, x, y, z, 0, 0, 0);
+                        level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, feetBlockState),
+                                x, y, z, 0, 0, 0);
+                    }
+                }
+                else {
+                    if (burrowingTicks > 40) {
+                        if (InfestedBedBlock.convertBed(level, feetBlockState, pos)) {
+                            this.spawnAnim();
+                            this.discard();
+                            level.playSound(null, pos, SoundEvents.WOOL_BREAK, SoundSource.HOSTILE, 1,1);
+                        }else{
+                            this.setBurrowing(false);
+                        }
+                    }else{
+                        if(burrowingTicks%4==0)
+                            level.playSound(null, pos, SoundEvents.WOOL_HIT, SoundSource.HOSTILE, 0.5f,1.2f);
                     }
                 }
             }
-        }
-        else if (burrowingTicks > 0) {
-            this.burrowingTicks = Math.max(0, this.burrowingTicks - 2);
+        } else if (burrowingTicks > 0) {
+            this.burrowingTicks = Math.max(0, this.burrowingTicks - 4);
         }
 
     }
@@ -337,6 +352,7 @@ public class BedbugEntity extends Monster {
         private final BedbugEntity bedBug;
         private final int searchRange;
         private int ticksOnTarget = 0;
+        private boolean reachedTarget;
 
         public InfestBedGoal(BedbugEntity pathfinderMob, double speed, int searchRange) {
             super(pathfinderMob, speed, searchRange);
@@ -346,21 +362,32 @@ public class BedbugEntity extends Monster {
         }
 
         @Override
+        protected boolean isReachedTarget() {
+            return reachedTarget;
+        }
+
+        @Override
         public void tick() {
-            boolean reached = this.isReachedTarget();
-            super.tick();
+            BlockPos blockPos = this.getMoveToTarget();
+            double dist = blockPos.distToCenterSqr(this.mob.position());
+            if (dist >= 1) {
+                this.reachedTarget = false;
+                ++this.tryTicks;
+                if (this.shouldRecalculatePath()) {
+                    double s = this.speedModifier;
+                    if (dist < (1.5*1.5)) s /= 2;
+                    this.mob.getNavigation().moveTo((blockPos.getX()) + 0.5, blockPos.getY(),
+                            (blockPos.getZ()) + 0.5, s);
+                }
+            } else {
+                this.reachedTarget = true;
+                --this.tryTicks;
+            }
+
             if (this.isReachedTarget()) {
                 ticksOnTarget++;
-                if (!reached) {
-                    this.bedBug.setBurrowing(true);
-                }
-                if (this.bedBug.burrowingTicks>40) {
-                    Level level = this.mob.level;
-                    if (InfestedBedBlock.convertBed(level, level.getBlockState(blockPos), blockPos)) {
-                        this.mob.spawnAnim();
-                        this.mob.discard();
-                    }
-                }
+                this.bedBug.setBurrowing(true);
+
             } else ticksOnTarget = 0;
         }
 
@@ -380,6 +407,7 @@ public class BedbugEntity extends Monster {
                 this.blockPos = bedBug.targetBed;
                 return true;
             }
+            //TODO: account for occupied
             var v = findNearestBed();
             if (!v.isEmpty()) {
                 bedBug.targetBed = v.get(0);

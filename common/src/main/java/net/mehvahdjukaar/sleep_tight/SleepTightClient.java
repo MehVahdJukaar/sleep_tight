@@ -1,12 +1,17 @@
 package net.mehvahdjukaar.sleep_tight;
 
+import net.mehvahdjukaar.moonlight.api.client.model.NestedModelLoader;
+import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
 import net.mehvahdjukaar.moonlight.api.platform.ClientPlatformHelper;
+import net.mehvahdjukaar.sleep_tight.client.InfestedBedBakedModel;
 import net.mehvahdjukaar.sleep_tight.client.particles.BedbugParticle;
 import net.mehvahdjukaar.sleep_tight.client.particles.DreamParticle;
 import net.mehvahdjukaar.sleep_tight.client.renderers.BedbugEntityRenderer;
 import net.mehvahdjukaar.sleep_tight.client.renderers.HammockBlockTileRenderer;
 import net.mehvahdjukaar.sleep_tight.client.renderers.InfestedBedRenderer;
 import net.mehvahdjukaar.sleep_tight.client.renderers.InvisibleEntityRenderer;
+import net.mehvahdjukaar.supplementaries.Supplementaries;
+import net.mehvahdjukaar.supplementaries.client.block_models.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.resources.model.Material;
@@ -37,6 +42,7 @@ public class SleepTightClient {
         ClientPlatformHelper.addBlockEntityRenderersRegistration(SleepTightClient::registerBlockEntityRenderers);
         ClientPlatformHelper.addAtlasTextureCallback(BED_SHEET, SleepTightClient::addTextures);
         ClientPlatformHelper.addParticleRegistration(SleepTightClient::registerParticles);
+        ClientPlatformHelper.addModelLoaderRegistration(SleepTightClient::registerModelLoaders);
     }
 
 
@@ -73,6 +79,10 @@ public class SleepTightClient {
         event.register(SleepTight.INFESTED_BED_TILE.get(), InfestedBedRenderer::new);
     }
 
+    @EventCalled
+    private static void registerModelLoaders(ClientPlatformHelper.ModelLoaderEvent event) {
+        event.register(SleepTight.res("infested_bed"), new InfestedBedBakedModel.Loader());
+    }
 
     public static Player getPlayer() {
         return Minecraft.getInstance().player;

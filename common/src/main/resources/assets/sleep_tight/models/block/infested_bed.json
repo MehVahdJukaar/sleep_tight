@@ -1,0 +1,6 @@
+{
+	"loader": "sleep_tight:infested_bed",
+	"textures": {
+		"particle": "sleep_tight:block/beds/white"
+	}
+}

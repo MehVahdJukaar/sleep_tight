@@ -1,4 +1,4 @@
-package net.mehvahdjukaar.sleep_tight.forge;
+package net.mehvahdjukaar.sleep_tight.client;
 
 
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -7,9 +7,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
-import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
 import net.mehvahdjukaar.sleep_tight.common.blocks.NightBagBlock;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
@@ -18,31 +18,21 @@ import net.minecraft.client.Options;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.screens.InBedChatScreen;
-import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraftforge.client.gui.overlay.ForgeGui;
-import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 
 import java.util.ArrayList;
 
-public class SleepGuiOverlay implements IGuiOverlay {
+public abstract class SleepGuiOverlay<T extends Gui> {
 
-    public SleepGuiOverlay() {
-    }
-
-    @Override
-    public void render(ForgeGui gui, PoseStack poseStack, float partialTicks, int width, int height) {
-
-        Minecraft mc = gui.getMinecraft();
+    public void render(T gui, PoseStack poseStack, float partialTicks, int width, int height) {
+        Minecraft mc = Minecraft.getInstance();
         Options options = mc.options;
-
 
         if (options.hideGui) return;
         var hit = mc.hitResult;
@@ -72,7 +62,7 @@ public class SleepGuiOverlay implements IGuiOverlay {
 
                     if(cooldown) {
 
-                        gui.setupOverlayRenderState(true, false, SleepTightClient.ICONS);
+                        setupOverlayRenderState(gui, true, false, SleepTightClient.ICONS);
                         gui.setBlitOffset(-90);
 
                         poseStack.pushPose();
@@ -97,6 +87,8 @@ public class SleepGuiOverlay implements IGuiOverlay {
             }
         }
     }
+
+    protected abstract void setupOverlayRenderState(T gui, boolean blend, boolean depthTest, ResourceLocation texture);
 
 
     //static stuff
@@ -168,7 +160,7 @@ public class SleepGuiOverlay implements IGuiOverlay {
         var p = player.getSleepingPos();
         if (p.isPresent()) {
             BlockPos pos = p.get();
-            BedData cap = ForgePlayerSleepCapability.getHomeBedIfHere(player, pos);
+            BedData cap = PlayerSleepData.getHomeBedIfHere(player, pos);
             isHomeBed = cap != null;
 
 

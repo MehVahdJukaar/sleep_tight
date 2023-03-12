@@ -1,7 +1,9 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
+import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
 import net.mehvahdjukaar.sleep_tight.common.entities.DreamerEssenceTargetEntity;
+import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncPlayerSleepCapMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
@@ -174,5 +176,17 @@ public abstract class PlayerSleepData {
 
     public void setDoubleBed(boolean doubleBed) {
         this.usingDoubleBed = doubleBed;
+    }
+
+    @Nullable
+    public static BedData getHomeBedIfHere(Player player, BlockPos pos) {
+        PlayerSleepData c = SleepTightPlatformStuff.getPlayerSleepData(player);
+        if (c != null && player.level.getBlockEntity(pos) instanceof IExtraBedDataProvider bed) {
+            BedData bedCap = bed.st_getBedData();
+            if (bedCap.getId().equals(c.getHomeBed()) && bedCap.isHomeBedFor(player)) {
+                return bedCap;
+            }
+        }
+        return null;
     }
 }

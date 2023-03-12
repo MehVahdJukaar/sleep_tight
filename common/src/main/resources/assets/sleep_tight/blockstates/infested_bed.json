@@ -1,7 +1,7 @@
 {
   "variants": {
     "": {
-      "model": "block/bed"
+      "model": "sleep_tight:block/infested_bed"
     }
   }
 }
