@@ -30,10 +30,11 @@ import static net.mehvahdjukaar.sleep_tight.configs.CommonConfigs.*;
 public class SleepEffectsHelper {
 
     public static void applyEffectsOnWakeUp(PlayerSleepData playerCap, ServerPlayer player,
-                                            long dayTimeDelta, BlockEntity blockEntity, ISleepTightBed bed) {
-        if (blockEntity instanceof IExtraBedDataProvider provider) { //just for vanilla bed
-            applyVanillaBedBonuses(player, dayTimeDelta, provider.st_getBedData(), playerCap);
-            applyHeartstoneBonuses(player, blockEntity, provider.st_getBedData(), playerCap);
+                                            long dayTimeDelta, BlockPos pos, ISleepTightBed bed,
+                                            BlockState state, @Nullable BedData data) {
+        if (data != null) { //just for vanilla bed
+            applyVanillaBedBonuses(player, dayTimeDelta, data, playerCap);
+            applyHeartstoneBonuses(player, pos, state, data, playerCap);
 
         }
         if (player.gameMode.isSurvival()) {
@@ -111,9 +112,10 @@ public class SleepEffectsHelper {
         }
     }
 
-    private static void applyHeartstoneBonuses(ServerPlayer player, BlockEntity tile, BedData data, PlayerSleepData playerSleepData) {
-        BlockPos pos = getPartnerPos(player, tile.getBlockState(), tile.getBlockPos());
-        if (pos != null) {
+    private static void applyHeartstoneBonuses(ServerPlayer player, BlockPos pos, BlockState state,
+                                        @Nullable       BedData data, PlayerSleepData playerSleepData) {
+        BlockPos otherPos = getPartnerPos(player, state, pos);
+        if (otherPos != null) {
             for (var e : WAKE_UP_EFFECTS.get()) {
                 player.addEffect(e.createInstance(playerSleepData.getHomeBedLevel()));
             }

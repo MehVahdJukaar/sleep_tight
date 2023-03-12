@@ -10,9 +10,11 @@ import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
 import net.mehvahdjukaar.sleep_tight.common.blocks.NightBagBlock;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
+import net.mehvahdjukaar.sleep_tight.common.items.NightBagItem;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
+import net.minecraft.client.AttackIndicatorStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.Gui;
@@ -45,11 +47,15 @@ public abstract class SleepGuiOverlay<T extends Gui> {
 
         if (options.getCameraType().isFirstPerson() && (mc.gameMode.getPlayerMode() != GameType.SPECTATOR ||
                 gui.canRenderCrosshairForSpectator(hit))) {
+
             Player player = mc.player;
 
             boolean laying = player.getVehicle() instanceof BedEntity;
-            if (laying || (cooldown && hit instanceof BlockHitResult bh &&
-                    mc.level.getBlockState(bh.getBlockPos()).getBlock() instanceof ISleepTightBed)) {
+            if (laying || (cooldown && (
+                    (hit instanceof BlockHitResult bh && mc.level.getBlockState(bh.getBlockPos())
+                            .getBlock() instanceof ISleepTightBed) ||
+                        player.getMainHandItem().getItem() instanceof NightBagItem
+                    ))) {
 
 
                 var c = SleepTightPlatformStuff.getPlayerSleepData(player);
@@ -75,6 +81,10 @@ public abstract class SleepGuiOverlay<T extends Gui> {
                         int j = height / 2 - 7 + 16;
                         int k = width / 2 - 6;
 
+                        if(mc.options.attackIndicator().get() == AttackIndicatorStatus.CROSSHAIR &&
+                                player.getAttackStrengthScale(0.0F) !=1){
+                            j += 8;
+                        }
 
                         int l = (int) (f * 11.0F);
                         GuiComponent.blit(poseStack, k, j, 3, 18, 11, 5, 48, 48);

@@ -246,14 +246,15 @@ public class ModEvents {
         if (p.isPresent()) {
             BlockPos pos = p.get();
             PlayerSleepData playerCap = SleepTightPlatformStuff.getPlayerSleepData(player);
-            BlockEntity blockEntity = player.level.getBlockEntity(pos);
-
+            BlockState state = player.level.getBlockState(pos);
             ISleepTightBed bed = (ISleepTightBed) Blocks.RED_BED;
-            if (blockEntity.getBlockState() instanceof ISleepTightBed b) {
+            if (state.getBlock() instanceof ISleepTightBed b) {
                 bed = b;
             }
-            if (blockEntity instanceof IExtraBedDataProvider tile) {
-                playerCap.onNightSleptIntoBed(tile.st_getBedData(), player);
+            BedData data = null;
+            if (player.level.getBlockEntity(pos) instanceof IExtraBedDataProvider tile) {
+                data = tile.st_getBedData();
+                playerCap.onNightSleptIntoBed(data, player);
 
             }
 
@@ -261,7 +262,7 @@ public class ModEvents {
                 WakeUpEncounterHelper.trySpawningBedbug(pos, (ServerLevel) player.level);
             }
 
-            SleepEffectsHelper.applyEffectsOnWakeUp(playerCap, player, dayTimeDelta, blockEntity, bed);
+            SleepEffectsHelper.applyEffectsOnWakeUp(playerCap, player, dayTimeDelta, pos, bed, state, data);
 
             playerCap.addInsomnia(player, bed.st_getCooldown());
             playerCap.syncToClient(player);

@@ -31,36 +31,41 @@ public class NightBagItem extends BlockItem {
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand usedHand) {
-        BlockPos pos = new BlockPos(player.position().add(0, 1 / 16f, 0));
-        ItemStack stack = player.getItemInHand(usedHand);
+        if(level.isClientSide) {
+            return InteractionResultHolder.success(player.getItemInHand(usedHand));
+            //player sleep check only works on server side because level.isDay() is true for client
+        }else{
+            BlockPos pos = new BlockPos(player.position().add(0, 1 / 16f, 0));
+            ItemStack stack = player.getItemInHand(usedHand);
 
-        //same logic as startSleepingInBed. Performed before actually committing. Hopefully these should match
-        var problem = SleepTightPlatformStuff.invokeSleepChecksEvents(player, pos);
-        if (problem != null) {
-            if (level.isClientSide) {
-                Component m = problem.getMessage();
-                if(problem == Player.BedSleepingProblem.NOT_POSSIBLE_HERE){
-                    m = Component.translatable("sleep_tight.message.not_possible_here");
-                }
-                if(m != null) player.displayClientMessage(m, true);
+            //same logic as startSleepingInBed. Performed before actually committing. Hopefully these should match
+            var problem = SleepTightPlatformStuff.invokeSleepChecksEvents(player, pos);
+            if (problem != null) {
+
+                    Component m = problem.getMessage();
+                    if (problem == Player.BedSleepingProblem.NOT_POSSIBLE_HERE) {
+                        m = Component.translatable("sleep_tight.message.not_possible_here");
+                    }
+                    if (m != null) player.displayClientMessage(m, true);
+
+                return InteractionResultHolder.fail(stack);
             }
-            return InteractionResultHolder.fail(stack);
-        }
 
-        BlockHitResult hit = new BlockHitResult(Vec3.atBottomCenterOf(pos).add(0, 1, 0), Direction.DOWN, pos, false);
-        BlockPlaceContext context = new BlockPlaceContext(player, usedHand, stack, hit);
-        InteractionResult r = this.place(context);
-        return switch (r) {
-            case SUCCESS -> InteractionResultHolder.consume(stack); //no swing anim
-            case CONSUME, CONSUME_PARTIAL -> InteractionResultHolder.consume(stack);
-            case FAIL -> {
-                if (level.isClientSide) {
+            BlockHitResult hit = new BlockHitResult(Vec3.atBottomCenterOf(pos).add(0, 1, 0), Direction.DOWN, pos, false);
+            BlockPlaceContext context = new BlockPlaceContext(player, usedHand, stack, hit);
+            InteractionResult r = this.place(context);
+            return switch (r) {
+                case SUCCESS -> InteractionResultHolder.consume(stack); //no swing anim
+                case CONSUME, CONSUME_PARTIAL -> InteractionResultHolder.consume(stack);
+                case FAIL -> {
+
                     player.displayClientMessage(Component.translatable("message.sleep_tight.night_bag"), true);
+
+                    yield InteractionResultHolder.fail(stack);
                 }
-                yield InteractionResultHolder.fail(stack);
-            }
-            default -> InteractionResultHolder.pass(stack);
-        };
+                default -> InteractionResultHolder.pass(stack);
+            };
+        }
     }
 
     @Override

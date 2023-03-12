@@ -1,12 +1,17 @@
 package net.mehvahdjukaar.sleep_tight.forge;
 
 
+import com.mojang.datafixers.util.Either;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.ForgeEventFactory;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Optional;
 
 public class SleepTightPlatformStuffImpl {
@@ -28,6 +33,18 @@ public class SleepTightPlatformStuffImpl {
             if (!player.level.dimensionType().natural()) {
                 return Player.BedSleepingProblem.NOT_POSSIBLE_HERE;
             }
+
+            if (!player.isCreative()) {
+                Vec3 vec3 = Vec3.atBottomCenterOf(pos);
+                List<Monster> list = player.level.getEntitiesOfClass(Monster.class,
+                        new AABB(vec3.x() - 8.0, vec3.y() - 5.0, vec3.z() - 8.0, vec3.x() + 8.0, vec3.y() + 5.0, vec3.z() + 8.0),
+                        m -> m.isPreventingPlayerRest(player)
+                );
+                if (!list.isEmpty()) {
+                    return Player.BedSleepingProblem.NOT_SAFE;
+                }
+            }
+
             if (!ForgeEventFactory.fireSleepingTimeCheck(player, Optional.of(pos))) {
                 return Player.BedSleepingProblem.NOT_POSSIBLE_NOW;
             }
