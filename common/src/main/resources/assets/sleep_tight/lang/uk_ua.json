@@ -42,10 +42,10 @@
   "gui.sleep_tight.nightmare": "Страх: %s",
   "effect.sleep_tight.invigorated": "Бадьорість",
   "effect.sleep_tight.invigorated.description": "Трохи збільшує отримання досвіду з мобів та блоків",
-  "entity.sleep_tight.bedbug": "Клоп",
-  "item.sleep_tight.bedbug_eggs": "Яйця клопа",
-  "item.sleep_tight.bedbug_spawn_egg": "Яйце виклику клопа",
-  "subtitles.sleep_tight.bedbug.death": "Клоп гине",
-  "subtitles.sleep_tight.bedbug.ambient": "Клоп шумить",
-  "subtitle.sleep_tight.bedbug.hurt": "Клопа поранено"
+  "entity.sleep_tight.bedbug": "Постільний клоп",
+  "item.sleep_tight.bedbug_eggs": "Яйця постільного клопа",
+  "item.sleep_tight.bedbug_spawn_egg": "Яйце виклику постільного клопа",
+  "subtitles.sleep_tight.bedbug.death": "Постільний клоп гине",
+  "subtitles.sleep_tight.bedbug.ambient": "Постільний клоп шумить",
+  "subtitle.sleep_tight.bedbug.hurt": "Постільного клопа поранено"
 }
