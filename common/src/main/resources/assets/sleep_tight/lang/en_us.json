@@ -47,5 +47,7 @@
   "item.sleep_tight.bedbug_spawn_egg": "Bedbug Spawn Egg",
   "subtitles.sleep_tight.bedbug.death": "Bedbug dies",
   "subtitles.sleep_tight.bedbug.ambient": "Bedbug noises",
-  "subtitle.sleep_tight.bedbug.hurt": "Bedbug hurts"
+  "subtitle.sleep_tight.bedbug.hurt": "Bedbug hurts",
+  "advancements.adventure.hammock.title": "Inertia is a Property of Matter",
+  "advancements.adventure.hammock.description": "Fall off a Hammock"
 }
