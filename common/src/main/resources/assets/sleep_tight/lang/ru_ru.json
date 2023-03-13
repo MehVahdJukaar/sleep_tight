@@ -19,7 +19,7 @@
   "message.sleep_tight.night_bag": "Не подходящее место",
   "message.sleep_tight.not_possible_here": "Вы не можете здесь спать",
   "message.sleep_tight.start_sleeping": "Нажмите %1$s, чтобы начать спать, %2$s, чтобы встать",
-  "message.sleep_tight.start_resting": "Нажмите %1$s, чтобы начать отдыхать, %1$s, чтобы встать",
+  "message.sleep_tight.start_resting": "Нажмите %1$s, чтобы начать отдыхать, %2$s, чтобы встать",
   "message.sleep_tight.nightmare": "Вас разбудил кошмар...",
   "message.sleep_tight.insomnia.night": "Вы сейчас не чувствуете усталости",
   "message.sleep_tight.insomnia.day": "Вы сейчас не чувствуете усталости",
