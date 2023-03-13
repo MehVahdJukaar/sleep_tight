@@ -1,20 +1,19 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
-import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
-import net.mehvahdjukaar.sleep_tight.common.InvigoratingEffect;
+import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
 import net.mehvahdjukaar.sleep_tight.common.blocks.IModBed;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
 import net.mehvahdjukaar.sleep_tight.common.blocks.NightBagBlock;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundNightmarePacket;
-import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
-import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncPlayerSleepCapMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
+import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -33,7 +32,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.phys.AABB;
@@ -52,7 +50,9 @@ public class ModEvents {
     public static long getWakeUpTimeWhenSlept(ServerLevel level, long newTimeDayTime) {
         WakeReason wakeReason = WakeReason.SLEPT_SUCCESSFULLY;
 
-        List<ServerPlayer> sleepingPlayers = level.players().stream().filter(Player::isSleepingLongEnough).toList();
+        List<ServerPlayer> sleepingPlayers = level.players().stream()
+                .filter(Player::isSleepingLongEnough)
+                .toList();
 
         //find first valid. Assumes they are all the same
         ISleepTightBed firstValid = (ISleepTightBed) Blocks.RED_BED;
@@ -79,7 +79,7 @@ public class ModEvents {
             //nightmares
             double chances = 0;
             int players = 0;
-            for (var player : level.players()) {
+            for (var player : sleepingPlayers) {
                 players++;
                 PlayerSleepData c = SleepTightPlatformStuff.getPlayerSleepData(player);
                 chances += c.getNightmareChance(player, player.getSleepingPos().get());
@@ -107,7 +107,7 @@ public class ModEvents {
     @EventCalled
     public static boolean canSetSpawn(Player player, @Nullable BlockPos pos) {
         if (pos != null) {
-            if(!BedBlock.canSetSpawn(player.level) && !CommonConfigs.EXPLOSION_BEHAVIOR.get().canRespawn()){
+            if (!BedBlock.canSetSpawn(player.level) && !CommonConfigs.EXPLOSION_BEHAVIOR.get().canRespawn()) {
                 return false;
             }
             Level level = player.getLevel();
@@ -345,11 +345,10 @@ public class ModEvents {
     public static void onEntityKilled(LivingEntity entity, Entity killer) {
         if (!entity.isRemoved() && entity.level instanceof ServerLevel serverLevel) {
             if (killer instanceof LivingEntity le && killer.wasKilled(serverLevel, entity)) {
-                InvigoratingEffect.onLivingDeath(serverLevel, entity, le);
+                InvigoratedEffect.onLivingDeath(serverLevel, entity, le);
             }
         }
     }
-
 
 
     public static boolean isDayTime(Level level) {

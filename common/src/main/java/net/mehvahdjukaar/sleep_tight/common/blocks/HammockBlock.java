@@ -264,7 +264,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
             return InteractionResult.FAIL;
         }
 
-        if (IModBed. tryExploding(level, pos)) return InteractionResult.sidedSuccess(level.isClientSide);
+        if (IModBed.tryExploding(level, pos)) return InteractionResult.sidedSuccess(level.isClientSide);
 
         if (state.getValue(OCCUPIED)) {
             //TODO: make nitwids use hammocks if available

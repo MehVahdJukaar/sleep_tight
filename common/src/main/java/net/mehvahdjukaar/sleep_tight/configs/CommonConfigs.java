@@ -26,7 +26,7 @@ public class CommonConfigs {
 
     public static final Supplier<Integer> HOME_BED_REQUIRED_NIGHTS;
     public static final Supplier<Integer> HOME_BED_MAX_LEVEL;
-    public static final Supplier<Double> INVIGORATING_XP;
+    public static final Supplier<Double> INVIGORATED_XP;
 
 
     public static final Supplier<Boolean> NIGHTMARES_BED;
@@ -83,7 +83,7 @@ public class CommonConfigs {
         }
 
         public boolean canExplode() {
-            return this == ALLOWS_SLEEPING || this == ALLOWS_SLEEPING_NO_RESPAWN;
+            return this == DEFAULT || this == TINY_EXPLOSION;
         }
     }
 
@@ -178,7 +178,7 @@ public class CommonConfigs {
                 .define("effect_clearing_types", PotionClearing.ALL);
         WAKE_UP_EFFECTS = builder.comment("Effects to apply when player wakes up. You can add more entries, this is a list")
                 .defineObject("effects_on_wake_up", () -> List.of(
-                                new EffectData(SleepTight.INVIGORATING.get(), 0, 0.1f, 2 * 60 * 20, 30 * 20)),
+                                new EffectData(SleepTight.INVIGORATED.get(), 0, 0.1f, 2 * 60 * 20, 30 * 20)),
                         EffectData.CODEC.listOf());
         builder.pop();
 
@@ -209,8 +209,8 @@ public class CommonConfigs {
 
         HOME_BED_REQUIRED_NIGHTS = builder.comment("Amount of nights needed to mark a bed as home bed")
                 .define("required_nights", 8, 1, 50);
-        INVIGORATING_XP = builder.comment("Percentage of xp added per tier of the effect. Setting to 1 doubles the effect")
-                .define("invigorating_effect_xp", 0.1, 0, 1);
+        INVIGORATED_XP = builder.comment("Percentage of xp added per tier of the effect. Setting to 1 doubles the effect")
+                .define("invigorated_effect_xp", 0.1, 0, 1);
         HOME_BED_MAX_LEVEL = builder.comment("home bed level cap. Each night slept increases this number")
                 .define("max_level_cap", 100, 0, 1000);
 

@@ -2,7 +2,7 @@ package net.mehvahdjukaar.sleep_tight;
 
 import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
-import net.mehvahdjukaar.sleep_tight.common.InvigoratingEffect;
+import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
 import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.InfestedBedBlock;
@@ -75,8 +75,10 @@ public class SleepTight {
         RegHelper.addAttributeRegistration(SleepTight::registerEntityAttributes);
         RegHelper.addSpawnPlacementsRegistration(SleepTight::registerSpawnPlacements);
 
-        //sleep next to eachother bonus
-        //TODO: persist cap after player death. Fix dismount from bed entity. Fix bed entity mount pos
+        //sleep next to eachother bonus bugged
+        //hammock roll out
+        //TODO: bedbug spawn
+        //bedbug actail behavior
     }
 
     public static void commonSetup() {
@@ -113,8 +115,8 @@ public class SleepTight {
 
     //effects
 
-    public static final Supplier<MobEffect> INVIGORATING = RegHelper.registerEffect(res("invigorating"), () ->
-            new InvigoratingEffect(MobEffectCategory.BENEFICIAL, 0x11ff22));
+    public static final Supplier<MobEffect> INVIGORATED = RegHelper.registerEffect(res("invigorated"), () ->
+            new InvigoratedEffect(MobEffectCategory.BENEFICIAL, 0x11ff22));
 
     //entities
 

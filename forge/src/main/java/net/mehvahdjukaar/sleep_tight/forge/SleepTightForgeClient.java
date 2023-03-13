@@ -26,16 +26,6 @@ public class SleepTightForgeClient {
     }
 
     @SubscribeEvent
-    public static void onCameraSetup(ViewportEvent.ComputeCameraAngles event) {
-        Minecraft mc = Minecraft.getInstance();
-        LocalPlayer player = mc.player;
-        if (player != null && player.getVehicle() instanceof BedEntity && mc.options.getCameraType().isFirstPerson()) {
-            //same y offset as camera in bed
-            event.getCamera().move(0, 0.3, 0);
-        }
-    }
-
-    @SubscribeEvent
     public static void onRenderScreen(ScreenEvent.Render.Post event) {
         if (event.getScreen() instanceof InBedChatScreen s) {
             SleepGuiOverlay.renderBedScreenOverlay(s, event.getPoseStack(), event.getMouseX(), event.getMouseY());

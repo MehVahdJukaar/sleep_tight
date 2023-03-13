@@ -1,10 +1,8 @@
 package net.mehvahdjukaar.sleep_tight.common;
 
-import net.fabricmc.loader.impl.lib.sat4j.core.Vec;
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
-import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
@@ -15,14 +13,11 @@ import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameRules;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.Random;
+public class InvigoratedEffect extends MobEffect {
 
-public class InvigoratingEffect extends MobEffect {
-
-    public InvigoratingEffect(MobEffectCategory mobEffectCategory, int i) {
+    public InvigoratedEffect(MobEffectCategory mobEffectCategory, int i) {
         super(mobEffectCategory, i);
     }
 
@@ -41,7 +36,7 @@ public class InvigoratingEffect extends MobEffect {
 
     @EventCalled
     public static void onLivingDeath(ServerLevel serverLevel, LivingEntity entity, LivingEntity killer) {
-        MobEffectInstance i = killer.getEffect(SleepTight.INVIGORATING.get());
+        MobEffectInstance i = killer.getEffect(SleepTight.INVIGORATED.get());
         if (i != null) {
             if (entity.lastHurtByPlayerTime > 0 && !entity.wasExperienceConsumed() && !(entity instanceof Player) &&
                     entity.shouldDropExperience() && serverLevel.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
@@ -59,7 +54,7 @@ public class InvigoratingEffect extends MobEffect {
     }
 
     private static double getExtraXp(int oldXp, int amp, RandomSource random) {
-        double value = oldXp * CommonConfigs.INVIGORATING_XP.get() * (amp + 1);
+        double value = oldXp * CommonConfigs.INVIGORATED_XP.get() * (amp + 1);
 
         int actual = (int) (value);
         double remainder = value - actual;
@@ -70,7 +65,7 @@ public class InvigoratingEffect extends MobEffect {
     }
 
     public static int onBlockBreak(int i, Player player) {
-        MobEffectInstance e = player.getEffect(SleepTight.INVIGORATING.get());
+        MobEffectInstance e = player.getEffect(SleepTight.INVIGORATED.get());
         if(e != null){
             return (int)getExtraXp(i, e.getAmplifier(), player.getRandom());
         }

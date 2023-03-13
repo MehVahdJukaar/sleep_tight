@@ -15,7 +15,9 @@ import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.world.entity.player.Player;
 
 public class SleepTightFabric implements ModInitializer {
@@ -38,7 +40,6 @@ public class SleepTightFabric implements ModInitializer {
         EntitySleepEvents.STOP_SLEEPING.register((a, b) -> {
             if (a instanceof Player p) ModEvents.onWokenUp(p, true);
         });
-
 
         EntitySleepEvents.ALLOW_SLEEP_TIME.register(((player, sleepingPos, vanillaResult) ->
                 ModEvents.onCheckSleepTime(player.level, sleepingPos)));
