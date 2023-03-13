@@ -6,7 +6,7 @@ import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 
-public class ServerBoundCommitSleepMessage implements Message {
+public class    ServerBoundCommitSleepMessage implements Message {
 
     public ServerBoundCommitSleepMessage(FriendlyByteBuf buf){
 

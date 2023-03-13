@@ -76,9 +76,9 @@ public class SleepTight {
         RegHelper.addSpawnPlacementsRegistration(SleepTight::registerSpawnPlacements);
 
         //sleep next to eachother bonus bugged
-        //hammock roll out
         //TODO: bedbug spawn
         //bedbug actail behavior
+        //pushing players in hammocks
     }
 
     public static void commonSetup() {

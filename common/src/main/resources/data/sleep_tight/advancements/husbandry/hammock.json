@@ -1,0 +1,28 @@
+{
+  "parent": "minecraft:adventure/sleep_in_bed",
+  "display": {
+    "icon": {
+      "item": "sleep_tight:hammock_red"
+    },
+    "title": {
+      "translate": "advancements.adventure.hammock.title"
+    },
+    "description": {
+      "translate": "advancements.adventure.hammock.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "unlock": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "unlock"
+    ]
+  ]
+}

@@ -135,7 +135,7 @@ public class CommonConfigs {
         HEARTSTONE_EFFECT = builder.comment("Effect to give to players when they wake up")
                 .defineObjectList("effects", () -> List.of(new EffectData(MobEffects.REGENERATION,
                         0, 0, 20 * 60, 20)), EffectData.CODEC);
-        NIGHT_BAG_BORING = builder.comment("Makes night bag less unique by allowing you to place them normally")
+        NIGHT_BAG_BORING = builder.comment("Makes night bag less unique by allowing you to place them normally on the ground")
                 .define("boring_night_bags", false);
         builder.pop();
 

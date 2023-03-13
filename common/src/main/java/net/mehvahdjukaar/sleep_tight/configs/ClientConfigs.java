@@ -44,7 +44,7 @@ public class ClientConfigs {
         DAMPING = builder.comment("Hammock damping factor. Slows a hammock over time")
                 .define("damping", 0.2, 0., 10);
         SWING_FORCE = builder.comment("Intensity of velocity increment that is applied when controlling a hammock")
-                .define("swing_force", 0.012, 0., 10);
+                .define("swing_force", 0.008, 0., 10);
         CAMERA_ROLL_INTENSITY = builder.comment("Camera roll intensity when swinging on a hammock. Set to 0 to turn it off entirely")
                 .define("camera_roll_intensity", 1, 0, 1f);
         builder.pop();
