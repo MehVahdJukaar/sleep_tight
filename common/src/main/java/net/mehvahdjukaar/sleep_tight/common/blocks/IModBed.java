@@ -25,15 +25,17 @@ public interface IModBed extends ISleepTightBed {
         return Component.empty();
     }
 
-    default InteractionResult canSleepAtTime(Level level){
+    default InteractionResult canSleepAtTime(Level level) {
         return InteractionResult.PASS;
     }
 
     static boolean tryExploding(Level level, BlockPos pos) {
         if (!BedBlock.canSetSpawn(level)) {
             if (!level.isClientSide) {
+                var c = CommonConfigs.EXPLOSION_BEHAVIOR.get();
+                if (c == CommonConfigs.ExplosionBehavior.ALLOWS_SLEEPING) return false;
                 level.removeBlock(pos, false);
-                float size = CommonConfigs.DISABLE_BIG_EXPLOSION.get() ? 0 : 5.0F;
+                float size = c == CommonConfigs.ExplosionBehavior.TINY_EXPLOSION ? 0 : 5.0F;
                 level.explode(null, DamageSource.badRespawnPointExplosion(), null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, size, true, Explosion.BlockInteraction.DESTROY);
             }
             return true;

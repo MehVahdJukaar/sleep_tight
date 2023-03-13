@@ -11,9 +11,9 @@ public class EffectData {
 
     public static final Codec<EffectData> CODEC = RecordCodecBuilder.create((instance) -> instance.group(
             Registry.MOB_EFFECT.byNameCodec().fieldOf("effect").forGetter(e -> e.effect),
-            ExtraCodecs.POSITIVE_INT.fieldOf("base_duration").forGetter(e -> e.baseDuration),
+            ExtraCodecs.NON_NEGATIVE_INT.optionalFieldOf("base_intensity",0).forGetter(e -> e.baseIntensity),
             Codec.FLOAT.fieldOf("intensity_per_level").forGetter(e -> e.intensityPerLevel),
-            ExtraCodecs.POSITIVE_INT.optionalFieldOf("base_intensity",0).forGetter(e -> e.baseIntensity),
+            ExtraCodecs.NON_NEGATIVE_INT.fieldOf("base_duration").forGetter(e -> e.baseDuration),
             Codec.FLOAT.fieldOf("duration_per_level").forGetter(e -> e.durationPerLevel)
     ).apply(instance, EffectData::new));
 
@@ -26,10 +26,10 @@ public class EffectData {
 
     public EffectData(MobEffect effect, int baseIntensity, float intensityPerLevel, int baseDuration, float durationPerLevel) {
         this.effect = effect;
-        this.intensityPerLevel = intensityPerLevel;
-        this.durationPerLevel = durationPerLevel;
-        this.baseDuration = baseDuration;
         this.baseIntensity = baseIntensity;
+        this.intensityPerLevel = intensityPerLevel;
+        this.baseDuration = baseDuration;
+        this.durationPerLevel = durationPerLevel;
     }
 
     //bed level from 0 to whatever

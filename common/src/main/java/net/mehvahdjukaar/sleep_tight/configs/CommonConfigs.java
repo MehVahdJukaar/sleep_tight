@@ -1,6 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.configs;
 
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigBuilder;
+import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigSpec;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.core.Registry;
@@ -14,7 +15,7 @@ import java.util.function.Supplier;
 public class CommonConfigs {
 
     public static final Supplier<Boolean> FIX_BED_POSITION;
-    public static final Supplier<Boolean> DISABLE_BIG_EXPLOSION;
+    public static final Supplier<ExplosionBehavior> EXPLOSION_BEHAVIOR;
     public static final Supplier<Integer> SLEEP_INTERVAL;
     public static final Supplier<Boolean> DOUBLE_BED;
     public static final Supplier<Boolean> LAY_WHEN_ON_COOLDOWN;
@@ -74,6 +75,17 @@ public class CommonConfigs {
     public static final Supplier<Integer> BEDBUG_MAX_LIGHT;
     public static final Supplier<Boolean> PREVENTED_BY_DREAM_CATCHER;
 
+    public enum ExplosionBehavior {
+        DEFAULT, TINY_EXPLOSION, ALLOWS_SLEEPING, ALLOWS_SLEEPING_NO_RESPAWN;
+
+        public boolean canRespawn() {
+            return this == ALLOWS_SLEEPING;
+        }
+
+        public boolean canExplode() {
+            return this == ALLOWS_SLEEPING || this == ALLOWS_SLEEPING_NO_RESPAWN;
+        }
+    }
 
     public enum EffectIntensity {
         NONE, TIME_BASED, MAX
@@ -100,6 +112,7 @@ public class CommonConfigs {
     }
 
 
+    public static final ConfigSpec SPEC;
 
     static {
         ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.COMMON);
@@ -112,18 +125,18 @@ public class CommonConfigs {
                 .define("lay_when_on_cooldown", true);
         DOUBLE_BED = builder.comment("Allows player to sleep in the middle of two beds")
                 .define("queen_size_bed", true);
-        DISABLE_BIG_EXPLOSION = builder.comment("Disables damage from bed explosion when used in another dimension")
-                .define("disable_explosion_damage", true);
+        EXPLOSION_BEHAVIOR = builder.comment("Disables damage from bed explosion when used in another dimension. Can also be used to disable explosion entirely allowing one to sleep in those dimensions")
+                .define("behavior_in_dimension", ExplosionBehavior.TINY_EXPLOSION);
         SLEEP_INTERVAL = builder.comment("Interval between two consecutive sleep times for them to not be considered consecutive")
                 .define("sleep_interval", 24000, 0, 1000000);
-        builder.push("heartstone_integration");
+        builder.push("heartstone_mod_integration");
         HEARTSTONE_MODE = builder.comment("Gives some benefit when sleeping next to somebody else. By default only works in conjunction with heartstone mod")
                 .define("enabled", HeartstoneMode.WITH_MOD);
         HEARTSTONE_EFFECT = builder.comment("Effect to give to players when they wake up")
                 .defineObjectList("effects", () -> List.of(new EffectData(MobEffects.REGENERATION,
                         0, 0, 20 * 60, 20)), EffectData.CODEC);
         NIGHT_BAG_BORING = builder.comment("Makes night bag less unique by allowing you to place them normally")
-                        .define("boring_night_bags", false);
+                .define("boring_night_bags", false);
         builder.pop();
 
         builder.pop();
@@ -158,13 +171,13 @@ public class CommonConfigs {
         BED_BENEFITS = builder.comment("Which type of beds will apply benefits on wake up")
                 .define("active_for", BedStatus.HOME_BED);
         HEALING = builder.comment("Healing applied on wake up")
-                    .define("healing", EffectIntensity.MAX);
+                .define("healing", EffectIntensity.MAX);
         EFFECT_CLEARING = builder.comment("")
                 .define("effect_clearing", EffectIntensity.MAX);
         EFFECT_CLEARING_TYPE = builder.comment("")
                 .define("effect_clearing_types", PotionClearing.ALL);
         WAKE_UP_EFFECTS = builder.comment("Effects to apply when player wakes up. You can add more entries, this is a list")
-                .defineObject("wake_up_effects", () -> List.of(
+                .defineObject("effects_on_wake_up", () -> List.of(
                                 new EffectData(SleepTight.INVIGORATING.get(), 0, 0.1f, 2 * 60 * 20, 30 * 20)),
                         EffectData.CODEC.listOf());
         builder.pop();
@@ -250,7 +263,7 @@ public class CommonConfigs {
         builder.pop();
 
         builder.setSynced();
-        builder.buildAndRegister();
+        SPEC = builder.buildAndRegister();
     }
 
     public static void init() {
