@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingpurpleients": [
+    {
+      "item": "sleep_tight:hammock_white"
+    },
+    {
+      "item": "minecraft:purple_dye"
+    }
+  ],
+  "result": {
+    "item": "sleep_tight:hammock_purple"
+  }
+}
