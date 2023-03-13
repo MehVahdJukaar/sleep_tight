@@ -47,5 +47,7 @@
   "item.sleep_tight.bedbug_spawn_egg": "Яйце виклику постільного клопа",
   "subtitles.sleep_tight.bedbug.death": "Постільний клоп гине",
   "subtitles.sleep_tight.bedbug.ambient": "Постільний клоп шумить",
-  "subtitle.sleep_tight.bedbug.hurt": "Постільного клопа поранено"
+  "subtitle.sleep_tight.bedbug.hurt": "Постільного клопа поранено",
+  "advancements.adventure.hammock.title": "Інертність – це властивість матерії",
+  "advancements.adventure.hammock.description": "Впадіть з гамака"
 }
