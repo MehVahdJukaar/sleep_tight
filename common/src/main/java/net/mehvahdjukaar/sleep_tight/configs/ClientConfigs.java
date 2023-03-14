@@ -17,6 +17,7 @@ public class ClientConfigs {
     public static final Supplier<Double> SWING_FORCE;
     public static final Supplier<Double> CAMERA_ROLL_INTENSITY;
     public static final Supplier<Boolean> HAMMOCK_ANIMATION;
+    public static final Supplier<Boolean> HAMMOCK_FALL;
 
     public static final Supplier<Double> PARTICLE_ALPHA;
     public static final Supplier<Integer> PARTICLE_LIFETIME;
@@ -47,6 +48,8 @@ public class ClientConfigs {
                 .define("swing_force", 0.008, 0., 10);
         CAMERA_ROLL_INTENSITY = builder.comment("Camera roll intensity when swinging on a hammock. Set to 0 to turn it off entirely")
                 .define("camera_roll_intensity", 1, 0, 1f);
+        HAMMOCK_FALL = builder.comment("Swinging too much on a hammock will make you fall. Disable to do a barrel roll")
+                .define("hammock_fall",true);
         builder.pop();
 
         builder.push("dream_essence");

@@ -38,6 +38,7 @@ import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.*;
+import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -121,12 +122,13 @@ public class BedbugEntity extends Monster {
         }
 
         if (this.isBurrowing()) {
-            BlockState feetBlockState = this.getFeetBlockState();
-            if (!feetBlockState.is(SleepTight.VANILLA_BEDS)) {
+            BlockPos pos = this.blockPosition();
+
+            BlockState feetBlockState = this.level.getBlockState(pos);
+            if (!(feetBlockState.getBlock() instanceof BedBlock)) {
                 this.setBurrowing(false);
             } else {
                 burrowingTicks++;
-                BlockPos pos = this.blockPosition();
                 if (level.isClientSide) {
                     for (int i = 0; i < 6 + level.random.nextInt(10); i++) {
                         float x = pos.getX() + level.random.nextFloat();
@@ -392,7 +394,7 @@ public class BedbugEntity extends Monster {
 
         @Override
         protected boolean isValidTarget(LevelReader level, BlockPos pos) {
-            return level.getBlockState(pos).is(SleepTight.VANILLA_BEDS);
+            return level.getBlockState(pos).getBlock() instanceof BedBlock;
         }
 
         @Override

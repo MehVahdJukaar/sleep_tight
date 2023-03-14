@@ -352,6 +352,11 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             data.syncToClient(player);
 
             NetworkHandler.CHANNEL.sendToClientPlayer(player, new ClientBoundSleepImmediatelyMessage(pos));
+            //satefy check
+            BlockState blockState = level.getBlockState(pos);
+            if(blockState.getBlock() instanceof BedBlock){
+                level.setBlockAndUpdate(pos, blockState.setValue(BedBlock.OCCUPIED,true));
+            }
         }
     }
 

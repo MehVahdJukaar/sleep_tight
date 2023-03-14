@@ -1,63 +1,57 @@
 package net.mehvahdjukaar.sleep_tight.common.tiles;
 
 import net.mehvahdjukaar.moonlight.api.block.MimicBlockTile;
-import net.mehvahdjukaar.moonlight.api.client.model.ExtraModelData;
-import net.mehvahdjukaar.moonlight.api.client.model.IExtraModelDataProvider;
-import net.mehvahdjukaar.moonlight.api.set.BlocksColorAPI;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
-import net.mehvahdjukaar.sleep_tight.core.BedData;
-import net.mehvahdjukaar.supplementaries.Supplementaries;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.ambient.Bat;
-import net.minecraft.world.entity.animal.AbstractFish;
-import net.minecraft.world.entity.animal.Bucketable;
-import net.minecraft.world.entity.animal.Fox;
-import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BedPart;
 import org.jetbrains.annotations.Nullable;
 
-public class InfestedBedTile extends BlockEntity implements IExtraModelDataProvider {
+public class InfestedBedTile extends MimicBlockTile {
 
-    private DyeColor color = DyeColor.WHITE;
-    private BlockState bed = Blocks.WHITE_BED.defaultBlockState();
+    @Nullable
+    private BlockEntity innerTile = null;
     @Nullable
     private CompoundTag mobTag = null;
 
     public InfestedBedTile(BlockPos blockPos, BlockState blockState) {
         super(SleepTight.INFESTED_BED_TILE.get(), blockPos, blockState);
+        mimic = Blocks.RED_BED.defaultBlockState();
     }
 
-    public DyeColor getColor() {
-        return this.color;
-    }
-
-    public void setColor(DyeColor color) {
-        this.color = color;
-        this.bed = BlocksColorAPI.getColoredBlock("bed",color).defaultBlockState();
-    }
-
-    @Override
-    public ExtraModelData getExtraModelData() {
-        return ExtraModelData.builder()
-                .with(MimicBlockTile.MIMIC, bed)
-                .build();
+    @Nullable
+    public BlockEntity getInner() {
+        if (innerTile == null && mimic.getBlock() instanceof EntityBlock eb && getBlockState().getValue(BedBlock.PART) == BedPart.HEAD) {
+            innerTile = eb.newBlockEntity(worldPosition, mimic);
+        }
+        return innerTile;
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag) {
+    public boolean setHeldBlock(BlockState state, int index) {
+        if (state.getBlock() instanceof EntityBlock eb && getBlockState().getValue(BedBlock.PART) == BedPart.HEAD) {
+            innerTile = eb.newBlockEntity(this.worldPosition, state);
+        }
+        var r = super.setHeldBlock(state, index);
+
+        return r;
+    }
+
+    @Override
+    public void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.putInt("color", this.color.ordinal());
-        if(mobTag != null){
+        tag.put("bed", NbtUtils.writeBlockState(mimic));
+        if (mobTag != null) {
             tag.put("bedbug", mobTag);
         }
     }
@@ -65,11 +59,15 @@ public class InfestedBedTile extends BlockEntity implements IExtraModelDataProvi
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        this.setColor(DyeColor.values() [tag.getInt("color")]);
-        if(tag.contains("bedbug")){
+        this.setHeldBlock(NbtUtils.readBlockState(tag.getCompound("bed")));
+        if (tag.contains("bedbug")) {
             this.mobTag = tag.getCompound("bedbug");
         }
+
     }
+
+
+
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
@@ -79,12 +77,13 @@ public class InfestedBedTile extends BlockEntity implements IExtraModelDataProvi
     @Override
     public CompoundTag getUpdateTag() {
         CompoundTag tag = new CompoundTag();
-        tag.putInt("color", this.color.ordinal());
+        tag.put("Mimic", NbtUtils.writeBlockState(mimic));
         return tag;
     }
 
+
     public BlockState getBed() {
-        return bed;
+        return mimic;
     }
 
     private static CompoundTag prepareMobTagForContainer(Entity entity, double yOffset) {

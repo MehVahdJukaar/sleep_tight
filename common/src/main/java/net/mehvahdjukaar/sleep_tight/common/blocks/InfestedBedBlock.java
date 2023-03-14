@@ -226,7 +226,8 @@ public class InfestedBedBlock extends HorizontalDirectionalBlock implements Enti
     @Override
     public boolean tryWash(Level level, BlockPos pos, BlockState state) {
         if (level.getBlockEntity(pos) instanceof InfestedBedTile tile) {
-            tile.setColor(DyeColor.WHITE);
+            //TODO:
+            //tile.setHeldBlock(Blocks.WHITE_BED);
             return true;
         }
         return false;
@@ -235,23 +236,22 @@ public class InfestedBedBlock extends HorizontalDirectionalBlock implements Enti
     @Override
     public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
         if (level.getBlockEntity(pos) instanceof InfestedBedTile tile) {
-            return BlocksColorAPI.getColoredItem("bed", tile.getColor()).getDefaultInstance();
+            return tile.getHeldBlock().getBlock().asItem().getDefaultInstance();
         }
         return getCloneItemStack(level, pos, state);
     }
 
     public static boolean convertBed(Level level, BlockState state, BlockPos pos) {
-        if(state.is(SleepTight.VANILLA_BEDS)) {
+        if(state.getBlock() instanceof BedBlock) {
             level.setBlock(pos, SleepTight.INFESTED_BED.get().withPropertiesOf(state), Block.UPDATE_KNOWN_SHAPE | 2);
             BlockPos pos2 = pos.relative(state.getValue(BedBlock.FACING).getOpposite());
             level.setBlock(pos2, SleepTight.INFESTED_BED.get().withPropertiesOf(state.setValue(BedBlock.PART, BedPart.FOOT)), 2);
 
-            DyeColor color = ((BedBlock) state.getBlock()).getColor();
             if (level.getBlockEntity(pos) instanceof InfestedBedTile tile) {
-                tile.setColor(color);
+                tile.setHeldBlock(state.getBlock().withPropertiesOf(tile.getBlockState()));
             }
             if (level.getBlockEntity(pos2) instanceof InfestedBedTile tile) {
-                tile.setColor(color);
+                tile.setHeldBlock(state.getBlock().withPropertiesOf(tile.getBlockState()));
             }
             return true;
         }

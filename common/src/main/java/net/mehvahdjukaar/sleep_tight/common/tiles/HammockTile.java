@@ -157,7 +157,7 @@ public class HammockTile extends BlockEntity {
         e.accelerateRight = false;
 
         //client is in charge here. Therefore they are only in charge of their own player
-        if (Mth.abs(e.angle) > 0.2+ Mth.PI / 2) {
+        if (Mth.abs(e.angle) > 0.2 + Mth.PI / 2 && ClientConfigs.HAMMOCK_FALL.get()) {
             for (var b : e.level.getEntitiesOfClass(BedEntity.class, new AABB(pos))) {
                 for (var p : b.getPassengers()) {
                     if (p == SleepTightClient.getPlayer()) {

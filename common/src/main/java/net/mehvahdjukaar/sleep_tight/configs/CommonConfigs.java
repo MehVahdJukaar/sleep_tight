@@ -129,14 +129,16 @@ public class CommonConfigs {
                 .define("behavior_in_dimension", ExplosionBehavior.TINY_EXPLOSION);
         SLEEP_INTERVAL = builder.comment("Interval between two consecutive sleep times for them to not be considered consecutive")
                 .define("sleep_interval", 24000, 0, 1000000);
+        NIGHT_BAG_BORING = builder.comment("Makes night bag less unique by allowing you to place them normally on the ground")
+                .define("boring_night_bags", false);
+
         builder.push("heartstone_mod_integration");
         HEARTSTONE_MODE = builder.comment("Gives some benefit when sleeping next to somebody else. By default only works in conjunction with heartstone mod")
                 .define("enabled", HeartstoneMode.WITH_MOD);
         HEARTSTONE_EFFECT = builder.comment("Effect to give to players when they wake up")
                 .defineObjectList("effects", () -> List.of(new EffectData(MobEffects.REGENERATION,
                         0, 0, 20 * 60, 20)), EffectData.CODEC);
-        NIGHT_BAG_BORING = builder.comment("Makes night bag less unique by allowing you to place them normally on the ground")
-                .define("boring_night_bags", false);
+
         builder.pop();
 
         builder.pop();

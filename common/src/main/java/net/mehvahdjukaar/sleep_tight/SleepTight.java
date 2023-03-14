@@ -3,6 +3,7 @@ package net.mehvahdjukaar.sleep_tight;
 import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
+import net.mehvahdjukaar.sleep_tight.common.PackProvider;
 import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.InfestedBedBlock;
@@ -75,8 +76,14 @@ public class SleepTight {
         RegHelper.addAttributeRegistration(SleepTight::registerEntityAttributes);
         RegHelper.addSpawnPlacementsRegistration(SleepTight::registerSpawnPlacements);
 
+        if(PlatformHelper.getEnv().isClient()) {
+            PackProvider.INSTANCE.register();
+        }
+
         //sleep next to eachother bonus bugged
         //TODO: bedbug spawn
+        //naturalist terry bear
+        //together nightmares
         //bedbug actail behavior
         //pushing players in hammocks
     }
@@ -105,7 +112,6 @@ public class SleepTight {
     //tags
 
     public static final TagKey<EntityType<?>> WAKE_UP_BLACKLIST = TagKey.create(Registry.ENTITY_TYPE_REGISTRY, res("wake_up_blacklist"));
-    public static final TagKey<Block> VANILLA_BEDS = TagKey.create(Registry.BLOCK_REGISTRY, res("vanilla_beds"));
     public static final TagKey<Block> BEDBUG_WALK_THROUGH = TagKey.create(Registry.BLOCK_REGISTRY, res("bedbug_walk_through"));
 
     //particles
