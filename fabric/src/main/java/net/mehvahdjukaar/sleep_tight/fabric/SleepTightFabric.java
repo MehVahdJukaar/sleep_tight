@@ -8,12 +8,16 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.mixin.event.interaction.ServerPlayerEntityMixin;
 import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.moonlight.fabric.FabricSetupCallbacks;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
+import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.world.entity.player.Player;
 
 public class SleepTightFabric implements ModInitializer {
@@ -36,7 +40,6 @@ public class SleepTightFabric implements ModInitializer {
         EntitySleepEvents.STOP_SLEEPING.register((a, b) -> {
             if (a instanceof Player p) ModEvents.onWokenUp(p, true);
         });
-
 
         EntitySleepEvents.ALLOW_SLEEP_TIME.register(((player, sleepingPos, vanillaResult) ->
                 ModEvents.onCheckSleepTime(player.level, sleepingPos)));
@@ -61,6 +64,7 @@ public class SleepTightFabric implements ModInitializer {
         ServerEntityCombatEvents.AFTER_KILLED_OTHER_ENTITY.register((world, entity, killedEntity) -> {
             ModEvents.onEntityKilled(killedEntity, entity);
         });
+
 
     }
 

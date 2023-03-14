@@ -1,6 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.configs;
 
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigBuilder;
+import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigSpec;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.util.Mth;
@@ -26,8 +27,9 @@ public class ClientConfigs {
     public static final Supplier<Boolean> INSOMNIA_COOLDOWN;
     public static final Supplier<Boolean> SHOW_TIME;
     public static final Supplier<Boolean> TIME_FORMAT_24H;
+    public static final ConfigSpec SPEC;
 
-    static{
+    static {
         ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.CLIENT);
 
         builder.push("hammock");
@@ -36,25 +38,25 @@ public class ClientConfigs {
         HAMMOCK_FREQUENCY = builder.comment("Oscillation frequency of a hammock (oscillations /sec). Exact one will match this on small angles and will increase slightly on big one like a real pendulum")
                 .define("oscillation_frequency", 0.25, 0, 2);
         HAMMOCK_MAX_ANGLE = builder.comment("Maximum angle a hammock can reach")
-                        .define("max_angle", 65, 0., 360);
+                .define("max_angle", 65, 0., 360);
         HAMMOCK_MIN_ANGLE = builder.comment("Minimum angle a hammock can reach")
                 .define("min_angle", 5, 0., 360);
         DAMPING = builder.comment("Hammock damping factor. Slows a hammock over time")
                 .define("damping", 0.2, 0., 10);
         SWING_FORCE = builder.comment("Intensity of velocity increment that is applied when controlling a hammock")
-                .define("swing_force", 0.012, 0., 10);
+                .define("swing_force", 0.008, 0., 10);
         CAMERA_ROLL_INTENSITY = builder.comment("Camera roll intensity when swinging on a hammock. Set to 0 to turn it off entirely")
-                        .define("camera_roll_intensity", 1, 0, 1f);
+                .define("camera_roll_intensity", 1, 0, 1f);
         builder.pop();
 
         builder.push("dream_essence");
         PARTICLE_ALPHA = builder.comment("How subtle the effect will be essentially. Set to one for bring fancy particles")
-                        .define("particle_alpha", 0.1, 0, 1);
+                .define("particle_alpha", 0.1, 0, 1);
         PARTICLE_LIFETIME = builder.comment("Affects the plume height. lower to make the plume shorter")
                 .define("particle_lifetime", 380, 1, 10000);
         PARTICLE_SPAWN_FREQUENCY = builder.comment("Makes particles spawn more often. Set to 0 to disable")
-                        .define("particle_spawn_chance",0.15, 0, 1);
-        TIME_FORMAT_24H =builder.define("24h_time_format", true);
+                .define("particle_spawn_chance", 0.15, 0, 1);
+        TIME_FORMAT_24H = builder.define("24h_time_format", true);
         builder.pop();
 
 
@@ -68,13 +70,13 @@ public class ClientConfigs {
         builder.pop();
 
         builder.onChange(ClientConfigs::onChange);
-        builder.buildAndRegister();
+        SPEC = builder.buildAndRegister();
     }
 
     public static void init() {
     }
 
-    private static void onChange(){
+    private static void onChange() {
         double frequency = ClientConfigs.HAMMOCK_FREQUENCY.get();
         k = (float) Math.pow(2 * Math.PI * frequency, 2);
         maxAngleEnergy = angleToEnergy(k, ClientConfigs.HAMMOCK_MAX_ANGLE.get());
@@ -89,7 +91,7 @@ public class ClientConfigs {
     private static float maxAngleEnergy;
     private static float minAngleEnergy;
 
-    public static float getK(){
+    public static float getK() {
         return k;
     }
 

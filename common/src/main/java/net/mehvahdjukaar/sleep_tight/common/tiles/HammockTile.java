@@ -2,10 +2,13 @@ package net.mehvahdjukaar.sleep_tight.common.tiles;
 
 import dev.architectury.injectables.annotations.PlatformOnly;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
-import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.network.AccelerateHammockMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.common.network.ServerBoundFallFromHammockMessage;
+import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -101,10 +104,7 @@ public class HammockTile extends BlockEntity {
 
         if (hasAcc && energy < ClientConfigs.getMaxAngleEnergy()) {
             double push = ClientConfigs.SWING_FORCE.get();
-            e.angularVel += push * (e.accelerateLeft ? -1 : 1);
-            if (energy != 0) {
-                int aa = 1;
-            }
+            e.angularVel += (push * (e.accelerateLeft ? -1 : 1));
 
             //update other clients
             NetworkHandler.CHANNEL.sendToServer(new AccelerateHammockMessage(pos, e.accelerateLeft));
@@ -112,13 +112,14 @@ public class HammockTile extends BlockEntity {
 
         float acc = -k * Mth.sin(e.angle);
 
-        if (e.hasDrag) {
+        if (e.hasDrag && !hasAcc) {
             //note that since its proportional to speed this effectively limits the max angle
             if (energy > ClientConfigs.getMinAngleEnergy()) {
                 double damping = ClientConfigs.DAMPING.get();
 
-                float drag = (float) (-damping * e.angularVel);
-                acc += drag;
+                float drag = (float) (damping * e.angularVel);
+
+                acc -= drag;
             } else {
                 e.hasDrag = false;
             }
@@ -154,6 +155,17 @@ public class HammockTile extends BlockEntity {
 
         e.accelerateLeft = false;
         e.accelerateRight = false;
+
+        //client is in charge here. Therefore they are only in charge of their own player
+        if (Mth.abs(e.angle) > 0.2+ Mth.PI / 2) {
+            for (var b : e.level.getEntitiesOfClass(BedEntity.class, new AABB(pos))) {
+                for (var p : b.getPassengers()) {
+                    if (p == SleepTightClient.getPlayer()) {
+                        NetworkHandler.CHANNEL.sendToServer(new ServerBoundFallFromHammockMessage());
+                    } else return;
+                }
+            }
+        }
     }
 
     public void accelerateLeft() {

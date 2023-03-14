@@ -63,6 +63,10 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         this.setPos(mainPos.getX() + 0.5, mainPos.getY() + 0.25, mainPos.getZ() + 0.5);
     }
 
+    public Direction getBedDirection() {
+        return dir;
+    }
+
     public boolean isDoubleBed() {
         return offsetMode == OffsetMode.DOUBLE_BED;
     }

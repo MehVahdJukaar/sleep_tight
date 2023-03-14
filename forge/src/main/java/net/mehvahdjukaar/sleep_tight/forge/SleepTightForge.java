@@ -4,8 +4,10 @@ import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
-import net.mehvahdjukaar.sleep_tight.common.InvigoratingEffect;
+import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -148,7 +150,7 @@ public class SleepTightForge {
     public void onBlockBreak(BlockEvent.BreakEvent event) {
         int i = event.getExpToDrop();
         if (i > 0) {
-            int j = InvigoratingEffect.onBlockBreak(i, event.getPlayer());
+            int j = InvigoratedEffect.onBlockBreak(i, event.getPlayer());
             if (j != 0) event.setExpToDrop(i + j);
         }
     }

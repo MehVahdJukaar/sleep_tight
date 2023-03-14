@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "id": "sleep_tight",
   "version": "${version}",
-  "name": "You've Goat to be kidding me",
-  "description": "Ram blocks for automation, Viking helmets and Geeps!",
+  "name": "Sleep Tight",
+  "description": "Balanced sleep. Don't let bedbugs bite!",
   "authors": [
     "Mehvahdjukaar, Plantkillable"
   ],
@@ -17,6 +17,9 @@
   "entrypoints": {
     "main": [
       "net.mehvahdjukaar.sleep_tight.fabric.SleepTightFabric"
+    ],
+    "modmenu": [
+      "net.mehvahdjukaar.sleep_tight.integration.fabric.ModMenuCompat"
     ]
   },
   "mixins": [
