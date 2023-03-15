@@ -16,6 +16,7 @@
   "block.sleep_tight.hammock_purple": "Фиолетовый гамак",
   "block.sleep_tight.hammock_orange": "Оранжевый гамак",
   "block.sleep_tight.night_bag": "Ночной мешок",
+  "block.sleep_tight.infested_bed": "Заражённая кровать",
   "message.sleep_tight.night_bag": "Не подходящее место",
   "message.sleep_tight.not_possible_here": "Вы не можете здесь спать",
   "message.sleep_tight.start_sleeping": "Нажмите %1$s, чтобы начать спать, %2$s, чтобы встать",
