@@ -20,7 +20,7 @@
   "message.sleep_tight.night_bag": "Not a suitable location",
   "message.sleep_tight.not_possible_here": "You cant sleep here",
   "message.sleep_tight.start_sleeping": "Press %1$s to start sleeping, %2$s to get up",
-  "message.sleep_tight.start_resting": "Press %1$s to start resting, %1$s to get up",
+  "message.sleep_tight.start_resting": "Press %1$s to start resting, %2$s to get up",
   "message.sleep_tight.nightmare": "A nightmare wakes you up...",
   "message.sleep_tight.insomnia.night": "You don't feel tired right now",
   "message.sleep_tight.insomnia.day": "You don't feel tired right now",
