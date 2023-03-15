@@ -19,7 +19,7 @@
   "message.sleep_tight.night_bag": "Не подходящее место",
   "message.sleep_tight.not_possible_here": "Вы не можете здесь спать",
   "message.sleep_tight.start_sleeping": "Нажмите %1$s, чтобы начать спать, %2$s, чтобы встать",
-  "message.sleep_tight.start_resting": "Нажмите %1$s, чтобы начать отдыхать, %1$s, чтобы встать",
+  "message.sleep_tight.start_resting": "Нажмите %1$s, чтобы начать отдыхать, %2$s, чтобы встать",
   "message.sleep_tight.nightmare": "Вас разбудил кошмар...",
   "message.sleep_tight.insomnia.night": "Вы сейчас не чувствуете усталости",
   "message.sleep_tight.insomnia.day": "Вы сейчас не чувствуете усталости",
@@ -45,7 +45,7 @@
   "entity.sleep_tight.bedbug": "Постельный клоп",
   "item.sleep_tight.bedbug_eggs": "Яйца постельного клопа",
   "item.sleep_tight.bedbug_spawn_egg": "Яйцо призыва постельного клопа",
-  "subtitles.sleep_tight.bedbug.death": "Клоп погибает",
-  "subtitles.sleep_tight.bedbug.ambient": "Клоп шумит",
-  "subtitle.sleep_tight.bedbug.hurt": "Клоп ранен"
+  "subtitles.sleep_tight.bedbug.death": "Постельный клоп погибает",
+  "subtitles.sleep_tight.bedbug.ambient": "Постельный клоп шумит",
+  "subtitle.sleep_tight.bedbug.hurt": "Постельный клоп ранен"
 }
