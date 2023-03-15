@@ -1,8 +1,8 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
+import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
-import net.mehvahdjukaar.sleep_tight.common.entities.DreamerEssenceTargetEntity;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncPlayerSleepCapMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
 import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
@@ -11,9 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
@@ -102,7 +100,7 @@ public abstract class PlayerSleepData {
     public double getNightmareChance(Player player, BlockPos pos) {
         int minNights = CommonConfigs.NIGHTMARES_CONSECUTIVE_NIGHTS.get();
         if (consecutiveNightsSlept < minNights) return 0;
-        if (isDreamerEssenceInRange(player.blockPosition(), player.level)) return 0;
+        if (DreamEssenceBlock.isInRange(player.blockPosition(), player.level)) return 0;
         BlockState state = player.level.getBlockState(pos);
         if (state.getBlock() instanceof ISleepTightBed bed) {
             if (!bed.st_canCauseNightmares()) return 0;
@@ -110,11 +108,6 @@ public abstract class PlayerSleepData {
 
         return CommonConfigs.NIGHTMARE_CHANCE_INCREMENT_PER_NIGHT.get()
                 * (consecutiveNightsSlept - minNights - 1);
-    }
-
-    public static boolean isDreamerEssenceInRange(BlockPos pos, Level level) {
-        return !level.getEntitiesOfClass(DreamerEssenceTargetEntity.class,
-                new AABB(pos).inflate(5)).isEmpty();
     }
 
     @Nullable

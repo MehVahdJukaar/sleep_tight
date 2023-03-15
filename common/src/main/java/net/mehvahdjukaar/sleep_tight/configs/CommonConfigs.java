@@ -74,6 +74,7 @@ public class CommonConfigs {
     public static final Supplier<Integer> BEDBUG_TRIES;
     public static final Supplier<Integer> BEDBUG_MAX_LIGHT;
     public static final Supplier<Boolean> PREVENTED_BY_DREAM_CATCHER;
+    public static final Supplier<Boolean> ONLY_WHEN_IN_HOME_BED;
 
     public enum ExplosionBehavior {
         DEFAULT, TINY_EXPLOSION, ALLOWS_SLEEPING, ALLOWS_SLEEPING_NO_RESPAWN;
@@ -145,7 +146,7 @@ public class CommonConfigs {
 
         builder.push("bedbugs");
         BEDBUG_SPAWN_CHANCE = builder.comment("Base spawn chance every time you wake up, increases with difficulty")
-                .define("spawn_chance", 0.1, 0, 1);
+                .define("spawn_chance", 0.11, 0, 1);
         BEDBUG_SPAWN_MAX_RANGE = builder.comment("max radius at which they can spawn")
                 .define("max_spawn_radius", 20, 1, 64);
         BEDBUG_SPAWN_MIN_RANGE = builder.comment("min radius from which they can spawn")
@@ -154,9 +155,11 @@ public class CommonConfigs {
                 .define("max_allowed_light_level", 15, 0, 15);
         BEDBUG_TRIES = builder.comment("The game will perform x attempts to spawn a bedbug around each player when they wake up. This already takes into account the chance config." +
                         "High values will decrease failed attempts")
-                .define("tries", 25, 0, 1000);
+                .define("tries", 20, 0, 1000);
         PREVENTED_BY_DREAM_CATCHER = builder.comment("Prevents bedbugs when using dream essence")
                 .define("prevented_by_dream_essence", false);
+        ONLY_WHEN_IN_HOME_BED = builder.comment("Only spawns bedbugs when sleeping in your home bed")
+                        .define("only_when_in_home_bed",false);
         builder.pop();
 
         builder.push("sleep_cooldown");

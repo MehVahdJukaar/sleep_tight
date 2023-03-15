@@ -7,6 +7,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
+import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
 import net.mehvahdjukaar.sleep_tight.common.blocks.NightBagBlock;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
@@ -175,7 +176,7 @@ public abstract class SleepGuiOverlay<T extends Gui> {
 
 
             hasDreamerEssence = !(player.getLevel().getBlockState(pos).getBlock() instanceof NightBagBlock) &&
-                    PlayerSleepData.isDreamerEssenceInRange(pos, player.level);
+                    DreamEssenceBlock.isInRange(pos, player.level);
         }
 
     }

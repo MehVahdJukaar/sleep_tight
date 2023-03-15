@@ -8,6 +8,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.EntityCollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -45,6 +46,12 @@ public class DreamEssenceBlock extends Block {
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         super.onPlace(state, level, pos, oldState, isMoving);
         level.addFreshEntity(new DreamerEssenceTargetEntity(level, pos));
+    }
+
+
+    public static boolean isInRange(BlockPos pos, Level level) {
+        return !level.getEntitiesOfClass(DreamerEssenceTargetEntity.class,
+                new AABB(pos).inflate(5)).isEmpty();
     }
 
 

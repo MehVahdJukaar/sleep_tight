@@ -29,7 +29,6 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
@@ -38,9 +37,7 @@ import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.*;
-import net.minecraft.world.level.block.BedBlock;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.PathFinder;
@@ -84,7 +81,7 @@ public class BedbugEntity extends Monster {
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
 
-       // this.targetSelector.addGoal(8, new NearestAttackableTargetGoal<>(this, Player.class, true));
+        // this.targetSelector.addGoal(8, new NearestAttackableTargetGoal<>(this, Player.class, true));
     }
 
     @Override
@@ -139,7 +136,7 @@ public class BedbugEntity extends Monster {
                     }
                 } else {
                     if (burrowingTicks > 40) {
-                        if (InfestedBedBlock.convertBed(level, feetBlockState, pos)) {
+                        if (InfestedBedBlock.infestBed(level, feetBlockState, pos)) {
                             this.spawnAnim();
                             this.discard();
                             level.playSound(null, pos, SoundEvents.WOOL_BREAK, SoundSource.HOSTILE, 1, 1);
@@ -346,6 +343,11 @@ public class BedbugEntity extends Monster {
         }
     }
 
+    public static boolean isValidBedForInfestation(BlockState state) {
+        Block block = state.getBlock();
+        return block instanceof BedBlock && block != SleepTight.INFESTED_BED && !state.getValue(BedBlock.OCCUPIED);
+    }
+
     static class InfestBedGoal extends MoveToBlockGoal {
 
         private final List<BlockPos> blacklist = new ArrayList<>();
@@ -394,7 +396,7 @@ public class BedbugEntity extends Monster {
 
         @Override
         protected boolean isValidTarget(LevelReader level, BlockPos pos) {
-            return level.getBlockState(pos).getBlock() instanceof BedBlock;
+            return isValidBedForInfestation(level.getBlockState(pos));
         }
 
         @Override
@@ -421,11 +423,14 @@ public class BedbugEntity extends Monster {
 
         private List<BlockPos> findNearestBed() {
             BlockPos pos = bedBug.blockPosition();
-            PoiManager poiManager = ((ServerLevel) bedBug.level).getPoiManager();
+            ServerLevel level = (ServerLevel) bedBug.level;
+            PoiManager poiManager = level.getPoiManager();
             Stream<PoiRecord> stream = poiManager.getInRange((h) ->
                     h.is(PoiTypes.HOME), pos, searchRange, PoiManager.Occupancy.ANY);
-            return stream.map(PoiRecord::getPos).sorted(Comparator.comparingDouble((p) ->
-                    p.distSqr(pos))).toList();
+            return stream.map(PoiRecord::getPos)
+                    .filter(p -> isValidTarget(level, p))
+                    .sorted(Comparator.comparingDouble((p) -> p.distSqr(pos)))
+                    .toList();
         }
     }
 
@@ -454,7 +459,7 @@ public class BedbugEntity extends Monster {
 
 
     public static AttributeSupplier.Builder makeAttributes() {
-        return Monster.createMonsterAttributes().add(Attributes.MAX_HEALTH, 12.0)
+        return Monster.createMonsterAttributes().add(Attributes.MAX_HEALTH, 9.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.325).add(Attributes.ATTACK_DAMAGE, 1.0);
     }
 
@@ -490,6 +495,9 @@ public class BedbugEntity extends Monster {
         protected BlockPathTypes evaluateBlockPathType(BlockGetter level, boolean canOpenDoors, boolean canEnterDoors, BlockPos pos, BlockPathTypes nodeType) {
             if (nodeType == BlockPathTypes.DOOR_OPEN || nodeType == BlockPathTypes.DOOR_WOOD_CLOSED ||
                     nodeType == BlockPathTypes.WALKABLE_DOOR) return BlockPathTypes.OPEN;
+            if(nodeType == BlockPathTypes.BLOCKED && level.getBlockState(pos).getBlock() instanceof BedBlock){
+                return BlockPathTypes.WALKABLE;
+            }
             return super.evaluateBlockPathType(level, canOpenDoors, canEnterDoors, pos, nodeType);
         }
     }

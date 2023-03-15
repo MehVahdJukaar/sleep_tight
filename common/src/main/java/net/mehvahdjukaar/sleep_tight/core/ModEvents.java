@@ -1,6 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
+import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
@@ -118,6 +119,10 @@ public class ModEvents {
         return true;
     }
 
+    public static boolean isValidBed(BlockState state) {
+        Block block = state.getBlock();
+        return block instanceof BedBlock && block != SleepTight.INFESTED_BED;
+    }
 
     @EventCalled
     public static InteractionResult onRightClickBlock(Player player, Level level, InteractionHand hand, BlockHitResult hitResult) {
@@ -125,7 +130,7 @@ public class ModEvents {
             BlockPos pos = hitResult.getBlockPos();
             var state = level.getBlockState(pos);
             Block b = state.getBlock();
-            if (state.getBlock() instanceof BedBlock) {
+            if (isValidBed(state)) {
                 Direction dir = state.getValue(BedBlock.FACING);
 
                 //get head
@@ -262,7 +267,7 @@ public class ModEvents {
             }
 
             if (bed.st_canSpawnBedbugs()) {
-                WakeUpEncounterHelper.trySpawningBedbug(pos, (ServerLevel) player.level);
+                WakeUpEncounterHelper.trySpawningBedbug(pos,  player, data);
             }
 
             SleepEffectsHelper.applyEffectsOnWakeUp(playerCap, player, dayTimeDelta, pos, bed, state, data);

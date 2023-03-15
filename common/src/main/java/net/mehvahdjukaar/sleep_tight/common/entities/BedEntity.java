@@ -11,6 +11,7 @@ import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.IModBed;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
+import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundRideImmediatelyMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSleepImmediatelyMessage;
@@ -164,7 +165,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
 
     private boolean isValidBed(BlockState state) {
         Block b = state.getBlock();
-        if (b instanceof BedBlock) {
+        if (ModEvents.isValidBed(state)) {
             return state.getValue(BedBlock.PART) == BedPart.HEAD;
         }
         if (b instanceof HammockBlock) {

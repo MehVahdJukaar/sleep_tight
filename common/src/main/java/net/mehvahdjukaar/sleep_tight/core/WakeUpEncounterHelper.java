@@ -1,6 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -151,18 +152,26 @@ public class WakeUpEncounterHelper {
     }
 
 
-    public static boolean trySpawningBedbug(BlockPos bedPos, ServerLevel level) {
+    public static boolean trySpawningBedbug(BlockPos bedPos, ServerPlayer player, BedData data) {
+        ServerLevel level = (ServerLevel) player.level;
         if (!level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) return false;
 
         double spawnChance = CommonConfigs.BEDBUG_SPAWN_CHANCE.get();
         if (level.random.nextFloat() < spawnChance) {
+
+            if (CommonConfigs.PREVENTED_BY_DREAM_CATCHER.get()) {
+                if (DreamEssenceBlock.isInRange(bedPos, level)) return false;
+            }
+            if (CommonConfigs.ONLY_WHEN_IN_HOME_BED.get()) {
+                if (data == null || !data.isHomeBedFor(player)) return false;
+            }
 
             BlockPos.MutableBlockPos mutable = bedPos.mutable();
             int monsterSpawnAttempts = CommonConfigs.BEDBUG_TRIES.get();
             int min = CommonConfigs.BEDBUG_SPAWN_MIN_RANGE.get();
             int max = CommonConfigs.BEDBUG_SPAWN_MAX_RANGE.get();
 
-            int maxAttempts = (int) ( monsterSpawnAttempts*(1+ level.getCurrentDifficultyAt(bedPos).getSpecialMultiplier()));
+            int maxAttempts = (int) (monsterSpawnAttempts * (1 + level.getCurrentDifficultyAt(bedPos).getSpecialMultiplier()));
 
             for (int attempt = 0; attempt < maxAttempts; attempt++) {
                 setRandomPosCircle(bedPos, mutable, level.random, min, max);
