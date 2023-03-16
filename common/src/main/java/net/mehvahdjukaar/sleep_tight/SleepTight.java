@@ -86,6 +86,7 @@ public class SleepTight {
         //together nightmares
         //bedbug actail behavior
         //pushing players in hammocks
+        //phantom spawn stuff
     }
 
     public static void commonSetup() {
