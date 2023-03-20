@@ -1,7 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "group": "hammock",
-  "ingredients2": [
+  "ingredients": [
     {"item": "sleep_tight:hammock_white"},
     {"tag": "forge:dyes/brown"}
   ],

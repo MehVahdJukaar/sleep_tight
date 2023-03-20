@@ -7,6 +7,7 @@ import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
 import net.mehvahdjukaar.sleep_tight.common.blocks.IModBed;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
+import net.mehvahdjukaar.sleep_tight.common.blocks.InfestedBedBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.NightBagBlock;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
@@ -18,6 +19,7 @@ import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.PlayerRespawnLogic;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
@@ -130,6 +132,11 @@ public class ModEvents {
             BlockPos pos = hitResult.getBlockPos();
             var state = level.getBlockState(pos);
             Block b = state.getBlock();
+
+            if(b instanceof InfestedBedBlock){
+                return state.use(level, player, hand,hitResult);
+            }
+
             if (isValidBed(state)) {
                 Direction dir = state.getValue(BedBlock.FACING);
 

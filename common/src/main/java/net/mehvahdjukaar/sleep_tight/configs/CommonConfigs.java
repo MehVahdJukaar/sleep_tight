@@ -183,7 +183,7 @@ public class CommonConfigs {
                 .define("effect_clearing_types", PotionClearing.ALL);
         WAKE_UP_EFFECTS = builder.comment("Effects to apply when player wakes up. You can add more entries, this is a list")
                 .defineObject("effects_on_wake_up", () -> List.of(
-                                new EffectData(SleepTight.INVIGORATED.get(), 0, 0.1f, 2 * 60 * 20, 30 * 20)),
+                                new EffectData(SleepTight.INVIGORATED.get(), 0, 0.075f, 2 * 60 * 20, 30 * 20)),
                         EffectData.CODEC.listOf());
         builder.pop();
 
@@ -208,7 +208,6 @@ public class CommonConfigs {
                 .define("xp_cost", 0, 0, 200);
         builder.pop();
 
-        builder.push("bed");
 
         builder.push("home_bed");
 
@@ -226,16 +225,13 @@ public class CommonConfigs {
         NIGHTMARES_HAMMOCK = builder.define("apply_to_hammock", false);
         NIGHTMARES_NIGHT_BAG = builder.define("apply_to_night_bags", false);
 
-        NIGHTMARES_CONSECUTIVE_NIGHTS = builder.comment("Amount of consecutive nights from which nightmares could start to happen")
-                .define("appear_after_consecutive_nights", 4, 0, 100);
-        NIGHTMARE_CHANCE_INCREMENT_PER_NIGHT = builder.define("nightmare_increment_per_night", 0.15, 0, 1);
+        NIGHTMARES_CONSECUTIVE_NIGHTS = builder.comment("Amount of consecutive nights slept after which nightmares could start to happen")
+                .define("appear_after_consecutive_nights", 3, 0, 100);
+        NIGHTMARE_CHANCE_INCREMENT_PER_NIGHT = builder.define("nightmare_increment_per_night", 0.16, 0, 1);
         NIGHTMARE_SLEEP_TIME_MULTIPLIER = builder.comment("Multiplier applied to time slept after a nightmare")
                 .define("sleep_time_multiplier", 0.5, 0.01, 1);
         NIGHTMARE_INSOMNIA_DURATION = builder.comment("Refractory period after a nightmare in which you won't be able to sleep")
                 .define("insomnia_duration", 24000 + 12000, 0, 1000000);
-
-        builder.pop();
-
 
         builder.pop();
 

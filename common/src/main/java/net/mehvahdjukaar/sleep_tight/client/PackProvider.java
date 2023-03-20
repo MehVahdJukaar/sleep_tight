@@ -1,4 +1,4 @@
-package net.mehvahdjukaar.sleep_tight.common;
+package net.mehvahdjukaar.sleep_tight.client;
 
 import com.google.gson.JsonParser;
 import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
@@ -6,7 +6,6 @@ import net.mehvahdjukaar.moonlight.api.resources.ResType;
 import net.mehvahdjukaar.moonlight.api.resources.pack.DynClientResourcesProvider;
 import net.mehvahdjukaar.moonlight.api.resources.pack.DynamicTexturePack;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
-import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -46,7 +45,8 @@ public class PackProvider extends DynClientResourcesProvider {
         if (o.isPresent() && !Objects.equals(o.get().sourcePackId(), "Default")) return;
 
 
-        if (!PlatformHelper.isModLoaded("enhancedblockentities")) {
+        if (!PlatformHelper.isModLoaded("enhancedblockentities") &&
+                !PlatformHelper.isModLoaded("betterbeds")) {
 
             String str = """
                     {
