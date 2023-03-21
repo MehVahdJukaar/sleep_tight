@@ -2,8 +2,8 @@ package net.mehvahdjukaar.sleep_tight;
 
 import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
-import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
 import net.mehvahdjukaar.sleep_tight.client.PackProvider;
+import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
 import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.InfestedBedBlock;
@@ -30,13 +30,11 @@ import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacements;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.Item;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BannerPattern;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -75,7 +73,7 @@ public class SleepTight {
         RegHelper.addAttributeRegistration(SleepTight::registerEntityAttributes);
         RegHelper.addSpawnPlacementsRegistration(SleepTight::registerSpawnPlacements);
 
-        if(PlatformHelper.getEnv().isClient()) {
+        if (PlatformHelper.getEnv().isClient()) {
             PackProvider.INSTANCE.register();
         }
 
@@ -113,6 +111,10 @@ public class SleepTight {
 
     public static final TagKey<EntityType<?>> WAKE_UP_BLACKLIST = TagKey.create(Registry.ENTITY_TYPE_REGISTRY, res("wake_up_blacklist"));
     public static final TagKey<Block> BEDBUG_WALK_THROUGH = TagKey.create(Registry.BLOCK_REGISTRY, res("bedbug_walk_through"));
+    public static final TagKey<BannerPattern> MOON_TAG = TagKey.create(Registry.BANNER_PATTERN_REGISTRY, res("pattern_item/moon"));
+
+    //banner pattern
+    public static final Supplier<BannerPattern> MOON_PATTERN = RegHelper.register(res("moon"), () -> new BannerPattern("mon"), Registry.BANNER_PATTERN);
 
     //particles
 
@@ -170,6 +172,9 @@ public class SleepTight {
     );
 
     //items
+    public static final Supplier<BannerPatternItem> MOON_PATTERN_ITEM = regItem("moon_banner_pattern", () ->
+            new BannerPatternItem(MOON_TAG, new Item.Properties().stacksTo(1).tab(CreativeModeTab.TAB_MISC))
+    );
 
     public static final Supplier<NightBagItem> NIGHT_BAG_ITEM = regItem("night_bag", () ->
             new NightBagItem(NIGHT_BAG.get(), new Item.Properties().tab(CreativeModeTab.TAB_DECORATIONS))

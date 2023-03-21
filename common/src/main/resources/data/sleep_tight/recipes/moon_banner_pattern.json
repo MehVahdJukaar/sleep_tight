@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "minecraft:paper"
+    },
+    {
+      "item": "sleep_tight:dreamer_essence"
+    }
+  ],
+  "result": {
+    "item": "sleep_tight:moon_banner_pattern"
+  }
+}

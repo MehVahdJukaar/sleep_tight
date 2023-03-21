@@ -155,7 +155,8 @@ public class ModEvents {
                 }
 
                 //fallsback on bed logic for non sleep action
-                if (BedBlock.canSetSpawn(level) && !player.isSecondaryUseActive() && !bedBlocked(level, pos, dir)) {
+                if (BedBlock.canSetSpawn(level) && !player.isSecondaryUseActive() && !bedBlocked(level, pos, dir) &&
+                        !player.isCrouching()) {
 
                     //tries clearing double bed
                     boolean occupied = state.getValue(BedBlock.OCCUPIED);
