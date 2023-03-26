@@ -19,9 +19,11 @@ import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.common.tiles.InfestedBedTile;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
+import net.mehvahdjukaar.supplementaries.reg.ModRegistry;
 import net.minecraft.Util;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.data.BuiltinRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.TagKey;
@@ -58,6 +60,7 @@ public class SleepTight {
 
     public static final boolean SUPP = PlatformHelper.isModLoaded("supplementaries");
     public static final boolean HS = PlatformHelper.isModLoaded("heartstone");
+    public static final boolean QUARK = PlatformHelper.isModLoaded("quark");
 
     public static ResourceLocation res(String name) {
         return new ResourceLocation(MOD_ID, name);
@@ -65,6 +68,7 @@ public class SleepTight {
 
 
     public static void commonInit() {
+
         NetworkHandler.registerMessages();
         ClientConfigs.init();
         CommonConfigs.init();

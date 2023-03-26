@@ -1,4 +1,3 @@
-import net.darkhax.curseforgegradle.TaskPublishCurseForge
 
 plugins {
     id "com.github.johnrengelman.shadow" version "7.1.2"
@@ -109,22 +108,8 @@ dependencies {
     modImplementation ("curse.maven:jei-238222:3884337")
     modImplementation ("curse.maven:configured-457570:4011355")
     modImplementation ("curse.maven:supplementaries-412082:4375776")
-}
 
-
-task publishCurseForge(type: TaskPublishCurseForge) {
-
-    apiToken = System.getenv('curseforge_token')
-    disableVersionDetection()
-
-    // Tells CurseForgeGradle to publish the output of the jar task. This will
-    // return a UploadArtifact object that can be used to further configure the file.
-    def mainFile = upload(rootProject.project_id, file("${project.buildDir}/libs/${archivesBaseName}-${version}.jar"))
-    mainFile.changelog = rootProject.file('changelog.md')
-    mainFile.changelogType = "markdown"
-    mainFile.releaseType = "release"
-    mainFile.addGameVersion(rootProject.minecraft_version)
-    mainFile.addModLoader("forge")
-    mainFile.addRequirement("selene")
-    mainFile.addOptional("heartstone")
+    modImplementation("curse.maven:autoreglib-250363:3857246")
+    modImplementation("curse.maven:quark-oddities-301051:3575623")
+    modImplementation("curse.maven:quark-243121:4426258")
 }

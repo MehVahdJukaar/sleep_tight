@@ -3,17 +3,13 @@ package net.mehvahdjukaar.sleep_tight.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Vector3f;
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
-import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.core.SleepEffectsHelper;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.entity.LivingEntityRenderer;
-import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -66,12 +62,14 @@ public class ClientEvents {
             }
         } else if (bedEntity != null) {
 
-            //bed
+            //bed entity on bed
             var dir = BedBlock.getBedOrientation(entity.level, pos);
-            float f1 = 90 - dir.toYRot();
-            poseStack.mulPose(Vector3f.YP.rotationDegrees(f1));
+            if (dir != null) {
+                float f1 = 90 - dir.toYRot();
+                poseStack.mulPose(Vector3f.YP.rotationDegrees(f1));
 
-            poseStack.translate(1.5, 0, 0);
+                poseStack.translate(1.5, 0, 0);
+            }
         }
 
     }

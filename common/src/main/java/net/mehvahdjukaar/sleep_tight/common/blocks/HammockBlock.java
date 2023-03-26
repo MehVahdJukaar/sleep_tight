@@ -11,6 +11,7 @@ import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.mehvahdjukaar.sleep_tight.core.WakeReason;
+import net.mehvahdjukaar.sleep_tight.integration.QuarkCompat;
 import net.mehvahdjukaar.sleep_tight.integration.SupplementariesCompat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -170,6 +171,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
         Direction opposite = dir.getOpposite();
         if (facingState.isFaceSturdy(level, relative, opposite, SupportType.CENTER)) return Connection.BLOCK;
         if (facingState.getBlock() instanceof FenceBlock ||
+                (SleepTight.QUARK && QuarkCompat.isVerticalPost(facingState)) ||
                 (SleepTight.SUPP && SupplementariesCompat.isRopeKnot(facingState))) return Connection.FENCE;
         return Connection.NONE;
     }
