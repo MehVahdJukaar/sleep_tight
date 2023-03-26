@@ -40,7 +40,7 @@
   "gui.sleep_tight.dreamer_essence": "美梦香精正使你免受梦魇侵扰",
   "gui.sleep_tight.home_bed": "家床",
   "gui.sleep_tight.bed_level": "床等级: %s",
-  "gui.sleep_tight.nightmare": "恐惧: %s",
+  "gui.sleep_tight.nightmare": "恐惧值: %s",
   "effect.sleep_tight.invigorated": "振奋",
   "effect.sleep_tight.invigorated.description": "略微增加从方块和生物获得的经验",
   "entity.sleep_tight.bedbug": "床虱",
@@ -51,4 +51,6 @@
   "subtitle.sleep_tight.bedbug.hurt": "床虱咬疼你了",
   "advancements.adventure.hammock.title": "惯性是个问题",
   "advancements.adventure.hammock.description": "摔下吊床"
+  "item.sleep_tight.moon_banner_pattern": "旗帜图案",
+  "item.sleep_tight.moon_banner_pattern.desc": "月亮盾徽"
 }
