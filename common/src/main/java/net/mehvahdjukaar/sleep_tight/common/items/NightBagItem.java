@@ -1,7 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.common.items;
 
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
-import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -31,22 +30,22 @@ public class NightBagItem extends BlockItem {
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand usedHand) {
-        if(level.isClientSide) {
+        if (level.isClientSide) {
             return InteractionResultHolder.success(player.getItemInHand(usedHand));
             //player sleep check only works on server side because level.isDay() is true for client
-        }else{
-            BlockPos pos = new BlockPos(player.position().add(0, 1 / 16f, 0));
+        } else {
+            BlockPos pos = BlockPos.containing(player.position().add(0, 1 / 16f, 0));
             ItemStack stack = player.getItemInHand(usedHand);
 
             //same logic as startSleepingInBed. Performed before actually committing. Hopefully these should match
             var problem = SleepTightPlatformStuff.invokeSleepChecksEvents(player, pos);
             if (problem != null) {
 
-                    Component m = problem.getMessage();
-                    if (problem == Player.BedSleepingProblem.NOT_POSSIBLE_HERE) {
-                        m = Component.translatable("message.sleep_tight.not_possible_here");
-                    }
-                    if (m != null) player.displayClientMessage(m, true);
+                Component m = problem.getMessage();
+                if (problem == Player.BedSleepingProblem.NOT_POSSIBLE_HERE) {
+                    m = Component.translatable("message.sleep_tight.not_possible_here");
+                }
+                if (m != null) player.displayClientMessage(m, true);
 
                 return InteractionResultHolder.fail(stack);
             }

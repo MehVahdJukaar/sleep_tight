@@ -2,9 +2,7 @@ package net.mehvahdjukaar.sleep_tight.client.renderers;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix3f;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3f;
+import com.mojang.math.Axis;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
@@ -21,6 +19,8 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.world.level.block.state.BlockState;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 
 public class HammockBlockTileRenderer implements BlockEntityRenderer<HammockTile> {
 
@@ -66,11 +66,11 @@ public class HammockBlockTileRenderer implements BlockEntityRenderer<HammockTile
 
         poseStack.pushPose();
         poseStack.translate(0.5, 0.5 + dy, 0.5);
-        poseStack.mulPose(Vector3f.YP.rotationDegrees(-state.getValue(HammockBlock.FACING).toYRot()));
+        poseStack.mulPose(Axis.YP.rotationDegrees(-state.getValue(HammockBlock.FACING).toYRot()));
 
 
         float yaw = blockEntity.getRoll(partialTick);
-        poseStack.mulPose(Vector3f.ZP.rotationDegrees(180.0F + yaw));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F + yaw));
 
         //renderDebugPivot(poseStack, bufferSource);
 

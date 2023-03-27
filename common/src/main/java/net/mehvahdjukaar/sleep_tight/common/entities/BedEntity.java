@@ -3,7 +3,7 @@ package net.mehvahdjukaar.sleep_tight.common.entities;
 import dev.architectury.injectables.annotations.PlatformOnly;
 import net.mehvahdjukaar.moonlight.api.entity.IControllableVehicle;
 import net.mehvahdjukaar.moonlight.api.entity.IExtraClientSpawnData;
-import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
+import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
@@ -23,6 +23,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
@@ -200,8 +201,8 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
 
     @Nonnull
     @Override
-    public Packet<?> getAddEntityPacket() {
-        return PlatformHelper.getEntitySpawnPacket(this);
+    public Packet<ClientGamePacketListener> getAddEntityPacket() {
+        return PlatHelper.getEntitySpawnPacket(this);
     }
 
     @Override
@@ -310,7 +311,8 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
         if (dismountOnTheSpot) return super.getDismountLocationForPassenger(passenger);
-        var o = BedBlock.findStandUpPosition(passenger.getType(), passenger.level, this.blockPosition(), passenger.getYRot());
+        var o = BedBlock.findStandUpPosition(passenger.getType(), passenger.level,
+                this.blockPosition(), this.dir, passenger.getYRot());
         //this will not quite work for hammocks but its good enough
         return o.orElseGet(() -> super.getDismountLocationForPassenger(passenger));
     }

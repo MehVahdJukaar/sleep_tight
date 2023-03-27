@@ -5,6 +5,7 @@ import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigSpec;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.random.SimpleWeightedRandomList;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
@@ -255,7 +256,7 @@ public class CommonConfigs {
                         \t\t\tweight = 2
                         """)
                 .defineObject("alternative_whitelist", () -> SimpleWeightedRandomList.<EntityType<?>>builder().build(),
-                        SimpleWeightedRandomList.wrappedCodecAllowingEmpty(Registry.ENTITY_TYPE.byNameCodec()));
+                        SimpleWeightedRandomList.wrappedCodecAllowingEmpty(BuiltInRegistries.ENTITY_TYPE.byNameCodec()));
         ENCOUNTER_SLEEP_TIME_MULTIPLIER = builder.comment("Multiplier applied to time slept after an encounter")
                 .define("sleep_time_multiplier", 0.5, 0.01, 1);
         ENCOUNTER_INSOMNIA_DURATION = builder.comment("Refractory period after an encounter in which you won't be able to sleep")

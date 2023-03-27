@@ -70,7 +70,7 @@ public abstract class SleepGuiOverlay<T extends Gui> {
                     if(cooldown) {
 
                         setupOverlayRenderState(gui, true, false, SleepTightClient.ICONS);
-                        gui.setBlitOffset(-90);
+                        //gui.setBlitOffset(-90);
 
                         poseStack.pushPose();
 

@@ -2,7 +2,7 @@ package net.mehvahdjukaar.sleep_tight;
 
 import net.mehvahdjukaar.moonlight.api.client.model.NestedModelLoader;
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
-import net.mehvahdjukaar.moonlight.api.platform.ClientPlatformHelper;
+import net.mehvahdjukaar.moonlight.api.platform.ClientHelper;
 import net.mehvahdjukaar.sleep_tight.client.InfestedBedBakedModel;
 import net.mehvahdjukaar.sleep_tight.client.particles.BedbugParticle;
 import net.mehvahdjukaar.sleep_tight.client.particles.DreamParticle;
@@ -33,16 +33,15 @@ public class SleepTightClient {
 
     public static final Material[] HAMMOCK_TEXTURES = Arrays.stream(DyeColor.values())
             .sorted(Comparator.comparingInt(DyeColor::getId))
-            .map(dyeColor -> new Material(BED_SHEET, SleepTight.res("entity/hammocks/" + dyeColor.getName())))
+            .map(dyeColor -> new Material(BED_SHEET, SleepTight.res("entity/beds/hammocks/" + dyeColor.getName())))
             .toArray(Material[]::new);
 
     public static void init() {
-        ClientPlatformHelper.addModelLayerRegistration(SleepTightClient::registerLayers);
-        ClientPlatformHelper.addEntityRenderersRegistration(SleepTightClient::registerEntityRenderers);
-        ClientPlatformHelper.addBlockEntityRenderersRegistration(SleepTightClient::registerBlockEntityRenderers);
-        ClientPlatformHelper.addAtlasTextureCallback(BED_SHEET, SleepTightClient::addTextures);
-        ClientPlatformHelper.addParticleRegistration(SleepTightClient::registerParticles);
-        ClientPlatformHelper.addModelLoaderRegistration(SleepTightClient::registerModelLoaders);
+        ClientHelper.addModelLayerRegistration(SleepTightClient::registerLayers);
+        ClientHelper.addEntityRenderersRegistration(SleepTightClient::registerEntityRenderers);
+        ClientHelper.addBlockEntityRenderersRegistration(SleepTightClient::registerBlockEntityRenderers);
+        ClientHelper.addParticleRegistration(SleepTightClient::registerParticles);
+        ClientHelper.addModelLoaderRegistration(SleepTightClient::registerModelLoaders);
     }
 
 
@@ -54,33 +53,29 @@ public class SleepTightClient {
         return new ModelLayerLocation(SleepTight.res(name), name);
     }
 
-    private static void addTextures(ClientPlatformHelper.AtlasTextureEvent event) {
-        Arrays.stream(HAMMOCK_TEXTURES).forEach(e -> event.addSprite(e.texture()));
-    }
-
-    private static void registerParticles(ClientPlatformHelper.ParticleEvent event) {
+    private static void registerParticles(ClientHelper.ParticleEvent event) {
         event.register(SleepTight.DREAM_PARTICLE.get(), DreamParticle.Factory::new);
         event.register(SleepTight.BEDBUG_PARTICLE.get(), BedbugParticle.Factory::new);
     }
 
-    private static void registerLayers(ClientPlatformHelper.ModelLayerEvent event) {
+    private static void registerLayers(ClientHelper.ModelLayerEvent event) {
         event.register(HAMMOCK, HammockBlockTileRenderer::createLayer);
         event.register(BEDBUG, BedbugEntityRenderer::createLayer);
     }
 
-    private static void registerEntityRenderers(ClientPlatformHelper.EntityRendererEvent event) {
+    private static void registerEntityRenderers(ClientHelper.EntityRendererEvent event) {
         event.register(SleepTight.BED_ENTITY.get(), InvisibleEntityRenderer::new);
         event.register(SleepTight.DREAMER_ESSENCE_ENTITY.get(), InvisibleEntityRenderer::new);
         event.register(SleepTight.BEDBUG_ENTITY.get(), BedbugEntityRenderer::new);
     }
 
-    private static void registerBlockEntityRenderers(ClientPlatformHelper.BlockEntityRendererEvent event) {
+    private static void registerBlockEntityRenderers(ClientHelper.BlockEntityRendererEvent event) {
         event.register(SleepTight.HAMMOCK_TILE.get(), HammockBlockTileRenderer::new);
         event.register(SleepTight.INFESTED_BED_TILE.get(), InfestedBedRenderer::new);
     }
 
     @EventCalled
-    private static void registerModelLoaders(ClientPlatformHelper.ModelLoaderEvent event) {
+    private static void registerModelLoaders(ClientHelper.ModelLoaderEvent event) {
         event.register(SleepTight.res("infested_bed"), new InfestedBedBakedModel.Loader());
     }
 

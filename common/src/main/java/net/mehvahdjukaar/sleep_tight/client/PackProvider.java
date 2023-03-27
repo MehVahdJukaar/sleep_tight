@@ -1,9 +1,9 @@
 package net.mehvahdjukaar.sleep_tight.client;
 
 import com.google.gson.JsonParser;
-import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
+import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.moonlight.api.resources.ResType;
-import net.mehvahdjukaar.moonlight.api.resources.pack.DynClientResourcesProvider;
+import net.mehvahdjukaar.moonlight.api.resources.pack.DynClientResourcesGenerator;
 import net.mehvahdjukaar.moonlight.api.resources.pack.DynamicTexturePack;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.resources.ResourceLocation;
@@ -14,13 +14,13 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Objects;
 
-public class PackProvider extends DynClientResourcesProvider {
+public class PackProvider extends DynClientResourcesGenerator {
 
     public static final PackProvider INSTANCE = new PackProvider();
 
     public PackProvider() {
         super(new DynamicTexturePack(SleepTight.res("generated_pack"), Pack.Position.BOTTOM, true, true));
-        this.dynamicPack.generateDebugResources = false;
+        this.dynamicPack.setGenerateDebugResources( false);
         this.dynamicPack.addNamespaces("minecraft");
     }
 
@@ -45,8 +45,8 @@ public class PackProvider extends DynClientResourcesProvider {
         if (o.isPresent() && !Objects.equals(o.get().sourcePackId(), "Default")) return;
 
 
-        if (!PlatformHelper.isModLoaded("enhancedblockentities") &&
-                !PlatformHelper.isModLoaded("betterbeds")) {
+        if (!PlatHelper.isModLoaded("enhancedblockentities") &&
+                !PlatHelper.isModLoaded("betterbeds")) {
 
             String str = """
                     {

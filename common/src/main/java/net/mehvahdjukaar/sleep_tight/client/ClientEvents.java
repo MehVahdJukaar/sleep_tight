@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Vector3f;
+import com.mojang.math.Axis;
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
@@ -18,6 +18,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 public class ClientEvents {
 
@@ -45,14 +47,14 @@ public class ClientEvents {
             o += 0.125;
             Vector3f v = tile.getDirection().step();
             poseStack.translate(0, o, 0);
-            poseStack.mulPose(v.rotationDegrees(roll));
+            poseStack.mulPose(Axis.of(v).rotationDegrees(roll));
             poseStack.translate(0, -o, 0);
 
             var mc = Minecraft.getInstance();
 
             if (bedEntity != null) {
                 float f1 = 90 - tile.getDirection().toYRot();
-                poseStack.mulPose(Vector3f.YP.rotationDegrees(f1));
+                poseStack.mulPose(Axis.YP.rotationDegrees(f1));
 
                 poseStack.translate(1.6125 - 3 / 32f, 0.125, 0);
             }
@@ -66,7 +68,7 @@ public class ClientEvents {
             var dir = BedBlock.getBedOrientation(entity.level, pos);
             if (dir != null) {
                 float f1 = 90 - dir.toYRot();
-                poseStack.mulPose(Vector3f.YP.rotationDegrees(f1));
+                poseStack.mulPose(Axis.YP.rotationDegrees(f1));
 
                 poseStack.translate(1.5, 0, 0);
             }
@@ -93,15 +95,15 @@ public class ClientEvents {
             pos = p.getSleepingPos().orElse(null);
         }
         if (pos != null && e.getLevel().getBlockEntity(pos) instanceof HammockTile tile) {
-            var q = camera.rotation().copy();
-            q.conj();
+            var q = new Quaternionf(camera.rotation());
+            q.conjugate();
             matrixStack.mulPose(q);
             float roll = (float) (tile.getRoll(partialTicks) * intensity);
 
             float o = 6 / 16f - tile.getPivotOffset();
             matrixStack.translate(0, -o, 0);
 
-            matrixStack.mulPose(tile.getDirection().step().rotationDegrees(roll));
+            matrixStack.mulPose(Axis.of(tile.getDirection().step()).rotationDegrees(roll));
 
             matrixStack.translate(0, o, 0);
             matrixStack.mulPose(camera.rotation());

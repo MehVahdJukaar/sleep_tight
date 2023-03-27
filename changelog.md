@@ -1,2 +1,1 @@
-* fixed a crash
-* hammocks can go against quark posts
+* 1.19.4

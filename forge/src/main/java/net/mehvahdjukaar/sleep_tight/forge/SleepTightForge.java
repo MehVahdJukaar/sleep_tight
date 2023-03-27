@@ -1,6 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.forge;
 
-import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
+import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
@@ -32,7 +32,7 @@ public class SleepTightForge {
 
     public SleepTightForge() {
         SleepTight.commonInit();
-        if (PlatformHelper.getEnv().isClient()) {
+        if (PlatHelper.getPhysicalSide().isClient()) {
             SleepTightClient.init();
             SleepTightForgeClient.init();
         }

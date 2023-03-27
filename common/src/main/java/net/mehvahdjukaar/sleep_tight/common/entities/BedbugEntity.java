@@ -287,8 +287,8 @@ public class BedbugEntity extends Monster {
     @Override
     protected void checkInsideBlocks() {
         AABB aABB = this.getBoundingBox();
-        BlockPos blockPos = new BlockPos(aABB.minX + 0.001, aABB.minY + 0.001, aABB.minZ + 0.001);
-        BlockPos blockPos2 = new BlockPos(aABB.maxX - 0.001, aABB.maxY - 0.001, aABB.maxZ - 0.001);
+        BlockPos blockPos = BlockPos.containing(aABB.minX + 0.001, aABB.minY + 0.001, aABB.minZ + 0.001);
+        BlockPos blockPos2 = BlockPos.containing(aABB.maxX - 0.001, aABB.maxY - 0.001, aABB.maxZ - 0.001);
         if (this.level.hasChunksAt(blockPos, blockPos2)) {
             BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
 
@@ -492,13 +492,13 @@ public class BedbugEntity extends Monster {
         }
 
         @Override
-        protected BlockPathTypes evaluateBlockPathType(BlockGetter level, boolean canOpenDoors, boolean canEnterDoors, BlockPos pos, BlockPathTypes nodeType) {
+        protected BlockPathTypes evaluateBlockPathType(BlockGetter blockGetter, BlockPos blockPos, BlockPathTypes nodeType) {
             if (nodeType == BlockPathTypes.DOOR_OPEN || nodeType == BlockPathTypes.DOOR_WOOD_CLOSED ||
                     nodeType == BlockPathTypes.WALKABLE_DOOR) return BlockPathTypes.OPEN;
-            if(nodeType == BlockPathTypes.BLOCKED && level.getBlockState(pos).getBlock() instanceof BedBlock){
+            if(nodeType == BlockPathTypes.BLOCKED && level.getBlockState(blockPos).getBlock() instanceof BedBlock){
                 return BlockPathTypes.WALKABLE;
             }
-            return super.evaluateBlockPathType(level, canOpenDoors, canEnterDoors, pos, nodeType);
+            return super.evaluateBlockPathType(level, blockPos, nodeType);
         }
     }
 

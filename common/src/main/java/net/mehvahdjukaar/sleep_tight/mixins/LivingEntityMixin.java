@@ -21,9 +21,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class LivingEntityMixin extends Entity {
 
     @Shadow
-    public abstract boolean isSleeping();
-
-    @Shadow
     public abstract boolean isDeadOrDying();
 
     protected LivingEntityMixin(EntityType<?> entityType, Level level) {

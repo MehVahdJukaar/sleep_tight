@@ -3,6 +3,7 @@ package net.mehvahdjukaar.sleep_tight.configs;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -10,7 +11,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 public class EffectData {
 
     public static final Codec<EffectData> CODEC = RecordCodecBuilder.create((instance) -> instance.group(
-            Registry.MOB_EFFECT.byNameCodec().fieldOf("effect").forGetter(e -> e.effect),
+            BuiltInRegistries.MOB_EFFECT.byNameCodec().fieldOf("effect").forGetter(e -> e.effect),
             ExtraCodecs.NON_NEGATIVE_INT.optionalFieldOf("base_intensity",0).forGetter(e -> e.baseIntensity),
             Codec.FLOAT.fieldOf("intensity_per_level").forGetter(e -> e.intensityPerLevel),
             ExtraCodecs.NON_NEGATIVE_INT.fieldOf("base_duration").forGetter(e -> e.baseDuration),

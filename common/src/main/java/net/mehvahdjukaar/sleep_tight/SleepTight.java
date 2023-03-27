@@ -1,6 +1,6 @@
 package net.mehvahdjukaar.sleep_tight;
 
-import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
+import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
 import net.mehvahdjukaar.sleep_tight.client.PackProvider;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
@@ -23,7 +23,7 @@ import net.mehvahdjukaar.supplementaries.reg.ModRegistry;
 import net.minecraft.Util;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.SimpleParticleType;
-import net.minecraft.data.BuiltinRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.TagKey;
@@ -58,9 +58,9 @@ public class SleepTight {
     public static final String MOD_ID = "sleep_tight";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
 
-    public static final boolean SUPP = PlatformHelper.isModLoaded("supplementaries");
-    public static final boolean HS = PlatformHelper.isModLoaded("heartstone");
-    public static final boolean QUARK = PlatformHelper.isModLoaded("quark");
+    public static final boolean SUPP = PlatHelper.isModLoaded("supplementaries");
+    public static final boolean HS = PlatHelper.isModLoaded("heartstone");
+    public static final boolean QUARK = PlatHelper.isModLoaded("quark");
 
     public static ResourceLocation res(String name) {
         return new ResourceLocation(MOD_ID, name);
@@ -77,7 +77,7 @@ public class SleepTight {
         RegHelper.addAttributeRegistration(SleepTight::registerEntityAttributes);
         RegHelper.addSpawnPlacementsRegistration(SleepTight::registerSpawnPlacements);
 
-        if (PlatformHelper.getEnv().isClient()) {
+        if (PlatHelper.getPhysicalSide().isClient()) {
             PackProvider.INSTANCE.register();
         }
 
@@ -113,12 +113,12 @@ public class SleepTight {
 
     //tags
 
-    public static final TagKey<EntityType<?>> WAKE_UP_BLACKLIST = TagKey.create(Registry.ENTITY_TYPE_REGISTRY, res("wake_up_blacklist"));
-    public static final TagKey<Block> BEDBUG_WALK_THROUGH = TagKey.create(Registry.BLOCK_REGISTRY, res("bedbug_walk_through"));
-    public static final TagKey<BannerPattern> MOON_TAG = TagKey.create(Registry.BANNER_PATTERN_REGISTRY, res("pattern_item/moon"));
+    public static final TagKey<EntityType<?>> WAKE_UP_BLACKLIST = TagKey.create(Registries.ENTITY_TYPE, res("wake_up_blacklist"));
+    public static final TagKey<Block> BEDBUG_WALK_THROUGH = TagKey.create(Registries.BLOCK, res("bedbug_walk_through"));
+    public static final TagKey<BannerPattern> MOON_TAG = TagKey.create(Registries.BANNER_PATTERN, res("pattern_item/moon"));
 
     //banner pattern
-    public static final Supplier<BannerPattern> MOON_PATTERN = RegHelper.register(res("moon"), () -> new BannerPattern("mon"), Registry.BANNER_PATTERN);
+    public static final Supplier<BannerPattern> MOON_PATTERN = RegHelper.register(res("moon"), () -> new BannerPattern("mon"), Registries.BANNER_PATTERN);
 
     //particles
 
@@ -145,8 +145,7 @@ public class SleepTight {
 
     public static final Supplier<DreamEssenceBlock> DREAMER_ESSENCE = regWithItem("dreamer_essence", () ->
                     new DreamEssenceBlock(BlockBehaviour.Properties.of(Material.AMETHYST, MaterialColor.COLOR_PURPLE)
-                            .sound(SoundType.AMETHYST).strength(1)),
-            CreativeModeTab.TAB_DECORATIONS
+                            .sound(SoundType.AMETHYST).strength(1))
     );
 
     public static final Supplier<NightBagBlock> NIGHT_BAG = regBlock("night_bag", () ->
@@ -160,41 +159,40 @@ public class SleepTight {
 
     public static final Map<DyeColor, Supplier<Block>> HAMMOCKS = Util.make(() ->
             Arrays.stream(DyeColor.values()).collect(Collectors.toUnmodifiableMap(d -> d, d ->
-                    regWithItem("hammock_" + d.getName(), () ->
-                            new HammockBlock(d), CreativeModeTab.TAB_DECORATIONS)))
-    );
+                    regWithItem("hammock_" + d.getName(), () -> new HammockBlock(d)))
+    ));
 
     //tile
 
     public static final Supplier<BlockEntityType<HammockTile>> HAMMOCK_TILE = RegHelper.registerBlockEntityType(
-            res("hammock"), () -> PlatformHelper.newBlockEntityType(HammockTile::new,
+            res("hammock"), () -> PlatHelper.newBlockEntityType(HammockTile::new,
                     HAMMOCKS.values().stream().map(Supplier::get).toArray(Block[]::new))
     );
 
     public static final Supplier<BlockEntityType<InfestedBedTile>> INFESTED_BED_TILE = RegHelper.registerBlockEntityType(
-            res("infested_bed"), () -> PlatformHelper.newBlockEntityType(InfestedBedTile::new, INFESTED_BED.get())
+            res("infested_bed"), () -> PlatHelper.newBlockEntityType(InfestedBedTile::new, INFESTED_BED.get())
     );
 
     //items
     public static final Supplier<BannerPatternItem> MOON_PATTERN_ITEM = regItem("moon_banner_pattern", () ->
-            new BannerPatternItem(MOON_TAG, new Item.Properties().stacksTo(1).tab(CreativeModeTab.TAB_MISC))
+            new BannerPatternItem(MOON_TAG, new Item.Properties().stacksTo(1))
     );
 
     public static final Supplier<NightBagItem> NIGHT_BAG_ITEM = regItem("night_bag", () ->
-            new NightBagItem(NIGHT_BAG.get(), new Item.Properties().tab(CreativeModeTab.TAB_DECORATIONS))
+            new NightBagItem(NIGHT_BAG.get(), new Item.Properties())
     );
 
     public static final Supplier<BedbugEggsItem> BED_BUG_EGGS = regItem("bedbug_eggs", () ->
-            new BedbugEggsItem(new Item.Properties().tab(CreativeModeTab.TAB_MISC))
+            new BedbugEggsItem(new Item.Properties())
     );
 
     public static final Supplier<Item> BEDBUG_SPAWN_EGG = regItem("bedbug_spawn_egg", () ->
-            PlatformHelper.newSpawnEgg(BEDBUG_ENTITY, 0x4b1813, 0xce5438, new Item.Properties().tab(CreativeModeTab.TAB_MISC))
+            PlatHelper.newSpawnEgg(BEDBUG_ENTITY, 0x4b1813, 0xce5438, new Item.Properties())
     );
 
 
-    public static <T extends Block> Supplier<T> regWithItem(String name, Supplier<T> blockFactory, CreativeModeTab tab) {
-        return regWithItem(name, blockFactory, new Item.Properties().tab(tab), 0);
+    public static <T extends Block> Supplier<T> regWithItem(String name, Supplier<T> blockFactory) {
+        return regWithItem(name, blockFactory, new Item.Properties(), 0);
     }
 
     public static <T extends Block> Supplier<T> regWithItem(String name, Supplier<T> blockFactory, Item.Properties properties, int burnTime) {

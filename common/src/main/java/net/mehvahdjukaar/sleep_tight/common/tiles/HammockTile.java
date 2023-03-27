@@ -75,17 +75,7 @@ public class HammockTile extends BlockEntity {
 
     @PlatformOnly(PlatformOnly.FORGE)
     public AABB getRenderBoundingBox() {
-        return new AABB(worldPosition.offset(-2.5, 0, -2.5), worldPosition.offset(2.5, 2, 2.5));
-    }
-
-    @Override
-    protected void saveAdditional(CompoundTag tag) {
-        super.saveAdditional(tag);
-    }
-
-    @Override
-    public void load(CompoundTag tag) {
-        super.load(tag);
+        return new AABB(worldPosition.offset(-3, 0, -3), worldPosition.offset(3, 2, 3));
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, HammockTile e) {

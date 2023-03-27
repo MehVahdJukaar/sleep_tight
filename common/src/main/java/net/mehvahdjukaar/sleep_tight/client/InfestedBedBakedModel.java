@@ -32,7 +32,7 @@ import java.util.function.Function;
 public class InfestedBedBakedModel implements CustomBakedModel {
     private final BlockModelShaper blockModelShaper;
 
-    public InfestedBedBakedModel() {
+    public InfestedBedBakedModel(ModelBaker modelBaker, Function<Material, TextureAtlasSprite> materialTextureAtlasSpriteFunction, ModelState modelState, ResourceLocation resourceLocation) {
         this.blockModelShaper = Minecraft.getInstance().getBlockRenderer().getBlockModelShaper();
     }
 
@@ -63,7 +63,7 @@ public class InfestedBedBakedModel implements CustomBakedModel {
 
     @Override
     public TextureAtlasSprite getBlockParticle(ExtraModelData data) {
-        BlockState mimic = data.get(MimicBlockTile.MIMIC);
+        BlockState mimic = data.get(MimicBlockTile.MIMIC_KEY);
         if (mimic != null && !mimic.isAir()) {
 
             BakedModel model = blockModelShaper.getBlockModel(mimic);
@@ -89,21 +89,8 @@ public class InfestedBedBakedModel implements CustomBakedModel {
     public static class Loader implements CustomModelLoader {
 
         @Override
-        public Geometry deserialize(JsonObject jsonObject, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
-            return new Geometry();
-        }
-
-        private static class Geometry implements CustomGeometry {
-
-            @Override
-            public CustomBakedModel bake(ModelBakery bakery, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelTransform, ResourceLocation modelLocation) {
-                return new InfestedBedBakedModel();
-            }
-
-            @Override
-            public Collection<Material> getMaterials(Function<ResourceLocation, UnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors) {
-                return List.of();
-            }
+        public CustomGeometry deserialize(JsonObject jsonObject, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+            return InfestedBedBakedModel::new;
         }
     }
 }

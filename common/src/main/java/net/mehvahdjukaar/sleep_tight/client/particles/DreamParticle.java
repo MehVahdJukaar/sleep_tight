@@ -1,10 +1,9 @@
 package net.mehvahdjukaar.sleep_tight.client.particles;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Quaternion;
-import com.mojang.math.Vector3f;
+import com.mojang.math.Axis;
 import net.mehvahdjukaar.moonlight.api.client.util.ParticleUtil;
-import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
+import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.minecraft.client.Camera;
@@ -17,6 +16,8 @@ import net.minecraft.util.ParticleUtils;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 public class DreamParticle extends TextureSheetParticle {
 
@@ -52,7 +53,7 @@ public class DreamParticle extends TextureSheetParticle {
 
         this.setSize(0.1f, 0.1f);
 
-        if(PlatformHelper.getPlatform().isFabric()){
+        if(PlatHelper.getPlatform().isFabric()){
             this.maxAlpha = (float) Math.max(0.2, ClientConfigs.PARTICLE_ALPHA.get());
             this.renderType = ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
         }else {
@@ -88,13 +89,13 @@ public class DreamParticle extends TextureSheetParticle {
         float x = (float) (Mth.lerp(partialTicks, this.xo, this.x) - pos.x());
         float y = (float) (Mth.lerp(partialTicks, this.yo, this.y) - pos.y());
         float z = (float) (Mth.lerp(partialTicks, this.zo, this.z) - pos.z());
-        Quaternion quaternion;
+        Quaternionf quaternion;
         if (this.roll == 0.0F) {
             quaternion = renderInfo.rotation();
         } else {
-            quaternion = new Quaternion(renderInfo.rotation());
+            quaternion = new Quaternionf(renderInfo.rotation());
             float i = Mth.lerp(partialTicks, this.oRoll, this.roll);
-            quaternion.mul(Vector3f.ZP.rotation(i));
+            quaternion.mul(Axis.ZP.rotation(i));
         }
 
         Vector3f[] vector3fs = new Vector3f[]{new Vector3f(-1.0F, -1.0F, 0.0F), new Vector3f(-1.0F, 1.0F, 0.0F), new Vector3f(1.0F, 1.0F, 0.0F), new Vector3f(1.0F, -1.0F, 0.0F)};
@@ -102,7 +103,7 @@ public class DreamParticle extends TextureSheetParticle {
 
         for (int k = 0; k < 4; ++k) {
             Vector3f vector3f2 = vector3fs[k];
-            vector3f2.transform(quaternion);
+            vector3f2.rotate(quaternion);
             vector3f2.mul(size);
             vector3f2.add(x, y, z);
         }
@@ -120,7 +121,7 @@ public class DreamParticle extends TextureSheetParticle {
 
     @Override
     protected int getLightColor(float partialTick) {
-        BlockPos pos = new BlockPos(this.x, this.y, this.z);
+        BlockPos pos = BlockPos.containing(this.x, this.y, this.z);
         if (!this.level.hasChunkAt(pos)) return 0;
         int i = level.getBrightness(LightLayer.SKY, pos);
         int j = level.getBrightness(LightLayer.BLOCK, pos);
