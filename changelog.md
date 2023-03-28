@@ -1,1 +1,1 @@
-* fixed color ordering
+* fixed fabric version

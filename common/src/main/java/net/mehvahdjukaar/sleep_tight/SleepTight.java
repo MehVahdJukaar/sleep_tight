@@ -54,6 +54,7 @@ import java.util.stream.Collectors;
  */
 public class SleepTight {
 
+
     public static final String MOD_ID = "sleep_tight";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
 

@@ -9,11 +9,15 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.random.SimpleWeightedRandomList;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
+import org.jetbrains.annotations.Contract;
 
 import java.util.List;
 import java.util.function.Supplier;
 
 public class CommonConfigs {
+
+    public static final boolean EASY_MODE = false;
+
 
     public static final Supplier<Boolean> FIX_BED_POSITION;
     public static final Supplier<ExplosionBehavior> EXPLOSION_BEHAVIOR;
@@ -117,7 +121,7 @@ public class CommonConfigs {
     public static final ConfigSpec SPEC;
 
     static {
-        ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.COMMON);
+        ConfigBuilder builder = ConfigBuilder.create(SleepTight.res(EASY_MODE ? "common" : "common_ez"),  ConfigType.COMMON);
 
         builder.push("misc");
 
@@ -195,7 +199,7 @@ public class CommonConfigs {
         CONSUME_HUNGER_MODE = builder.comment("Method to calculate hunger loss. Can be based off time slept, difficulty or constant")
                 .define("consumed_hunger_mode", HungerMode.TIME_DIFFICULTY_BASED);
         CONSUMED_HUNGER = builder.comment("Base hunger decrement value. Depends on other config. Set to 0 to disable")
-                .define("base_value", 5, 0f, 20);
+                .define("base_value", diff(5,0), 0f, 20);
         builder.pop();
 
         builder.push("sleep_requirements");
@@ -213,7 +217,7 @@ public class CommonConfigs {
         builder.push("home_bed");
 
         HOME_BED_REQUIRED_NIGHTS = builder.comment("Amount of nights needed to mark a bed as home bed")
-                .define("required_nights", 8, 1, 50);
+                .define("required_nights",  diff(8, 6), 1, 50);
         INVIGORATED_XP = builder.comment("Percentage of xp added per tier of the effect. Setting to 1 doubles the effect")
                 .define("invigorated_effect_xp", 0.1, 0, 1);
         HOME_BED_MAX_LEVEL = builder.comment("home bed level cap. Each night slept increases this number")
@@ -227,10 +231,10 @@ public class CommonConfigs {
         NIGHTMARES_NIGHT_BAG = builder.define("apply_to_night_bags", false);
 
         NIGHTMARES_CONSECUTIVE_NIGHTS = builder.comment("Amount of consecutive nights slept after which nightmares could start to happen")
-                .define("appear_after_consecutive_nights", 3, 0, 100);
+                .define("appear_after_consecutive_nights", diff( 3, 4), 0, 100);
         NIGHTMARE_CHANCE_INCREMENT_PER_NIGHT = builder.define("nightmare_increment_per_night", 0.16, 0, 1);
         NIGHTMARE_SLEEP_TIME_MULTIPLIER = builder.comment("Multiplier applied to time slept after a nightmare")
-                .define("sleep_time_multiplier", 0.5, 0.01, 1);
+                .define("sleep_time_multiplier", diff(0.5, 1), 0.01, 1);
         NIGHTMARE_INSOMNIA_DURATION = builder.comment("Refractory period after a nightmare in which you won't be able to sleep")
                 .define("insomnia_duration", 24000 + 12000, 0, 1000000);
 
@@ -270,4 +274,20 @@ public class CommonConfigs {
 
     public static void init() {
     }
+
+    @Contract
+    private static boolean diff(boolean def, boolean easy){
+        return EASY_MODE ? easy : def;
+    }
+
+    @Contract
+    private static double diff(double def, double easy){
+        return EASY_MODE ? easy : def;
+    }
+
+    @Contract
+    private static int diff(int def, int easy){
+        return EASY_MODE ? easy : def;
+    }
+
 }

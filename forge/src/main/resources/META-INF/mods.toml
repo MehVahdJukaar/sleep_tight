@@ -20,7 +20,7 @@ credits="Mehvahdjukaar, Plantkillable" #optional
 authors="MehVahdJukaar, Plantkillable" #optional
 
 description='''
-Balanced sleep
+Balanced sleep overhaul & hammocks
 '''
 
 
@@ -39,12 +39,12 @@ Balanced sleep
 [[dependencies.sleep_tight]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.19.2,1.20)"
+    versionRange="[1.19.4,1.20)"
     ordering="NONE"
     side="BOTH"
 
 [[dependencies.sleep_tight]]
     modId="moonlight"
     mandatory=true
-    versionRange="[1.19.2-2.2.16,]"
+    versionRange="[1.19.4-2.3.4,]"
     side="BOTH"
