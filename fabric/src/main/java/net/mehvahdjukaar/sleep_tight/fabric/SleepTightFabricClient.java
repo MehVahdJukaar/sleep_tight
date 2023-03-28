@@ -45,10 +45,10 @@ public class SleepTightFabricClient {
             }
 
             if (texture != null) {
-                RenderSystem.enableTexture();
+                //RenderSystem.enableTexture();
                 RenderSystem.setShaderTexture(0, texture);
             } else {
-                RenderSystem.disableTexture();
+                //RenderSystem.disableTexture();
             }
 
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);

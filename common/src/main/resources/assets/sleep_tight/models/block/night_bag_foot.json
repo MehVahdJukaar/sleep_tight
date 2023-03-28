@@ -2,8 +2,8 @@
 	"credit": "Made with Blockbench",
 	"parent": "minecraft:block/cube_all",
 	"textures": {
-		"0": "sleep_tight:entity/night_bag",
-		"particle": "sleep_tight:entity/night_bag"
+		"0": "sleep_tight:block/night_bag",
+		"particle": "sleep_tight:block/night_bag"
 	},
 	"elements": [
 		{

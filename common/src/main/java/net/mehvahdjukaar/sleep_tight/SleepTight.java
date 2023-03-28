@@ -2,6 +2,7 @@ package net.mehvahdjukaar.sleep_tight;
 
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
+import net.mehvahdjukaar.moonlight.api.set.BlocksColorAPI;
 import net.mehvahdjukaar.sleep_tight.client.PackProvider;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
 import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
@@ -19,9 +20,7 @@ import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.common.tiles.InfestedBedTile;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
-import net.mehvahdjukaar.supplementaries.reg.ModRegistry;
 import net.minecraft.Util;
-import net.minecraft.core.Registry;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -76,7 +75,7 @@ public class SleepTight {
         ModCommands.init();
         RegHelper.addAttributeRegistration(SleepTight::registerEntityAttributes);
         RegHelper.addSpawnPlacementsRegistration(SleepTight::registerSpawnPlacements);
-
+        RegHelper.addItemsToTabsRegistration(SleepTight::registerItemsToTabs);
         if (PlatHelper.getPhysicalSide().isClient()) {
             PackProvider.INSTANCE.register();
         }
@@ -90,10 +89,22 @@ public class SleepTight {
         //phantom spawn stuff
     }
 
+
     public static void commonSetup() {
 
     }
 
+    private static void registerItemsToTabs(RegHelper.ItemToTabEvent event) {
+        event.add(CreativeModeTabs.FUNCTIONAL_BLOCKS, DREAMER_ESSENCE.get());
+        event.add(CreativeModeTabs.TOOLS_AND_UTILITIES, NIGHT_BAG.get());
+        event.add(CreativeModeTabs.SPAWN_EGGS, BEDBUG_SPAWN_EGG.get());
+        event.addAfter(CreativeModeTabs.INGREDIENTS, i -> i.is(Items.SPIDER_EYE), BED_BUG_EGGS.get());
+        event.addAfter(CreativeModeTabs.INGREDIENTS, i -> i.is(Items.PIGLIN_BANNER_PATTERN), MOON_PATTERN_ITEM.get());
+        event.addAfter(CreativeModeTabs.COLORED_BLOCKS, i -> i.is(Items.PINK_BED),
+                BlocksColorAPI.ordered(HAMMOCKS).map(Supplier::get).toArray(Block[]::new));
+        event.addAfter(CreativeModeTabs.FUNCTIONAL_BLOCKS, i -> i.is(Items.PINK_BED),
+                BlocksColorAPI.ordered(HAMMOCKS).map(Supplier::get).toArray(Block[]::new));
+    }
 
     private static void registerSpawnPlacements(RegHelper.SpawnPlacementEvent event) {
         event.register(BEDBUG_ENTITY.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BedbugEntity::checkMonsterSpawnRules);
@@ -144,8 +155,8 @@ public class SleepTight {
     //blocks
 
     public static final Supplier<DreamEssenceBlock> DREAMER_ESSENCE = regWithItem("dreamer_essence", () ->
-                    new DreamEssenceBlock(BlockBehaviour.Properties.of(Material.AMETHYST, MaterialColor.COLOR_PURPLE)
-                            .sound(SoundType.AMETHYST).strength(1))
+            new DreamEssenceBlock(BlockBehaviour.Properties.of(Material.AMETHYST, MaterialColor.COLOR_PURPLE)
+                    .sound(SoundType.AMETHYST).strength(1))
     );
 
     public static final Supplier<NightBagBlock> NIGHT_BAG = regBlock("night_bag", () ->
@@ -160,7 +171,7 @@ public class SleepTight {
     public static final Map<DyeColor, Supplier<Block>> HAMMOCKS = Util.make(() ->
             Arrays.stream(DyeColor.values()).collect(Collectors.toUnmodifiableMap(d -> d, d ->
                     regWithItem("hammock_" + d.getName(), () -> new HammockBlock(d)))
-    ));
+            ));
 
     //tile
 

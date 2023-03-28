@@ -4,20 +4,14 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityCombatEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.fabricmc.fabric.mixin.event.interaction.ServerPlayerEntityMixin;
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
-import net.mehvahdjukaar.moonlight.fabric.FabricSetupCallbacks;
+import net.mehvahdjukaar.moonlight.fabric.MLFabricSetupCallbacks;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
-import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
-import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
-import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.world.entity.player.Player;
 
 public class SleepTightFabric implements ModInitializer {
@@ -27,12 +21,12 @@ public class SleepTightFabric implements ModInitializer {
 
         SleepTight.commonInit();
 
-        if (PlatHelper.getEnv().isClient()) {
-            FabricSetupCallbacks.CLIENT_SETUP.add(SleepTightClient::init);
+        if (PlatHelper.getPhysicalSide().isClient()) {
+            MLFabricSetupCallbacks.CLIENT_SETUP.add(SleepTightClient::init);
             SleepTightFabricClient.init();
         }
 
-        FabricSetupCallbacks.COMMON_SETUP.add(SleepTight::commonSetup);
+        MLFabricSetupCallbacks.COMMON_SETUP.add(SleepTight::commonSetup);
 
         UseBlockCallback.EVENT.register(ModEvents::onRightClickBlock);
 

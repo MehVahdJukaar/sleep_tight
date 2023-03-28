@@ -14,6 +14,7 @@ import net.mehvahdjukaar.supplementaries.Supplementaries;
 import net.mehvahdjukaar.supplementaries.client.block_models.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.renderer.blockentity.BedRenderer;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
@@ -33,7 +34,7 @@ public class SleepTightClient {
 
     public static final Material[] HAMMOCK_TEXTURES = Arrays.stream(DyeColor.values())
             .sorted(Comparator.comparingInt(DyeColor::getId))
-            .map(dyeColor -> new Material(BED_SHEET, SleepTight.res("entity/beds/hammocks/" + dyeColor.getName())))
+            .map(dyeColor -> new Material(BED_SHEET, SleepTight.res("entity/bed/hammock_" + dyeColor.getName())))
             .toArray(Material[]::new);
 
     public static void init() {
