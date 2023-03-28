@@ -7,10 +7,10 @@
   ],
   "key": {
     "#": {
-      "item": "minecraft:phantom_membrane"
+      "item": "minecraft:echo_shard"
     },
     "1": {
-      "tag": "minecraft:wool"
+      "item": "minecraft:phantom_membrane"
     }
   },
   "result": {
@@ -19,7 +19,7 @@
   "conditions": [
     {
       "type": "sleep_tight:flag",
-      "flag": "easy"
+      "flag": "normal"
     }
   ]
 }

@@ -19,11 +19,9 @@ import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.common.tiles.InfestedBedTile;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
-import net.mehvahdjukaar.supplementaries.reg.ModRegistry;
 import net.minecraft.Util;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.SimpleParticleType;
-import net.minecraft.data.BuiltinRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.TagKey;
@@ -80,6 +78,8 @@ public class SleepTight {
         if (PlatformHelper.getEnv().isClient()) {
             PackProvider.INSTANCE.register();
         }
+        RegHelper.registerSimpleRecipeCondition(res("flag"), s -> CommonConfigs.EASY_MODE == s.equals("easy"));
+
 
         //sleep next to eachother bonus bugged
         //TODO: bedbug spawn

@@ -14,6 +14,8 @@ import java.util.function.Supplier;
 
 public class CommonConfigs {
 
+    public static final boolean EASY_MODE = true;
+
     public static final Supplier<Boolean> FIX_BED_POSITION;
     public static final Supplier<ExplosionBehavior> EXPLOSION_BEHAVIOR;
     public static final Supplier<Integer> SLEEP_INTERVAL;
@@ -116,7 +118,7 @@ public class CommonConfigs {
     public static final ConfigSpec SPEC;
 
     static {
-        ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.COMMON);
+        ConfigBuilder builder = ConfigBuilder.create(SleepTight.res(EASY_MODE ? "common_easymode" : "common"), ConfigType.COMMON);
 
         builder.push("misc");
 
@@ -146,7 +148,7 @@ public class CommonConfigs {
 
         builder.push("bedbugs");
         BEDBUG_SPAWN_CHANCE = builder.comment("Base spawn chance every time you wake up, increases with difficulty")
-                .define("spawn_chance", 0.11, 0, 1);
+                .define("spawn_chance", diff(0.11, 0.9), 0, 1);
         BEDBUG_SPAWN_MAX_RANGE = builder.comment("max radius at which they can spawn")
                 .define("max_spawn_radius", 20, 1, 64);
         BEDBUG_SPAWN_MIN_RANGE = builder.comment("min radius from which they can spawn")
@@ -157,18 +159,18 @@ public class CommonConfigs {
                         "High values will decrease failed attempts")
                 .define("tries", 20, 0, 1000);
         PREVENTED_BY_DREAM_CATCHER = builder.comment("Prevents bedbugs when using dream essence")
-                .define("prevented_by_dream_essence", false);
+                .define("prevented_by_dream_essence", diff(false, true));
         ONLY_WHEN_IN_HOME_BED = builder.comment("Only spawns bedbugs when sleeping in your home bed")
-                        .define("only_when_in_home_bed",false);
+                .define("only_when_in_home_bed", false);
         builder.pop();
 
         builder.push("sleep_cooldown");
         HAMMOCK_COOLDOWN = builder.comment("Time before you can sleep/rest again after you've slept in a hammock")
-                .define("hammock", 6000, 0, 1000000);
+                .define("hammock", diff(6000,0), 0, 1000000);
         NIGHT_BAG_COOLDOWN = builder.comment("Time before you can sleep/rest again after you've successfully slept in a bed")
-                .define("night_bag", 6000, 0, 1000000);
+                .define("night_bag", diff(6000,0), 0, 1000000);
         BED_COOLDOWN = builder.comment("Time before you can sleep/rest again after you've successfully slept in a bed")
-                .define("bed", 6000, 0, 1000000);
+                .define("bed", diff(6000,0), 0, 1000000);
         builder.pop();
 
 
@@ -194,7 +196,7 @@ public class CommonConfigs {
         CONSUME_HUNGER_MODE = builder.comment("Method to calculate hunger loss. Can be based off time slept, difficulty or constant")
                 .define("consumed_hunger_mode", HungerMode.TIME_DIFFICULTY_BASED);
         CONSUMED_HUNGER = builder.comment("Base hunger decrement value. Depends on other config. Set to 0 to disable")
-                .define("base_value", 5, 0f, 20);
+                .define("base_value",diff(5,0), 0f, 20);
         builder.pop();
 
         builder.push("sleep_requirements");
@@ -212,7 +214,7 @@ public class CommonConfigs {
         builder.push("home_bed");
 
         HOME_BED_REQUIRED_NIGHTS = builder.comment("Amount of nights needed to mark a bed as home bed")
-                .define("required_nights", 8, 1, 50);
+                .define("required_nights", diff(8,6), 1, 50);
         INVIGORATED_XP = builder.comment("Percentage of xp added per tier of the effect. Setting to 1 doubles the effect")
                 .define("invigorated_effect_xp", 0.1, 0, 1);
         HOME_BED_MAX_LEVEL = builder.comment("home bed level cap. Each night slept increases this number")
@@ -226,12 +228,12 @@ public class CommonConfigs {
         NIGHTMARES_NIGHT_BAG = builder.define("apply_to_night_bags", false);
 
         NIGHTMARES_CONSECUTIVE_NIGHTS = builder.comment("Amount of consecutive nights slept after which nightmares could start to happen")
-                .define("appear_after_consecutive_nights", 3, 0, 100);
+                .define("appear_after_consecutive_nights", diff(3,4), 0, 100);
         NIGHTMARE_CHANCE_INCREMENT_PER_NIGHT = builder.define("nightmare_increment_per_night", 0.16, 0, 1);
         NIGHTMARE_SLEEP_TIME_MULTIPLIER = builder.comment("Multiplier applied to time slept after a nightmare")
-                .define("sleep_time_multiplier", 0.5, 0.01, 1);
+                .define("sleep_time_multiplier", diff(0.5,0.9), 0.01, 1);
         NIGHTMARE_INSOMNIA_DURATION = builder.comment("Refractory period after a nightmare in which you won't be able to sleep")
-                .define("insomnia_duration", 24000 + 12000, 0, 1000000);
+                .define("insomnia_duration", diff(24000 + 12000, 3000), 0, 1000000);
 
         builder.pop();
 
@@ -259,7 +261,7 @@ public class CommonConfigs {
         ENCOUNTER_SLEEP_TIME_MULTIPLIER = builder.comment("Multiplier applied to time slept after an encounter")
                 .define("sleep_time_multiplier", 0.5, 0.01, 1);
         ENCOUNTER_INSOMNIA_DURATION = builder.comment("Refractory period after an encounter in which you won't be able to sleep")
-                .define("insomnia_duration", 12000, 0, 1000000);
+                .define("insomnia_duration", diff(12000, 3000), 0, 1000000);
 
         builder.pop();
 
@@ -268,5 +270,17 @@ public class CommonConfigs {
     }
 
     public static void init() {
+    }
+
+    private static boolean diff(boolean def, boolean easy) {
+        return EASY_MODE ? easy : def;
+    }
+
+    private static double diff(double def, double easy) {
+        return EASY_MODE ? easy : def;
+    }
+
+    private static int diff(int def, int easy) {
+        return EASY_MODE ? easy : def;
     }
 }
