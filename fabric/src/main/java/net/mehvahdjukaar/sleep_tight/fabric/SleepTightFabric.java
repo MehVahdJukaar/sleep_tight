@@ -34,7 +34,7 @@ public class SleepTightFabric implements ModInitializer {
 
         FabricSetupCallbacks.COMMON_SETUP.add(SleepTight::commonSetup);
 
-        UseBlockCallback.EVENT.register(ModEvents::onRightClickBlock);
+        //UseBlockCallback.EVENT.register(ModEvents::onRightClickBlock);
 
         EntitySleepEvents.ALLOW_SETTING_SPAWN.register(ModEvents::canSetSpawn);
         EntitySleepEvents.STOP_SLEEPING.register((a, b) -> {

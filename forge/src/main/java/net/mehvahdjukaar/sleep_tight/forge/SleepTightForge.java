@@ -112,7 +112,7 @@ public class SleepTightForge {
     @SubscribeEvent
     public void onUseBlock(PlayerInteractEvent.RightClickBlock event) {
         if (!event.isCanceled()) {
-            var ret = ModEvents.onRightClickBlock(event.getEntity(), event.getLevel(), event.getHand(), event.getHitVec());
+            var ret = InteractionResult.PASS ;// ModEvents.onRightClickBlock(event.getEntity(), event.getLevel(), event.getHand(), event.getHitVec());
             if (ret != InteractionResult.PASS) {
                 event.setCanceled(true);
                 event.setCancellationResult(ret);
