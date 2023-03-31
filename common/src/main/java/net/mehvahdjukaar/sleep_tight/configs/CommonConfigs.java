@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 
 public class CommonConfigs {
 
-    public static final boolean EASY_MODE = true;
+    public static final boolean EASY_MODE = false;
 
     public static final Supplier<Boolean> FIX_BED_POSITION;
     public static final Supplier<ExplosionBehavior> EXPLOSION_BEHAVIOR;
