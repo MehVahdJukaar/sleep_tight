@@ -80,7 +80,9 @@ public class SleepTight {
         }
         RegHelper.registerSimpleRecipeCondition(res("flag"), s -> CommonConfigs.EASY_MODE == s.equals("easy"));
 
-
+        //particles
+        //proper bedbug AI
+        //cats hunt bedbugs
         //sleep next to eachother bonus bugged
         //TODO: bedbug spawn
         //naturalist terry bear

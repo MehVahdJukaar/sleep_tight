@@ -46,18 +46,24 @@ public class WakeUpEncounterHelper {
             setRandomPosCyl(bedPos, mutable, level.random, min, max, height);
             var spawnData = getRandomEncounterData(level, struct, generator, category, mutable);
             if (spawnData.isEmpty()) continue;
-            var entity = createValidMobToSpawn(player.position(), level, mutable, spawnData.get(), MobSpawnType.NATURAL);
-            if (entity instanceof Mob mob) {
+            try {
 
-                //config
-                if (!mob.hasLineOfSight(player)) {
+                var entity = createValidMobToSpawn(player.position(), level, mutable, spawnData.get(), MobSpawnType.NATURAL);
+                if (entity instanceof Mob mob) {
 
-                    doSpawnMob(level, mob);
+                    //config
+                    if (!mob.hasLineOfSight(player)) {
 
-                    setupMobToTargetPlayer(player, mob);
+                        doSpawnMob(level, mob);
 
-                    count++;
+                        setupMobToTargetPlayer(player, mob);
+
+                        count++;
+                    }
                 }
+            }catch (Exception e){
+                SleepTight.LOGGER.error("Failed to spawn entity encounter, likely some mod at fault here:");
+                e.printStackTrace();
             }
         }
         return count != 0;

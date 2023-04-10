@@ -1,2 +1,1 @@
-* fixed a crash
-* hammocks can go against quark posts
+* prevented the mod to crash when some other mod would have errors spawning their entity as a wake up encounter. Log will be spammed instead
