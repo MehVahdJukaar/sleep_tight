@@ -1,9 +1,8 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
-import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
-import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
-import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
+import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.integration.HeartstoneCompat;
 import net.minecraft.core.BlockPos;
@@ -113,10 +112,10 @@ public class SleepEffectsHelper {
     }
 
     private static void applyHeartstoneBonuses(ServerPlayer player, BlockPos pos, BlockState state,
-                                        @Nullable       BedData data, PlayerSleepData playerSleepData) {
+                                               @Nullable BedData data, PlayerSleepData playerSleepData) {
         BlockPos otherPos = getPartnerPos(player, state, pos);
         if (otherPos != null) {
-            for (var e : WAKE_UP_EFFECTS.get()) {
+            for (var e : HEARTSTONE_EFFECT.get()) {
                 player.addEffect(e.createInstance(playerSleepData.getHomeBedLevel()));
             }
         }
@@ -171,10 +170,10 @@ public class SleepEffectsHelper {
 
     private static boolean hasPartnerAt(Player player, CommonConfigs.HeartstoneMode mode, Level level, BlockPos otherPos) {
         BlockState leftState = level.getBlockState(otherPos);
-        if (leftState.getBlock() instanceof BedBlock && leftState.getValue(BedBlock.OCCUPIED)) {
+        if (leftState.getBlock() instanceof BedBlock) {
             AABB bb = new AABB(otherPos);
             for (var p : level.getEntitiesOfClass(Player.class, bb,
-                    e -> e.getSleepingPos().orElse(null) == otherPos)) {
+                    e -> e.getSleepingPos().map(p -> p.equals(otherPos)).orElse(false))) {
                 if (mode == CommonConfigs.HeartstoneMode.WITH_MOD) {
                     return HeartstoneCompat.isFren(player, p);
                 } else return true;

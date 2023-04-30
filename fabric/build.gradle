@@ -31,6 +31,8 @@ dependencies {
     modImplementation("curse.maven:modmenu-308702:3920481") {
         exclude module: "fabric-api"
     }
+    modImplementation ("curse.maven:better-respawn-340907:4497570")
+
     modImplementation("net.mehvahdjukaar:heartstone-fabric:1.19.2-1.1.2")
     modImplementation ("net.mehvahdjukaar:moonlight-fabric:${project.moonlight_version}")
 }

@@ -1,6 +1,5 @@
 package net.mehvahdjukaar.sleep_tight.common.entities;
 
-import dev.architectury.injectables.annotations.PlatformOnly;
 import net.mehvahdjukaar.moonlight.api.entity.IControllableVehicle;
 import net.mehvahdjukaar.moonlight.api.entity.IExtraClientSpawnData;
 import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
@@ -9,20 +8,23 @@ import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.IModBed;
-import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
-import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
-import net.mehvahdjukaar.sleep_tight.core.ModEvents;
-import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundRideImmediatelyMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSleepImmediatelyMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
 import net.mehvahdjukaar.sleep_tight.common.network.ServerBoundCommitSleepMessage;
+import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
+import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
+import net.mehvahdjukaar.sleep_tight.core.ModEvents;
+import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializer;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
@@ -44,7 +46,10 @@ import java.util.List;
 public class BedEntity extends Entity implements IControllableVehicle, IExtraClientSpawnData {
 
     private Direction dir = Direction.NORTH;
-    private OffsetMode offsetMode = OffsetMode.NONE;
+    public static final EntityDataSerializer<OffsetMode> SERIALIZER = EntityDataSerializer.simpleEnum(OffsetMode.class);
+    private static final EntityDataAccessor<OffsetMode> DATA_OFFSET = SynchedEntityData.defineId(BedEntity.class, SERIALIZER);
+
+
     private BlockState bedState = Blocks.AIR.defaultBlockState();
 
     private boolean dismountOnTheSpot = false;
@@ -59,9 +64,21 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         this.dir = bedDir.getOpposite();
         this.setYRot(this.dir.toYRot());
         this.bedState = bedState;
-        this.offsetMode = offsetMode;
+        this.setOffsetMode(offsetMode);
 
         this.setPos(mainPos.getX() + 0.5, mainPos.getY() + 0.25, mainPos.getZ() + 0.5);
+    }
+
+    protected void defineSynchedData() {
+        this.entityData.define(DATA_OFFSET, OffsetMode.NONE);
+    }
+
+    public OffsetMode getOffsetMode() {
+        return this.entityData.get(DATA_OFFSET);
+    }
+
+    public void setOffsetMode(OffsetMode mode) {
+        this.entityData.set(DATA_OFFSET, mode);
     }
 
     public Direction getBedDirection() {
@@ -69,11 +86,19 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     public boolean isDoubleBed() {
-        return offsetMode == OffsetMode.DOUBLE_BED;
+        return getOffsetMode() == OffsetMode.DOUBLE_BED;
     }
 
     public void clearDoubleBed() {
-        if (offsetMode == OffsetMode.DOUBLE_BED) offsetMode = OffsetMode.NONE;
+        if (getOffsetMode() == OffsetMode.DOUBLE_BED) {
+            setOffsetMode(OffsetMode.NONE);
+
+            BlockPos otherPos = getDoubleBedPos();
+            BlockState otherState = level.getBlockState(otherPos);
+            if (otherState == bedState) {
+                level.setBlockAndUpdate(otherPos, otherState.setValue(BedBlock.OCCUPIED, false));
+            }
+        }
     }
 
     @Override
@@ -85,20 +110,18 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         }
         boolean dead = passengers.isEmpty();
         BlockPos pos = blockPosition();
-        this.bedState = level.getBlockState(pos);
-        boolean isBed = isValidBed(bedState);
+        BlockState newBedState = level.getBlockState(pos);
+        boolean isBed = isValidBed(newBedState);
 
-        if (offsetMode == OffsetMode.DOUBLE_BED && tickCount > 2) {
+        if (isDoubleBed() && tickCount > 2) {
             BlockPos otherPos = getDoubleBedPos();
-            if (level.getBlockState(otherPos) != bedState) {
+            if (level.getBlockState(otherPos) != newBedState) {
                 this.clearDoubleBed();
             }
         }
 
         if (isBed) {
-            dir = bedState.getValue(BedBlock.FACING).getOpposite();
-            //hasOffset = isHammock3L(bedState);
-
+            this.dir = newBedState.getValue(BedBlock.FACING).getOpposite();
         }
 
         if (!dead && !isBed) {
@@ -130,19 +153,16 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             dead = !didOffsetByPiston;
         }
 
+
         if (dead && !level.isClientSide) {
-            discard();
             if (isBed) {
-                if (offsetMode == OffsetMode.DOUBLE_BED) {
-                    BlockPos otherPos = getDoubleBedPos();
-                    BlockState otherState = level.getBlockState(otherPos);
-                    if (otherState == bedState) {
-                        level.setBlockAndUpdate(otherPos, otherState.setValue(BedBlock.OCCUPIED, false));
-                    }
-                }
-                level.setBlockAndUpdate(pos, bedState.setValue(BedBlock.OCCUPIED, false));
+                level.setBlockAndUpdate(pos, newBedState.setValue(BedBlock.OCCUPIED, false));
             }
+            clearDoubleBed();
+            discard();
         }
+
+        this.bedState = newBedState;
     }
 
 
@@ -162,6 +182,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     public BlockPos getDoubleBedPos() {
         return this.blockPosition().relative(dir.getCounterClockWise());
     }
+
 
     private boolean isValidBed(BlockState state) {
         Block b = state.getBlock();
@@ -185,17 +206,13 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     @Override
-    protected void defineSynchedData() {
-    }
-
-    @Override
     protected void readAdditionalSaveData(@Nonnull CompoundTag compound) {
-        this.offsetMode = OffsetMode.values()[compound.getByte("mode")];
+        this.setOffsetMode(OffsetMode.values()[compound.getByte("mode")]);
     }
 
     @Override
     protected void addAdditionalSaveData(@Nonnull CompoundTag compound) {
-        compound.putByte("mode", (byte) offsetMode.ordinal());
+        compound.putByte("mode", (byte) getOffsetMode().ordinal());
     }
 
     @Nonnull
@@ -219,7 +236,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
                 //same as set pos to bed
                 BlockPos pos = this.blockPosition();
                 Vec3 c = new Vec3(pos.getX() + 0.5, pos.getY() + 9 / 16f, pos.getZ() + 0.5);
-                if (offsetMode == OffsetMode.DOUBLE_BED) {
+                if (isDoubleBed()) {
                     c = getDoubleBedOffset(dir.getOpposite(), c);
                 }
                 passenger.setPos(c);
@@ -273,13 +290,13 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     @Override
     public void writeSpawnData(FriendlyByteBuf buf) {
         buf.writeInt(this.dir.get2DDataValue());
-        buf.writeInt(this.offsetMode.ordinal());
+        buf.writeInt(this.getOffsetMode().ordinal());
     }
 
     @Override
     public void readSpawnData(FriendlyByteBuf buf) {
         this.dir = Direction.from2DDataValue(buf.readInt());
-        this.offsetMode = OffsetMode.values()[buf.readInt()];
+        this.setOffsetMode(OffsetMode.values()[buf.readInt()]);
 
     }
 
@@ -349,14 +366,14 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
                 e.discard();
             }
             PlayerSleepData data = SleepTightPlatformStuff.getPlayerSleepData(player);
-            data.setDoubleBed(offsetMode == OffsetMode.DOUBLE_BED);
+            data.setDoubleBed(isDoubleBed());
             data.syncToClient(player);
 
             NetworkHandler.CHANNEL.sendToClientPlayer(player, new ClientBoundSleepImmediatelyMessage(pos));
             //satefy check
             BlockState blockState = level.getBlockState(pos);
-            if(blockState.getBlock() instanceof BedBlock){
-                level.setBlockAndUpdate(pos, blockState.setValue(BedBlock.OCCUPIED,true));
+            if (blockState.getBlock() instanceof BedBlock) {
+                level.setBlockAndUpdate(pos, blockState.setValue(BedBlock.OCCUPIED, true));
             }
         }
     }
@@ -373,9 +390,11 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
                     Direction dir = state.getValue(BedBlock.FACING).getClockWise();
                     BlockPos relative = pos.relative(dir);
                     BlockState s = level.getBlockState(relative);
+                    //tries left and right bed
                     if (s == state) {
-                        mode = OffsetMode.DOUBLE_BED;
                         level.setBlockAndUpdate(relative, state.setValue(BedBlock.OCCUPIED, true));
+                        mode = OffsetMode.DOUBLE_BED;
+
                     } else {
                         //move pos on double bed left one
                         dir = dir.getOpposite();
@@ -383,8 +402,8 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
                         s = level.getBlockState(relative);
                         if (s == state) {
                             level.setBlockAndUpdate(pos, state.setValue(BedBlock.OCCUPIED, true));
-                            pos = relative;
                             mode = OffsetMode.DOUBLE_BED;
+                            pos = relative;
                         }
                     }
                 }

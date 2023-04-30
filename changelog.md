@@ -1,1 +1,4 @@
-* prevented the mod to crash when some other mod would have errors spawning their entity as a wake up encounter. Log will be spammed instead
+- fixed double beds not being cleared when another player would try to use them
+- fixed other quirks with them
+- fixed heartstone integration not working at all
+- improved bedbugs AI, previously preventing making them stuck on a bed

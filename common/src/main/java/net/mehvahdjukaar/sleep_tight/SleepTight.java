@@ -22,6 +22,7 @@ import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.Util;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.TagKey;
@@ -79,6 +80,10 @@ public class SleepTight {
             PackProvider.INSTANCE.register();
         }
         RegHelper.registerSimpleRecipeCondition(res("flag"), s -> CommonConfigs.EASY_MODE == s.equals("easy"));
+
+        EntityDataSerializers.registerSerializer(BedEntity.SERIALIZER);
+
+        //enahnced celestials interactions
 
         //particles
         //proper bedbug AI

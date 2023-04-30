@@ -37,7 +37,10 @@ import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.*;
-import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.PathFinder;
@@ -136,7 +139,7 @@ public class BedbugEntity extends Monster {
                     }
                 } else {
                     if (burrowingTicks > 40) {
-                        if (InfestedBedBlock.infestBed(level, feetBlockState, pos)) {
+                        if (InfestedBedBlock.infestBed(level, pos)) {
                             this.spawnAnim();
                             this.discard();
                             level.playSound(null, pos, SoundEvents.WOOL_BREAK, SoundSource.HOSTILE, 1, 1);
@@ -371,7 +374,7 @@ public class BedbugEntity extends Monster {
 
         @Override
         public void tick() {
-            BlockPos blockPos = this.getMoveToTarget();
+            BlockPos blockPos = this.getMoveToTarget().below();
             double dist = blockPos.distToCenterSqr(this.mob.position());
             if (dist >= 1) {
                 this.reachedTarget = false;
@@ -379,8 +382,8 @@ public class BedbugEntity extends Monster {
                 if (this.shouldRecalculatePath()) {
                     double s = this.speedModifier;
                     if (dist < (1.5 * 1.5)) s /= 2;
-                    this.mob.getNavigation().moveTo((blockPos.getX()) + 0.5, blockPos.getY(),
-                            (blockPos.getZ()) + 0.5, s);
+                    this.mob.getNavigation().moveTo((blockPos.getX() + 0.5), blockPos.getY() + 0.25,
+                            (blockPos.getZ() + 0.5), s);
                 }
             } else {
                 this.reachedTarget = true;
@@ -495,9 +498,9 @@ public class BedbugEntity extends Monster {
         protected BlockPathTypes evaluateBlockPathType(BlockGetter level, boolean canOpenDoors, boolean canEnterDoors, BlockPos pos, BlockPathTypes nodeType) {
             if (nodeType == BlockPathTypes.DOOR_OPEN || nodeType == BlockPathTypes.DOOR_WOOD_CLOSED ||
                     nodeType == BlockPathTypes.WALKABLE_DOOR) return BlockPathTypes.OPEN;
-            if(nodeType == BlockPathTypes.BLOCKED && level.getBlockState(pos).getBlock() instanceof BedBlock){
-                return BlockPathTypes.WALKABLE;
-            }
+            //if(level.getBlockState(pos).getBlock() instanceof BedBlock){
+            //    return BlockPathTypes.OPEN;
+            //}
             return super.evaluateBlockPathType(level, canOpenDoors, canEnterDoors, pos, nodeType);
         }
     }
