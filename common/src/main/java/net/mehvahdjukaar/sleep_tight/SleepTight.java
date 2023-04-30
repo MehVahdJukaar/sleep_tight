@@ -23,6 +23,7 @@ import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.Util;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.TagKey;
@@ -80,6 +81,8 @@ public class SleepTight {
         if (PlatHelper.getPhysicalSide().isClient()) {
             PackProvider.INSTANCE.register();
         }
+
+        EntityDataSerializers.registerSerializer(BedEntity.SERIALIZER);
 
         //sleep next to eachother bonus bugged
         //TODO: bedbug spawn

@@ -370,6 +370,11 @@ public class BedbugEntity extends Monster {
         }
 
         @Override
+        protected BlockPos getMoveToTarget() {
+            return this.blockPos;
+        }
+
+        @Override
         public void tick() {
             BlockPos blockPos = this.getMoveToTarget();
             double dist = blockPos.distToCenterSqr(this.mob.position());
@@ -379,7 +384,7 @@ public class BedbugEntity extends Monster {
                 if (this.shouldRecalculatePath()) {
                     double s = this.speedModifier;
                     if (dist < (1.5 * 1.5)) s /= 2;
-                    this.mob.getNavigation().moveTo((blockPos.getX()) + 0.5, blockPos.getY(),
+                    this.mob.getNavigation().moveTo((blockPos.getX()) + 0.5, blockPos.getY()+0.25,
                             (blockPos.getZ()) + 0.5, s);
                 }
             } else {

@@ -162,25 +162,31 @@ public class ModEvents {
                     boolean occupied = state.getValue(BedBlock.OCCUPIED);
                     if (occupied) {
                         var list = level.getEntitiesOfClass(BedEntity.class, new AABB(pos));
-                        if (list.size() > 1) {
+                        if (list.size() > 0) {
                             BedEntity bedEntity = list.get(0);
                             if (!bedEntity.isDoubleBed()) return InteractionResult.PASS;
 
-                            bedEntity.clearDoubleBed();
-                            pos = bedEntity.getDoubleBedPos();
                             //assumes other state is valid because bed would have noticed otherwise
+                            bedEntity.clearDoubleBed();
+
+                            pos = bedEntity.getDoubleBedPos();
                             state = state.setValue(BedBlock.OCCUPIED, false);
                             level.setBlockAndUpdate(pos, state);
+
                             occupied = false;
 
                         } else {
                             BlockPos doublePos = BedEntity.getInverseDoubleBedPos(pos, state);
                             list = level.getEntitiesOfClass(BedEntity.class, new AABB(doublePos));
-                            if (list.size() > 1) {
+                            if (list.size() > 0) {
                                 BedEntity bedEntity = list.get(0);
                                 if (!bedEntity.isDoubleBed()) return InteractionResult.PASS;
+
                                 bedEntity.clearDoubleBed();
-                                level.setBlockAndUpdate(pos, state.setValue(BedBlock.OCCUPIED, false));
+
+                                state = state.setValue(BedBlock.OCCUPIED, false);
+                                level.setBlockAndUpdate(pos, state);
+
                                 occupied = false;
                             }
                         }

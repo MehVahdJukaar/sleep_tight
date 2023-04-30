@@ -143,7 +143,7 @@ public class CommonConfigs {
                 .define("enabled", HeartstoneMode.WITH_MOD);
         HEARTSTONE_EFFECT = builder.comment("Effect to give to players when they wake up")
                 .defineObjectList("effects", () -> List.of(new EffectData(MobEffects.REGENERATION,
-                        0, 0, 20 * 60, 20)), EffectData.CODEC);
+                        0, 0, 30 * 60, 20)), EffectData.CODEC);
 
         builder.pop();
 

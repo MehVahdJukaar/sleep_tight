@@ -1,1 +1,3 @@
-* fixed fabric version
+- fixed double bed bugs
+- fixed heartstone integration not working
+- improved bedbugs targeting
