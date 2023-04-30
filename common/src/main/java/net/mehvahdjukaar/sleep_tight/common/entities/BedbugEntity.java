@@ -136,7 +136,7 @@ public class BedbugEntity extends Monster {
                     }
                 } else {
                     if (burrowingTicks > 40) {
-                        if (InfestedBedBlock.infestBed(level, feetBlockState, pos)) {
+                        if (InfestedBedBlock.infestBed(level, pos)) {
                             this.spawnAnim();
                             this.discard();
                             level.playSound(null, pos, SoundEvents.WOOL_BREAK, SoundSource.HOSTILE, 1, 1);

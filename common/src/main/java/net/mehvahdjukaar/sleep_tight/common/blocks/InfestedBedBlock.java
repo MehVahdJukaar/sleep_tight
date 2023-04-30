@@ -147,16 +147,18 @@ public class InfestedBedBlock extends BedBlock implements IWashable {
         }
     }
 
-    public static boolean infestBed(Level level, BlockState state, BlockPos pos) {
+    public static boolean infestBed(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
         if(BedbugEntity.isValidBedForInfestation(state)) {
             level.setBlock(pos, SleepTight.INFESTED_BED.get().withPropertiesOf(state), Block.UPDATE_KNOWN_SHAPE | 2);
-            BlockPos pos2 = pos.relative(state.getValue(BedBlock.FACING).getOpposite());
-            level.setBlock(pos2, SleepTight.INFESTED_BED.get().withPropertiesOf(state.setValue(BedBlock.PART, BedPart.FOOT)), 2);
+            Direction dir = state.getValue(BedBlock.FACING);
+            BlockPos neighborPos = pos.relative(state.getValue(BedBlock.PART) == BedPart.FOOT ? dir : dir.getOpposite());
+            level.setBlock(neighborPos, SleepTight.INFESTED_BED.get().withPropertiesOf(level.getBlockState(neighborPos)), 2);
 
             if (level.getBlockEntity(pos) instanceof InfestedBedTile tile) {
                 tile.setHeldBlock(state.getBlock().withPropertiesOf(tile.getBlockState()));
             }
-            if (level.getBlockEntity(pos2) instanceof InfestedBedTile tile) {
+            if (level.getBlockEntity(neighborPos) instanceof InfestedBedTile tile) {
                 tile.setHeldBlock(state.getBlock().withPropertiesOf(tile.getBlockState()));
             }
             return true;
