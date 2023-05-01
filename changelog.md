@@ -1,4 +1,1 @@
-- fixed double beds not being cleared when another player would try to use them
-- fixed other quirks with them
-- fixed heartstone integration not working at all
-- improved bedbugs AI, previously preventing making them stuck on a bed
+- fixed an issue with player set spawn event not accounting for null spawn
