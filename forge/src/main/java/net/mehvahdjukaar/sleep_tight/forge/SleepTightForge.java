@@ -6,6 +6,7 @@ import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -103,7 +104,8 @@ public class SleepTightForge {
     @SubscribeEvent
     public void onSpawnSet(PlayerSetSpawnEvent evt) {
         if (evt.getSpawnLevel() == evt.getEntity().level.dimension()) {
-            if (ModEvents.shouldCancelSetSpawn(evt.getEntity(), evt.getNewSpawn())) {
+            BlockPos newSpawn = evt.getNewSpawn();
+            if (newSpawn != null && ModEvents.shouldCancelSetSpawn(evt.getEntity(), newSpawn)) {
                 evt.setCanceled(true);
             }
         }
