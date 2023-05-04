@@ -145,7 +145,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
                     if ((type == Connection.FENCE && i != 1) || type == Connection.BLOCK) {
                         Direction opposite = dir.getOpposite();
                         BlockPos nextPos = p.relative(opposite);
-                        if (!level.getBlockState(p).canBeReplaced(context) || !level.getWorldBorder().isWithinBounds(nextPos)) {
+                        if (!level.getBlockState(nextPos).canBeReplaced(context) || !level.getWorldBorder().isWithinBounds(nextPos)) {
                             continue;
                         }
                         if (type == Connection.BLOCK) {
