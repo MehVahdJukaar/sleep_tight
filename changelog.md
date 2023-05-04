@@ -1,1 +1,1 @@
-- fixed an issue with player set spawn event not accounting for null spawn
+fixed hammock placement deleting the block in the middle
