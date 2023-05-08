@@ -1,1 +1,1 @@
-- fixed error in set spawn event
+fixed hammock placement
