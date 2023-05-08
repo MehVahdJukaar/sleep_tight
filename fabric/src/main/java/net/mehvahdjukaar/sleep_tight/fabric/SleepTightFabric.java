@@ -11,8 +11,11 @@ import net.mehvahdjukaar.moonlight.fabric.MLFabricSetupCallbacks;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
+import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class SleepTightFabric implements ModInitializer {
 
@@ -41,6 +44,21 @@ public class SleepTightFabric implements ModInitializer {
         EntitySleepEvents.ALLOW_SLEEPING.register((player, pos) -> {
             if (!ModEvents.checkExtraSleepConditions(player, pos)) {
                 return Player.BedSleepingProblem.OTHER_PROBLEM;
+            }
+            return null;
+        });
+
+        EntitySleepEvents.ALLOW_BED.register((entity, sleepingPos, state, vanillaResult) -> {
+            if (state.getBlock() instanceof HammockBlock) {
+                return InteractionResult.SUCCESS;
+            }
+            return InteractionResult.PASS;
+        });
+
+        EntitySleepEvents.MODIFY_SLEEPING_DIRECTION.register((entity, sleepingPos, sleepingDirection) -> {
+            BlockState state = entity.level.getBlockState(sleepingPos);
+            if (state.getBlock() instanceof HammockBlock hb) {
+                return hb.getBedDirection(state, entity.level, sleepingPos);
             }
             return null;
         });
