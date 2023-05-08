@@ -1,1 +1,2 @@
-fixed hammock placement deleting the block in the middle
+- fixed hammocks not being a valid bed on fabric
+- increased hammock base max swing angle 

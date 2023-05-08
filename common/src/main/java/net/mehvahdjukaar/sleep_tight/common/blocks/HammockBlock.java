@@ -366,8 +366,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
         level.setBlock(pos, state.setValue(BedBlock.OCCUPIED, occupied), 3);
     }
 
-    //@Override
-    @PlatformOnly(PlatformOnly.FORGE)
+    //@Override Forge override
     public Direction getBedDirection(BlockState state, LevelReader level, BlockPos pos) {
         return state.getValue(HorizontalDirectionalBlock.FACING);
     }

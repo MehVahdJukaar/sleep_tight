@@ -42,4 +42,5 @@ public interface IModBed extends ISleepTightBed {
         }
         return false;
     }
+
 }
