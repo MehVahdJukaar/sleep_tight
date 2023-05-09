@@ -53,7 +53,7 @@ public class SleepTightFabric implements ModInitializer {
             if (state.getBlock() instanceof HammockBlock hb) {
                 return hb.getBedDirection(state, entity.level, sleepingPos);
             }
-            return null;
+            return sleepingDirection;
         });
 
         EntitySleepEvents.ALLOW_SLEEPING.register((player, pos) -> {
