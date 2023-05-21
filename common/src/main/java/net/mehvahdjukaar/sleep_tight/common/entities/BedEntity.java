@@ -269,7 +269,11 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     protected void removePassenger(Entity passenger) {
         super.removePassenger(passenger);
         this.positionRider(passenger);
-        passenger.setPose(Pose.SLEEPING);
+        if(passenger instanceof Player p && p.isSleeping()) {
+            passenger.setPose(Pose.SLEEPING);
+        }else{
+            passenger.setPose(Pose.STANDING);
+        }
     }
 
     @Override
