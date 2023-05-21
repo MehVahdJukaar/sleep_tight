@@ -8,6 +8,7 @@ import com.mojang.brigadier.context.CommandContext;
 import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -18,7 +19,8 @@ public class ModCommands {
         RegHelper.addCommandRegistration(ModCommands::register);
     }
 
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+    private static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext, Commands.CommandSelection commandSelection) {
+
         dispatcher.register(
                 Commands.literal(SleepTight.MOD_ID).requires((p) -> p.hasPermission(2))
                         .then(Commands.literal("sleep_cooldown")

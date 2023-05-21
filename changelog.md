@@ -1,1 +1,1 @@
-fixed not being able to sleep on beds
+updated commands

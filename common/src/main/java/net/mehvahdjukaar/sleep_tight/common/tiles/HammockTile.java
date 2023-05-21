@@ -11,7 +11,6 @@ import net.mehvahdjukaar.sleep_tight.common.network.ServerBoundFallFromHammockMe
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -32,7 +31,7 @@ public class HammockTile extends BlockEntity {
     private float pivotOffset;
     private Direction direction;
 
-    private float prevYaw;
+    private float prevAngle;
     private float angle;
     private float angularVel = 0f;
     private boolean hasDrag = true;
@@ -57,7 +56,7 @@ public class HammockTile extends BlockEntity {
 
     public float getRoll(float partialTicks) {
         if (!ClientConfigs.HAMMOCK_ANIMATION.get()) return 0;
-        return (180 / Mth.PI) * Mth.rotLerp(partialTicks, prevYaw, angle);
+        return (180 / Mth.PI) * Mth.rotLerp(partialTicks, prevAngle, angle);
     }
 
     public float getPivotOffset() {
@@ -79,7 +78,7 @@ public class HammockTile extends BlockEntity {
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, HammockTile e) {
-        e.prevYaw = e.angle;
+        e.prevAngle = e.angle;
 
         float dt = 1 / 20f; //time step
 
