@@ -52,7 +52,7 @@ public class WakeUpEncounterHelper {
                 if (entity instanceof Mob mob) {
 
                     //config
-                    if (!mob.hasLineOfSight(player)) {
+                    if (mob.hasLineOfSight(player)) {
 
                         doSpawnMob(level, mob);
 
