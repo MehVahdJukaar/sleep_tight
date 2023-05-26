@@ -6,6 +6,7 @@ import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
+import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.core.SleepEffectsHelper;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -131,9 +132,11 @@ public class ClientEvents {
 
     public static void displayRidingMessage(BedEntity bed) {
         Minecraft mc = Minecraft.getInstance();
-        Component component = bed.getRidingMessage(mc.options.keyJump.getTranslatedKeyMessage(),
-                mc.options.keyShift.getTranslatedKeyMessage());
-        mc.gui.setOverlayMessage(component, false);
-        mc.getNarrator().sayNow(component);
+        if (!CommonConfigs.SLEEP_IMMEDIATELY.get()) {
+            Component component = bed.getRidingMessage(mc.options.keyJump.getTranslatedKeyMessage(),
+                    mc.options.keyShift.getTranslatedKeyMessage());
+            mc.gui.setOverlayMessage(component, false);
+            mc.getNarrator().sayNow(component);
+        }
     }
 }

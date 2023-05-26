@@ -105,9 +105,14 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     @Override
     public void tick() {
         super.tick();
+
         List<Entity> passengers = getPassengers();
         for (var p : passengers) {
             p.setPose(Pose.SLEEPING);
+
+            if (this.tickCount > 2 && !level.isClientSide && !CommonConfigs.SLEEP_IMMEDIATELY.get() && p instanceof ServerPlayer sp) {
+                this.startSleepingOn(sp);
+            }
         }
         boolean dead = passengers.isEmpty();
         BlockPos pos = blockPosition();
@@ -269,7 +274,11 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     protected void removePassenger(Entity passenger) {
         super.removePassenger(passenger);
         this.positionRider(passenger);
-        passenger.setPose(Pose.SLEEPING);
+        if (passenger instanceof Player p && p.isSleeping()) {
+            passenger.setPose(Pose.SLEEPING);
+        } else {
+            passenger.setPose(Pose.STANDING);
+        }
     }
 
     @Override

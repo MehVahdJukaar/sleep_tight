@@ -4,7 +4,6 @@ import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigBuilder;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigSpec;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
-import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.random.SimpleWeightedRandomList;
 import net.minecraft.world.effect.MobEffects;
@@ -25,6 +24,7 @@ public class CommonConfigs {
     public static final Supplier<Boolean> DOUBLE_BED;
     public static final Supplier<Boolean> LAY_WHEN_ON_COOLDOWN;
     public static final Supplier<Boolean> NIGHT_BAG_BORING;
+    public static final Supplier<Boolean> SLEEP_IMMEDIATELY;
 
     public static final Supplier<HeartstoneMode> HEARTSTONE_MODE;
     public static final Supplier<List<EffectData>> HEARTSTONE_EFFECT;
@@ -121,7 +121,7 @@ public class CommonConfigs {
     public static final ConfigSpec SPEC;
 
     static {
-        ConfigBuilder builder = ConfigBuilder.create(SleepTight.res(EASY_MODE ? "common" : "common_ez"),  ConfigType.COMMON);
+        ConfigBuilder builder = ConfigBuilder.create(SleepTight.res(EASY_MODE ? "common_ez" : "common"),  ConfigType.COMMON);
 
         builder.push("misc");
 
@@ -132,12 +132,14 @@ public class CommonConfigs {
         DOUBLE_BED = builder.comment("Allows player to sleep in the middle of two beds")
                 .define("queen_size_bed", true);
         EXPLOSION_BEHAVIOR = builder.comment("Disables damage from bed explosion when used in another dimension. Can also be used to disable explosion entirely allowing one to sleep in those dimensions")
-                .define("behavior_in_dimension", ExplosionBehavior.TINY_EXPLOSION);
+                .define("behavior_in_dimension", ExplosionBehavior.DEFAULT);
         SLEEP_INTERVAL = builder.comment("Interval between two consecutive sleep times for them to not be considered consecutive")
                 .define("sleep_interval", 24000, 0, 1000000);
         NIGHT_BAG_BORING = builder.comment("Makes night bag less unique by allowing you to place them normally on the ground")
                 .define("boring_night_bags", false);
 
+        SLEEP_IMMEDIATELY = builder.comment("Immediately attempt sleeping after laying down on a bed")
+                        .define("sleep_immediately", false);
         builder.push("heartstone_mod_integration");
         HEARTSTONE_MODE = builder.comment("Gives some benefit when sleeping next to somebody else. By default only works in conjunction with heartstone mod")
                 .define("enabled", HeartstoneMode.WITH_MOD);

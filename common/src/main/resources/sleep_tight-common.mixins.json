@@ -16,6 +16,7 @@
     "LivingEntityMixin",
     "PhantomMixin",
     "PlayerMixin",
+    "ServerLevelMixin",
     "ServerPlayerMixin"
   ],
   "injectors": {
