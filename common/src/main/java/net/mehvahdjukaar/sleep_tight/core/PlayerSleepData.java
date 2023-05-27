@@ -93,6 +93,10 @@ public abstract class PlayerSleepData {
         return 1 - (((float) (amountAwake)) / timeLeft);
     }
 
+    public boolean isOnSleepCooldown(Player player) {
+        return getInsomniaCooldown(player) > 0;
+    }
+
     public long getInsomniaTimeLeft(Player player) {
         return insomniaWillElapseTimeStamp - player.level.getGameTime();
     }

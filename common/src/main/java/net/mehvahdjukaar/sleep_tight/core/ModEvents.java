@@ -19,7 +19,6 @@ import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.PlayerRespawnLogic;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
@@ -339,7 +338,7 @@ public class ModEvents {
     //similar to what below but isnt time related
     @EventCalled
     public static boolean checkExtraSleepConditions(Player player, @Nullable BlockPos bedPos) {
-        if (SleepTightPlatformStuff.getPlayerSleepData(player).getInsomniaCooldown(player) > 0) {
+        if (SleepTightPlatformStuff.getPlayerSleepData(player).isOnSleepCooldown(player)) {
             if (!player.level.isClientSide) {
                 String s = isDayTime(player.level) ? "message.sleep_tight.insomnia.day" :
                         "message.sleep_tight.insomnia.night";

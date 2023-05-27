@@ -2,6 +2,7 @@ package net.mehvahdjukaar.sleep_tight.core;
 
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -50,7 +51,7 @@ public class WakeUpEncounterHelper {
             if (entity instanceof Mob mob) {
 
                 //config
-                if (!mob.hasLineOfSight(player)) {
+                if (mob.hasLineOfSight(player)) {
 
                     doSpawnMob(level, mob);
 

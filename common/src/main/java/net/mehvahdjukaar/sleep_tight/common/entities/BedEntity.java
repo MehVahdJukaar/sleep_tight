@@ -110,7 +110,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         for (var p : passengers) {
             p.setPose(Pose.SLEEPING);
 
-            if (this.tickCount > 2 && !level.isClientSide && !CommonConfigs.SLEEP_IMMEDIATELY.get() && p instanceof ServerPlayer sp) {
+            if (this.tickCount > 2 && !level.isClientSide && CommonConfigs.SLEEP_IMMEDIATELY.get() && p instanceof ServerPlayer sp) {
                 this.startSleepingOn(sp);
             }
         }
