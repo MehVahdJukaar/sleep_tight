@@ -1,2 +1,3 @@
-added config to sleep immediately
-resting on a hammock in multiplayer now has the correct status message
+- Fixed the newly added config being on by default
+- Fixed spawn encounters only spawning when not in line of sight instead of the opposite
+- Players that need to sleep to skip a night will only include those that are not on sleep cooldown
