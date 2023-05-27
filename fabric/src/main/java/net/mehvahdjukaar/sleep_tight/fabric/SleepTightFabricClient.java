@@ -1,5 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.fabric;
 
+import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
@@ -57,7 +58,8 @@ public class SleepTightFabricClient {
 
         public void render(PoseStack poseStack, float partialTicks) {
             Minecraft mc = Minecraft.getInstance();
-            render(mc.gui, poseStack, partialTicks, mc.getWindow().getWidth(), mc.getWindow().getHeight());
+            Window window = mc.getWindow();
+            render(mc.gui, poseStack, partialTicks, window.getGuiScaledWidth(), window.getGuiScaledHeight());
         }
     }
 }

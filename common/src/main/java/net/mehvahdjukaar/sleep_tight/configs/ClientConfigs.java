@@ -4,6 +4,7 @@ import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigBuilder;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigSpec;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.minecraft.util.Mth;
 
 import java.util.function.Supplier;
@@ -29,6 +30,9 @@ public class ClientConfigs {
     public static final Supplier<Boolean> SHOW_TIME;
     public static final Supplier<Boolean> TIME_FORMAT_24H;
     public static final ConfigSpec SPEC;
+
+    public static final Supplier<Boolean> SLEEP_IMMEDIATELY;
+
 
     static {
         ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.CLIENT);
@@ -70,6 +74,8 @@ public class ClientConfigs {
                 .define("crossair_insomnia_cooldown", true);
         SHOW_TIME = builder.comment("Displays current time when sleeping")
                 .define("show_time_when_sleeping", true);
+        SLEEP_IMMEDIATELY = builder.comment("Automatically attempt sleeping when laying on a bed")
+                        .define("sleep_immediately", false);
         builder.pop();
 
         builder.onChange(ClientConfigs::onChange);

@@ -5,6 +5,7 @@ import net.mehvahdjukaar.moonlight.api.entity.IExtraClientSpawnData;
 import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.IModBed;
@@ -13,6 +14,7 @@ import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSleepImmediatelyM
 import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
 import net.mehvahdjukaar.sleep_tight.common.network.ServerBoundCommitSleepMessage;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
+import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
@@ -107,6 +109,12 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         List<Entity> passengers = getPassengers();
         for (var p : passengers) {
             p.setPose(Pose.SLEEPING);
+
+            if(level.isClientSide && this.tickCount>2 && ClientConfigs.SLEEP_IMMEDIATELY.get()){
+                if(p == SleepTightClient.getPlayer()) {
+                    NetworkHandler.CHANNEL.sendToServer(new ServerBoundCommitSleepMessage());
+                }
+            }
         }
         boolean dead = passengers.isEmpty();
         BlockPos pos = blockPosition();

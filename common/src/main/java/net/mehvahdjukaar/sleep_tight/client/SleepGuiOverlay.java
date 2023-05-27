@@ -55,8 +55,8 @@ public abstract class SleepGuiOverlay<T extends Gui> {
             if (laying || (cooldown && (
                     (hit instanceof BlockHitResult bh && mc.level.getBlockState(bh.getBlockPos())
                             .getBlock() instanceof ISleepTightBed) ||
-                        player.getMainHandItem().getItem() instanceof NightBagItem
-                    ))) {
+                            player.getMainHandItem().getItem() instanceof NightBagItem
+            ))) {
 
 
                 var c = SleepTightPlatformStuff.getPlayerSleepData(player);
@@ -64,10 +64,10 @@ public abstract class SleepGuiOverlay<T extends Gui> {
                 if (f < 1) {
 
                     if (laying && timer) {
-                        mc.font.draw(poseStack, "" + c.getInsomniaTimeLeft(player)/20, 2.0F, 2, 14737632);
+                        mc.font.draw(poseStack, "" + c.getInsomniaTimeLeft(player) / 20, 2.0F, 2, 14737632);
                     }
 
-                    if(cooldown) {
+                    if (cooldown) {
 
                         setupOverlayRenderState(gui, true, false, SleepTightClient.ICONS);
                         gui.setBlitOffset(-90);
@@ -82,8 +82,8 @@ public abstract class SleepGuiOverlay<T extends Gui> {
                         int j = height / 2 - 7 + 16;
                         int k = width / 2 - 6;
 
-                        if(mc.options.attackIndicator().get() == AttackIndicatorStatus.CROSSHAIR &&
-                                player.getAttackStrengthScale(0.0F) !=1){
+                        if (mc.options.attackIndicator().get() == AttackIndicatorStatus.CROSSHAIR &&
+                                player.getAttackStrengthScale(0.0F) != 1) {
                             j += 8;
                         }
 
