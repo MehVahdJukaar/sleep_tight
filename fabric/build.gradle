@@ -31,7 +31,7 @@ dependencies {
     modCompileOnly("curse.maven:modmenu-308702:3920481") {
         exclude module: "fabric-api"
     }
-    modCompileOnly("net.mehvahdjukaar:heartstone-fabric:1.19.2-1.1.2")
+   // modCompileOnly("net.mehvahdjukaar:heartstone-fabric:1.19.2-1.1.2")
     modImplementation ("net.mehvahdjukaar:moonlight-fabric:${project.moonlight_version}")
 }
 

@@ -11,8 +11,8 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
 
     modImplementation("net.mehvahdjukaar:moonlight:${project.moonlight_version}")
-    modCompileOnly("net.mehvahdjukaar:heartstone:1.19.2-1.1.2")
     modImplementation ("curse.maven:supplementaries-412082:4375776")
+    modImplementation ("curse.maven:heartstone-573152:4569323")
 
 }
 
