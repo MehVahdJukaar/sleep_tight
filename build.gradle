@@ -40,6 +40,7 @@ subprojects {
     var changelogText = changelogFile.exists() ? changelogFile.text : ""
 
     if (env.MODRINTH_TOKEN) {
+
         modrinth {
             projectId = "sleep-tight"
             uploadFile = tasks.remapJar
