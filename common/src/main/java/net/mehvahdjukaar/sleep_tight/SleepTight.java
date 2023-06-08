@@ -26,6 +26,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
@@ -98,12 +99,12 @@ public class SleepTight {
     }
 
     private static void registerItemsToTabs(RegHelper.ItemToTabEvent event) {
-        event.add(CreativeModeTabs.FUNCTIONAL_BLOCKS, DREAMER_ESSENCE.get());
+        event.addAfter(CreativeModeTabs.FUNCTIONAL_BLOCKS,i -> i.is(ItemTags.BEDS), DREAMER_ESSENCE.get());
         event.add(CreativeModeTabs.TOOLS_AND_UTILITIES, NIGHT_BAG.get());
         event.add(CreativeModeTabs.SPAWN_EGGS, BEDBUG_SPAWN_EGG.get());
         event.addAfter(CreativeModeTabs.INGREDIENTS, i -> i.is(Items.SPIDER_EYE), BED_BUG_EGGS.get());
         event.addAfter(CreativeModeTabs.INGREDIENTS, i -> i.is(Items.PIGLIN_BANNER_PATTERN), MOON_PATTERN_ITEM.get());
-        event.addAfter(CreativeModeTabs.COLORED_BLOCKS, i -> i.is(Items.PINK_BED),
+        event.addAfter(CreativeModeTabs.COLORED_BLOCKS, i -> i.is(ItemTags.BEDS),
                 BlocksColorAPI.ordered(HAMMOCKS).map(Supplier::get).toArray(Block[]::new));
         event.addAfter(CreativeModeTabs.FUNCTIONAL_BLOCKS, i -> i.is(Items.PINK_BED),
                 BlocksColorAPI.ordered(HAMMOCKS).map(Supplier::get).toArray(Block[]::new));

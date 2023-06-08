@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.mehvahdjukaar.sleep_tight.client.SleepGuiOverlay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.InBedChatScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.resources.ResourceLocation;
@@ -55,9 +56,9 @@ public class SleepTightFabricClient {
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
         }
 
-        public void render(PoseStack poseStack, float partialTicks) {
+        public void render(GuiGraphics graphics, float partialTicks) {
             Minecraft mc = Minecraft.getInstance();
-            render(mc.gui, poseStack, partialTicks, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
+            render(mc.gui, graphics, partialTicks, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
         }
     }
 }

@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -20,13 +21,14 @@ public class SleepTightPlatformStuffImpl {
     @org.jetbrains.annotations.Contract
     public static Player.BedSleepingProblem invokeSleepChecksEvents(Player player, BlockPos pos) {
         if (!player.isSleeping() && player.isAlive()) {
-            if (!player.level.dimensionType().natural()) {
+            Level level = player.level();
+            if (!level.dimensionType().natural()) {
                 return Player.BedSleepingProblem.NOT_POSSIBLE_HERE;
             }
 
             if (!player.isCreative()) {
                 Vec3 vec3 = Vec3.atBottomCenterOf(pos);
-                List<Monster> list = player.level.getEntitiesOfClass(Monster.class,
+                List<Monster> list = level.getEntitiesOfClass(Monster.class,
                         new AABB(vec3.x() - 8.0, vec3.y() - 5.0, vec3.z() - 8.0, vec3.x() + 8.0, vec3.y() + 5.0, vec3.z() + 8.0),
                         m -> m.isPreventingPlayerRest(player)
                 );
@@ -45,7 +47,7 @@ public class SleepTightPlatformStuffImpl {
     //same as fabric mixin
 
     private static boolean isDay(Player player, BlockPos pos) {
-        boolean day = player.level.isDay();
+        boolean day = player.level().isDay();
         InteractionResult result = EntitySleepEvents.ALLOW_SLEEP_TIME.invoker().allowSleepTime(player, pos, !day);
 
         if (result != InteractionResult.PASS) {
