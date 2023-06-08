@@ -10,8 +10,6 @@ import net.mehvahdjukaar.sleep_tight.client.renderers.BedbugEntityRenderer;
 import net.mehvahdjukaar.sleep_tight.client.renderers.HammockBlockTileRenderer;
 import net.mehvahdjukaar.sleep_tight.client.renderers.InfestedBedRenderer;
 import net.mehvahdjukaar.sleep_tight.client.renderers.InvisibleEntityRenderer;
-import net.mehvahdjukaar.supplementaries.Supplementaries;
-import net.mehvahdjukaar.supplementaries.client.block_models.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.blockentity.BedRenderer;

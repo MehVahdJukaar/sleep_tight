@@ -15,6 +15,7 @@ import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class SleepTightFabric implements ModInitializer {
@@ -39,7 +40,7 @@ public class SleepTightFabric implements ModInitializer {
         });
 
         EntitySleepEvents.ALLOW_SLEEP_TIME.register(((player, sleepingPos, vanillaResult) ->
-                ModEvents.onCheckSleepTime(player.level, sleepingPos)));
+                ModEvents.onCheckSleepTime(player.level(), sleepingPos)));
 
         EntitySleepEvents.ALLOW_SLEEPING.register((player, pos) -> {
             if (!ModEvents.checkExtraSleepConditions(player, pos)) {
@@ -56,9 +57,10 @@ public class SleepTightFabric implements ModInitializer {
         });
 
         EntitySleepEvents.MODIFY_SLEEPING_DIRECTION.register((entity, sleepingPos, sleepingDirection) -> {
-            BlockState state = entity.level.getBlockState(sleepingPos);
+            Level level = entity.level();
+            BlockState state = level.getBlockState(sleepingPos);
             if (state.getBlock() instanceof HammockBlock hb) {
-                return hb.getBedDirection(state, entity.level, sleepingPos);
+                return hb.getBedDirection(state, level, sleepingPos);
             }
             return sleepingDirection;
         });

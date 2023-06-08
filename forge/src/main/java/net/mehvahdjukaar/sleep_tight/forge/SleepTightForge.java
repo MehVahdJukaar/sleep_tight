@@ -71,7 +71,7 @@ public class SleepTightForge {
     public void onSleepTimeCheck(SleepingTimeCheckEvent event) {
         var p = event.getSleepingLocation();
         if (p.isPresent()) {
-            switch (ModEvents.onCheckSleepTime(event.getEntity().getLevel(), p.get())) {
+            switch (ModEvents.onCheckSleepTime(event.getEntity().level(), p.get())) {
                 case FAIL -> event.setResult(Event.Result.DENY);
                 case CONSUME, SUCCESS -> event.setResult(Event.Result.ALLOW);
             }
@@ -104,7 +104,7 @@ public class SleepTightForge {
 
     @SubscribeEvent
     public void onSpawnSet(PlayerSetSpawnEvent evt) {
-        if (evt.getSpawnLevel() == evt.getEntity().level.dimension()) {
+        if (evt.getSpawnLevel() == evt.getEntity().level().dimension()) {
             BlockPos newSpawn = evt.getNewSpawn();
             if (newSpawn != null && ModEvents.shouldCancelSetSpawn(evt.getEntity(), newSpawn)) {
                 evt.setCanceled(true);

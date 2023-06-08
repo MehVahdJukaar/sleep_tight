@@ -95,6 +95,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             setOffsetMode(OffsetMode.NONE);
 
             BlockPos otherPos = getDoubleBedPos();
+            Level level = level();
             BlockState otherState = level.getBlockState(otherPos);
             if (otherState == bedState) {
                 level.setBlockAndUpdate(otherPos, otherState.setValue(BedBlock.OCCUPIED, false));
@@ -106,6 +107,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     public void tick() {
         super.tick();
 
+        Level level = this.level();
         List<Entity> passengers = getPassengers();
         for (var p : passengers) {
             p.setPose(Pose.SLEEPING);
@@ -232,11 +234,11 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     @Override
-    public void positionRider(Entity passenger) {
+    protected void positionRider(Entity passenger, MoveFunction callback) {
         if (this.hasPassenger(passenger)) {
             if (bedState.getBlock() instanceof IModBed b) {
                 var v = b.getSleepingPosition(bedState, this.blockPosition());
-                passenger.setPos(v.x, v.y, v.z);
+                callback.accept(passenger, v.x, v.y, v.z);
             } else {
                 //same as set pos to bed
                 BlockPos pos = this.blockPosition();
@@ -244,7 +246,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
                 if (isDoubleBed()) {
                     c = getDoubleBedOffset(dir.getOpposite(), c);
                 }
-                passenger.setPos(c);
+                callback.accept(passenger, c.x, c.y, c.z);
             }
         }
     }
@@ -286,7 +288,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         if (jumping) {
             NetworkHandler.CHANNEL.sendToServer(new ServerBoundCommitSleepMessage());
         } else if (left ^ right) {
-            if (this.level.getBlockEntity(this.getOnPos()) instanceof HammockTile tile) {
+            if (this.level().getBlockEntity(this.getOnPos()) instanceof HammockTile tile) {
                 if (left) {
                     tile.accelerateLeft();
                 } else {
@@ -310,7 +312,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     public Component getRidingMessage(Component keyMessage, Component shiftMessage) {
-        this.bedState = level.getBlockState(this.blockPosition());
+        this.bedState = level().getBlockState(this.blockPosition());
         if (bedState.getBlock() instanceof HammockBlock) {
             return Component.translatable("message.sleep_tight.start_resting", keyMessage, shiftMessage);
         } else {
@@ -336,7 +338,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
         if (dismountOnTheSpot) return super.getDismountLocationForPassenger(passenger);
-        var o = BedBlock.findStandUpPosition(passenger.getType(), passenger.level,
+        var o = BedBlock.findStandUpPosition(passenger.getType(), passenger.level(),
                 this.blockPosition(), this.dir, passenger.getYRot());
         //this will not quite work for hammocks but its good enough
         return o.orElseGet(() -> super.getDismountLocationForPassenger(passenger));
@@ -381,6 +383,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
 
             NetworkHandler.CHANNEL.sendToClientPlayer(player, new ClientBoundSleepImmediatelyMessage(pos));
             //satefy check
+            Level level = level();
             BlockState blockState = level.getBlockState(pos);
             if (blockState.getBlock() instanceof BedBlock) {
                 level.setBlockAndUpdate(pos, blockState.setValue(BedBlock.OCCUPIED, true));

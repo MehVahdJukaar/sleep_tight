@@ -34,7 +34,7 @@ public class AccelerateHammockMessage implements Message {
     @Override
     public void handle(ChannelHandler.Context context) {
         if (context.getDirection() == NetworkDir.PLAY_TO_CLIENT) {
-            Level level = Minecraft.getInstance().cameraEntity.getLevel();
+            Level level = Minecraft.getInstance().cameraEntity.level();
             if (level.getBlockEntity(pos) instanceof HammockTile tile) {
                 if (leftPressed) {
                     tile.accelerateLeft();

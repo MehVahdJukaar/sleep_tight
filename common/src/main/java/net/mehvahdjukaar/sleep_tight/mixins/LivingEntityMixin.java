@@ -29,7 +29,7 @@ public abstract class LivingEntityMixin extends Entity {
 
     @Inject(method = "setPosToBed", at = @At("HEAD"), cancellable = true)
     public void setHammockPos(BlockPos pos, CallbackInfo ci) {
-        BlockState state = this.level.getBlockState(pos);
+        BlockState state = this.level().getBlockState(pos);
         Vec3 v = ModEvents.getSleepingPosition(this, state, pos);
         if (v != null) {
             this.setPos(v);
@@ -38,7 +38,7 @@ public abstract class LivingEntityMixin extends Entity {
     }
     @Inject(method = "isSleeping", at = @At(value = "HEAD"), cancellable = true)
     public void sleepOnEntity(CallbackInfoReturnable<Boolean> cir) {
-        if (this.level.isClientSide && !this.isDeadOrDying() && this.getVehicle() instanceof BedEntity && ClientEvents.cameraHack) {
+        if (this.level().isClientSide && !this.isDeadOrDying() && this.getVehicle() instanceof BedEntity && ClientEvents.cameraHack) {
             cir.setReturnValue(true);
         }
     }

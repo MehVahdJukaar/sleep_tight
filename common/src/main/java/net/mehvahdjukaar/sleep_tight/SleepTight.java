@@ -40,8 +40,7 @@ import net.minecraft.world.level.block.entity.BannerPattern;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.material.Material;
-import net.minecraft.world.level.material.MaterialColor;
+import net.minecraft.world.level.material.MapColor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -159,12 +158,13 @@ public class SleepTight {
     //blocks
 
     public static final Supplier<DreamEssenceBlock> DREAMER_ESSENCE = regWithItem("dreamer_essence", () ->
-            new DreamEssenceBlock(BlockBehaviour.Properties.of(Material.AMETHYST, MaterialColor.COLOR_PURPLE)
+            new DreamEssenceBlock(BlockBehaviour.Properties.copy(Blocks.AMETHYST_BLOCK)
                     .sound(SoundType.AMETHYST).strength(1))
     );
 
     public static final Supplier<NightBagBlock> NIGHT_BAG = regBlock("night_bag", () ->
-            new NightBagBlock(BlockBehaviour.Properties.of(Material.WOOL, MaterialColor.TERRACOTTA_BLUE)
+            new NightBagBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.TERRACOTTA_BLUE)
                     .sound(SoundType.WOOL).strength(0.1F))
     );
 

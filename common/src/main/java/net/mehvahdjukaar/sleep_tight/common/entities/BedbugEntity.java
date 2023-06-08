@@ -37,7 +37,10 @@ import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.*;
-import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.PathFinder;
@@ -73,7 +76,7 @@ public class BedbugEntity extends Monster {
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(1, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new ClimbOnTopOfPowderSnowGoal(this, this.level));
+        this.goalSelector.addGoal(1, new ClimbOnTopOfPowderSnowGoal(this, this.level()));
         this.goalSelector.addGoal(2, new InfestBedGoal(this, 1, 20));
         this.goalSelector.addGoal(3, new BedbugLeapGoal(this, 0.25F));
         this.goalSelector.addGoal(4, new BedbugAttackGoal(this));
@@ -111,8 +114,8 @@ public class BedbugEntity extends Monster {
         if (this.getTarget() != null)
             this.getLookControl().setLookAt(this.getTarget());
 
-
-        if (!this.level.isClientSide) {
+        Level level = this.level();
+        if (!level.isClientSide) {
             this.setClimbing(this.horizontalCollision);
         } else {
             this.prevBurrowingTicks = burrowingTicks;
@@ -121,7 +124,7 @@ public class BedbugEntity extends Monster {
         if (this.isBurrowing()) {
             BlockPos pos = this.blockPosition();
 
-            BlockState feetBlockState = this.level.getBlockState(pos);
+            BlockState feetBlockState = level.getBlockState(pos);
             if (!(feetBlockState.getBlock() instanceof BedBlock)) {
                 this.setBurrowing(false);
             } else {
@@ -273,7 +276,7 @@ public class BedbugEntity extends Monster {
     protected void onInsideBlock(BlockState state, BlockPos pos) {
         if (state.getBlock() instanceof DoorBlock) {
             //gets full shape
-            VoxelShape voxelShape = state.getCollisionShape(this.level, pos);
+            VoxelShape voxelShape = state.getCollisionShape(this.level(), pos);
             VoxelShape voxelShape2 = voxelShape.move(pos.getX(), pos.getY(), pos.getZ());
             if (Shapes.joinIsNotEmpty(voxelShape2, Shapes.create(this.getBoundingBox()), BooleanOp.AND)) {
 
@@ -289,22 +292,23 @@ public class BedbugEntity extends Monster {
         AABB aABB = this.getBoundingBox();
         BlockPos blockPos = BlockPos.containing(aABB.minX + 0.001, aABB.minY + 0.001, aABB.minZ + 0.001);
         BlockPos blockPos2 = BlockPos.containing(aABB.maxX - 0.001, aABB.maxY - 0.001, aABB.maxZ - 0.001);
-        if (this.level.hasChunksAt(blockPos, blockPos2)) {
+        Level level = level();
+        if (level.hasChunksAt(blockPos, blockPos2)) {
             BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
 
             for (int i = blockPos.getX(); i <= blockPos2.getX(); ++i) {
                 for (int j = blockPos.getY(); j <= blockPos2.getY(); ++j) {
                     for (int k = blockPos.getZ(); k <= blockPos2.getZ(); ++k) {
                         mutableBlockPos.set(i, j, k);
-                        BlockState blockState = this.level.getBlockState(mutableBlockPos);
+                        BlockState blockState = level.getBlockState(mutableBlockPos);
 
                         try {
-                            blockState.entityInside(this.level, mutableBlockPos, this);
+                            blockState.entityInside(level, mutableBlockPos, this);
                             this.onInsideBlock(blockState, mutableBlockPos);
                         } catch (Exception e) {
                             CrashReport crashReport = CrashReport.forThrowable(e, "Colliding entity with block");
                             CrashReportCategory crashReportCategory = crashReport.addCategory("Block being collided with");
-                            CrashReportCategory.populateBlockDetails(crashReportCategory, this.level, mutableBlockPos, blockState);
+                            CrashReportCategory.populateBlockDetails(crashReportCategory, level, mutableBlockPos, blockState);
                             throw new ReportedException(crashReport);
                         }
                     }
@@ -384,7 +388,7 @@ public class BedbugEntity extends Monster {
                 if (this.shouldRecalculatePath()) {
                     double s = this.speedModifier;
                     if (dist < (1.5 * 1.5)) s /= 2;
-                    this.mob.getNavigation().moveTo((blockPos.getX()) + 0.5, blockPos.getY()+0.25,
+                    this.mob.getNavigation().moveTo((blockPos.getX()) + 0.5, blockPos.getY() + 0.25,
                             (blockPos.getZ()) + 0.5, s);
                 }
             } else {
@@ -411,7 +415,7 @@ public class BedbugEntity extends Monster {
 
         @Override
         protected boolean findNearestBlock() {
-            if (bedBug.targetBed != null && this.isValidTarget(this.mob.level, bedBug.targetBed)) {
+            if (bedBug.targetBed != null && this.isValidTarget(this.mob.level(), bedBug.targetBed)) {
                 this.blockPos = bedBug.targetBed;
                 return true;
             }
@@ -428,7 +432,7 @@ public class BedbugEntity extends Monster {
 
         private List<BlockPos> findNearestBed() {
             BlockPos pos = bedBug.blockPosition();
-            ServerLevel level = (ServerLevel) bedBug.level;
+            ServerLevel level = (ServerLevel) bedBug.level();
             PoiManager poiManager = level.getPoiManager();
             Stream<PoiRecord> stream = poiManager.getInRange((h) ->
                     h.is(PoiTypes.HOME), pos, searchRange, PoiManager.Occupancy.ANY);
@@ -500,7 +504,7 @@ public class BedbugEntity extends Monster {
         protected BlockPathTypes evaluateBlockPathType(BlockGetter blockGetter, BlockPos blockPos, BlockPathTypes nodeType) {
             if (nodeType == BlockPathTypes.DOOR_OPEN || nodeType == BlockPathTypes.DOOR_WOOD_CLOSED ||
                     nodeType == BlockPathTypes.WALKABLE_DOOR) return BlockPathTypes.OPEN;
-            if(nodeType == BlockPathTypes.BLOCKED && level.getBlockState(blockPos).getBlock() instanceof BedBlock){
+            if (nodeType == BlockPathTypes.BLOCKED && level.getBlockState(blockPos).getBlock() instanceof BedBlock) {
                 return BlockPathTypes.WALKABLE;
             }
             return super.evaluateBlockPathType(level, blockPos, nodeType);

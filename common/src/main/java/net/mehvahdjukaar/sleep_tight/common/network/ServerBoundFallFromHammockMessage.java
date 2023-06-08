@@ -31,7 +31,7 @@ public class ServerBoundFallFromHammockMessage implements Message {
         Player p = context.getSender();
         if(p.getVehicle() instanceof BedEntity){
             p.stopRiding();
-            p.hurt(p.level.damageSources().fall(), 1);
+            p.hurt(p.level().damageSources().fall(), 1);
             if(p instanceof ServerPlayer player) {
                 Advancement advancement = p.getServer().getAdvancements().getAdvancement(SleepTight.res( "husbandry/hammock"));
                 if (advancement != null) {

@@ -32,7 +32,7 @@ public class ClientBoundRideImmediatelyMessage implements Message {
     @Override
     public void handle(ChannelHandler.Context context) {
         Player player = SleepTightClient.getPlayer();
-        Level level = player.level;
+        Level level = player.level();
         Entity entity = level.getEntity(id);
         if (entity != null) {
             player.startRiding(entity);

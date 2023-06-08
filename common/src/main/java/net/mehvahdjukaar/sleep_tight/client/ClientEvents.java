@@ -17,6 +17,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import org.joml.Quaternionf;
@@ -40,7 +41,8 @@ public class ClientEvents {
             bedEntity = be;
         }
         if (pos == null) return;
-        if (entity.getLevel().getBlockEntity(pos) instanceof HammockTile tile) {
+        Level level = entity.level();
+        if (level.getBlockEntity(pos) instanceof HammockTile tile) {
 
             float roll = tile.getRoll(partialTicks);
 
@@ -66,7 +68,7 @@ public class ClientEvents {
         } else if (bedEntity != null) {
 
             //bed entity on bed
-            var dir = BedBlock.getBedOrientation(entity.level, pos);
+            var dir = BedBlock.getBedOrientation(level, pos);
             if (dir != null) {
                 float f1 = 90 - dir.toYRot();
                 poseStack.mulPose(Axis.YP.rotationDegrees(f1));
@@ -95,7 +97,7 @@ public class ClientEvents {
         } else if (e instanceof Player p) {
             pos = p.getSleepingPos().orElse(null);
         }
-        if (pos != null && e.getLevel().getBlockEntity(pos) instanceof HammockTile tile) {
+        if (pos != null && e.level().getBlockEntity(pos) instanceof HammockTile tile) {
             var q = new Quaternionf(camera.rotation());
             q.conjugate();
             matrixStack.mulPose(q);
@@ -122,7 +124,7 @@ public class ClientEvents {
         if (entity instanceof Player player) {
             BlockPos partnerPos = SleepEffectsHelper.getPartnerPos(player, state, pos);
             if (partnerPos != null) {
-                entity.level.addParticle(ParticleTypes.HEART,
+                entity.level().addParticle(ParticleTypes.HEART,
                         0.5 + (pos.getX() + partnerPos.getX()) / 2f,
                         0.6 + (pos.getY() + partnerPos.getY()) / 2f,
                         0.5 + (pos.getZ() + partnerPos.getZ()) / 2f, 0, 0, 0);

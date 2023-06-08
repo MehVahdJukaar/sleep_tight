@@ -23,8 +23,8 @@ public class BedbugEggsItem extends Item {
     }
 
     public InteractionResult useOnBed(Player player, InteractionHand hand, ItemStack stack, BlockState state, BlockPos pos, BlockHitResult hit) {
-        if (InfestedBedBlock.infestBed(player.level, pos)) {
-            Level level = player.level;
+        Level level = player.level();
+        if (InfestedBedBlock.infestBed(level, pos)) {
             player.awardStat(Stats.ITEM_USED.get(this));
             if (!player.getAbilities().instabuild) {
                 stack.shrink(1);

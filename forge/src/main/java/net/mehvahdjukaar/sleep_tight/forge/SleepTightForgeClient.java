@@ -28,7 +28,7 @@ public class SleepTightForgeClient {
     @SubscribeEvent
     public static void onRenderScreen(ScreenEvent.Render.Post event) {
         if (event.getScreen() instanceof InBedChatScreen s) {
-            SleepGuiOverlay.renderBedScreenOverlay(s, event.getPoseStack(), event.getMouseX(), event.getMouseY());
+            SleepGuiOverlay.renderBedScreenOverlay(s, event.getGuiGraphics(), event.getMouseX(), event.getMouseY());
         }
     }
 
@@ -63,7 +63,7 @@ public class SleepTightForgeClient {
 
         @Override
         protected void setupOverlayRenderState(ForgeGui gui, boolean blend, boolean depthTest, ResourceLocation icons) {
-            gui.setupOverlayRenderState(blend, depthTest, icons);
+            gui.setupOverlayRenderState(blend, depthTest);
         }
     }
 

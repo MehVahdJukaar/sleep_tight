@@ -44,7 +44,7 @@ public class ClientBoundParticleMessage implements Message {
 
     @Override
     public void handle(ChannelHandler.Context context) {
-        Level level = SleepTightClient.getPlayer().level;
+        Level level = SleepTightClient.getPlayer().level();
 
         if(data < 4) {
             spawnParticleOnBed(pos, level);

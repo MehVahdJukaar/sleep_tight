@@ -154,7 +154,7 @@ public class WakeUpEncounterHelper {
 
 
     public static boolean trySpawningBedbug(BlockPos bedPos, ServerPlayer player, BedData data) {
-        ServerLevel level = (ServerLevel) player.level;
+        ServerLevel level = (ServerLevel) player.level();
         if (!level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) return false;
 
         double spawnChance = CommonConfigs.BEDBUG_SPAWN_CHANCE.get();

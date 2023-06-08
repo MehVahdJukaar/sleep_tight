@@ -42,27 +42,7 @@ public abstract class BlockMixin {
     private static void unsetXpHack(BlockState state, Level level, BlockPos pos, BlockEntity blockEntity, Entity entity, ItemStack tool, CallbackInfo ci) {
         InvigoratedEffect.BLOCK_XP_LEVEL.remove();
     }
-
-    @Inject(method = "dropResources(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/storage/loot/LootContext$Builder;)V",
-            at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/block/state/BlockState;spawnAfterBreak(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/item/ItemStack;Z)V",
-                    shift = At.Shift.BEFORE))
-    private static void setXpHackLoot(BlockState state, LootContext.Builder context, CallbackInfo ci) {
-        Entity entity = context.getOptionalParameter(LootContextParams.THIS_ENTITY);
-        if (entity instanceof LivingEntity le) {
-            var eff = le.getEffect(SleepTight.INVIGORATED.get());
-            if (eff != null) InvigoratedEffect.BLOCK_XP_LEVEL.set(eff.getAmplifier());
-        }
-    }
-
-    @Inject(method = "dropResources(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/storage/loot/LootContext$Builder;)V",
-            at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/block/state/BlockState;spawnAfterBreak(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/item/ItemStack;Z)V",
-                    shift = At.Shift.AFTER))
-    private static void unsetXpHackLoot(BlockState state, LootContext.Builder lootContextBuilder, CallbackInfo ci) {
-        InvigoratedEffect.BLOCK_XP_LEVEL.remove();
-
-    }
+    //TODO: figure out another way to do this
 
     @Inject(method = "popExperience", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ExperienceOrb;award(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/Vec3;I)V",
     shift = At.Shift.AFTER))

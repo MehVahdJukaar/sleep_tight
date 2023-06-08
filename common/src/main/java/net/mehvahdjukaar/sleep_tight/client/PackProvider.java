@@ -64,10 +64,4 @@ public class PackProvider extends DynClientResourcesGenerator {
         }
     }
 
-    @Override
-    public void generateStaticAssetsOnStartup(ResourceManager manager) {
-
-    }
-
-
 }

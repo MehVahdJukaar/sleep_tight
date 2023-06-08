@@ -48,7 +48,7 @@ public abstract class PlayerSleepData {
     }
 
     public void addInsomnia(Player player, long duration) {
-        long gameTime = player.level.getGameTime();
+        long gameTime = player.level().getGameTime();
         this.insomniaWillElapseTimeStamp = gameTime + duration;
         this.consecutiveNightsSlept = 0;
 
@@ -57,7 +57,7 @@ public abstract class PlayerSleepData {
 
     //for home bed calculations
     public void onNightSleptIntoBed(BedData bed, Player player) {
-        long gameTime = player.level.getGameTime();
+        long gameTime = player.level().getGameTime();
         long awakeTime = gameTime - this.lastWokenUpTimeStamp;
         if (awakeTime > CommonConfigs.SLEEP_INTERVAL.get()) {
             //reset when hasn't slept for a while
@@ -86,7 +86,7 @@ public abstract class PlayerSleepData {
     public float getInsomniaCooldown(Player player) {
         //creative are immune
         if (player.getAbilities().instabuild) return 0;
-        long currentTime = player.level.getGameTime();
+        long currentTime = player.level().getGameTime();
         long timeLeft = insomniaWillElapseTimeStamp - currentTime;
         if (timeLeft < 0) return 0;
         long amountAwake = currentTime - this.lastWokenUpTimeStamp;
@@ -98,14 +98,14 @@ public abstract class PlayerSleepData {
     }
 
     public long getInsomniaTimeLeft(Player player) {
-        return insomniaWillElapseTimeStamp - player.level.getGameTime();
+        return insomniaWillElapseTimeStamp - player.level().getGameTime();
     }
 
     public double getNightmareChance(Player player, BlockPos pos) {
         int minNights = CommonConfigs.NIGHTMARES_CONSECUTIVE_NIGHTS.get();
         if (consecutiveNightsSlept < minNights) return 0;
-        if (DreamEssenceBlock.isInRange(player.blockPosition(), player.level)) return 0;
-        BlockState state = player.level.getBlockState(pos);
+        if (DreamEssenceBlock.isInRange(player.blockPosition(), player.level())) return 0;
+        BlockState state = player.level().getBlockState(pos);
         if (state.getBlock() instanceof ISleepTightBed bed) {
             if (!bed.st_canCauseNightmares()) return 0;
         }
@@ -180,7 +180,7 @@ public abstract class PlayerSleepData {
     @Nullable
     public static BedData getHomeBedIfHere(Player player, BlockPos pos) {
         PlayerSleepData c = SleepTightPlatformStuff.getPlayerSleepData(player);
-        if (c != null && player.level.getBlockEntity(pos) instanceof IExtraBedDataProvider bed) {
+        if (c != null && player.level().getBlockEntity(pos) instanceof IExtraBedDataProvider bed) {
             BedData bedCap = bed.st_getBedData();
             if (bedCap.getId().equals(c.getHomeBed()) && bedCap.isHomeBedFor(player)) {
                 return bedCap;

@@ -57,6 +57,7 @@ public class DreamerEssenceTargetEntity extends LivingEntity {
 
     @Override
     public void tick() {
+        Level level = level();
         if (level.getBlockState(this.blockPosition()).getBlock() != SleepTight.DREAMER_ESSENCE.get()) {
             this.discard();
         }
@@ -74,7 +75,7 @@ public class DreamerEssenceTargetEntity extends LivingEntity {
 
     @Override
     public void remove(RemovalReason reason) {
-        if (!this.isRemoved() && !level.isClientSide) {
+        if (!this.isRemoved() && !level().isClientSide) {
             NetworkHandler.CHANNEL.sentToAllClientPlayersTrackingEntity(this, ClientBoundParticleMessage.dreamEssence(this.blockPosition()));
         }
         super.remove(reason);

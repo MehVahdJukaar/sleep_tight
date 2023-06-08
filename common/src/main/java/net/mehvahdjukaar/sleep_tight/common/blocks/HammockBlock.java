@@ -36,7 +36,6 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
-import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
@@ -60,7 +59,9 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     private final DyeColor color;
 
     public HammockBlock(DyeColor color) {
-        super(Properties.of(Material.WOOL, color.getMaterialColor())
+        super(Properties.of()
+                .mapColor(color.getMapColor())
+                .pushReaction(PushReaction.DESTROY)
                 .sound(SoundType.WOOL).strength(0.2F).noOcclusion());
         this.color = color;
         this.registerDefaultState(this.stateDefinition.any().setValue(PART, HammockPart.MIDDLE).setValue(OCCUPIED, false));
@@ -208,11 +209,6 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
                 default -> SHAPE_NORTH;
             };
         }
-    }
-
-    @Override
-    public PushReaction getPistonPushReaction(BlockState state) {
-        return PushReaction.DESTROY;
     }
 
     @Override

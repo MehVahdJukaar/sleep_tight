@@ -58,7 +58,7 @@ public class ModCommands {
                 cap.addInsomnia(serverPlayer, cooldown);
                 cap.syncToClient(serverPlayer);
 
-                context.getSource().sendSuccess(Component.translatable("message.sleep_tight.command.set_insomnia"), false);
+                context.getSource().sendSuccess(()->Component.translatable("message.sleep_tight.command.set_insomnia"), false);
                 return cooldown;
             }
             return 0;
@@ -76,7 +76,7 @@ public class ModCommands {
             if (context.getSource().getEntity() instanceof ServerPlayer serverPlayer) {
                 var cap = SleepTightPlatformStuff.getPlayerSleepData(serverPlayer);
                 int timeLeft = (int) cap.getInsomniaTimeLeft(serverPlayer);
-                context.getSource().sendSuccess(Component.translatable("message.sleep_tight.command.get_insomnia", timeLeft), false);
+                context.getSource().sendSuccess(()->Component.translatable("message.sleep_tight.command.get_insomnia", timeLeft), false);
                 return timeLeft;
             }
             return 0;
@@ -99,7 +99,7 @@ public class ModCommands {
                 cap.setConsecutiveNightsSlept(nights);
                 cap.syncToClient(serverPlayer);
 
-                context.getSource().sendSuccess(Component.translatable("message.sleep_tight.command.set_nights"), false);
+                context.getSource().sendSuccess(()->Component.translatable("message.sleep_tight.command.set_nights"), false);
                 return nights;
             }
             return 0;
@@ -118,7 +118,7 @@ public class ModCommands {
                 var cap = SleepTightPlatformStuff.getPlayerSleepData(serverPlayer);
 
                 int timeLeft = cap.getConsecutiveNightsSlept();
-                context.getSource().sendSuccess(Component.translatable("message.sleep_tight.command.get_nights", timeLeft), false);
+                context.getSource().sendSuccess(()->Component.translatable("message.sleep_tight.command.get_nights", timeLeft), false);
 
                 return timeLeft;
             }
@@ -142,7 +142,7 @@ public class ModCommands {
                 cap.setNightsSleptInHomeBed(nights);
                 cap.syncToClient(serverPlayer);
 
-                context.getSource().sendSuccess(Component.translatable("message.sleep_tight.command.set_home_bed_nights"), false);
+                context.getSource().sendSuccess(()->Component.translatable("message.sleep_tight.command.set_home_bed_nights"), false);
                 return nights;
             }
             return 0;
@@ -161,7 +161,7 @@ public class ModCommands {
                 var cap = SleepTightPlatformStuff.getPlayerSleepData(serverPlayer);
 
                 int timeLeft = cap.getNightsSleptInHomeBed();
-                context.getSource().sendSuccess(Component.translatable("message.sleep_tight.command.get_home_bed_nights", timeLeft), false);
+                context.getSource().sendSuccess(()->Component.translatable("message.sleep_tight.command.get_home_bed_nights", timeLeft), false);
 
                 return timeLeft;
             }
@@ -181,7 +181,7 @@ public class ModCommands {
                 var cap = SleepTightPlatformStuff.getPlayerSleepData(serverPlayer);
 
                 double nightmareChance = cap.getNightmareChance(serverPlayer, serverPlayer.getOnPos());
-                context.getSource().sendSuccess(Component.translatable("message.sleep_tight.command.nightmare_chance", String.format("%.3f", nightmareChance)), false);
+                context.getSource().sendSuccess(()->Component.translatable("message.sleep_tight.command.nightmare_chance", String.format("%.3f", nightmareChance)), false);
             }
             return 0;
         }

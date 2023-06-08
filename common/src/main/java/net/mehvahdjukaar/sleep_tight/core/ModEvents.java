@@ -109,10 +109,10 @@ public class ModEvents {
     @EventCalled
     public static boolean canSetSpawn(Player player, @Nullable BlockPos pos) {
         if (pos != null) {
-            if (!BedBlock.canSetSpawn(player.level) && !CommonConfigs.EXPLOSION_BEHAVIOR.get().canRespawn()) {
+            Level level = player.level();
+            if (!BedBlock.canSetSpawn(level) && !CommonConfigs.EXPLOSION_BEHAVIOR.get().canRespawn()) {
                 return false;
             }
-            Level level = player.getLevel();
             if (!level.isClientSide) {
                 return !(level.getBlockState(pos).getBlock() instanceof NightBagBlock);
             }
@@ -220,7 +220,7 @@ public class ModEvents {
     @EventCalled
     public static Vec3 getSleepingPosition(Entity entity, BlockState state, BlockPos pos) {
         //sleep started
-        if (entity.level.isClientSide) ClientEvents.onSleepStarted(entity, state, pos);
+        if (entity.level().isClientSide) ClientEvents.onSleepStarted(entity, state, pos);
         if (state.getBlock() instanceof IModBed iModBed) {
             return iModBed.getSleepingPosition(state, pos);
         } else if (state.is(BlockTags.BEDS)) {
@@ -267,13 +267,14 @@ public class ModEvents {
         if (p.isPresent()) {
             BlockPos pos = p.get();
             PlayerSleepData playerCap = SleepTightPlatformStuff.getPlayerSleepData(player);
-            BlockState state = player.level.getBlockState(pos);
+            Level level = player.level();
+            BlockState state = level.getBlockState(pos);
             ISleepTightBed bed = (ISleepTightBed) Blocks.RED_BED;
             if (state.getBlock() instanceof ISleepTightBed b) {
                 bed = b;
             }
             BedData data = null;
-            if (player.level.getBlockEntity(pos) instanceof IExtraBedDataProvider tile) {
+            if (level.getBlockEntity(pos) instanceof IExtraBedDataProvider tile) {
                 data = tile.st_getBedData();
                 playerCap.onNightSleptIntoBed(data, player);
 
@@ -296,7 +297,8 @@ public class ModEvents {
         var p = player.getSleepingPos();
         if (p.isPresent()) {
             BlockPos pos = p.get();
-            BlockState state = player.level.getBlockState(pos);
+            Level level = player.level();
+            BlockState state = level.getBlockState(pos);
             if (state.getBlock() instanceof IModBed bed) {
                 bed.onLeftBed(state, pos, player);
             }
@@ -305,11 +307,11 @@ public class ModEvents {
                 var data = SleepTightPlatformStuff.getPlayerSleepData(player);
                 if (data.usingDoubleBed()) {
                     BlockPos doublePos = BedEntity.getDoubleBedPos(pos, state);
-                    BlockState doubleState = player.level.getBlockState(doublePos);
+                    BlockState doubleState = level.getBlockState(doublePos);
                     if (doubleState.is(BlockTags.BEDS)) {
                         doubleState = doubleState.setValue(BedBlock.OCCUPIED, false);
                         if (doubleState == state) {
-                            player.level.setBlockAndUpdate(doublePos, doubleState);
+                            level.setBlockAndUpdate(doublePos, doubleState);
                         }
                     }
                     data.setDoubleBed(false);
@@ -323,7 +325,7 @@ public class ModEvents {
     //true if spawn should be cancelled
     @EventCalled
     public static boolean shouldCancelSetSpawn(Player entity, BlockPos newSpawn) {
-        if (entity.getLevel().getBlockState(newSpawn).getBlock() instanceof IModBed bed) {
+        if (entity.level().getBlockState(newSpawn).getBlock() instanceof IModBed bed) {
             return !bed.canSetSpawn();
         }
         return false;
@@ -339,8 +341,8 @@ public class ModEvents {
     @EventCalled
     public static boolean checkExtraSleepConditions(Player player, @Nullable BlockPos bedPos) {
         if (SleepTightPlatformStuff.getPlayerSleepData(player).isOnSleepCooldown(player)) {
-            if (!player.level.isClientSide) {
-                String s = isDayTime(player.level) ? "message.sleep_tight.insomnia.day" :
+            if (!player.level().isClientSide) {
+                String s = isDayTime(player.level()) ? "message.sleep_tight.insomnia.day" :
                         "message.sleep_tight.insomnia.night";
                 player.displayClientMessage(Component.translatable(s), true);
             }
@@ -361,8 +363,8 @@ public class ModEvents {
 
     @EventCalled
     public static void onEntityKilled(LivingEntity entity, Entity killer) {
-        if (!entity.isRemoved() && entity.level instanceof ServerLevel serverLevel) {
-            if (killer instanceof LivingEntity le && killer.wasKilled(serverLevel, entity)) {
+        if (!entity.isRemoved() && entity.level() instanceof ServerLevel serverLevel) {
+            if (killer instanceof LivingEntity le && killer.killedEntity(serverLevel, entity)) {
                 InvigoratedEffect.onLivingDeath(serverLevel, entity, le);
             }
         }

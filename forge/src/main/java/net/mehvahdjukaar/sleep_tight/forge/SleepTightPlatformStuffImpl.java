@@ -6,6 +6,7 @@ import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.ForgeEventFactory;
@@ -30,13 +31,14 @@ public class SleepTightPlatformStuffImpl {
             return ret;
         }
         if (!player.isSleeping() && player.isAlive()) {
-            if (!player.level.dimensionType().natural()) {
+            Level level = player.level();
+            if (!level.dimensionType().natural()) {
                 return Player.BedSleepingProblem.NOT_POSSIBLE_HERE;
             }
 
             if (!player.isCreative()) {
                 Vec3 vec3 = Vec3.atBottomCenterOf(pos);
-                List<Monster> list = player.level.getEntitiesOfClass(Monster.class,
+                List<Monster> list = level.getEntitiesOfClass(Monster.class,
                         new AABB(vec3.x() - 8.0, vec3.y() - 5.0, vec3.z() - 8.0, vec3.x() + 8.0, vec3.y() + 5.0, vec3.z() + 8.0),
                         m -> m.isPreventingPlayerRest(player)
                 );

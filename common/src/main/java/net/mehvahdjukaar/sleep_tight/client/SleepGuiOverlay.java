@@ -3,7 +3,6 @@ package net.mehvahdjukaar.sleep_tight.client;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
@@ -19,7 +18,7 @@ import net.minecraft.client.AttackIndicatorStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.InBedChatScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -33,7 +32,7 @@ import java.util.ArrayList;
 
 public abstract class SleepGuiOverlay<T extends Gui> {
 
-    public void render(T gui, PoseStack poseStack, float partialTicks, int width, int height) {
+    public void render(T gui, GuiGraphics graphics, float partialTicks, int width, int height) {
         Minecraft mc = Minecraft.getInstance();
         Options options = mc.options;
 
@@ -55,8 +54,8 @@ public abstract class SleepGuiOverlay<T extends Gui> {
             if (laying || (cooldown && (
                     (hit instanceof BlockHitResult bh && mc.level.getBlockState(bh.getBlockPos())
                             .getBlock() instanceof ISleepTightBed) ||
-                        player.getMainHandItem().getItem() instanceof NightBagItem
-                    ))) {
+                            player.getMainHandItem().getItem() instanceof NightBagItem
+            ))) {
 
 
                 var c = SleepTightPlatformStuff.getPlayerSleepData(player);
@@ -64,15 +63,15 @@ public abstract class SleepGuiOverlay<T extends Gui> {
                 if (f < 1) {
 
                     if (laying && timer) {
-                        mc.font.draw(poseStack, "" + c.getInsomniaTimeLeft(player)/20, 2.0F, 2, 14737632);
+                        graphics.drawString(mc.font, "" + c.getInsomniaTimeLeft(player) / 20, 2, 2, 14737632);
                     }
 
-                    if(cooldown) {
+                    if (cooldown) {
 
                         setupOverlayRenderState(gui, true, false, SleepTightClient.ICONS);
                         //gui.setBlitOffset(-90);
 
-                        poseStack.pushPose();
+                        graphics.pose().pushPose();
 
                         RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR,
                                 GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR, GlStateManager.SourceFactor.ONE,
@@ -82,17 +81,17 @@ public abstract class SleepGuiOverlay<T extends Gui> {
                         int j = height / 2 - 7 + 16;
                         int k = width / 2 - 6;
 
-                        if(mc.options.attackIndicator().get() == AttackIndicatorStatus.CROSSHAIR &&
-                                player.getAttackStrengthScale(0.0F) !=1){
+                        if (mc.options.attackIndicator().get() == AttackIndicatorStatus.CROSSHAIR &&
+                                player.getAttackStrengthScale(0.0F) != 1) {
                             j += 8;
                         }
 
                         int l = (int) (f * 11.0F);
-                        GuiComponent.blit(poseStack, k, j, 3, 18, 11, 5, 48, 48);
-                        GuiComponent.blit(poseStack, k, j, 16 + 3, 18, l, 5, 48, 48);
+                        graphics.blit(SleepTightClient.ICONS, k, j, 3, 18, 11, 5, 48, 48);
+                        graphics.blit(SleepTightClient.ICONS, k, j, 16 + 3f, 18, l, 5, 48, 48);
 
 
-                        poseStack.popPose();
+                        graphics.pose().popPose();
                     }
                 }
             }
@@ -107,26 +106,25 @@ public abstract class SleepGuiOverlay<T extends Gui> {
     //I have a player and a block entity serializable capability which i want to have access on client too. When is the correct time to sync them? For example player enters a world and its serverside caps are read and initialized but client one isnt.
 
 
-    public static void renderBedScreenOverlay(InBedChatScreen s, PoseStack poseStack, int mouseX, int mouseY) {
+    public static void renderBedScreenOverlay(InBedChatScreen s, GuiGraphics graphics, int mouseX, int mouseY) {
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
 
 
         if (ClientConfigs.SHOW_TIME.get()) {
-            mc.font.draw(poseStack, getCurrentTime(player.level), 2.0F, 2, 14737632);
+            graphics.drawString(mc.font, getCurrentTime(player.level()), 2, 2, 14737632);
         }
 
         //ModBedCapability cap = ModBedCapability.getHomeBedIfHere(player, p.get());
-        RenderSystem.setShaderTexture(0, SleepTightClient.ICONS);
         int y = s.height - 39;
         int iconSize = 18;
         if (isHomeBed) {
             int x = s.width / 2 - 120;
-            Gui.blit(poseStack, x, y, 0, 0, iconSize, iconSize, 48, 48);
+            graphics.blit(SleepTightClient.ICONS, x, y, 0, 0, iconSize, iconSize, 48, 48);
         }
         if (hasDreamerEssence) {
             int x = s.width / 2 + 120 - iconSize;
-            Gui.blit(poseStack, x, y, iconSize, 0, iconSize, iconSize, 48, 48);
+            graphics.blit(SleepTightClient.ICONS, x, y, iconSize, 0, iconSize, iconSize, 48, 48);
         }
 
         if (isHomeBed) {
@@ -138,14 +136,14 @@ public abstract class SleepGuiOverlay<T extends Gui> {
                 var lines = new ArrayList<>(mc.font.split(Component.translatable("gui.sleep_tight.home_bed"), 200));
                 lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.bed_level", bedLevel), 200));
                 lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.nightmare", nightmare), 200));
-                s.renderTooltip(poseStack, lines, mouseX, mouseY);
+                graphics.renderTooltip(mc.font, lines, mouseX, mouseY);
             }
         }
         if (hasDreamerEssence) {
             int x = s.width / 2 + 120 - iconSize;
             if (MthUtils.isWithinRectangle(x, y, iconSize, iconSize, mouseX, mouseY)) {
 
-                s.renderTooltip(poseStack, mc.font.split(Component.translatable("gui.sleep_tight.dreamer_essence"), 200), mouseX, mouseY);
+                graphics.renderTooltip(mc.font, mc.font.split(Component.translatable("gui.sleep_tight.dreamer_essence"), 200), mouseX, mouseY);
             }
         }
     }
@@ -175,8 +173,8 @@ public abstract class SleepGuiOverlay<T extends Gui> {
             isHomeBed = cap != null;
 
 
-            hasDreamerEssence = !(player.getLevel().getBlockState(pos).getBlock() instanceof NightBagBlock) &&
-                    DreamEssenceBlock.isInRange(pos, player.level);
+            hasDreamerEssence = !(player.level().getBlockState(pos).getBlock() instanceof NightBagBlock) &&
+                    DreamEssenceBlock.isInRange(pos, player.level());
         }
 
     }

@@ -48,7 +48,7 @@ public class SleepEffectsHelper {
         if (hunger == 0) return;
         HungerMode mode = CONSUME_HUNGER_MODE.get();
         if (mode == HungerMode.DIFFICULTY_BASED || mode == HungerMode.TIME_DIFFICULTY_BASED) {
-            int diff = player.getLevel().getDifficulty().getId();
+            int diff = player.level().getDifficulty().getId();
             if (diff == 0) return;
             else hunger *= 1 + ((diff - 1) * 0.25);
         }
@@ -128,20 +128,21 @@ public class SleepEffectsHelper {
     //true if can sleep
     public static boolean checkExtraRequirements(Player player, @Nullable BlockPos bedPos) {
         if (bedPos != null && !player.getAbilities().instabuild) {
-            BlockEntity tile = player.getLevel().getBlockEntity(bedPos);
+            Level level = player.level();
+            BlockEntity tile = level.getBlockEntity(bedPos);
             if (tile == null && !REQUIREMENT_NIGHT_BAG.get()) return true; //only hammocks have null tile of our bocks
             if (tile instanceof HammockTile && !REQUIREMENT_HAMMOCK.get()) return true;
             if (!REQUIREMENT_BED.get()) return true;
 
             int xp = XP_COST.get();
             if (xp != 0 && player.totalExperience < xp) {
-                if (player.level.isClientSide) {
+                if (level.isClientSide) {
                     player.displayClientMessage(Component.translatable("message.sleep_tight.xp"), true);
                 }
                 return false;
             }
             if (NEED_FULL_HUNGER.get() && player.getFoodData().needsFood()) {
-                if (player.level.isClientSide) {
+                if (level.isClientSide) {
                     player.displayClientMessage(Component.translatable("message.sleep_tight.hunger"), true);
                 }
                 return false;
@@ -155,7 +156,7 @@ public class SleepEffectsHelper {
     @org.jetbrains.annotations.Nullable
     public static BlockPos getPartnerPos(Player player, BlockState state, BlockPos pos) {
         var mode = CommonConfigs.HEARTSTONE_MODE.get();
-        Level level = player.getLevel();
+        Level level = player.level();
         if (mode.isOn() && state.getBlock() instanceof BedBlock) {
             BlockPos otherPos = BedEntity.getDoubleBedPos(pos, state);
             boolean x = hasPartnerAt(player, mode, level, otherPos);
