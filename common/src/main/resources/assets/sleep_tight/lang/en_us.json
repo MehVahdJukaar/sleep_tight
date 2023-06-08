@@ -53,5 +53,22 @@
   "advancements.adventure.hammock.title": "Inertia is a Property of Matter",
   "advancements.adventure.hammock.description": "Fall off a Hammock",
   "item.sleep_tight.moon_banner_pattern": "Banner Pattern",
-  "item.sleep_tight.moon_banner_pattern.desc": "Moon Charge"
+  "item.sleep_tight.moon_banner_pattern.desc": "Moon Charge",
+
+  "block.minecraft.banner.creeper.black": "Black Moon Charge",
+  "block.minecraft.banner.creeper.blue": "Blue Moon Charge",
+  "block.minecraft.banner.creeper.brown": "Brown Moon Charge",
+  "block.minecraft.banner.creeper.cyan": "Cyan Moon Charge",
+  "block.minecraft.banner.creeper.gray": "Gray Moon Charge",
+  "block.minecraft.banner.creeper.green": "Green Moon Charge",
+  "block.minecraft.banner.creeper.light_blue": "Light Blue Moon Charge",
+  "block.minecraft.banner.creeper.light_gray": "Light Gray Moon Charge",
+  "block.minecraft.banner.creeper.lime": "Lime Moon Charge",
+  "block.minecraft.banner.creeper.magenta": "Magenta Moon Charge",
+  "block.minecraft.banner.creeper.orange": "Orange Moon Charge",
+  "block.minecraft.banner.creeper.pink": "Pink Moon Charge",
+  "block.minecraft.banner.creeper.purple": "Purple Moon Charge",
+  "block.minecraft.banner.creeper.red": "Red Moon Charge",
+  "block.minecraft.banner.creeper.white": "White Moon Charge",
+  "block.minecraft.banner.creeper.yellow": "Yellow Moon Charge"
 }

@@ -57,7 +57,7 @@ public class SleepTightFabricClient {
 
         public void render(PoseStack poseStack, float partialTicks) {
             Minecraft mc = Minecraft.getInstance();
-            render(mc.gui, poseStack, partialTicks, mc.getWindow().getWidth(), mc.getWindow().getHeight());
+            render(mc.gui, poseStack, partialTicks, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
         }
     }
 }
