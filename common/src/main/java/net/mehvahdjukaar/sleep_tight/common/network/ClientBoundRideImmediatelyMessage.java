@@ -19,9 +19,6 @@ public class ClientBoundRideImmediatelyMessage implements Message {
 
     public ClientBoundRideImmediatelyMessage(Entity entity) {
         this.id = entity.getId();
-        if(entity instanceof BedEntity bed){
-            ClientEvents.displayRidingMessage(bed);
-        }
     }
 
     @Override

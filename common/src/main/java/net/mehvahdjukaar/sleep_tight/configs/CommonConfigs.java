@@ -13,9 +13,10 @@ import org.jetbrains.annotations.Contract;
 import java.util.List;
 import java.util.function.Supplier;
 
+import static net.mehvahdjukaar.sleep_tight.SleepTight.EASY_MODE;
+
 public class CommonConfigs {
 
-    public static final boolean EASY_MODE = false;
 
 
     public static final Supplier<Boolean> FIX_BED_POSITION;
