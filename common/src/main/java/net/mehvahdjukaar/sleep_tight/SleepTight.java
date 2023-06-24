@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
  */
 public class SleepTight {
 
-    public static final boolean EASY_MODE = false;
+    public static final boolean EASY_MODE = true;
 
 
 

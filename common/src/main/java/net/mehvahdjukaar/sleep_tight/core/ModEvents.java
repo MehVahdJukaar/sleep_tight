@@ -110,13 +110,16 @@ public class ModEvents {
     public static boolean canSetSpawn(Player player, @Nullable BlockPos pos) {
         if (pos != null) {
             Level level = player.level();
-            if (!BedBlock.canSetSpawn(level) && !CommonConfigs.EXPLOSION_BEHAVIOR.get().canRespawn()) {
+            Block block = level.getBlockState(pos).getBlock();
+
+            if (block instanceof  BedBlock && !BedBlock.canSetSpawn(level) && !CommonConfigs.EXPLOSION_BEHAVIOR.get().canRespawn()) {
                 return false;
             }
-            if (!level.isClientSide) {
-                return !(level.getBlockState(pos).getBlock() instanceof NightBagBlock);
+            if ((block instanceof NightBagBlock)) {
+                return false;
             }
         }
+        //pass
         return true;
     }
 
@@ -132,8 +135,8 @@ public class ModEvents {
             var state = level.getBlockState(pos);
             Block b = state.getBlock();
 
-            if(b instanceof InfestedBedBlock){
-                return state.use(level, player, hand,hitResult);
+            if (b instanceof InfestedBedBlock) {
+                return state.use(level, player, hand, hitResult);
             }
 
             if (isValidBed(state)) {
@@ -281,7 +284,7 @@ public class ModEvents {
             }
 
             if (bed.st_canSpawnBedbugs()) {
-                WakeUpEncounterHelper.trySpawningBedbug(pos,  player, data);
+                WakeUpEncounterHelper.trySpawningBedbug(pos, player, data);
             }
 
             SleepEffectsHelper.applyEffectsOnWakeUp(playerCap, player, dayTimeDelta, pos, bed, state, data);
