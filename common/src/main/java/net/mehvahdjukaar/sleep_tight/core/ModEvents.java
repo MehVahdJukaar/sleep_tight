@@ -110,12 +110,14 @@ public class ModEvents {
     @EventCalled
     public static boolean canSetSpawn(Player player, @Nullable BlockPos pos) {
         if (pos != null) {
-            if (!BedBlock.canSetSpawn(player.level) && !CommonConfigs.EXPLOSION_BEHAVIOR.get().canRespawn()) {
+            Level level = player.getLevel();
+            Block block = level.getBlockState(pos).getBlock();
+
+            if (block instanceof BedBlock && !BedBlock.canSetSpawn(player.level) && !CommonConfigs.EXPLOSION_BEHAVIOR.get().canRespawn()) {
                 return false;
             }
-            Level level = player.getLevel();
             if (!level.isClientSide) {
-                return !(level.getBlockState(pos).getBlock() instanceof NightBagBlock);
+                return !(block instanceof NightBagBlock);
             }
         }
         return true;

@@ -1,4 +1,1 @@
-- added config to sleep immediately
-- fixed sleep encounters spawning when not in los
-- players on sleep cooldown are no longer counter towards the players needed to skip the night count
-- fixed sleep cooldown hud not rendering correctly on fabric
+fixed respawn anchors not working
