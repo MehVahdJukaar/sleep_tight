@@ -43,7 +43,7 @@ subprojects {
         modrinth {
             projectId = "sleep-tight"
             uploadFile = tasks.remapJar
-            gameVersions = [rootProject.minecraft_version]
+            gameVersions = [rootProject.minecraft_version,rootProject.minecraft_version_2]
             loaders = [modLoader]
             changelog = changelogText
 
@@ -68,6 +68,7 @@ subprojects {
                 changelog = changelogText
                 releaseType = rootProject.release_type
                 addGameVersion rootProject.minecraft_version
+                addGameVersion rootProject.minecraft_version_2
                 addGameVersion modLoader.capitalize()
 
                 mainArtifact(tasks.remapJar)
