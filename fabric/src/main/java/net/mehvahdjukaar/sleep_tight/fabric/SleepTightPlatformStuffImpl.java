@@ -1,9 +1,12 @@
 package net.mehvahdjukaar.sleep_tight.fabric;
 
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
+import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
+import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -20,6 +23,10 @@ public class SleepTightPlatformStuffImpl {
 
     @org.jetbrains.annotations.Contract
     public static Player.BedSleepingProblem invokeSleepChecksEvents(Player player, BlockPos pos) {
+        if( !ModEvents.checkExtraSleepConditions(player, pos)){
+            return null; //idk why but we need this here to match forge (called by event there)
+        }
+
         if (!player.isSleeping() && player.isAlive()) {
             Level level = player.level();
             if (!level.dimensionType().natural()) {
