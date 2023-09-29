@@ -8,12 +8,13 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class SleepTightPlatformStuffImpl {
     @org.jetbrains.annotations.Contract
-    public static PlayerSleepData getPlayerSleepData(Player player) {
+    public static PlayerSleepData getPlayerSleepData(@NotNull Player player) {
         return ((ISleepTightPlayer) player).getSleepData();
     }
 

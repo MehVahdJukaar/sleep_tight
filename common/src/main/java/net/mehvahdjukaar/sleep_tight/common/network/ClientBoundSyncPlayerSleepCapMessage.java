@@ -7,6 +7,7 @@ import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.levelgen.structure.structures.WoodlandMansionStructure;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
@@ -57,6 +58,7 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     @Override
     public void handle(ChannelHandler.Context context) {
         Player p = SleepTightClient.getPlayer();
+        if (p == null) return;
         var c = SleepTightPlatformStuff.getPlayerSleepData(p);
         c.acceptFromServer(this.id, this.insomniaElapse, this.sleepTime, this.consecutiveNights, this.homeBedNights, this.doubleBed);
     }

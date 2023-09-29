@@ -1,1 +1,1 @@
-fixed respawn anchors not working
+added a null player check just incase
