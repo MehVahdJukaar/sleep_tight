@@ -57,6 +57,9 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     @Override
     public void handle(ChannelHandler.Context context) {
         Player p = SleepTightClient.getPlayer();
+        if(p == null){
+            return;
+        }
         var c = SleepTightPlatformStuff.getPlayerSleepData(p);
         c.acceptFromServer(this.id, this.insomniaElapse, this.sleepTime, this.consecutiveNights, this.homeBedNights, this.doubleBed);
     }
