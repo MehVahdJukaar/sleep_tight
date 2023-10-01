@@ -1,1 +1,2 @@
-added a null player check just incase
+- fixed home bed status not saving after world load
+- mansion beds are all infested now

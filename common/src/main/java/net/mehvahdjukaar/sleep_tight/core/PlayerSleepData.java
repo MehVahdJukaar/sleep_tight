@@ -19,6 +19,13 @@ import java.util.UUID;
 //ideally only data associated with a player here. Does contain some logic...
 public abstract class PlayerSleepData {
 
+    protected static final String HOME_BED_NBT = "home_bed_id";
+    protected static final String INSOMNIA_ELAPSE_NBT = "insomnia_elapses_at";
+    protected static final String LAST_TIME_SLEPT_NBT = "last_time_slept";
+    protected static final String CONSECUTIVE_NIGHTS_NBT = "consecutive_nights";
+    protected static final String HOME_BED_LEVEL_NBT = "home_bed_nights";
+    protected static final String USING_DOUBLE_BED_NBT = "using_double_bed";
+
     @Nullable
     private UUID homeBed = null;
     private long insomniaWillElapseTimeStamp = 0;
@@ -29,19 +36,21 @@ public abstract class PlayerSleepData {
 
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
-        if (homeBed != null) tag.putUUID("home_bed_id", homeBed);
-        tag.putLong("insomnia_elapses_at", insomniaWillElapseTimeStamp);
-        tag.putLong("last_time_slept", lastWokenUpTimeStamp);
-        tag.putInt("consecutive_nights", consecutiveNightsSlept);
-        tag.putInt("home_bed_nights", nightsSleptInHomeBed);
-        tag.putBoolean("using_double_bed", usingDoubleBed);
+        if (homeBed != null) {
+            tag.putUUID(HOME_BED_NBT, homeBed);
+        }
+        tag.putLong(INSOMNIA_ELAPSE_NBT, insomniaWillElapseTimeStamp);
+        tag.putLong(LAST_TIME_SLEPT_NBT, lastWokenUpTimeStamp);
+        tag.putInt(CONSECUTIVE_NIGHTS_NBT, consecutiveNightsSlept);
+        tag.putInt(HOME_BED_LEVEL_NBT, nightsSleptInHomeBed);
+        tag.putBoolean(USING_DOUBLE_BED_NBT, usingDoubleBed);
         return tag;
     }
 
     public void deserializeNBT(CompoundTag tag) {
-        if (tag.contains("bed_id")) this.homeBed = tag.getUUID("home_bed_id");
-        this.insomniaWillElapseTimeStamp = tag.getLong("insomnia_elapses_at");
-        this.lastWokenUpTimeStamp = tag.getLong("last_time_slept");
+        if (tag.contains(HOME_BED_NBT)) this.homeBed = tag.getUUID(HOME_BED_NBT);
+        this.insomniaWillElapseTimeStamp = tag.getLong(INSOMNIA_ELAPSE_NBT);
+        this.lastWokenUpTimeStamp = tag.getLong(LAST_TIME_SLEPT_NBT);
         this.consecutiveNightsSlept = tag.getInt("consecutive_nights");
         this.nightsSleptInHomeBed = tag.getInt("home_bed_nights");
         this.usingDoubleBed = tag.getBoolean("using_double_bed");
