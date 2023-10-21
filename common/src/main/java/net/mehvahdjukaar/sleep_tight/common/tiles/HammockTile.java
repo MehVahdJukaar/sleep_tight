@@ -1,6 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.common.tiles;
 
 import dev.architectury.injectables.annotations.PlatformOnly;
+import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
@@ -14,6 +15,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -42,7 +44,8 @@ public class HammockTile extends BlockEntity {
         this.color = ((HammockBlock) blockState.getBlock()).getColor();
         this.pivotOffset = blockState.getValue(HammockBlock.PART).getPivotOffset();
         this.direction = blockState.getValue(HammockBlock.FACING);
-        this.angle = 0 * (float) ((RandomSource.create().nextFloat() - 0.5) * Math.toRadians(ClientConfigs.HAMMOCK_MIN_ANGLE.get()));
+        this.angle = PlatHelper.getPhysicalSide().isClient() ?  0 * (float) ((RandomSource.create().nextFloat() - 0.5) *
+                Math.toRadians(ClientConfigs.HAMMOCK_MIN_ANGLE.get())) : 0;
     }
 
 
@@ -146,10 +149,10 @@ public class HammockTile extends BlockEntity {
         e.accelerateRight = false;
 
         //client is in charge here. Therefore they are only in charge of their own player
-        if (Mth.abs(e.angle) > 0.2 + Mth.PI / 2 && ClientConfigs.HAMMOCK_FALL.get()) {
+        if (Mth.abs(e.angle) > -0.2 + Mth.PI / 2 && ClientConfigs.HAMMOCK_FALL.get()) {
             for (var b : e.level.getEntitiesOfClass(BedEntity.class, new AABB(pos))) {
                 for (var p : b.getPassengers()) {
-                    if (p == SleepTightClient.getPlayer()) {
+                    if (p instanceof  Player pp && pp.isLocalPlayer()) {
                         NetworkHandler.CHANNEL.sendToServer(new ServerBoundFallFromHammockMessage());
                     } else return;
                 }

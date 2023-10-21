@@ -1,2 +1,3 @@
-- fixed home bed status not saving after world load
-- mansion beds are all infested now
+- villagers will close theie eyes when sleeping
+- fixed server sided crash
+- fixed infested bed render bounding box

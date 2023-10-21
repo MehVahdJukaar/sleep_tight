@@ -6,7 +6,8 @@
   "client": [
     "GameRendererMixin",
     "LevelRendererMixin",
-    "LivingEntityRendererMixin"
+    "LivingEntityRendererMixin",
+    "VillagerRendererMixin"
   ],
   "mixins": [
     "BedBlockEntityMixin",

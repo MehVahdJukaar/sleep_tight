@@ -19,14 +19,13 @@ public class InfestedBedRenderer implements BlockEntityRenderer<InfestedBedTile>
 
     }
 
-
+    @Override
     public void render(InfestedBedTile blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
         BlockEntity inner = blockEntity.getInner();
         if (inner != null) {
             poseStack.translate(0.5, 0.5, 0.5);
             poseStack.mulPose(Axis.YP.rotationDegrees(-blockEntity.getBlockState().getValue(BedBlock.FACING).toYRot()));
             poseStack.translate(-0.5, -0.5, -0.5);
-
             renderInner(inner, partialTick, poseStack, bufferSource, packedLight, packedOverlay);
         }
     }

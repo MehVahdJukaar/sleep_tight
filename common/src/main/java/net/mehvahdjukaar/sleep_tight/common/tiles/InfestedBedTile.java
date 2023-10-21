@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
 public class InfestedBedTile extends MimicBlockTile {
@@ -117,5 +118,11 @@ public class InfestedBedTile extends MimicBlockTile {
         mobTag.remove("Leash");
         mobTag.remove("UUID");//TODO: UUID
         return mobTag;
+    }
+
+    //@Override
+    public AABB getRenderBoundingBox() {
+        BlockPos pos = this.getBlockPos();
+        return new AABB(pos.offset(-1, 0, -1), pos.offset(2, 2, 2));
     }
 }
