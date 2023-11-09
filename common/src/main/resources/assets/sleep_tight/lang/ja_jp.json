@@ -45,7 +45,7 @@
   "effect.sleep_tight.invigorating.description": "mobを倒した際の経験値が少し増加します",
   "entity.sleep_tight.bedbug": "トコジラミ",
   "item.sleep_tight.bedbug_eggs": "トコジラミの卵",
-  "item.sleep_tight.bedbug_spawn_egg": "トコジラミのスポーンエッグ"
+  "item.sleep_tight.bedbug_spawn_egg": "トコジラミのスポーンエッグ",
   "subtitles.sleep_tight.bedbug.death": "トコジラミが死ぬ",
   "subtitles.sleep_tight.bedbug.ambient": "トコジラミが鳴く",
   "subtitle.sleep_tight.bedbug.hurt": "トコジラミがダメージを受ける",
