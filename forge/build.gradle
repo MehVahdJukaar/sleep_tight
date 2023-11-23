@@ -103,8 +103,9 @@ dependencies {
 
     implementation 'org.jetbrains:annotations:22.0.0'
 
-    modImplementation("net.mehvahdjukaar:moonlight-forge:${project.moonlight_version}")
-    modImplementation("net.mehvahdjukaar:heartstone-forge:1.19.2-1.1.2")
+    //modImplementation("net.mehvahdjukaar:moonlight-forge:${project.moonlight_version}")
+    //modImplementation("net.mehvahdjukaar:heartstone-forge:1.19.2-1.1.2")
+    modImplementation("curse.maven:heartstone-573152:4569323")
     //modImplementation ("curse.maven:jei-238222:3884337")
     //modImplementation ("curse.maven:fantasys-furniture-579564:4183177")
     modImplementation ("curse.maven:enhanced-celestials-438447:4393946")
@@ -115,4 +116,7 @@ dependencies {
 
     modCompileOnly("curse.maven:autoreglib-250363:3857246")
     modCompileOnly("curse.maven:quark-243121:4426258")
+
+    modImplementation ("curse.maven:selene-499980:4843863")
+
 }

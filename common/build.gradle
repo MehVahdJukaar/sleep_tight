@@ -10,10 +10,11 @@ dependencies {
 
     modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
 
-    modImplementation("net.mehvahdjukaar:moonlight:${project.moonlight_version}")
+    //modImplementation("net.mehvahdjukaar:moonlight:${project.moonlight_version}")
     //modImplementation ("curse.maven:supplementaries-412082:4375776")
     modCompileOnly ("curse.maven:supplementaries-412082:4592008")
     modCompileOnly ("curse.maven:heartstone-573152:4569323")
+    modImplementation ("curse.maven:selene-499980:4843865")
 
 }
 
