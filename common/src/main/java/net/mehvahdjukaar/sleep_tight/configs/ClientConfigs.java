@@ -19,6 +19,7 @@ public class ClientConfigs {
     public static final Supplier<Double> CAMERA_ROLL_INTENSITY;
     public static final Supplier<Boolean> HAMMOCK_ANIMATION;
     public static final Supplier<Boolean> HAMMOCK_FALL;
+    public static final Supplier<Boolean> VILLAGER_SLEEP;
 
     public static final Supplier<Double> PARTICLE_ALPHA;
     public static final Supplier<Integer> PARTICLE_LIFETIME;
@@ -76,6 +77,8 @@ public class ClientConfigs {
                 .define("show_time_when_sleeping", true);
         SLEEP_IMMEDIATELY = builder.comment("Automatically attempt sleeping when laying on a bed")
                         .define("sleep_immediately", false);
+        VILLAGER_SLEEP = builder.comment("Makes villagers close their eyes when sleeping")
+                        .define("sleeping_villagers_eyes", true);
         builder.pop();
 
         builder.onChange(ClientConfigs::onChange);
