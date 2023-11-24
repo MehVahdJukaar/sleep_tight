@@ -1,24 +1,20 @@
 package net.mehvahdjukaar.sleep_tight.common.tiles;
 
-import com.mojang.serialization.Codec;
 import net.mehvahdjukaar.moonlight.api.block.MimicBlockTile;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.BedBlock;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
 public class InfestedBedTile extends MimicBlockTile {
@@ -46,9 +42,7 @@ public class InfestedBedTile extends MimicBlockTile {
         if (state.getBlock() instanceof EntityBlock eb && getBlockState().getValue(BedBlock.PART) == BedPart.HEAD) {
             innerTile = eb.newBlockEntity(this.worldPosition, state);
         }
-        var r = super.setHeldBlock(state, index);
-
-        return r;
+        return super.setHeldBlock(state, index);
     }
 
     @Override
@@ -67,9 +61,6 @@ public class InfestedBedTile extends MimicBlockTile {
         }
     }
 
-
-
-
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
@@ -87,6 +78,7 @@ public class InfestedBedTile extends MimicBlockTile {
         return mimic;
     }
 
+    //TODO:
     private static CompoundTag prepareMobTagForContainer(Entity entity, double yOffset) {
         //set post relative to center block cage
         double px = 0.5;
@@ -128,5 +120,11 @@ public class InfestedBedTile extends MimicBlockTile {
         mobTag.remove("Leash");
         mobTag.remove("UUID");//TODO: UUID
         return mobTag;
+    }
+
+    //@Override
+    public AABB getRenderBoundingBox() {
+        BlockPos pos = this.getBlockPos();
+        return new AABB(pos.offset(-1, 0, -1), pos.offset(2, 2, 2));
     }
 }
