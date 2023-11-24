@@ -1,3 +1,1 @@
-- villagers will close theie eyes when sleeping
-- fixed server sided crash
-- fixed infested bed render bounding box
+added villager sleep config

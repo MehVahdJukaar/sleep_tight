@@ -24,7 +24,7 @@ public abstract class ClientPacketListenerMixin {
             target = "Lnet/minecraft/network/chat/Component;translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;",
     shift = At.Shift.BEFORE), locals = LocalCapture.CAPTURE_FAILHARD,  cancellable = true)
     public void mountBed(ClientboundSetPassengersPacket packet, CallbackInfo ci, Entity vehicle, boolean bl, int[] var4, int var5, int var6, int i, Entity entity2){
-        //hack since beds can only have 1 passenger, so we can cancel
+        //hack since beds can only have one passenger, so we can cancel
         if(vehicle instanceof BedEntity bed){
             if (!CommonConfigs.SLEEP_IMMEDIATELY.get()) {
                 Component component = bed.getRidingMessage(this.minecraft.options.keyJump.getTranslatedKeyMessage(),

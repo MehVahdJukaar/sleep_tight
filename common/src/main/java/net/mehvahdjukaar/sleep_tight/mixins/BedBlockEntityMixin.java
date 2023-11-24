@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.Unique;
 public abstract class BedBlockEntityMixin extends BlockEntity implements IExtraBedDataProvider {
 
     @Unique
-    private final BedData bedCapability = new BedData();
+    private final BedData sleep_tight$bedCapability = new BedData();
 
     protected BedBlockEntityMixin(BlockEntityType<?> blockEntityType, BlockPos blockPos, BlockState blockState) {
         super(blockEntityType, blockPos, blockState);
@@ -30,18 +30,18 @@ public abstract class BedBlockEntityMixin extends BlockEntity implements IExtraB
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        if (!bedCapability.isEmpty()) tag.put("sleep_tight_data", bedCapability.serializeNBT());
+        if (!sleep_tight$bedCapability.isEmpty()) tag.put("sleep_tight_data", sleep_tight$bedCapability.serializeNBT());
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
         var c = tag.getCompound("sleep_tight_data");
-        if (c != null) this.bedCapability.deserializeNBT(c);
+        if (c != null) this.sleep_tight$bedCapability.deserializeNBT(c);
     }
 
     @Override
     public BedData st_getBedData() {
-        return bedCapability;
+        return sleep_tight$bedCapability;
     }
 }
