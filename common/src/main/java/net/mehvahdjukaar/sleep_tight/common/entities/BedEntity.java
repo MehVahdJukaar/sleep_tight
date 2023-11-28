@@ -354,8 +354,12 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
 
 
     public void startSleepingOn(ServerPlayer player) {
-
+        //safety check because we call startSleepInBed
         BlockPos pos = this.blockPosition();
+        if(!isValidBed(level.getBlockState(pos))){
+            return;
+        }
+
         this.dismountOnTheSpot = true;
         var r = player.startSleepInBed(pos);
         this.dismountOnTheSpot = false;

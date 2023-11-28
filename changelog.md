@@ -1,5 +1,1 @@
-- fixed home bed status not saving after world load
-- mansion beds are all infested now
-- villagers will close their eyes when sleeping
-- ~~fixed server sided crash~~ (Not sure this was backported -ArkVeil)
-- fixed infested bed render bounding box
+added some safety checks
