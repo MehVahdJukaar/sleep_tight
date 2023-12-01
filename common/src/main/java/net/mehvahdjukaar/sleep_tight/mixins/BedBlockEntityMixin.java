@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
 
-@Mixin(BedBlockEntity.class)
+@Mixin(value = BedBlockEntity.class, priority = 1100)
 public abstract class BedBlockEntityMixin extends BlockEntity implements IExtraBedDataProvider {
 
     @Unique

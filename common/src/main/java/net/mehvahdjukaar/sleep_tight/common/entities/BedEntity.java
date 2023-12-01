@@ -354,8 +354,11 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
 
 
     public void startSleepingOn(ServerPlayer player) {
-
+        //safety check since we call startSleepInBed
         BlockPos pos = this.blockPosition();
+        if(!this.isValidBed(level().getBlockState(pos))){
+            return;
+        }
         this.dismountOnTheSpot = true;
         var r = player.startSleepInBed(pos);
         this.dismountOnTheSpot = false;
@@ -437,7 +440,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             var d = player.getDeltaMovement();
             double vel = d.dot(MthUtils.V3itoV3(tile.getDirection().getClockWise().getNormal())) / d.length();
 
-            tile.addImpulse(-vel * 1.1f);
+            tile.addImpulse((float) (-vel * 1.1f));
         }
     }
 

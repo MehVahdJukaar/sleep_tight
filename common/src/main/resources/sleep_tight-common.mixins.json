@@ -12,6 +12,7 @@
   "mixins": [
     "BedBlockEntityMixin",
     "BedBlockMixin",
+    "BlockEntityMixin",
     "DoorBlockMixin",
     "LivingEntityMixin",
     "PhantomMixin",

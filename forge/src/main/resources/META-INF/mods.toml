@@ -46,5 +46,5 @@ Balanced sleep overhaul & hammocks
 [[dependencies.sleep_tight]]
     modId="moonlight"
     mandatory=true
-    versionRange="[1.20-2.5.0,]"
+    versionRange="[1.20-2.8.67,]"
     side="BOTH"
