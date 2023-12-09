@@ -67,10 +67,13 @@ public class SleepTight {
 
 
     public static void commonInit() {
-
         NetworkHandler.registerMessages();
-        ClientConfigs.init();
         CommonConfigs.init();
+
+        if (PlatHelper.getPhysicalSide().isClient()) {
+            PackProvider.INSTANCE.register();
+            ClientConfigs.init();
+        }
 
         ModCommands.init();
         RegHelper.addAttributeRegistration(SleepTight::registerEntityAttributes);

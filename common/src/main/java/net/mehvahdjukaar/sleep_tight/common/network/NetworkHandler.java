@@ -13,7 +13,7 @@ public class NetworkHandler {
         CHANNEL.register(NetworkDir.BOTH, AccelerateHammockMessage.class, AccelerateHammockMessage::new);
         CHANNEL.register(NetworkDir.PLAY_TO_CLIENT, ClientBoundSyncPlayerSleepCapMessage.class, ClientBoundSyncPlayerSleepCapMessage::new);
         CHANNEL.register(NetworkDir.PLAY_TO_CLIENT, ClientBoundParticleMessage.class, ClientBoundParticleMessage::new);
-        CHANNEL.register(NetworkDir.PLAY_TO_CLIENT, ClientBoundRideImmediatelyMessage.class, ClientBoundRideImmediatelyMessage::new);
+        CHANNEL.register(NetworkDir.PLAY_TO_CLIENT, ClientBoundAlightCameraOnLayMessage.class, ClientBoundAlightCameraOnLayMessage::new);
         CHANNEL.register(NetworkDir.PLAY_TO_CLIENT, ClientBoundSleepImmediatelyMessage.class, ClientBoundSleepImmediatelyMessage::new);
         CHANNEL.register(NetworkDir.PLAY_TO_CLIENT, ClientBoundNightmarePacket.class, ClientBoundNightmarePacket::new);
     }
