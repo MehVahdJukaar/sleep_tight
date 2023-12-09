@@ -45,10 +45,6 @@ public class SleepTightClient {
     }
 
 
-
-    public static void setup() {
-    }
-
     private static ModelLayerLocation loc(String name) {
         return new ModelLayerLocation(SleepTight.res(name), name);
     }

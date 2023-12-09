@@ -26,11 +26,9 @@ public class SleepTightFabric implements ModInitializer {
         SleepTight.commonInit();
 
         if (PlatHelper.getPhysicalSide().isClient()) {
-            MLFabricSetupCallbacks.CLIENT_SETUP.add(SleepTightClient::init);
+            SleepTightClient.init();
             SleepTightFabricClient.init();
         }
-
-        MLFabricSetupCallbacks.COMMON_SETUP.add(SleepTight::commonSetup);
 
         UseBlockCallback.EVENT.register(ModEvents::onRightClickBlock);
 

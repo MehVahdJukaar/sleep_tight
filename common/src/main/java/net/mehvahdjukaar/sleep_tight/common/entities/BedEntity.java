@@ -6,9 +6,10 @@ import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
+import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.IModBed;
-import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundRideImmediatelyMessage;
+import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundAlightCameraOnLayMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSleepImmediatelyMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
 import net.mehvahdjukaar.sleep_tight.common.network.ServerBoundCommitSleepMessage;
@@ -21,6 +22,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -270,6 +272,18 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         passenger.setYRot(this.getYRot());
         passenger.setOldPosAndRot();
         passenger.setPose(Pose.SLEEPING);
+        if (level().isClientSide && passenger instanceof Player player) {
+            alignCamera(player, this.getYRot());
+            //needed on forge i believe
+            ClientEvents.displayRidingMessage(this);
+        }
+    }
+
+    public static void alignCamera(Player player, float bedYRot) {
+        player.setYRot(bedYRot);
+        player.setYHeadRot(bedYRot);
+        player.yRotO = player.getYRot();
+        player.yHeadRotO = player.yHeadRot;
     }
 
     @Override
@@ -302,16 +316,17 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     public void writeSpawnData(FriendlyByteBuf buf) {
         buf.writeInt(this.dir.get2DDataValue());
         buf.writeInt(this.getOffsetMode().ordinal());
+        buf.writeUUID(this.getPassengers().get(0).getUUID());
     }
 
     @Override
     public void readSpawnData(FriendlyByteBuf buf) {
         this.dir = Direction.from2DDataValue(buf.readInt());
         this.setOffsetMode(OffsetMode.values()[buf.readInt()]);
-
+        this.level().getPlayerByUUID(buf.readUUID()).startRiding(this);
     }
 
-    public Component getRidingMessage(Component keyMessage, Component shiftMessage) {
+    public MutableComponent getRidingMessage(Component keyMessage, Component shiftMessage) {
         this.bedState = level().getBlockState(this.blockPosition());
         if (bedState.getBlock() instanceof HammockBlock) {
             return Component.translatable("message.sleep_tight.start_resting", keyMessage, shiftMessage);
@@ -356,7 +371,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     public void startSleepingOn(ServerPlayer player) {
         //safety check since we call startSleepInBed
         BlockPos pos = this.blockPosition();
-        if(!this.isValidBed(level().getBlockState(pos))){
+        if (!this.isValidBed(level().getBlockState(pos))) {
             return;
         }
         this.dismountOnTheSpot = true;
@@ -426,13 +441,14 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             }
             level.setBlockAndUpdate(pos, state.setValue(BedBlock.OCCUPIED, true));
 
-            BedEntity entity = new BedEntity(level, pos, state, mode);
+            BedEntity bedEntity = new BedEntity(level, pos, state, mode);
 
-            level.addFreshEntity(entity);
-            player.startRiding(entity);
+            player.startRiding(bedEntity);
+            level.addFreshEntity(bedEntity);
             if (player instanceof ServerPlayer serverPlayer) {
-                //dont ask me why this is needed
-                NetworkHandler.CHANNEL.sendToClientPlayer(serverPlayer, new ClientBoundRideImmediatelyMessage(entity));
+                //Don't ask me why this is needed. Align camera immediately to prevent camera jerk
+                //TODO: actually this doesnt even work. Fix. Also fix shifting when going off bed
+                NetworkHandler.CHANNEL.sendToClientPlayer(serverPlayer, new ClientBoundAlightCameraOnLayMessage(bedEntity));
             }
 
         } else if (level.getBlockEntity(pos) instanceof HammockTile tile) {
