@@ -20,7 +20,7 @@ public abstract class SleepStatusMixin {
 
     @Inject(method = "update",at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;isSleeping()Z",
     shift = At.Shift.BEFORE), locals = LocalCapture.CAPTURE_FAILEXCEPTION)
-    public void removeOnCooldown(List<ServerPlayer> players, CallbackInfoReturnable<Boolean> cir, int i, int j,
+    public void sleep_tight$removeOnCooldown(List<ServerPlayer> players, CallbackInfoReturnable<Boolean> cir, int i, int j,
                                  Iterator var4, ServerPlayer serverPlayer){
         if(SleepTightPlatformStuff.getPlayerSleepData(serverPlayer).isOnSleepCooldown(serverPlayer)){
             this.activePlayers--;

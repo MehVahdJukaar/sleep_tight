@@ -1,12 +1,10 @@
 package net.mehvahdjukaar.sleep_tight.fabric;
 
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
-import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -18,7 +16,7 @@ import java.util.List;
 public class SleepTightPlatformStuffImpl {
     @org.jetbrains.annotations.Contract
     public static PlayerSleepData getPlayerSleepData(Player player) {
-        return ((ISleepTightPlayer) player).getSleepData();
+        return ((ISleepTightPlayer) player).st$getSleepData();
     }
 
     @org.jetbrains.annotations.Contract
