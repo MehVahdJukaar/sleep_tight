@@ -26,7 +26,7 @@ public abstract class BlockEntityMixin {
         if (this instanceof IExtraBedDataProvider provider) {
             var data = provider.st_getBedData();
             var c = tag.getCompound("sleep_tight_data");
-            if (c != null) data.deserializeNBT(c);
+            data.deserializeNBT(c);
         }
     }
 }

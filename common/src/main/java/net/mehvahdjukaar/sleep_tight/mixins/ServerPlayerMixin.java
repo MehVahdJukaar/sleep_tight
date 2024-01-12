@@ -1,5 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.mixins;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
@@ -17,12 +19,12 @@ public abstract class ServerPlayerMixin extends LivingEntity {
         super(entityType, level);
     }
 
-    @Redirect(method = "startSleepInBed", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/dimension/DimensionType;natural()Z"))
-    public boolean canSleepInDimension(DimensionType instance) {
+    @WrapOperation(method = "startSleepInBed", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/dimension/DimensionType;natural()Z"))
+    public boolean canSleepInDimension(DimensionType instance, Operation<Boolean> original) {
         boolean n = instance.natural();
         if (!n && !CommonConfigs.EXPLOSION_BEHAVIOR.get().canExplode()) {
             return true;
         }
-        return instance.natural();
+        return original.call(instance);
     }
 }

@@ -91,11 +91,19 @@ public class SleepTight {
         //particles
         //proper bedbug AI
         //cats hunt bedbugs
+        /*
+        Experience a sleep encounter - Alarmed!
+Get invigorated effect - You awaken feeling Well Rested
+Establish a home bed by sleeping in it 8 times - There are many like it, but this one is mine
+Place a dreamer essence - It's what phantoms crave
+Use a night bag - Glamping
+Use a potion of harming on a bed to remove a bed bug - Pest control
+         */
         //sleep next to eachother bonus bugged
         //TODO: bedbug spawn
         //naturalist terry bear
         //together nightmares
-        //bedbug actail behavior
+        //bedbug ai behavior
         //pushing players in hammocks
         //phantom spawn stuff
     }

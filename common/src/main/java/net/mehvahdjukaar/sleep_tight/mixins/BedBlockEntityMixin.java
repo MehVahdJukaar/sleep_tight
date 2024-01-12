@@ -37,7 +37,7 @@ public abstract class BedBlockEntityMixin extends BlockEntity implements IExtraB
     public void load(CompoundTag tag) {
         super.load(tag);
         var c = tag.getCompound("sleep_tight_data");
-        if (c != null) this.sleep_tight$bedCapability.deserializeNBT(c);
+        this.sleep_tight$bedCapability.deserializeNBT(c);
     }
 
     @Override

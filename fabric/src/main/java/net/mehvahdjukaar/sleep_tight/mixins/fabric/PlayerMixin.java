@@ -15,20 +15,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class PlayerMixin implements ISleepTightPlayer {
 
     @Unique
-    private final PlayerSleepData sleepData = new PlayerSleepDataImpl();
+    private final PlayerSleepData sleep_tight$sleepData = new PlayerSleepDataImpl();
 
     @Override
-    public PlayerSleepData getSleepData() {
-        return sleepData;
+    public PlayerSleepData st$getSleepData() {
+        return sleep_tight$sleepData;
     }
 
     @Inject(method = "addAdditionalSaveData", at = @At("HEAD"))
     public void saveAdditional(CompoundTag compound, CallbackInfo ci){
-        compound.put("sleep_tight_data", sleepData.serializeNBT());
+        compound.put("sleep_tight_data", sleep_tight$sleepData.serializeNBT());
     }
 
     @Inject(method = "readAdditionalSaveData", at = @At("HEAD"))
     public void readAdditional(CompoundTag compound, CallbackInfo ci){
-        sleepData.deserializeNBT(compound.getCompound("sleep_tight_data"));
+        sleep_tight$sleepData.deserializeNBT(compound.getCompound("sleep_tight_data"));
     }
 }

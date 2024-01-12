@@ -34,7 +34,7 @@ public class BedData {
     }
 
     public void deserializeNBT(CompoundTag tag) {
-        if (tag == null) return;
+        if (tag == null || tag.isEmpty()) return;
         if (tag.contains("owners")) {
             ListTag listTag = tag.getList("owners", ListTag.TAG_COMPOUND);
             this.homeBedTo.clear();

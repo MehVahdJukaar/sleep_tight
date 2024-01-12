@@ -1,6 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.fabric;
 
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
+import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
@@ -15,7 +16,7 @@ import java.util.List;
 public class SleepTightPlatformStuffImpl {
     @org.jetbrains.annotations.Contract
     public static PlayerSleepData getPlayerSleepData(@NotNull Player player) {
-        return ((ISleepTightPlayer) player).getSleepData();
+        return ((ISleepTightPlayer) player).st$getSleepData();
     }
 
     @org.jetbrains.annotations.Contract

@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.Mixin;
 @Mixin(DoorBlock.class)
 public abstract class DoorBlockMixin extends Block {
 
-    public DoorBlockMixin(Properties properties) {
+    protected DoorBlockMixin(Properties properties) {
         super(properties);
     }
 
