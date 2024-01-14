@@ -113,7 +113,17 @@ public class ModEvents {
             Level level = player.getLevel();
             Block block = level.getBlockState(pos).getBlock();
 
-            if (block instanceof BedBlock && !BedBlock.canSetSpawn(player.level) && !CommonConfigs.EXPLOSION_BEHAVIOR.get().canRespawn()) {
+            if (block instanceof BedBlock) {
+                if (CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
+                    if (PlayerSleepData.getHomeBedIfHere(player, pos) == null) {
+                        return false;
+                    }
+                }
+                if (!BedBlock.canSetSpawn(level) && !CommonConfigs.EXPLOSION_BEHAVIOR.get().canRespawn()) {
+                    return false;
+                }
+            }
+            if ((block instanceof NightBagBlock)) {
                 return false;
             }
             if (!level.isClientSide) {

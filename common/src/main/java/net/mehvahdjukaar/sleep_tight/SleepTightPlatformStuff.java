@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class SleepTightPlatformStuff {
 
+    @NotNull
     @Contract
     @ExpectPlatform
     public static PlayerSleepData getPlayerSleepData(@NotNull Player player) {

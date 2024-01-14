@@ -1,6 +1,12 @@
 package net.mehvahdjukaar.sleep_tight.mixins;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
+import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
+import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
@@ -19,11 +25,12 @@ public abstract class PlayerMixin extends LivingEntity {
     }
 
     @Inject(method = "updatePlayerPose", at = @At("HEAD"), cancellable = true)
-    public void setSleepingPoseInHammock(CallbackInfo ci){
+    public void sleep_tight$setSleepingPoseInHammock(CallbackInfo ci){
         if(this.getVehicle() instanceof BedEntity){
             this.setPose(Pose.SLEEPING);
             ci.cancel();
         }
-
     }
+
+
 }

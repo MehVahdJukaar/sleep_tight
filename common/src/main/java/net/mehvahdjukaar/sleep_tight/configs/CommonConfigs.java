@@ -15,7 +15,6 @@ import java.util.function.Supplier;
 public class CommonConfigs {
 
     public static final boolean EASY_MODE = false;
-
     public static final Supplier<Boolean> FIX_BED_POSITION;
     public static final Supplier<ExplosionBehavior> EXPLOSION_BEHAVIOR;
     public static final Supplier<Integer> SLEEP_INTERVAL;
@@ -28,6 +27,7 @@ public class CommonConfigs {
 
     public static final Supplier<Integer> HOME_BED_REQUIRED_NIGHTS;
     public static final Supplier<Integer> HOME_BED_MAX_LEVEL;
+    public static final Supplier<Boolean> ONLY_RESPAWN_IN_HOME_BED;
     public static final Supplier<Double> INVIGORATED_XP;
 
 
@@ -135,6 +135,8 @@ public class CommonConfigs {
         NIGHT_BAG_BORING = builder.comment("Makes night bag less unique by allowing you to place them normally on the ground")
                 .define("boring_night_bags", false);
 
+        SLEEP_IMMEDIATELY = builder.comment("Immediately attempt sleeping after laying down on a bed")
+                .define("sleep_immediately", false);
         builder.push("heartstone_mod_integration");
         HEARTSTONE_MODE = builder.comment("Gives some benefit when sleeping next to somebody else. By default only works in conjunction with heartstone mod")
                 .define("enabled", HeartstoneMode.WITH_MOD);
@@ -196,7 +198,7 @@ public class CommonConfigs {
         CONSUME_HUNGER_MODE = builder.comment("Method to calculate hunger loss. Can be based off time slept, difficulty or constant")
                 .define("consumed_hunger_mode", HungerMode.TIME_DIFFICULTY_BASED);
         CONSUMED_HUNGER = builder.comment("Base hunger decrement value. Depends on other config. Set to 0 to disable")
-                .define("base_value",diff(5,0), 0f, 20);
+                .define("base_value",diff(5, 0), 0f, 20);
         builder.pop();
 
         builder.push("sleep_requirements");
@@ -217,9 +219,10 @@ public class CommonConfigs {
                 .define("required_nights", diff(8,6), 1, 50);
         INVIGORATED_XP = builder.comment("Percentage of xp added per tier of the effect. Setting to 1 doubles the effect")
                 .define("invigorated_effect_xp", 0.1, 0, 1);
-        HOME_BED_MAX_LEVEL = builder.comment("home bed level cap. Each night slept increases this number")
+        HOME_BED_MAX_LEVEL = builder.comment("Home bed level cap. Each night slept increases this number")
                 .define("max_level_cap", 100, 0, 1000);
-
+        ONLY_RESPAWN_IN_HOME_BED = builder.comment("Makes respawning only possible when using your own Home Bed. Fight back the night!")
+                .define("only_respawn_in_home_bed", false);
         builder.pop();
 
         builder.push("nightmares");

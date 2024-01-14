@@ -184,10 +184,10 @@ public abstract class PlayerSleepData {
 
     @Nullable
     public static BedData getHomeBedIfHere(Player player, BlockPos pos) {
-        PlayerSleepData c = SleepTightPlatformStuff.getPlayerSleepData(player);
-        if (c != null && player.level.getBlockEntity(pos) instanceof IExtraBedDataProvider bed) {
+        PlayerSleepData sleepData = SleepTightPlatformStuff.getPlayerSleepData(player);
+        if (player.level.getBlockEntity(pos) instanceof IExtraBedDataProvider bed) {
             BedData bedCap = bed.st_getBedData();
-            if (bedCap.getId().equals(c.getHomeBed()) && bedCap.isHomeBedFor(player)) {
+            if (bedCap.getId().equals(sleepData.getHomeBed()) && bedCap.isHomeBedFor(player)) {
                 return bedCap;
             }
         }

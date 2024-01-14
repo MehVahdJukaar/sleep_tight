@@ -1,7 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.forge;
 
 
-import com.mojang.datafixers.util.Either;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.monster.Monster;
@@ -19,7 +18,10 @@ public class SleepTightPlatformStuffImpl {
 
     @org.jetbrains.annotations.Contract
     public static PlayerSleepData getPlayerSleepData(Player player) {
-        return player.getCapability(ForgePlayerSleepCapability.TOKEN).orElse(null);
+        return player.getCapability(ForgePlayerSleepCapability.TOKEN).orElseThrow(
+                () -> new IllegalStateException("Player sleep capability was null. " +
+                        "This should not be possible! Do not Report this to Sleep Tight")
+        );
     }
 
     @org.jetbrains.annotations.Contract
