@@ -17,6 +17,7 @@
     "DoorBlockMixin",
     "LivingEntityMixin",
     "PhantomMixin",
+    "PlayerListMixin",
     "PlayerMixin",
     "ServerLevelMixin",
     "ServerPlayerMixin",

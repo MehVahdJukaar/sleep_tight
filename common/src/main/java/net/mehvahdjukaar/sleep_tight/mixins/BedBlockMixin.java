@@ -1,5 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.mixins;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.world.damagesource.DamageSource;
@@ -34,11 +36,11 @@ public abstract class BedBlockMixin extends Block implements ISleepTightBed {
         return size;
     }
 
-    @Redirect(method = "use", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/BedBlock;canSetSpawn(Lnet/minecraft/world/level/Level;)Z"))
-    private boolean allowsSleepingInDimension(Level level) {
+    @WrapOperation(method = "use", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/BedBlock;canSetSpawn(Lnet/minecraft/world/level/Level;)Z"))
+    private boolean allowsSleepingInDimension(Level level, Operation<Boolean> original) {
         if (!CommonConfigs.EXPLOSION_BEHAVIOR.get().canExplode()) {
             return true;
         }
-        return BedBlock.canSetSpawn(level);
+        return original.call(level);
     }
 }

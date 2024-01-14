@@ -18,7 +18,6 @@ import static net.mehvahdjukaar.sleep_tight.SleepTight.EASY_MODE;
 public class CommonConfigs {
 
 
-
     public static final Supplier<Boolean> FIX_BED_POSITION;
     public static final Supplier<ExplosionBehavior> EXPLOSION_BEHAVIOR;
     public static final Supplier<Integer> SLEEP_INTERVAL;
@@ -32,6 +31,7 @@ public class CommonConfigs {
 
     public static final Supplier<Integer> HOME_BED_REQUIRED_NIGHTS;
     public static final Supplier<Integer> HOME_BED_MAX_LEVEL;
+    public static final Supplier<Boolean> ONLY_RESPAWN_IN_HOME_BED;
     public static final Supplier<Double> INVIGORATED_XP;
 
 
@@ -122,7 +122,7 @@ public class CommonConfigs {
     public static final ConfigSpec SPEC;
 
     static {
-        ConfigBuilder builder = ConfigBuilder.create(SleepTight.res(EASY_MODE ? "common_ez" : "common"),  ConfigType.COMMON);
+        ConfigBuilder builder = ConfigBuilder.create(SleepTight.res(EASY_MODE ? "common_ez" : "common"), ConfigType.COMMON);
 
         builder.push("misc");
 
@@ -140,7 +140,7 @@ public class CommonConfigs {
                 .define("boring_night_bags", false);
 
         SLEEP_IMMEDIATELY = builder.comment("Immediately attempt sleeping after laying down on a bed")
-                        .define("sleep_immediately", false);
+                .define("sleep_immediately", false);
         builder.push("heartstone_mod_integration");
         HEARTSTONE_MODE = builder.comment("Gives some benefit when sleeping next to somebody else. By default only works in conjunction with heartstone mod")
                 .define("enabled", HeartstoneMode.WITH_MOD);
@@ -167,7 +167,7 @@ public class CommonConfigs {
         PREVENTED_BY_DREAM_CATCHER = builder.comment("Prevents bedbugs when using dream essence")
                 .define("prevented_by_dream_essence", false);
         ONLY_WHEN_IN_HOME_BED = builder.comment("Only spawns bedbugs when sleeping in your home bed")
-                        .define("only_when_in_home_bed",false);
+                .define("only_when_in_home_bed", false);
         builder.pop();
 
         builder.push("sleep_cooldown");
@@ -202,7 +202,7 @@ public class CommonConfigs {
         CONSUME_HUNGER_MODE = builder.comment("Method to calculate hunger loss. Can be based off time slept, difficulty or constant")
                 .define("consumed_hunger_mode", HungerMode.TIME_DIFFICULTY_BASED);
         CONSUMED_HUNGER = builder.comment("Base hunger decrement value. Depends on other config. Set to 0 to disable")
-                .define("base_value", diff(5,0), 0f, 20);
+                .define("base_value", diff(5, 0), 0f, 20);
         builder.pop();
 
         builder.push("sleep_requirements");
@@ -220,12 +220,13 @@ public class CommonConfigs {
         builder.push("home_bed");
 
         HOME_BED_REQUIRED_NIGHTS = builder.comment("Amount of nights needed to mark a bed as home bed")
-                .define("required_nights",  diff(8, 6), 1, 50);
+                .define("required_nights", diff(8, 6), 1, 50);
         INVIGORATED_XP = builder.comment("Percentage of xp added per tier of the effect. Setting to 1 doubles the effect")
                 .define("invigorated_effect_xp", 0.1, 0, 1);
-        HOME_BED_MAX_LEVEL = builder.comment("home bed level cap. Each night slept increases this number")
+        HOME_BED_MAX_LEVEL = builder.comment("Home bed level cap. Each night slept increases this number")
                 .define("max_level_cap", 100, 0, 1000);
-
+        ONLY_RESPAWN_IN_HOME_BED = builder.comment("Makes respawning only possible when using your own Home Bed. Fight back the night!")
+                .define("only_respawn_in_home_bed", false);
         builder.pop();
 
         builder.push("nightmares");
@@ -234,7 +235,7 @@ public class CommonConfigs {
         NIGHTMARES_NIGHT_BAG = builder.define("apply_to_night_bags", false);
 
         NIGHTMARES_CONSECUTIVE_NIGHTS = builder.comment("Amount of consecutive nights slept after which nightmares could start to happen")
-                .define("appear_after_consecutive_nights", diff( 3, 4), 0, 100);
+                .define("appear_after_consecutive_nights", diff(3, 4), 0, 100);
         NIGHTMARE_CHANCE_INCREMENT_PER_NIGHT = builder.define("nightmare_increment_per_night", 0.16, 0, 1);
         NIGHTMARE_SLEEP_TIME_MULTIPLIER = builder.comment("Multiplier applied to time slept after a nightmare")
                 .define("sleep_time_multiplier", diff(0.5, 1), 0.01, 1);
@@ -279,17 +280,17 @@ public class CommonConfigs {
     }
 
     @Contract
-    private static boolean diff(boolean def, boolean easy){
+    private static boolean diff(boolean def, boolean easy) {
         return EASY_MODE ? easy : def;
     }
 
     @Contract
-    private static double diff(double def, double easy){
+    private static double diff(double def, double easy) {
         return EASY_MODE ? easy : def;
     }
 
     @Contract
-    private static int diff(int def, int easy){
+    private static int diff(int def, int easy) {
         return EASY_MODE ? easy : def;
     }
 

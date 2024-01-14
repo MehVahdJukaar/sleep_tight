@@ -5,9 +5,11 @@ import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 public class SleepTightPlatformStuff {
 
+    @NotNull
     @Contract
     @ExpectPlatform
     public static PlayerSleepData getPlayerSleepData(Player player) {
