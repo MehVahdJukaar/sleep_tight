@@ -16,6 +16,9 @@ dependencies {
     modCompileOnly ("curse.maven:heartstone-573152:4569323")
     modImplementation ("curse.maven:selene-499980:4843865")
 
+    modCompileOnly("org.violetmoon.quark:Quark-4.0-beta-426")
+    modCompileOnly("org.violetmoon.zeta:Zeta-1.0-beta-1")
+
 }
 
 publishing {
