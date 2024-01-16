@@ -110,6 +110,4 @@ dependencies {
     modCompileOnly ("curse.maven:configured-457570:4011355")
     modCompileOnly ("curse.maven:supplementaries-412082:4375776")
 
-    modCompileOnly("curse.maven:autoreglib-250363:3857246")
-    modCompileOnly("curse.maven:quark-243121:4426258")
 }

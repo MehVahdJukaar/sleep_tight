@@ -14,6 +14,9 @@ dependencies {
     modImplementation("net.mehvahdjukaar:heartstone:${project.heartstone_version}")
     modImplementation ("curse.maven:supplementaries-412082:4375776")
 
+    modCompileOnly("org.violetmoon.quark:Quark-4.0-beta-426")
+    modCompileOnly("org.violetmoon.zeta:Zeta-1.0-beta-1")
+
 }
 
 publishing {

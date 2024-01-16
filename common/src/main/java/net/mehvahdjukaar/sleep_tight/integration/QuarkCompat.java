@@ -1,15 +1,12 @@
 package net.mehvahdjukaar.sleep_tight.integration;
 
-import dev.architectury.injectables.annotations.ExpectPlatform;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
-import org.jetbrains.annotations.Contract;
+import org.violetmoon.quark.content.building.block.WoodPostBlock;
 
 public class QuarkCompat {
 
-
-    @Contract
-    @ExpectPlatform
     public static boolean isVerticalPost(BlockState facingState) {
-        throw new AssertionError();
+        return facingState.getBlock() instanceof WoodPostBlock && facingState.getValue(WoodPostBlock.AXIS) == Direction.Axis.Y;
     }
 }
