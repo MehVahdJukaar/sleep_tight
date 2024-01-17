@@ -10,6 +10,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -26,7 +27,8 @@ public class PlayerListMixin {
                                                                  boolean respawnAfterWinningTheGame,
                                                                  Operation<Optional<Vec3>> original, @Local ServerPlayer player) {
         if (!isRespawnForced && CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
-            if (PlayerSleepData.getHomeBedIfHere(player, spawnBlockPos) == null) {
+            if (player.level().getBlockState(spawnBlockPos).getBlock() instanceof BedBlock &&
+                    PlayerSleepData.getHomeBedIfHere(player, spawnBlockPos) == null) {
                 return Optional.empty();
             }
         }
