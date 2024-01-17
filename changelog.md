@@ -1,1 +1,1 @@
-updated quark compat
+fixed hardcode bed repsawn logic
