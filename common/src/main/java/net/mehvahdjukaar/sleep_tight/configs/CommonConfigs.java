@@ -107,10 +107,18 @@ public class CommonConfigs {
     }
 
     public enum HeartstoneMode {
-        WITH_MOD, OFF, ALWAYS_ON;
+        HEARTSTONE_PLAYER_OR_VILLAGER(true, true),
+        HEARTSTONE_PLAYER(true, false),
+        ANY_PLAYER_OR_VILLAGER(false, true),
+        ANY_PLAYER(false, false),
+        OFF(false, false);
 
-        public boolean isOn() {
-            return this == ALWAYS_ON || (this == WITH_MOD && SleepTight.HS);
+        public final boolean needsHeartstone;
+        public final boolean allowVillagers;
+
+        HeartstoneMode(boolean needsHeartstone, boolean allowVillagers) {
+            this.needsHeartstone = needsHeartstone;
+            this.allowVillagers = allowVillagers;
         }
     }
 
@@ -139,7 +147,7 @@ public class CommonConfigs {
                 .define("sleep_immediately", false);
         builder.push("heartstone_mod_integration");
         HEARTSTONE_MODE = builder.comment("Gives some benefit when sleeping next to somebody else. By default only works in conjunction with heartstone mod")
-                .define("enabled", HeartstoneMode.WITH_MOD);
+                .define("enabled", HeartstoneMode.HEARTSTONE_PLAYER_OR_VILLAGER);
         HEARTSTONE_EFFECT = builder.comment("Effect to give to players when they wake up next to a heartstone player")
                 .defineObjectList("effects", () -> List.of(new EffectData(MobEffects.REGENERATION,
                         0, 0, 30 * 60, 20)), EffectData.CODEC);

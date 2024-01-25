@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -156,7 +157,7 @@ public class SleepEffectsHelper {
     public static BlockPos getPartnerPos(Player player, BlockState state, BlockPos pos) {
         var mode = CommonConfigs.HEARTSTONE_MODE.get();
         Level level = player.getLevel();
-        if (mode.isOn() && state.getBlock() instanceof BedBlock) {
+        if (mode != HeartstoneMode.OFF && state.getBlock() instanceof BedBlock) {
             BlockPos otherPos = BedEntity.getDoubleBedPos(pos, state);
             boolean x = hasPartnerAt(player, mode, level, otherPos);
             if (!x) {
@@ -172,15 +173,13 @@ public class SleepEffectsHelper {
         BlockState leftState = level.getBlockState(otherPos);
         if (leftState.getBlock() instanceof BedBlock) {
             AABB bb = new AABB(otherPos);
-            for (var p : level.getEntitiesOfClass(Player.class, bb,
+            for (var entity : level.getEntitiesOfClass(LivingEntity.class, bb,
                     e -> e.getSleepingPos().map(p -> p.equals(otherPos)).orElse(false))) {
-                if (mode == CommonConfigs.HeartstoneMode.WITH_MOD) {
-                    return HeartstoneCompat.isFren(player, p);
-                } else return true;
+                if (mode.allowVillagers && entity instanceof Villager) return true;
+                if (entity instanceof Player p) {
+                    if (!mode.needsHeartstone || HeartstoneCompat.isFren(player, p)) return true;
+                }
             }
-            var vl = level.getEntitiesOfClass(Villager.class, bb,
-                    v -> v.getSleepingPos().orElse(null) == otherPos);
-            return !vl.isEmpty();
         }
         return false;
     }
