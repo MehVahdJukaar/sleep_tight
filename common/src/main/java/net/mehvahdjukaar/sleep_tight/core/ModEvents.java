@@ -255,6 +255,9 @@ public class ModEvents {
         if (mobSpawned) {
             var c = SleepTightPlatformStuff.getPlayerSleepData(player);
             c.addInsomnia(player, CommonConfigs.ENCOUNTER_INSOMNIA_DURATION.get());
+            c.setLasWokenUpTime(player.level());
+            c.resetConsecutiveNightSleptCounter();
+
             c.syncToClient(player);
         } else {
             player.displayClientMessage(Component.translatable("message.sleep_tight.encounter"), true);
@@ -264,6 +267,9 @@ public class ModEvents {
     private static void onNightmare(ServerPlayer player) {
         var c = SleepTightPlatformStuff.getPlayerSleepData(player);
         c.addInsomnia(player, CommonConfigs.NIGHTMARE_INSOMNIA_DURATION.get());
+        c.setLasWokenUpTime(player.level());
+        c.resetConsecutiveNightSleptCounter();
+
         c.syncToClient(player);
         player.displayClientMessage(Component.translatable("message.sleep_tight.nightmare"), true);
         player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 20 * 3, 0, false, false, false,
@@ -286,9 +292,11 @@ public class ModEvents {
             BedData data = null;
             if (level.getBlockEntity(pos) instanceof IExtraBedDataProvider tile) {
                 data = tile.st_getBedData();
-                playerCap.onNightSleptIntoBed(data, player);
-
+                playerCap.maybeIncreaseNightsInHomeBed(data, player);
             }
+
+            playerCap.increaseConsecutiveNightSleptCounter(player);
+            playerCap.setLasWokenUpTime(player.level());
 
             if (bed.st_canSpawnBedbugs()) {
                 WakeUpEncounterHelper.trySpawningBedbug(pos, player, data);

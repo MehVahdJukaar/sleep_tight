@@ -32,6 +32,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.behavior.SleepInBed;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
@@ -45,6 +46,7 @@ import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nonnull;
 import java.util.List;
+import java.util.UUID;
 
 public class BedEntity extends Entity implements IControllableVehicle, IExtraClientSpawnData {
 
@@ -272,10 +274,9 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         passenger.setYRot(this.getYRot());
         passenger.setOldPosAndRot();
         passenger.setPose(Pose.SLEEPING);
-        if (level().isClientSide && passenger instanceof Player player) {
-            alignCamera(player, this.getYRot());
-            //needed on forge i believe
+        if (passenger instanceof Player player && player.isLocalPlayer()) {
             ClientEvents.displayRidingMessage(this);
+            alignCamera(player, this.getYRot());
         }
     }
 
@@ -316,14 +317,22 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     public void writeSpawnData(FriendlyByteBuf buf) {
         buf.writeInt(this.dir.get2DDataValue());
         buf.writeInt(this.getOffsetMode().ordinal());
-        buf.writeUUID(this.getPassengers().get(0).getUUID());
+        boolean isValid = !this.getPassengers().isEmpty();
+        buf.writeBoolean(isValid);
+        if (isValid) {
+            buf.writeUUID(this.getPassengers().get(0).getUUID());
+        }
     }
 
     @Override
     public void readSpawnData(FriendlyByteBuf buf) {
         this.dir = Direction.from2DDataValue(buf.readInt());
         this.setOffsetMode(OffsetMode.values()[buf.readInt()]);
-        this.level().getPlayerByUUID(buf.readUUID()).startRiding(this);
+        if (buf.readBoolean()) {
+            UUID uniqueId = buf.readUUID();
+            var p = this.level().getPlayerByUUID(uniqueId);
+            if (p != null) p.startRiding(this);
+        }
     }
 
     public MutableComponent getRidingMessage(Component keyMessage, Component shiftMessage) {
@@ -375,11 +384,13 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             return;
         }
         this.dismountOnTheSpot = true;
+        //Player should dismount bed entity here. called by vanilla code somewhere i think
         var r = player.startSleepInBed(pos);
         this.dismountOnTheSpot = false;
 
         var op = r.left();
         if (op.isPresent()) {
+            //failed sleeping. mount entity again
             player.startRiding(this, true);
             Player.BedSleepingProblem problem = op.get();
             Component m;
@@ -390,22 +401,22 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
                 player.displayClientMessage(m, true);
             }
         } else {
-            var e = player.getVehicle();
-            if (e instanceof BedEntity) {
-                player.removeVehicle();
-                e.discard();
-            }
+            //Incase player is somehow still riding this
+            player.removeVehicle();
+
             PlayerSleepData data = SleepTightPlatformStuff.getPlayerSleepData(player);
             data.setDoubleBed(isDoubleBed());
             data.syncToClient(player);
 
             NetworkHandler.CHANNEL.sendToClientPlayer(player, new ClientBoundSleepImmediatelyMessage(pos));
-            //satefy check
+            //safety check
             Level level = level();
             BlockState blockState = level.getBlockState(pos);
             if (blockState.getBlock() instanceof BedBlock) {
                 level.setBlockAndUpdate(pos, blockState.setValue(BedBlock.OCCUPIED, true));
             }
+
+            this.discard();
         }
     }
 

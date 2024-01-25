@@ -133,6 +133,7 @@ public class ClientEvents {
     }
 
     public static void displayRidingMessage(BedEntity bed) {
+        //needed on forge i believe?
         Minecraft mc = Minecraft.getInstance();
         if (!CommonConfigs.SLEEP_IMMEDIATELY.get()) {
             Component component = bed.getRidingMessage(mc.options.keyJump.getTranslatedKeyMessage(),

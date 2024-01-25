@@ -11,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 import javax.annotation.Nullable;
@@ -59,24 +60,9 @@ public abstract class PlayerSleepData {
     public void addInsomnia(Player player, long duration) {
         long gameTime = player.level().getGameTime();
         this.insomniaWillElapseTimeStamp = gameTime + duration;
-        this.consecutiveNightsSlept = 0;
-
-        this.lastWokenUpTimeStamp = gameTime;
     }
 
-    //for home bed calculations
-    public void onNightSleptIntoBed(BedData bed, Player player) {
-        long gameTime = player.level().getGameTime();
-        long awakeTime = gameTime - this.lastWokenUpTimeStamp;
-        if (awakeTime > CommonConfigs.SLEEP_INTERVAL.get()) {
-            //reset when hasn't slept for a while
-            this.consecutiveNightsSlept = 0;
-        } else {
-            this.consecutiveNightsSlept += 1;
-        }
-        this.lastWokenUpTimeStamp = gameTime;
-
-
+    public void maybeIncreaseNightsInHomeBed(BedData bed, Player player) {
         var bedId = bed.getId();
         if (bedId.equals(homeBed)) {
             int required = CommonConfigs.HOME_BED_REQUIRED_NIGHTS.get();
@@ -89,6 +75,26 @@ public abstract class PlayerSleepData {
             this.homeBed = bedId;
             this.nightsSleptInHomeBed = 0;
         }
+    }
+
+    public void setLasWokenUpTime(Level level) {
+        long gameTime = level.getGameTime();
+        this.lastWokenUpTimeStamp = gameTime;
+    }
+
+    public void increaseConsecutiveNightSleptCounter(Player player) {
+        long gameTime = player.level().getGameTime();
+        long awakeTime = gameTime - this.lastWokenUpTimeStamp;
+        if (awakeTime > CommonConfigs.SLEEP_INTERVAL.get()) {
+            //reset when hasn't slept for a while
+            this.consecutiveNightsSlept = 0;
+        } else {
+            this.consecutiveNightsSlept += 1;
+        }
+    }
+
+    public void resetConsecutiveNightSleptCounter() {
+        consecutiveNightsSlept = 0;
     }
 
     //1 max 0 min
@@ -111,6 +117,7 @@ public abstract class PlayerSleepData {
     }
 
     public double getNightmareChance(Player player, BlockPos pos) {
+        if (player.isCreative()) return 0;
         int minNights = CommonConfigs.NIGHTMARES_CONSECUTIVE_NIGHTS.get();
         if (consecutiveNightsSlept < minNights) return 0;
         if (DreamEssenceBlock.isInRange(player.blockPosition(), player.level())) return 0;
