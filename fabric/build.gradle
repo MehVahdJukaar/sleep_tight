@@ -26,43 +26,52 @@ dependencies {
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
 
-    modCompileOnly("curse.maven:yacl-667299:3987709")
-
-    modCompileOnly("curse.maven:modmenu-308702:3920481") {
-        exclude module: "fabric-api"
-    }
-  //  modCompileOnly("net.mehvahdjukaar:heartstone-fabric:1.19.2-1.1.2")
-    modImplementation ("net.mehvahdjukaar:moonlight-fabric:${project.moonlight_version}")
+    modImplementation("net.mehvahdjukaar:moonlight-fabric:${moonlight_version}")
 }
 
 
 
 processResources {
-    inputs.property "version", project.version
-    inputs.property "mod_id", rootProject.mod_id
+    // input variables of this task:
+    var replaceProperties = [
+            minecraft_version    : minecraft_version,
+            minecraft_min_version: minecraft_min_version,
+            minecraft_max_version: minecraft_max_version,
+
+            mod_id               : mod_id,
+            mod_name             : mod_name,
+            mod_version          : mod_version,
+            mod_license          : mod_license,
+            mod_authors          : mod_authors,
+            mod_description      : mod_description,
+            mod_credits          : mod_credits,
+            mod_homepage         : mod_homepage,
+            mod_github           : mod_github
+    ]
+    // setting them as input
+    inputs.properties replaceProperties
 
     filesMatching("fabric.mod.json") {
-        expand "version": project.version, "mod_id": rootProject.mod_id
+        expand replaceProperties + [project: project]
     }
 }
-
 
 shadowJar {
     exclude "architectury.common.json"
 
     configurations = [project.configurations.shadowCommon]
-    classifier "dev-shadow"
+    archiveClassifier = "dev-shadow"
 }
 
 remapJar {
     injectAccessWidener = true
     input.set shadowJar.archiveFile
     dependsOn shadowJar
-    classifier "fabric"
+    archiveClassifier = "fabric"// release_type == "release" ? "fabric" : "fabric-EASY_MODE"
 }
 
 jar {
-    classifier "dev"
+    archiveClassifier = "dev"
 }
 
 sourcesJar {
@@ -80,7 +89,7 @@ components.java {
 publishing {
     publications {
         mavenFabric(MavenPublication) {
-            artifactId = rootProject.mod_id + "-" + project.name
+            artifactId = mod_id + "-" + project.name
             from components.java
         }
     }

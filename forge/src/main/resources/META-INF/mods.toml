@@ -1,50 +1,48 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
 
-modLoader="javafml" #mandatory
+license = "${mod_license}"
+issueTrackerURL = "${mod_github}/issues"
 
-loaderVersion="[40,)" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.
+[[mixins]]
+config = "${mod_name}.mixins.json"
+[[mixins]]
+config = "${mod_name}.mixins-common.json"
 
-license="ARR"
-
-[[mods]] #mandatory
-
-modId= "sleep_tight" #mandatory
-
-version = "${version}"
-
-displayName="Sleep Tight" #mandatory
-
-logoFile="icon.png" #optional
-
-credits="Mehvahdjukaar, Plantkillable" #optional
-
-authors="MehVahdJukaar, Plantkillable" #optional
-
-description='''
-Balanced sleep overhaul & hammocks
-'''
-
+[[mods]]
+modId = "sleep_tight"
+version = "${mod_version}"
+displayName = "${mod_name}"
+logoFile = "icon.png"
+authors = "${mod_authors}"
+credits = "${mod_credits}"
+description = '''${mod_description}'''
+modUrl = "${mod_homepage}"
+itemIcon = "minecraft:brush" #catalogue icon
 
 [modproperties.sleep_tight]
-    catalogueItemIcon = "sleep_tight:dreamer_essence" #catalogue icon
-    configuredBackground = "minecraft:textures/block/blue_wool.png"
+catalogueItemIcon = "sleep_tight:dreamer_essence" #catalogue icon
+configuredBackground = "minecraft:textures/block/blue_wool.png"
 
-
-[[dependencies.sleep_tight]] #optional
-    modId="forge" #mandatory
-    mandatory=true #mandatory
-    versionRange="[47.0.34,)" #mandatory
-    ordering="NONE"
-    side="BOTH"
 
 [[dependencies.sleep_tight]]
-    modId="minecraft"
-    mandatory=true
-    versionRange="[1.20,1.21)"
-    ordering="NONE"
-    side="BOTH"
+modId = "forge"
+type = "REQUIRED"
+versionRange = "${neo_version_range}"
+ordering = "NONE"
+side = "BOTH"
 
 [[dependencies.sleep_tight]]
-    modId="moonlight"
-    mandatory=true
-    versionRange="[1.20-2.8.67,]"
-    side="BOTH"
+modId = "minecraft"
+type = "REQUIRED"
+versionRange = "[${minecraft_min_version},${minecraft_max_version})"
+ordering = "NONE"
+side = "BOTH"
+
+
+[[dependencies.sleep_tight]]
+modId = "moonlight"
+type = "REQUIRED"
+versionRange = "*"
+ordering = "NONE"
+side = "BOTH"
