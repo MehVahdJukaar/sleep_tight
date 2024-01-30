@@ -42,6 +42,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -72,8 +73,10 @@ public class SleepTight {
 
 
     public static void commonInit() {
-        NetworkHandler.registerMessages();
+        NetworkHandler.init();
         CommonConfigs.init();
+
+        PlatHelper.addCommonSetup(SleepTight::commonSetup);
 
         if (PlatHelper.getPhysicalSide().isClient()) {
             PackProvider.INSTANCE.register();
@@ -170,7 +173,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     //blocks
 
     public static final Supplier<DreamEssenceBlock> DREAMER_ESSENCE = regWithItem("dreamer_essence", () ->
-            new DreamEssenceBlock(BlockBehaviour.Properties.copy(Blocks.AMETHYST_BLOCK)
+            new DreamEssenceBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.AMETHYST_BLOCK)
                     .sound(SoundType.AMETHYST).strength(1))
     );
 
@@ -181,12 +184,16 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     );
 
     public static final Supplier<InfestedBedBlock> INFESTED_BED = regBlock("infested_bed", () ->
-            new InfestedBedBlock(BlockBehaviour.Properties.copy(Blocks.BROWN_BED))
+            new InfestedBedBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.BROWN_BED))
     );
 
     public static final Map<DyeColor, Supplier<Block>> HAMMOCKS = Util.make(() ->
             Arrays.stream(DyeColor.values()).collect(Collectors.toUnmodifiableMap(d -> d, d ->
-                    regWithItem("hammock_" + d.getName(), () -> new HammockBlock(d)))
+                    regWithItem("hammock_" + d.getName(), () -> new HammockBlock(d,
+                            BlockBehaviour.Properties.of()
+                                    .mapColor(d.getMapColor())
+                                    .pushReaction(PushReaction.DESTROY)
+                                    .sound(SoundType.WOOL).strength(0.2F).noOcclusion())))
             ));
 
     //tile

@@ -8,7 +8,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.event.ForgeEventFactory;
+import net.neoforged.neoforge.event.EventHooks;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -19,16 +19,13 @@ public class SleepTightPlatformStuffImpl {
 
     @org.jetbrains.annotations.Contract
     public static PlayerSleepData getPlayerSleepData(Player player) {
-        return player.getCapability(ForgePlayerSleepCapability.TOKEN).orElseThrow(
-                () -> new IllegalStateException("Player sleep capability was null. " +
-                        "This should not be possible! Do not Report this to Sleep Tight")
-        );
+        return player.getData(SleepTightForge.PLAYER_SLEEP_DATA);
     }
 
     @org.jetbrains.annotations.Contract
     @Nullable
     public static Player.BedSleepingProblem invokeSleepChecksEvents(Player player, BlockPos pos) {
-        Player.BedSleepingProblem ret = ForgeEventFactory.onPlayerSleepInBed(player, Optional.of(pos));
+        Player.BedSleepingProblem ret = EventHooks.onPlayerSleepInBed(player, Optional.of(pos));
         if (ret != null) {
             return ret;
         }
@@ -49,7 +46,7 @@ public class SleepTightPlatformStuffImpl {
                 }
             }
 
-            if (!ForgeEventFactory.fireSleepingTimeCheck(player, Optional.of(pos))) {
+            if (!EventHooks.fireSleepingTimeCheck(player, Optional.of(pos))) {
                 return Player.BedSleepingProblem.NOT_POSSIBLE_NOW;
             }
         }

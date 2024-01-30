@@ -123,6 +123,6 @@ public class InfestedBedTile extends MimicBlockTile {
     //@Override
     public AABB getRenderBoundingBox() {
         BlockPos pos = this.getBlockPos();
-        return new AABB(pos.offset(-1, 0, -1), pos.offset(2, 2, 2));
+        return new AABB(pos.offset(-1, 0, -1).getCenter(), pos.offset(2, 2, 2).getCenter());
     }
 }

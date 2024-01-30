@@ -27,6 +27,10 @@ dependencies {
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
 
     modImplementation("net.mehvahdjukaar:moonlight-fabric:${moonlight_version}")
+
+    modCompileOnly "com.terraformersmc:modmenu:4.0.6", {
+        exclude module: "fabric-api"
+    }
 }
 
 
@@ -67,7 +71,7 @@ remapJar {
     injectAccessWidener = true
     input.set shadowJar.archiveFile
     dependsOn shadowJar
-    archiveClassifier = "fabric"// release_type == "release" ? "fabric" : "fabric-EASY_MODE"
+    archiveClassifier = release_type == "release" ? "fabric" : "fabric-EASY_MODE"
 }
 
 jar {

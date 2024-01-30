@@ -2,6 +2,7 @@ package net.mehvahdjukaar.sleep_tight.common.network;
 
 import net.mehvahdjukaar.moonlight.api.platform.network.ChannelHandler;
 import net.mehvahdjukaar.moonlight.api.platform.network.Message;
+import net.mehvahdjukaar.moonlight.api.util.Utils;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.minecraft.advancements.Advancement;
@@ -33,12 +34,7 @@ public class ServerBoundFallFromHammockMessage implements Message {
             p.stopRiding();
             p.hurt(p.level().damageSources().fall(), 1);
             if(p instanceof ServerPlayer player) {
-                Advancement advancement = p.getServer().getAdvancements().getAdvancement(SleepTight.res( "husbandry/hammock"));
-                if (advancement != null) {
-                    if (!player.getAdvancements().getOrStartProgress(advancement).isDone()) {
-                        player.getAdvancements().award(advancement, "unlock");
-                    }
-                }
+                Utils.awardAdvancement(player, SleepTight.res( "husbandry/hammock"));
             }
         }
     }

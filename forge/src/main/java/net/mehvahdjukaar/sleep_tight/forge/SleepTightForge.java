@@ -10,21 +10,22 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.player.*;
-import net.minecraftforge.event.level.BlockEvent;
-import net.minecraftforge.event.level.SleepFinishedTimeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.bus.api.Event;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.*;
+import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.SleepFinishedTimeEvent;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
+
+import java.util.function.Supplier;
 
 /**
  * Author: MehVahdJukaar
@@ -32,34 +33,25 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 @Mod(SleepTight.MOD_ID)
 public class SleepTightForge {
 
-    public SleepTightForge() {
+    private static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES = DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, SleepTight.MOD_ID);
+
+    public SleepTightForge(IEventBus bus) {
         SleepTight.commonInit();
 
         if (PlatHelper.getPhysicalSide().isClient()) {
             SleepTightClient.init();
-            SleepTightForgeClient.init();
+            SleepTightForgeClient.init(bus);
         }
 
-        MinecraftForge.EVENT_BUS.register(this);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(SleepTightForge::setup);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(SleepTightForge::registerCaps);
+        ATTACHMENT_TYPES.register(bus);
+
+        NeoForge.EVENT_BUS.register(this);
     }
 
-    public static void setup(final FMLCommonSetupEvent event) {
-        event.enqueueWork(SleepTight::commonSetup);
-    }
+    public static final Supplier<AttachmentType<ForgePlayerSleepCapability>> PLAYER_SLEEP_DATA =
+            ATTACHMENT_TYPES.register("player_data", () ->
+                    AttachmentType.serializable(ForgePlayerSleepCapability::new).build());
 
-
-    public static void registerCaps(RegisterCapabilitiesEvent event) {
-        event.register(ForgePlayerSleepCapability.class);
-    }
-
-    @SubscribeEvent
-    public void attachPlayerCapabilities(AttachCapabilitiesEvent<Entity> event) {
-        if (event.getObject() instanceof Player) {
-            event.addCapability(SleepTight.res("player_data"), new ForgePlayerSleepCapability());
-        }
-    }
 
     @SubscribeEvent
     public void onSleepConditionCheck(PlayerSleepInBedEvent event) {
@@ -135,11 +127,9 @@ public class SleepTightForge {
     public void onPlayerClone(PlayerEvent.Clone event) {
         if (event.isWasDeath()) {
             Player old = event.getOriginal();
-            old.reviveCaps();
             var oldData = SleepTightPlatformStuff.getPlayerSleepData(old);
             var newData = SleepTightPlatformStuff.getPlayerSleepData(event.getEntity());
             newData.copyFrom(oldData);
-            old.invalidateCaps();
         }
     }
 

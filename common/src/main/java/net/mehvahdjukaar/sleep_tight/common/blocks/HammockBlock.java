@@ -1,5 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.common.blocks;
 
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.architectury.injectables.annotations.PlatformOnly;
 import net.mehvahdjukaar.moonlight.api.block.IRotatable;
 import net.mehvahdjukaar.moonlight.api.set.BlocksColorAPI;
@@ -38,7 +40,6 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
-import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -58,13 +59,14 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     public static final VoxelShape SHAPE_WEST = Block.box(8, 3.0, 0.0, 16.0, 6.0, 16.0);
     public static final VoxelShape SHAPE_EAST = Block.box(0.0, 3.0, 0, 8, 6.0, 16);
 
+    public static final MapCodec<HammockBlock> CODEC = RecordCodecBuilder.mapCodec((i) -> i.group(
+            DyeColor.CODEC.fieldOf("color").forGetter(HammockBlock::getColor),
+            propertiesCodec()).apply(i, HammockBlock::new));
+
     private final DyeColor color;
 
-    public HammockBlock(DyeColor color) {
-        super(Properties.of()
-                .mapColor(color.getMapColor())
-                .pushReaction(PushReaction.DESTROY)
-                .sound(SoundType.WOOL).strength(0.2F).noOcclusion());
+    public HammockBlock(DyeColor color, Properties properties) {
+        super(properties);
         this.color = color;
         this.registerDefaultState(this.stateDefinition.any().setValue(PART, HammockPart.MIDDLE).setValue(OCCUPIED, false));
     }
@@ -113,8 +115,9 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
         return super.updateShape(state, direction, neighborState, level, currentPos, neighborPos);
     }
 
+
     @Override
-    public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide && player.isCreative()) {
             //prevents drop
             HammockPart part = state.getValue(PART);
@@ -130,7 +133,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
                 }
             }
         }
-        super.playerWillDestroy(level, pos, state, player);
+        return super.playerWillDestroy(level, pos, state, player);
     }
 
     @Nullable
@@ -371,6 +374,11 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     //@Override Forge override
     public Direction getBedDirection(BlockState state, LevelReader level, BlockPos pos) {
         return state.getValue(HorizontalDirectionalBlock.FACING);
+    }
+
+    @Override
+    protected MapCodec<HammockBlock> codec() {
+        return CODEC;
     }
 
     private enum Connection {

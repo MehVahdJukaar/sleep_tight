@@ -149,11 +149,6 @@ public class DreamerEssenceTargetEntity extends LivingEntity {
     }
 
     @Override
-    public boolean canBreatheUnderwater() {
-        return true;
-    }
-
-    @Override
     protected boolean isImmobile() {
         return true;
     }

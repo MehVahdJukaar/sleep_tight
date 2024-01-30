@@ -28,6 +28,7 @@ import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -123,7 +124,7 @@ public class InfestedBedBlock extends BedBlock implements IWashable {
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
         if (level.getBlockEntity(pos) instanceof InfestedBedTile tile) {
             return tile.getHeldBlock().getBlock().asItem().getDefaultInstance();
         }

@@ -77,7 +77,7 @@ public class HammockTile extends BlockEntity {
 
     @PlatformOnly(PlatformOnly.FORGE)
     public AABB getRenderBoundingBox() {
-        return new AABB(worldPosition.offset(-3, 0, -3), worldPosition.offset(3, 2, 3));
+        return new AABB(worldPosition.offset(-3, 0, -3).getCenter(), worldPosition.offset(3, 2, 3).getCenter());
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, HammockTile e) {

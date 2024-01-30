@@ -32,7 +32,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.ai.behavior.SleepInBed;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
@@ -44,7 +43,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.phys.Vec3;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.UUID;
 
@@ -218,12 +216,12 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     @Override
-    protected void readAdditionalSaveData(@Nonnull CompoundTag compound) {
+    protected void readAdditionalSaveData(CompoundTag compound) {
         this.setOffsetMode(OffsetMode.values()[compound.getByte("mode")]);
     }
 
     @Override
-    protected void addAdditionalSaveData(@Nonnull CompoundTag compound) {
+    protected void addAdditionalSaveData(CompoundTag compound) {
         compound.putByte("mode", (byte) getOffsetMode().ordinal());
     }
 
@@ -233,8 +231,8 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     @Override
-    public double getPassengersRidingOffset() {
-        return 0.0125;
+    protected float ridingOffset(Entity entity) {
+        return 0.0125f;
     }
 
     @Override

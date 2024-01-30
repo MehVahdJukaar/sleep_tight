@@ -64,7 +64,7 @@ shadowJar {
 remapJar {
     input.set shadowJar.archiveFile
     dependsOn shadowJar
-    archiveClassifier = "forge" // release_type == "release" ? "forge" : "forge-EASY_MODE"
+    archiveClassifier = release_type == "release" ? "forge" : "forge-EASY_MODE"
 }
 
 jar {
@@ -124,6 +124,7 @@ dependencies {
 
     modCompileOnly("curse.maven:jei-238222:5060299")
     modImplementation("net.mehvahdjukaar:moonlight-forge:${moonlight_version}")
+
 
     implementation 'org.jetbrains:annotations:22.0.0'
 }

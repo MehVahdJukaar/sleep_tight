@@ -1,7 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.integration;
 
 import net.minecraft.core.Direction;
-import net.minecraft.world.entity.animal.horse.Horse;
 import net.minecraft.world.level.block.state.BlockState;
 import org.violetmoon.quark.content.building.block.WoodPostBlock;
 
