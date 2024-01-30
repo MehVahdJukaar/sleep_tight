@@ -22,7 +22,7 @@ public abstract class BlockMixin {
     @Inject(method = "dropResources(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/item/ItemStack;Z)V",
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/world/level/block/state/BlockState;spawnAfterBreak(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/item/ItemStack;Z)V",
-                    shift = At.Shift.BEFORE))
+                    shift = At.Shift.BEFORE), remap = false)
     private static void setXpHack(BlockState state, Level level, BlockPos pos, BlockEntity blockEntity,
                                   Entity entity, ItemStack tool, boolean dropXp, CallbackInfo ci) {
         if (dropXp && entity instanceof LivingEntity le) {
@@ -34,14 +34,14 @@ public abstract class BlockMixin {
     @Inject(method = "dropResources(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/item/ItemStack;Z)V",
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/world/level/block/state/BlockState;spawnAfterBreak(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/item/ItemStack;Z)V",
-                    shift = At.Shift.AFTER))
+                    shift = At.Shift.AFTER), remap = false)
     private static void unsetXpHack(BlockState state, Level level, BlockPos pos, BlockEntity blockEntity, Entity entity, ItemStack tool, boolean dropXp, CallbackInfo ci) {
         InvigoratedEffect.BLOCK_XP_LEVEL.remove();
     }
     //TODO: figure out another way to do this
 
     @Inject(method = "popExperience", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ExperienceOrb;award(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/Vec3;I)V",
-            shift = At.Shift.AFTER))
+            shift = At.Shift.AFTER), remap = false)
     protected void addInvigoratedXP(ServerLevel level, BlockPos pos, int amount, CallbackInfo ci) {
         InvigoratedEffect.onBlcokXpDropped(level, pos, amount);
     }
