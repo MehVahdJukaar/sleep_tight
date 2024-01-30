@@ -27,7 +27,6 @@ public class SleepTightClient {
     public static final ModelLayerLocation HAMMOCK = loc("hammock");
     public static final ModelLayerLocation BEDBUG = loc("bedbug");
     public static final ResourceLocation BED_SHEET = new ResourceLocation("textures/atlas/beds.png");
-    public static final ResourceLocation ICONS = SleepTight.res("textures/gui/sleep_icons.png");
     public static final ResourceLocation BEDBUG_TEXTURE = SleepTight.res("textures/entity/bedbug.png");
     public static final ResourceLocation SLEEPING_VILLAGER_TEXTURE = SleepTight.res("textures/entity/villager_sleeping.png");
 

@@ -4,7 +4,7 @@ package net.mehvahdjukaar.sleep_tight.client;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
-import net.mehvahdjukaar.sleep_tight.SleepTightClient;
+import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
@@ -31,6 +31,11 @@ import net.minecraft.world.phys.BlockHitResult;
 import java.util.ArrayList;
 
 public abstract class SleepGuiOverlay<T extends Gui> {
+
+    private static final ResourceLocation HOME_BED = SleepTight.res("home_bed");
+    private static final ResourceLocation DREAM_ESSENCE = SleepTight.res("dream_essence");
+    private static final ResourceLocation BED_COOLDOWN = SleepTight.res("bed_cooldown");
+    private static final ResourceLocation BED_COOLDOWN_BACKGROUND = SleepTight.res("bed_cooldown_background");
 
     public void render(T gui, GuiGraphics graphics, float partialTicks, int width, int height) {
         Minecraft mc = Minecraft.getInstance();
@@ -59,8 +64,8 @@ public abstract class SleepGuiOverlay<T extends Gui> {
 
 
                 var c = SleepTightPlatformStuff.getPlayerSleepData(player);
-                float f = 1 - c.getInsomniaCooldown(player);
-                if (f < 1) {
+                float percentage = 1 - c.getInsomniaCooldown(player);
+                if (percentage < 1) {
 
                     if (laying && timer) {
                         graphics.drawString(mc.font, "" + c.getInsomniaTimeLeft(player) / 20, 2, 2, 14737632);
@@ -68,30 +73,30 @@ public abstract class SleepGuiOverlay<T extends Gui> {
 
                     if (cooldown) {
 
-                        setupOverlayRenderState(gui, true, false, SleepTightClient.ICONS);
-                        //gui.setBlitOffset(-90);
-
                         graphics.pose().pushPose();
 
+                        RenderSystem.enableBlend();
                         RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR,
                                 GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR, GlStateManager.SourceFactor.ONE,
                                 GlStateManager.DestFactor.ZERO);
 
 
-                        int j = height / 2 - 7 + 16;
-                        int k = width / 2 - 6;
+                        int posY = height / 2 - 8 + 16;
+                        int posX = width / 2 - 9;
 
                         if (mc.options.attackIndicator().get() == AttackIndicatorStatus.CROSSHAIR &&
                                 player.getAttackStrengthScale(0.0F) != 1) {
-                            j += 8;
+                            posY += 8;
                         }
+                        int w = 3 + Math.round (percentage * 11.0F);
 
-                        int l = (int) (f * 11.0F);
-                        graphics.blit(SleepTightClient.ICONS, k, j, 3, 18, 11, 5, 48, 48);
-                        graphics.blit(SleepTightClient.ICONS, k, j, 16 + 3f, 18, l, 5, 48, 48);
-
+                        graphics.blitSprite(BED_COOLDOWN_BACKGROUND, posX, posY, 16, 6);
+                        graphics.blitSprite(BED_COOLDOWN, 16, 6, 0, 0, posX, posY, w, 6);
 
                         graphics.pose().popPose();
+
+                        RenderSystem.defaultBlendFunc();
+
                     }
                 }
             }
@@ -120,11 +125,11 @@ public abstract class SleepGuiOverlay<T extends Gui> {
         int iconSize = 18;
         if (isHomeBed) {
             int x = s.width / 2 - 120;
-            graphics.blit(SleepTightClient.ICONS, x, y, 0, 0, iconSize, iconSize, 48, 48);
+            graphics.blitSprite(HOME_BED, x, y, 18, 18);
         }
         if (hasDreamerEssence) {
             int x = s.width / 2 + 120 - iconSize;
-            graphics.blit(SleepTightClient.ICONS, x, y, iconSize, 0, iconSize, iconSize, 48, 48);
+            graphics.blitSprite(DREAM_ESSENCE, x, y, 18, 18);
         }
 
         if (isHomeBed) {

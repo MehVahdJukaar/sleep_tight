@@ -104,8 +104,8 @@ public abstract class PlayerSleepData {
         long currentTime = player.level().getGameTime();
         long timeLeft = insomniaWillElapseTimeStamp - currentTime;
         if (timeLeft < 0) return 0;
-        long amountAwake = currentTime - this.lastWokenUpTimeStamp;
-        return 1 - (((float) (amountAwake)) / timeLeft);
+        long maxCooldown = insomniaWillElapseTimeStamp - this.lastWokenUpTimeStamp;
+        return ((float) timeLeft / maxCooldown);
     }
 
     public boolean isOnSleepCooldown(Player player) {
