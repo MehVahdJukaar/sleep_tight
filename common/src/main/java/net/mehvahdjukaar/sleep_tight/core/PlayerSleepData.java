@@ -97,15 +97,14 @@ public abstract class PlayerSleepData {
         consecutiveNightsSlept = 0;
     }
 
-    //1 max 0 min
     public float getInsomniaCooldown(Player player) {
         //creative are immune
         if (player.getAbilities().instabuild) return 0;
         long currentTime = player.level.getGameTime();
         long timeLeft = insomniaWillElapseTimeStamp - currentTime;
         if (timeLeft < 0) return 0;
-        long amountAwake = currentTime - this.lastWokenUpTimeStamp;
-        return 1 - (((float) (amountAwake)) / timeLeft);
+        long maxCooldown = insomniaWillElapseTimeStamp - this.lastWokenUpTimeStamp;
+        return ((float) timeLeft / maxCooldown);
     }
 
     public long getInsomniaTimeLeft(Player player) {
