@@ -1,6 +1,1 @@
-- Fixed consecutive nights not being counted causing nightmares to never happen
-- Nightmares wont happen in creative anymore
-- Fixed sleeping in bed not setting occupied state correctly allowing villager to sleep over you (0.0)
-- On a related note fixed villagers sleeping *with* you not causing heart particle (secs)
-- Fixed an issue where bed entities that are about to be removed could crash if server tried to send them to client
-- Fixed sleeping message appearing for everybody on the server not just local player
+fixed sleep cooldown elapsing sooner than expected
