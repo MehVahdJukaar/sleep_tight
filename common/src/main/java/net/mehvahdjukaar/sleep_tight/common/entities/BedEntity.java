@@ -3,6 +3,7 @@ package net.mehvahdjukaar.sleep_tight.common.entities;
 import net.mehvahdjukaar.moonlight.api.entity.IControllableVehicle;
 import net.mehvahdjukaar.moonlight.api.entity.IExtraClientSpawnData;
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
+import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
@@ -11,7 +12,7 @@ import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.IModBed;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundAlightCameraOnLayMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSleepImmediatelyMessage;
-import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.common.network.ModMessages;
 import net.mehvahdjukaar.sleep_tight.common.network.ServerBoundCommitSleepMessage;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
@@ -299,7 +300,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     @Override
     public void onInputUpdate(boolean left, boolean right, boolean up, boolean down, boolean sprint, boolean jumping) {
         if (jumping) {
-            NetworkHandler.CHANNEL.sendToServer(new ServerBoundCommitSleepMessage());
+            NetworkHelper.sendToServer(new ServerBoundCommitSleepMessage());
         } else if (left ^ right) {
             if (this.level().getBlockEntity(this.getOnPos()) instanceof HammockTile tile) {
                 if (left) {
@@ -406,7 +407,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             data.setDoubleBed(isDoubleBed());
             data.syncToClient(player);
 
-            NetworkHandler.CHANNEL.sendToClientPlayer(player, new ClientBoundSleepImmediatelyMessage(pos));
+            NetworkHelper.sendToClientPlayer(player, new ClientBoundSleepImmediatelyMessage(pos));
             //safety check
             Level level = level();
             BlockState blockState = level.getBlockState(pos);
@@ -457,7 +458,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             if (player instanceof ServerPlayer serverPlayer) {
                 //Don't ask me why this is needed. Align camera immediately to prevent camera jerk
                 //TODO: actually this doesnt even work. Fix. Also fix shifting when going off bed
-                NetworkHandler.CHANNEL.sendToClientPlayer(serverPlayer, new ClientBoundAlightCameraOnLayMessage(bedEntity));
+                NetworkHelper.sendToClientPlayer(serverPlayer, new ClientBoundAlightCameraOnLayMessage(bedEntity));
             }
 
         } else if (level.getBlockEntity(pos) instanceof HammockTile tile) {

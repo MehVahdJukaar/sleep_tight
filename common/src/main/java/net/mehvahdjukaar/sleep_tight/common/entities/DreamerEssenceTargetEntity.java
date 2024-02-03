@@ -1,10 +1,11 @@
 package net.mehvahdjukaar.sleep_tight.common.entities;
 
 import dev.architectury.injectables.annotations.PlatformOnly;
+import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundParticleMessage;
-import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.common.network.ModMessages;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
@@ -76,7 +77,7 @@ public class DreamerEssenceTargetEntity extends LivingEntity {
     @Override
     public void remove(RemovalReason reason) {
         if (!this.isRemoved() && !level().isClientSide) {
-            NetworkHandler.CHANNEL.sentToAllClientPlayersTrackingEntity(this, ClientBoundParticleMessage.dreamEssence(this.blockPosition()));
+            NetworkHelper.sentToAllClientPlayersTrackingEntity(this, ClientBoundParticleMessage.dreamEssence(this.blockPosition()));
         }
         super.remove(reason);
     }

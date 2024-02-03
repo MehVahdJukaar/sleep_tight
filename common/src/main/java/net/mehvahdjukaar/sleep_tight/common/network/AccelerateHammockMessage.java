@@ -1,8 +1,8 @@
 package net.mehvahdjukaar.sleep_tight.common.network;
 
-import net.mehvahdjukaar.moonlight.api.platform.network.ChannelHandler;
 import net.mehvahdjukaar.moonlight.api.platform.network.Message;
 import net.mehvahdjukaar.moonlight.api.platform.network.NetworkDir;
+import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -26,14 +26,14 @@ public class AccelerateHammockMessage implements Message {
     }
 
     @Override
-    public void writeToBuffer(FriendlyByteBuf buf) {
+    public void write(FriendlyByteBuf buf) {
         buf.writeBlockPos(pos);
         buf.writeBoolean(leftPressed);
     }
 
     @Override
-    public void handle(ChannelHandler.Context context) {
-        if (context.getDirection() == NetworkDir.PLAY_TO_CLIENT) {
+    public void handle(NetworkHelper.Context context) {
+        if (context.getDirection() == NetworkDir.CLIENTBOUND) {
             Level level = Minecraft.getInstance().cameraEntity.level();
             if (level.getBlockEntity(pos) instanceof HammockTile tile) {
                 if (leftPressed) {
@@ -44,7 +44,7 @@ public class AccelerateHammockMessage implements Message {
             }
         } else {
             var p = context.getSender();
-            NetworkHandler.CHANNEL.sentToAllClientPlayersTrackingEntity(p,this);
+            NetworkHelper.sentToAllClientPlayersTrackingEntity(p,this);
         }
     }
 }

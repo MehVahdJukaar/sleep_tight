@@ -1,6 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
+import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
@@ -13,7 +14,7 @@ import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundNightmarePacket;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncPlayerSleepCapMessage;
-import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.common.network.ModMessages;
 import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
@@ -274,7 +275,7 @@ public class ModEvents {
         player.displayClientMessage(Component.translatable("message.sleep_tight.nightmare"), true);
         player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 20 * 3, 0, false, false, false,
                 null, Optional.of(new MobEffectInstance.FactorData(20, 10, 1, 1, 20 * 3, 1, true))));
-        NetworkHandler.CHANNEL.sendToClientPlayer(player, new ClientBoundNightmarePacket());
+        NetworkHelper.sendToClientPlayer(player, new ClientBoundNightmarePacket());
     }
 
     //server sided
@@ -351,7 +352,7 @@ public class ModEvents {
 
     @EventCalled
     public static void onPlayerLoggedIn(ServerPlayer player) {
-        NetworkHandler.CHANNEL.sendToClientPlayer(player,
+        NetworkHelper.sendToClientPlayer(player,
                 new ClientBoundSyncPlayerSleepCapMessage(player));
     }
 

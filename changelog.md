@@ -1,1 +1,1 @@
-updated to 1.20.4
+fixed neoforge not loading the mod

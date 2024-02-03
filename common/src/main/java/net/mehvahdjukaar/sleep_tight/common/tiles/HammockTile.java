@@ -3,11 +3,12 @@ package net.mehvahdjukaar.sleep_tight.common.tiles;
 import dev.architectury.injectables.annotations.PlatformOnly;
 import net.mehvahdjukaar.moonlight.api.client.anim.PendulumAnimation;
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
+import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.network.AccelerateHammockMessage;
-import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.common.network.ModMessages;
 import net.mehvahdjukaar.sleep_tight.common.network.ServerBoundFallFromHammockMessage;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.minecraft.core.BlockPos;
@@ -85,7 +86,7 @@ public class HammockTile extends BlockEntity {
             double push = ClientConfigs.SWING_FORCE.get();
             e.animation.addImpulse((float) (push * (e.accelerateLeft ? -1 : 1)));
             //update other clients
-            NetworkHandler.CHANNEL.sendToServer(new AccelerateHammockMessage(pos, e.accelerateLeft));
+            NetworkHelper.sendToServer(new AccelerateHammockMessage(pos, e.accelerateLeft));
         }
         e.animation.tick(false);
 
@@ -94,7 +95,7 @@ public class HammockTile extends BlockEntity {
             for (var b : e.level.getEntitiesOfClass(BedEntity.class, new AABB(pos))) {
                 for (var p : b.getPassengers()) {
                     if (p instanceof Player pp && pp.isLocalPlayer()) {
-                        NetworkHandler.CHANNEL.sendToServer(new ServerBoundFallFromHammockMessage());
+                        NetworkHelper.sendToServer(new ServerBoundFallFromHammockMessage());
                     } else return;
                 }
             }

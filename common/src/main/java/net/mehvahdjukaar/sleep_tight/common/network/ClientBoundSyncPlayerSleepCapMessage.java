@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.common.network;
 
-import net.mehvahdjukaar.moonlight.api.platform.network.ChannelHandler;
 import net.mehvahdjukaar.moonlight.api.platform.network.Message;
+import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
@@ -44,7 +44,7 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     }
 
     @Override
-    public void writeToBuffer(FriendlyByteBuf buf) {
+    public void write(FriendlyByteBuf buf) {
         buf.writeBoolean(id != null);
         if (id != null) buf.writeUUID(id);
         buf.writeLong(insomniaElapse);
@@ -55,9 +55,9 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     }
 
     @Override
-    public void handle(ChannelHandler.Context context) {
+    public void handle(NetworkHelper.Context context) {
         Player p = SleepTightClient.getPlayer();
-        if(p == null){
+        if (p == null) {
             return;
         }
         var c = SleepTightPlatformStuff.getPlayerSleepData(p);

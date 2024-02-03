@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.common.network;
 
-import net.mehvahdjukaar.moonlight.api.platform.network.ChannelHandler;
 import net.mehvahdjukaar.moonlight.api.platform.network.Message;
+import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
@@ -19,12 +19,12 @@ public class ClientBoundSleepImmediatelyMessage implements Message {
     }
 
     @Override
-    public void writeToBuffer(FriendlyByteBuf buf) {
+    public void write(FriendlyByteBuf buf) {
         buf.writeBlockPos(pos);
     }
 
     @Override
-    public void handle(ChannelHandler.Context context) {
+    public void handle(NetworkHelper.Context context) {
         SleepTightClient.getPlayer().startSleeping(pos);
     }
 

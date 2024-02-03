@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.common.network;
 
-import net.mehvahdjukaar.moonlight.api.platform.network.ChannelHandler;
 import net.mehvahdjukaar.moonlight.api.platform.network.Message;
+import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.common.entities.DreamerEssenceTargetEntity;
 import net.minecraft.core.BlockPos;
@@ -24,34 +24,34 @@ public class ClientBoundParticleMessage implements Message {
         this.data = data;
     }
 
-    public static ClientBoundParticleMessage bedbugInfest(BlockPos pos, Direction direction){
-       return new ClientBoundParticleMessage(pos, direction.get2DDataValue());
+    public static ClientBoundParticleMessage bedbugInfest(BlockPos pos, Direction direction) {
+        return new ClientBoundParticleMessage(pos, direction.get2DDataValue());
     }
 
-    public static ClientBoundParticleMessage bedbugDoor(BlockPos pos){
+    public static ClientBoundParticleMessage bedbugDoor(BlockPos pos) {
         return new ClientBoundParticleMessage(pos, 5);
     }
 
-    public static ClientBoundParticleMessage dreamEssence(BlockPos pos){
+    public static ClientBoundParticleMessage dreamEssence(BlockPos pos) {
         return new ClientBoundParticleMessage(pos, 4);
     }
 
-        @Override
-    public void writeToBuffer(FriendlyByteBuf buf) {
+    @Override
+    public void write(FriendlyByteBuf buf) {
         buf.writeBlockPos(pos);
         buf.writeInt(data);
     }
 
     @Override
-    public void handle(ChannelHandler.Context context) {
+    public void handle(NetworkHelper.Context context) {
         Level level = SleepTightClient.getPlayer().level();
 
-        if(data < 4) {
+        if (data < 4) {
             spawnParticleOnBed(pos, level);
             spawnParticleOnBed(pos.relative(Direction.from2DDataValue(data)), level);
-        }else if(data == 4){
+        } else if (data == 4) {
             DreamerEssenceTargetEntity.spawnDeathParticles(level, pos);
-        }else{
+        } else {
             level.addDestroyBlockEffect(pos, level.getBlockState(pos));
         }
     }

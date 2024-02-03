@@ -1,9 +1,10 @@
 package net.mehvahdjukaar.sleep_tight.common.entities;
 
+import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.blocks.InfestedBedBlock;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundParticleMessage;
-import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.common.network.ModMessages;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
@@ -280,7 +281,7 @@ public class BedbugEntity extends Monster {
             VoxelShape voxelShape2 = voxelShape.move(pos.getX(), pos.getY(), pos.getZ());
             if (Shapes.joinIsNotEmpty(voxelShape2, Shapes.create(this.getBoundingBox()), BooleanOp.AND)) {
 
-                NetworkHandler.CHANNEL.sentToAllClientPlayersTrackingEntity(this, ClientBoundParticleMessage.bedbugDoor(pos));
+                NetworkHelper.sentToAllClientPlayersTrackingEntity(this, ClientBoundParticleMessage.bedbugDoor(pos));
                 this.makeStuckInBlock(state, new Vec3(0.5, 0.5, 0.5));
             }
         }

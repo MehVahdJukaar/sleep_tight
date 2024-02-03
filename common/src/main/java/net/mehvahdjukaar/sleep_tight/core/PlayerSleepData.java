@@ -1,10 +1,11 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
+import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncPlayerSleepCapMessage;
-import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.common.network.ModMessages;
 import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
@@ -161,7 +162,7 @@ public abstract class PlayerSleepData {
     }
 
     public void syncToClient(ServerPlayer player) {
-        NetworkHandler.CHANNEL.sendToClientPlayer(player, new ClientBoundSyncPlayerSleepCapMessage(this));
+        NetworkHelper.sendToClientPlayer(player, new ClientBoundSyncPlayerSleepCapMessage(this));
     }
 
     public void setConsecutiveNightsSlept(int consecutiveNightsSlept) {

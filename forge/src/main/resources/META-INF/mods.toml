@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "${loader_version_range}"
+loaderVersion = "*"
 
 license = "${mod_license}"
 issueTrackerURL = "${mod_github}/issues"
@@ -26,9 +26,9 @@ configuredBackground = "minecraft:textures/block/blue_wool.png"
 
 
 [[dependencies.sleep_tight]]
-modId = "forge"
+modId = "neoforge"
 type = "REQUIRED"
-versionRange = "${neo_version_range}"
+versionRange = "*"
 ordering = "NONE"
 side = "BOTH"
 
