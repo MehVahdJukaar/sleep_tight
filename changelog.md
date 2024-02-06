@@ -1,1 +1,1 @@
-fixed sleep cooldown elapsing sooner than expected
+fixed an issue with heartstones
