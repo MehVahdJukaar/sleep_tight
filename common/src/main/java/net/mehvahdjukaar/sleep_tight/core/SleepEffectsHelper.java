@@ -1,5 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
+import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
@@ -178,7 +179,8 @@ public class SleepEffectsHelper {
                     v -> v.getSleepingPos().map(p -> p.equals(otherPos)).orElse(false))) {
                 if (mode.allowVillagers && entity instanceof Villager) return true;
                 if (entity instanceof Player p) {
-                    if (!mode.needsHeartstone || HeartstoneCompat.isFren(player, p)) return true;
+                    if (!mode.needsHeartstone ||
+                            (SleepTight.HS && HeartstoneCompat.isFren(player, p))) return true;
                 }
             }
         }

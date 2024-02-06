@@ -1,1 +1,1 @@
-fixed neoforge not loading the mod
+fixed an issue with heartstones
