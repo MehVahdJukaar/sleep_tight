@@ -263,11 +263,11 @@ public class CommonConfigs {
         ENCOUNTER_MIN_RADIUS = builder.define("min_radius", 2, 0, 32);
         ENCOUNTER_HEIGHT = builder.define("height", 3, 1, 10);
         ENCOUNTER_WHITELIST = builder.comment("""
-                        Mobs that can randomly wake up the player if sleeping in a dark place. Leave empty to use default spawning behavior. Add a weighted list in the following format (replace line bellow):
-                        [[bed.wake_up_encounters.alternative_whitelist]]
+                        Mobs that can randomly wake up the player if sleeping in a dark place. Leave empty to use default spawning behavior. Add a weighted list in the following format (replace line bellow with this example.This is a Toml map btw, check out its syntax):
+                        [[wake_up_encounters.alternative_whitelist]]
                         \t\t\tdata = "minecraft:vindicator"
                         \t\t\tweight = 2
-                        [[bed.wake_up_encounters.alternative_whitelist]]
+                        [[wake_up_encounters.alternative_whitelist]]
                         \t\t\tdata = "minecraft:creeper"
                         \t\t\tweight = 2
                         """)
