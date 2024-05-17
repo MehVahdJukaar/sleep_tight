@@ -79,9 +79,6 @@ public class SleepTight {
         RegHelper.addAttributeRegistration(SleepTight::registerEntityAttributes);
         RegHelper.addSpawnPlacementsRegistration(SleepTight::registerSpawnPlacements);
 
-        if (PlatformHelper.getEnv().isClient()) {
-            PackProvider.INSTANCE.register();
-        }
         RegHelper.registerSimpleRecipeCondition(res("flag"), s -> CommonConfigs.EASY_MODE == s.equals("easy"));
 
         EntityDataSerializers.registerSerializer(BedEntity.SERIALIZER);
