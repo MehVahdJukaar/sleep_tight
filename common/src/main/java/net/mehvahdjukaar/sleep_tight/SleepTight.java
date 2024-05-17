@@ -70,7 +70,7 @@ public class SleepTight {
         NetworkHandler.registerMessages();
         CommonConfigs.init();
 
-        if (PlatHelper.getPhysicalSide().isClient()) {
+        if (PlatformHelper.getEnv().isClient()) {
             PackProvider.INSTANCE.register();
             ClientConfigs.init();
         }

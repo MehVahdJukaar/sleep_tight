@@ -44,8 +44,8 @@ import net.minecraft.world.level.block.piston.PistonMovingBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.UUID;
 
@@ -218,16 +218,16 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     @Override
-    protected void readAdditionalSaveData(@Nonnull CompoundTag compound) {
+    protected void readAdditionalSaveData(@NotNull CompoundTag compound) {
         this.setOffsetMode(OffsetMode.values()[compound.getByte("mode")]);
     }
 
     @Override
-    protected void addAdditionalSaveData(@Nonnull CompoundTag compound) {
+    protected void addAdditionalSaveData(@NotNull CompoundTag compound) {
         compound.putByte("mode", (byte) getOffsetMode().ordinal());
     }
 
-    @Nonnull
+    @NotNull
     @Override
     public Packet<?> getAddEntityPacket() {
         return PlatformHelper.getEntitySpawnPacket(this);
@@ -331,7 +331,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         this.setOffsetMode(OffsetMode.values()[buf.readInt()]);
         if (buf.readBoolean()) {
             UUID uniqueId = buf.readUUID();
-            var p = this.level().getPlayerByUUID(uniqueId);
+            var p = this.level.getPlayerByUUID(uniqueId);
             if (p != null) p.startRiding(this);
         }
     }

@@ -6,11 +6,13 @@ import net.minecraft.world.entity.player.Player;
 public class HeartstoneCompat {
 
     public static boolean isFren(Player player, Player target){
-        for(var v : player.getInventory().items){
-            if(v.getItem() instanceof HeartstoneItem){
-                if(HeartstoneItem.arePlayersBounded(player, v, target))return true;
+        try {
+            for (var v : player.getInventory().items) {
+                if (v.getItem() instanceof HeartstoneItem) {
+                    if (HeartstoneItem.arePlayersBounded(player, v, target)) return true;
+                }
             }
-        }
+        }catch (Exception shush){}
         return false;
     }
 }

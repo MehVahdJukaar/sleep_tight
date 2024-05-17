@@ -3,8 +3,8 @@ package net.mehvahdjukaar.sleep_tight.core;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.world.entity.player.Player;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;

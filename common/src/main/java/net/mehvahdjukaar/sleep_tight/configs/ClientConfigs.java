@@ -1,12 +1,10 @@
 package net.mehvahdjukaar.sleep_tight.configs;
 
-import net.mehvahdjukaar.moonlight.api.client.anim.PendulumAnimation;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigBuilder;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigSpec;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
-import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
-import net.minecraft.util.Mth;
+import net.mehvahdjukaar.sleep_tight.client.PendulumAnimation;
 
 import java.util.function.Supplier;
 

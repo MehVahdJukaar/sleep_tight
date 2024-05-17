@@ -7,8 +7,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
-
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 
 public class InvisibleEntityRenderer extends EntityRenderer<Entity> {
 
@@ -16,14 +15,14 @@ public class InvisibleEntityRenderer extends EntityRenderer<Entity> {
 		super(context);
 	}
 
-	@Nonnull
+	@NotNull
 	@Override
-	public ResourceLocation getTextureLocation(@Nonnull Entity entity) {
+	public ResourceLocation getTextureLocation(@NotNull Entity entity) {
 		return null;
 	}
 
 	@Override
-	public boolean shouldRender(@Nonnull Entity livingEntityIn, @Nonnull Frustum camera, double camX, double camY, double camZ) {
+	public boolean shouldRender(@NotNull Entity livingEntityIn, @NotNull Frustum camera, double camX, double camY, double camZ) {
 		return true;
 	}
 

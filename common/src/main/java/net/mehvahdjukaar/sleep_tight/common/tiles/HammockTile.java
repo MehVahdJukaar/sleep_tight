@@ -1,9 +1,11 @@
 package net.mehvahdjukaar.sleep_tight.common.tiles;
 
+import com.mojang.math.Vector3f;
 import dev.architectury.injectables.annotations.PlatformOnly;
-import net.mehvahdjukaar.moonlight.api.client.anim.PendulumAnimation;
-import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
+import net.mehvahdjukaar.moonlight.api.platform.PlatformHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.sleep_tight.SleepTightClient;
+import net.mehvahdjukaar.sleep_tight.client.PendulumAnimation;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.network.AccelerateHammockMessage;
@@ -15,13 +17,11 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import org.joml.Vector3f;
 
 public class HammockTile extends BlockEntity {
 
@@ -42,7 +42,7 @@ public class HammockTile extends BlockEntity {
         this.pivotOffset = blockState.getValue(HammockBlock.PART).getPivotOffset();
         this.direction = blockState.getValue(HammockBlock.FACING);
 
-        if (PlatHelper.getPhysicalSide().isClient()) {
+        if (PlatformHelper.getEnv().isClient()) {
             this.animation = new PendulumAnimation(ClientConfigs.HAMMOCK_ANIMATION_PARAM, this::getRotationAxis);
         } else {
             this.animation = null;

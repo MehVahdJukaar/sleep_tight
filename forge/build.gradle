@@ -45,17 +45,17 @@ shadowJar {
     exclude "architectury.common.json"
 
     configurations = [project.configurations.shadowCommon]
-    classifier "dev-shadow"
+    archiveClassifier = "dev-shadow"
 }
 
 remapJar {
     input.set shadowJar.archiveFile
     dependsOn shadowJar
-    classifier null
+    archiveClassifier = null
 }
 
 jar {
-    classifier "dev"
+    archiveClassifier = "dev"
 }
 
 sourcesJar {
@@ -116,7 +116,8 @@ dependencies {
 
     modCompileOnly("curse.maven:autoreglib-250363:3857246")
     modCompileOnly("curse.maven:quark-243121:4426258")
-
+    implementation(annotationProcessor("io.github.llamalad7:mixinextras-common:${mixin_extras_version}"))
+    implementation(include("io.github.llamalad7:mixinextras-forge:${mixin_extras_version}"))
     modImplementation ("curse.maven:selene-499980:4843863")
 
 }

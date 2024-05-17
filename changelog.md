@@ -1,1 +1,1 @@
-added some safety checks
+backported all recent changes from 1.20

@@ -27,7 +27,7 @@ public class PlayerListMixin {
                                                                  boolean respawnAfterWinningTheGame,
                                                                  Operation<Optional<Vec3>> original, @Local ServerPlayer player) {
         if (!isRespawnForced && CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
-            if (player.level().getBlockState(spawnBlockPos).getBlock() instanceof BedBlock &&
+            if (player.level.getBlockState(spawnBlockPos).getBlock() instanceof BedBlock &&
                     PlayerSleepData.getHomeBedIfHere(player, spawnBlockPos) == null) {
                 return Optional.empty();
             }

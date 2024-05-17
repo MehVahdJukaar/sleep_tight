@@ -65,6 +65,7 @@ public class CommonConfigs {
     public static final Supplier<Integer> XP_COST;
 
     public static final Supplier<Boolean> PENALTIES_BED;
+    public static final Supplier<Boolean> SLEEP_IMMEDIATELY;
     public static final Supplier<Boolean> PENALTIES_HAMMOCK;
     public static final Supplier<Boolean> PENALTIES_NIGHT_BAG;
     public static final Supplier<HungerMode> CONSUME_HUNGER_MODE;
