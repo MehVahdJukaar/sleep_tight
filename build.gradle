@@ -193,7 +193,6 @@ ext {
             mod_credits               : mod_credits,
             mod_homepage              : mod_homepage,
             mod_github                : mod_github,
-            update_url                : update_url,
 
             neo_version               : neo_version,
             neo_version_range         : neo_version_range,

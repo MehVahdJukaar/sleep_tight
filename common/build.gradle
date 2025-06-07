@@ -6,6 +6,11 @@ loom {
     accessWidenerPath = file("src/main/resources/sleep_tight.accesswidener")
 }
 
+shadowJar {
+    zip64 true
+
+}
+
 dependencies {
 
     modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
