@@ -25,7 +25,7 @@ public class PlayerListMixin {
     private Optional<Vec3> sleep_tight$cancelSpawnWhenNotHomeBed(ServerLevel serverLevel, BlockPos spawnBlockPos,
                                                                  float playerOrientation, boolean isRespawnForced,
                                                                  boolean respawnAfterWinningTheGame,
-                                                                 Operation<Optional<Vec3>> original, @Local ServerPlayer player) {
+                                                                 Operation<Optional<Vec3>> original, @Local(argsOnly = true) ServerPlayer player) {
         if (!isRespawnForced && CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
             if (player.level().getBlockState(spawnBlockPos).getBlock() instanceof BedBlock &&
                     PlayerSleepData.getHomeBedIfHere(player, spawnBlockPos) == null) {

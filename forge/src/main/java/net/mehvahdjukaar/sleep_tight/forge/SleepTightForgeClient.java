@@ -1,30 +1,36 @@
 package net.mehvahdjukaar.sleep_tight.forge;
 
+import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.client.SleepGuiOverlay;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
+import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.InBedChatScreen;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.players.PlayerList;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
 import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.client.event.ScreenEvent;
-import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 public class SleepTightForgeClient {
 
-    public static void init() {
+    public static void init(IEventBus bus) {
         MinecraftForge.EVENT_BUS.register(SleepTightForgeClient.class);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(SleepTightForgeClient::onAddGuiLayers);
+        bus.addListener(SleepTightForgeClient::onAddGuiLayers);
+    }
+
+    @SubscribeEvent
+    public static void onEntityTIck(LivingEvent.LivingTickEvent event) {
+        SleepTightClient.onEntityTick(event.getEntity());
     }
 
     @SubscribeEvent
@@ -42,12 +48,12 @@ public class SleepTightForgeClient {
     }
 
     @SubscribeEvent
-    public static void renderPlayer(RenderPlayerEvent.Pre event){
+    public static void renderPlayer(RenderPlayerEvent.Pre event) {
         Player player = event.getEntity();
         Minecraft mc = Minecraft.getInstance();
-        if(player == mc.player &&
+        if (player == mc.player &&
                 mc.options.getCameraType().isFirstPerson() &&
-                player.getVehicle() instanceof BedEntity ){
+                player.getVehicle() instanceof BedEntity) {
             event.getRenderer().getModel().head.visible = false;
         }
     }
@@ -55,7 +61,6 @@ public class SleepTightForgeClient {
     public static void onAddGuiLayers(RegisterGuiOverlaysEvent event) {
         event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "sleep_indicator", new SleepGuiOverlayImpl());
     }
-
 
 
     public static class SleepGuiOverlayImpl extends SleepGuiOverlay<ForgeGui> implements IGuiOverlay {

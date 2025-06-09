@@ -21,6 +21,7 @@ public class ClientConfigs {
     public static final Supplier<Double> PARTICLE_ALPHA;
     public static final Supplier<Integer> PARTICLE_LIFETIME;
     public static final Supplier<Double> PARTICLE_SPAWN_FREQUENCY;
+    public static final Supplier<Boolean> ZZZ_PARTICLES;
 
 
     public static final Supplier<Boolean> INSOMNIA_TIMER;
@@ -67,6 +68,8 @@ public class ClientConfigs {
                 .define("show_time_when_sleeping", true);
         VILLAGER_SLEEP = builder.comment("Makes villagers close their eyes when sleeping")
                         .define("sleeping_villagers_eyes", true);
+        ZZZ_PARTICLES = builder.comment("Spawn particles when sleeping. Set to 0 to disable")
+                .define("zzz_particles", true);
         builder.pop();
 
         SPEC = builder.buildAndRegister();

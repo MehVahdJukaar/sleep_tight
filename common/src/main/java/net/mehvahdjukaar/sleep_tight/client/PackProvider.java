@@ -5,6 +5,7 @@ import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.moonlight.api.resources.ResType;
 import net.mehvahdjukaar.moonlight.api.resources.pack.DynClientResourcesGenerator;
 import net.mehvahdjukaar.moonlight.api.resources.pack.DynamicTexturePack;
+import net.mehvahdjukaar.moonlight.api.resources.pack.ResourceGenTask;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.repository.Pack;
@@ -13,6 +14,7 @@ import net.minecraft.world.item.DyeColor;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class PackProvider extends DynClientResourcesGenerator {
 
@@ -35,33 +37,34 @@ public class PackProvider extends DynClientResourcesGenerator {
     }
 
     @Override
-    public void regenerateDynamicAssets(ResourceManager manager) {
+    public void regenerateDynamicAssets(Consumer<ResourceGenTask> executor) {
 
-        ResourceLocation res = new ResourceLocation("white_bed");
-
-
-        var o = manager.getResource(ResType.BLOCKSTATES.getPath(res));
-
-        if (o.isPresent() && !Objects.equals(o.get().sourcePackId(), "Default")) return;
+        executor.accept((manager, sink) -> {
+            ResourceLocation res = new ResourceLocation("white_bed");
 
 
-        if (!PlatHelper.isModLoaded("enhancedblockentities") &&
-                !PlatHelper.isModLoaded("betterbeds")) {
+            var o = manager.getResource(ResType.BLOCKSTATES.getPath(res));
 
-            String str = """
-                    {
-                      "variants": {
-                        "": {
-                          "model": "sleep_tight:block/#_bed"
-                        }
-                      }
-                    }""";
-            for (var c : DyeColor.values()) {
-                var json = JsonParser.parseString(str.replace("#", c.getName()));
+            if (o.isPresent() && !Objects.equals(o.get().sourcePackId(), "Default")) return;
 
-                dynamicPack.addJson(new ResourceLocation(c.getName() + "_bed"), json, ResType.BLOCKSTATES);
+
+            if (!PlatHelper.isModLoaded("enhancedblockentities") &&
+                    !PlatHelper.isModLoaded("betterbeds")) {
+
+                String str = """
+                        {
+                          "variants": {
+                            "": {
+                              "model": "sleep_tight:block/#_bed"
+                            }
+                          }
+                        }""";
+                for (var c : DyeColor.values()) {
+                    var json = JsonParser.parseString(str.replace("#", c.getName()));
+                    sink.addJson(new ResourceLocation(c.getName() + "_bed"), json, ResType.BLOCKSTATES);
+                }
             }
-        }
+        });
     }
 
 }

@@ -1,5 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.mixins;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.SleepStatus;
@@ -19,9 +20,9 @@ public abstract class SleepStatusMixin {
     @Shadow private int activePlayers;
 
     @Inject(method = "update",at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;isSleeping()Z",
-    shift = At.Shift.BEFORE), locals = LocalCapture.CAPTURE_FAILEXCEPTION)
-    public void sleep_tight$removeOnCooldown(List<ServerPlayer> players, CallbackInfoReturnable<Boolean> cir, int i, int j,
-                                 Iterator var4, ServerPlayer serverPlayer){
+    shift = At.Shift.BEFORE))
+    public void sleep_tight$removeOnCooldown(List<ServerPlayer> players, CallbackInfoReturnable<Boolean> cir,
+                                             @Local ServerPlayer serverPlayer){
         if(SleepTightPlatformStuff.getPlayerSleepData(serverPlayer).isOnSleepCooldown(serverPlayer)){
             this.activePlayers--;
         }

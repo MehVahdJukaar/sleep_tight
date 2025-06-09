@@ -132,6 +132,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
 
     //sound events
 
+    public static final Supplier<SoundEvent> SNORE_SOUND = RegHelper.registerSound(res("snore"));
     public static final Supplier<SoundEvent> NIGHTMARE_SOUND = RegHelper.registerSound(res("nightmare"));
     public static final Supplier<SoundEvent> BEDBUG_AMBIENT = RegHelper.registerSound(res("bedbug.ambient"));
     public static final Supplier<SoundEvent> BEDBUG_DEATH = RegHelper.registerSound(res("bedbug.death"));
@@ -150,6 +151,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
 
     public static final Supplier<SimpleParticleType> DREAM_PARTICLE = RegHelper.registerParticle(res("dream"));
     public static final Supplier<SimpleParticleType> BEDBUG_PARTICLE = RegHelper.registerParticle(res("bedbug"));
+    public static final Supplier<SimpleParticleType> ZZZ_PARTICLE = RegHelper.registerParticle(res("zzz"));
 
     //effects
 

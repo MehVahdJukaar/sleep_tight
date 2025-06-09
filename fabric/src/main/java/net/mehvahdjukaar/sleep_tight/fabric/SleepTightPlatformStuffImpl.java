@@ -14,6 +14,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 public class SleepTightPlatformStuffImpl {
+
     @org.jetbrains.annotations.Contract
     public static PlayerSleepData getPlayerSleepData(Player player) {
         return ((ISleepTightPlayer) player).st$getSleepData();

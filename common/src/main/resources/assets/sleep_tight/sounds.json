@@ -60,6 +60,13 @@
         "name": "sleep_tight:nightmare"
       }
     ]
+  },
+  "snore": {
+    "sounds": [
+      {
+        "name": "sleep_tight:snore"
+      }
+    ]
   }
 }
 

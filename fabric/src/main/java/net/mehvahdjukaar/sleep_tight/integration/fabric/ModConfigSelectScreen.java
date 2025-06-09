@@ -15,7 +15,7 @@ public class ModConfigSelectScreen extends FabricConfigListScreen {
 
     public ModConfigSelectScreen(Screen parent) {
         super(SleepTight.MOD_ID, SleepTight.NIGHT_BAG.get().asItem().getDefaultInstance(),
-                Component.literal("\u00A79Sleep Tight Configs"), new ResourceLocation("textures/block/blue_wool.png"),
+                Component.literal("§9Sleep Tight Configs"), new ResourceLocation("textures/block/blue_wool.png"),
                 parent, ClientConfigs.SPEC, CommonConfigs.SPEC);
     }
 

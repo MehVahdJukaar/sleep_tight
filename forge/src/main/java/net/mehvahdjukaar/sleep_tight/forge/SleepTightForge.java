@@ -21,6 +21,7 @@ import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.level.SleepFinishedTimeEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -32,17 +33,17 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 @Mod(SleepTight.MOD_ID)
 public class SleepTightForge {
 
-    public SleepTightForge() {
+    public SleepTightForge(IEventBus bus) {
         SleepTight.commonInit();
 
         if (PlatHelper.getPhysicalSide().isClient()) {
             SleepTightClient.init();
-            SleepTightForgeClient.init();
+            SleepTightForgeClient.init(bus);
         }
 
         MinecraftForge.EVENT_BUS.register(this);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(SleepTightForge::setup);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(SleepTightForge::registerCaps);
+        bus.addListener(SleepTightForge::setup);
+        bus.addListener(SleepTightForge::registerCaps);
     }
 
     public static void setup(final FMLCommonSetupEvent event) {
