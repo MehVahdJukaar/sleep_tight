@@ -43,8 +43,8 @@ import net.minecraft.world.level.block.piston.PistonMovingBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.UUID;
 
@@ -74,6 +74,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         this.setPos(mainPos.getX() + 0.5, mainPos.getY() + 0.25, mainPos.getZ() + 0.5);
     }
 
+    @Override
     protected void defineSynchedData() {
         this.entityData.define(DATA_OFFSET, OffsetMode.NONE);
     }
@@ -218,12 +219,12 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     @Override
-    protected void readAdditionalSaveData(@Nonnull CompoundTag compound) {
+    protected void readAdditionalSaveData(@NotNull CompoundTag compound) {
         this.setOffsetMode(OffsetMode.values()[compound.getByte("mode")]);
     }
 
     @Override
-    protected void addAdditionalSaveData(@Nonnull CompoundTag compound) {
+    protected void addAdditionalSaveData(@NotNull CompoundTag compound) {
         compound.putByte("mode", (byte) getOffsetMode().ordinal());
     }
 
@@ -368,7 +369,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         return o.orElseGet(() -> super.getDismountLocationForPassenger(passenger));
     }
 
-    private enum OffsetMode {
+    public enum OffsetMode {
         NONE, HAMMOCK_3L, DOUBLE_BED;
     }
 

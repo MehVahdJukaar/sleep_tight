@@ -1,27 +1,24 @@
 
-modLoader="javafml" #mandatory
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
 
-loaderVersion="[40,)" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.
+license = "${mod_license}"
+issueTrackerURL = "${mod_github}/issues"
 
-license="ARR"
+[[mixins]]
+config = "${mod_id}.mixins.json"
+[[mixins]]
+config = "${mod_id}-common.mixins.json"
 
-[[mods]] #mandatory
-
-modId= "sleep_tight" #mandatory
-
-version = "${version}"
-
-displayName="Sleep Tight" #mandatory
-
-logoFile="icon.png" #optional
-
-credits="Mehvahdjukaar, Plantkillable" #optional
-
-authors="MehVahdJukaar, Plantkillable" #optional
-
-description='''
-Balanced sleep overhaul & hammocks
-'''
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName = "${mod_name}"
+logoFile = "icon.png"
+authors = "${mod_authors}"
+credits = "${mod_credits}"
+description = '''${mod_description}'''
+modUrl = "${mod_homepage}"
 
 
 [modproperties.sleep_tight]

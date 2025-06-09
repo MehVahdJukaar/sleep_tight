@@ -5,10 +5,10 @@ import net.minecraft.world.entity.player.Player;
 
 public class HeartstoneCompat {
 
-    public static boolean isFren(Player player, Player target){
-        for(var v : player.getInventory().items){
-            if(v.getItem() instanceof HeartstoneItem){
-                if(HeartstoneItem.arePlayersBound(player, v, target))return true;
+    public static boolean isFren(Player player, Player target) {
+        for (var v : player.getInventory().items) {
+            if (v.getItem() instanceof HeartstoneItem) {
+                if (HeartstoneItem.arePlayersBound(player, v, target, true)) return true;
             }
         }
         return false;
