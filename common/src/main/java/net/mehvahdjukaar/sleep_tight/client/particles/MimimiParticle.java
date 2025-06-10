@@ -21,16 +21,16 @@ public class MimimiParticle extends TextureSheetParticle {
         super(clientLevel, x, y, z, 0.0, 0.0, 0.0);
         this.friction = 1;
         this.gravity = 0;
-        this.yaw = (float) 0;
+        this.yaw = (float) yaw;
         this.xd = 0;
         this.yd = 0;
         this.zd = 0;
         this.quadSize = 0.01F;
         this.oQuadSize = this.quadSize;
         this.quadInc = 0.0019f;
-        this.lifetime = 120;
+        this.lifetime = 140;
         this.hasPhysics = true;
-        this.roll = MthUtils.nextWeighted(this.random, 0.12f, 25) * Mth.PI * (this.random.nextBoolean() ? -1 : 1);
+        this.roll = Mth.sin((this.age / (float) this.lifetime * 3.6f * Mth.PI + rollOffset)) * 0.1f;
         this.oRoll = roll;
         this.rollOffset = Mth.randomBetween(this.random, 0, Mth.PI * 2);
     }
@@ -43,10 +43,10 @@ public class MimimiParticle extends TextureSheetParticle {
     @Override
     public void tick() {
         this.oRoll = this.roll;
-        this.roll = Mth.sin((this.age / (float) this.lifetime * 2f * Mth.PI + rollOffset)) * 0.1f;
+        this.roll = Mth.sin((this.age / (float) this.lifetime * 3.6f * Mth.PI + rollOffset)) * 0.1f;
         float wobble = Mth.cos((float) this.age / this.lifetime * 2.7f* Mth.PI) * 0.006f;
-        Vector3f vv = new Vector3f(wobble, 0, 0.005f);
-        vv.rotateY((this.yaw * Mth.DEG_TO_RAD) + 45);
+        Vector3f vv = new Vector3f(wobble, 0, 0.0045f);
+        vv.rotateY((this.yaw * Mth.DEG_TO_RAD) - 45);
         this.xd = vv.x();
         this.yd = 0.004;
         this.zd = vv.z();

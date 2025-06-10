@@ -19,6 +19,10 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Arrays;
 import java.util.Calendar;
@@ -88,18 +92,23 @@ public class SleepTightClient {
 
     @EventCalled
     public static void onEntityTick(LivingEntity entity) {
-        if (entity.isSleeping() && ClientConfigs.ZZZ_PARTICLES.get() && entity.tickCount % 30 == 0) {
-            var pos = entity.position().add(0, entity.getBbHeight() + 1 / 16f, 0);
-            var level = entity.level();
+        if (entity.isSleeping() && ClientConfigs.ZZZ_PARTICLES.get()
+                && !entity.getType().is(SleepTight.NO_SLEEP_PARTICLES)
+                && entity.tickCount % 35 == 0) {
+            Vec3 pos = entity.position().add(0, entity.getBbHeight() + 1 / 16f, 0);
+            Level level = entity.level();
+            float yawDeg = 180 - entity.getViewYRot(1);
+            var bedPos = entity.getSleepingPos();
+            if (bedPos.isPresent()) {
+                BlockState bedState = level.getBlockState(bedPos.get());
+                if (bedState.hasProperty(BedBlock.FACING)) {
+                    yawDeg = -bedState.getValue(BedBlock.FACING).toYRot();
+                }
+            }
+
             level.addParticle(SleepTight.ZZZ_PARTICLE.get(),
                     pos.x, pos.y, pos.z,
-                    entity.getViewYRot(1), 0, 0);
-
-            if (SleepTightClient.HAS_SNORE && entity.tickCount % 60 == 0 &&
-                    entity.getRandom().nextBoolean()) {
-                //play snore sound
-                entity.playSound(SleepTight.SNORE_SOUND.get(), 1.0f, Mth.randomBetween(entity.getRandom(), 0.9f, 1.1f));
-            }
+                    yawDeg, 0, 0);
         }
     }
 }

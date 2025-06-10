@@ -147,6 +147,8 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     //banner pattern
     public static final Supplier<BannerPattern> MOON_PATTERN = RegHelper.register(res("moon"), () -> new BannerPattern("mon"), Registries.BANNER_PATTERN);
 
+    public static final TagKey<EntityType<?>> NO_SLEEP_PARTICLES = TagKey.create(Registries.ENTITY_TYPE, res("no_sleep_particles"));
+
     //particles
 
     public static final Supplier<SimpleParticleType> DREAM_PARTICLE = RegHelper.registerParticle(res("dream"));

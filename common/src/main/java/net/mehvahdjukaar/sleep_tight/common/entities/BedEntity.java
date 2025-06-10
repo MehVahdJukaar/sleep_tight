@@ -5,6 +5,7 @@ import net.mehvahdjukaar.moonlight.api.entity.IExtraClientSpawnData;
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
@@ -32,7 +33,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.ai.behavior.SleepInBed;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
@@ -303,6 +303,10 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     public void onInputUpdate(boolean left, boolean right, boolean up, boolean down, boolean sprint, boolean jumping) {
         if (jumping) {
             NetworkHandler.CHANNEL.sendToServer(new ServerBoundCommitSleepMessage());
+            if (this.level().isClientSide && SleepTightClient.HAS_SNORE){
+                this.getPassengers().get(0)
+                        .playSound(SleepTight.SNORE_SOUND.get(), 1.0f, Mth.randomBetween(this.random, 0.9f, 1.1f));
+       }
         } else if (left ^ right) {
             if (this.level().getBlockEntity(this.getOnPos()) instanceof HammockTile tile) {
                 if (left) {
@@ -418,6 +422,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             }
 
             this.discard();
+
         }
     }
 
