@@ -19,6 +19,7 @@ public class CommonConfigs {
 
 
     public static final Supplier<Boolean> FIX_BED_POSITION;
+    public static final Supplier<Boolean> RESPAWN_LAYING;
     public static final Supplier<ExplosionBehavior> EXPLOSION_BEHAVIOR;
     public static final Supplier<Integer> SLEEP_INTERVAL;
     public static final Supplier<Boolean> DOUBLE_BED;
@@ -51,6 +52,7 @@ public class CommonConfigs {
     public static final Supplier<Integer> ENCOUNTER_MAX_COUNT;
     public static final Supplier<Double> ENCOUNTER_SLEEP_TIME_MULTIPLIER;
     public static final Supplier<Integer> ENCOUNTER_INSOMNIA_DURATION;
+
 
     public static final Supplier<Integer> BED_COOLDOWN;
     public static final Supplier<Integer> HAMMOCK_COOLDOWN;
@@ -133,7 +135,8 @@ public class CommonConfigs {
         ConfigBuilder builder = ConfigBuilder.create(SleepTight.res(EASY_MODE ? "common_ez" : "common"), ConfigType.COMMON);
 
         builder.push("misc");
-
+        RESPAWN_LAYING = builder.comment("Makes players respawn by laying on their bed")
+                .define("respawn_laying", true);
         FIX_BED_POSITION = builder.comment("Fixes multiplayer players being positioned 2 pixels above a bed")
                 .define("fix_bed_position", true);
         LAY_WHEN_ON_COOLDOWN = builder.comment("Allows laying on a bed when you are on sleeping cooldown")

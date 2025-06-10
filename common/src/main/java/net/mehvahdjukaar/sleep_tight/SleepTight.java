@@ -14,7 +14,7 @@ import net.mehvahdjukaar.sleep_tight.common.entities.BedbugEntity;
 import net.mehvahdjukaar.sleep_tight.common.entities.DreamerEssenceTargetEntity;
 import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
 import net.mehvahdjukaar.sleep_tight.common.items.NightBagItem;
-import net.mehvahdjukaar.sleep_tight.common.network.ModCommands;
+import net.mehvahdjukaar.sleep_tight.common.ModCommands;
 import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.common.tiles.InfestedBedTile;

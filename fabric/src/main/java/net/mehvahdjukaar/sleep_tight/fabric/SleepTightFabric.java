@@ -7,7 +7,6 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
-import net.mehvahdjukaar.moonlight.fabric.MLFabricSetupCallbacks;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
@@ -66,11 +65,17 @@ public class SleepTightFabric implements ModInitializer {
         ServerPlayConnectionEvents.JOIN.register((l, s, m) -> ModEvents.onPlayerLoggedIn(l.player));
 
         ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) -> {
-            if (!alive) {
-                var oldData = SleepTightPlatformStuff.getPlayerSleepData(oldPlayer);
-                var newData = SleepTightPlatformStuff.getPlayerSleepData(newPlayer);
-                newData.copyFrom(oldData);
-            }
+            //if (!alive) {
+            var oldData = SleepTightPlatformStuff.getPlayerSleepData(oldPlayer);
+            var newData = SleepTightPlatformStuff.getPlayerSleepData(newPlayer);
+            newData.copyFrom(oldData);
+            //just server. we must sync
+            newData.syncToClient(newPlayer);
+            //}
+        });
+
+        ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
+            ModEvents.onPlayerRespawned(newPlayer);
         });
 
         ServerEntityCombatEvents.AFTER_KILLED_OTHER_ENTITY.register((world, entity, killedEntity) -> {

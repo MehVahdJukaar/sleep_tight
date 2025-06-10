@@ -95,7 +95,7 @@ public class SleepTightClient {
         if (entity.isSleeping() && ClientConfigs.ZZZ_PARTICLES.get()
                 && !entity.getType().is(SleepTight.NO_SLEEP_PARTICLES)
                 && entity.tickCount % 35 == 0) {
-            Vec3 pos = entity.position().add(0, entity.getBbHeight() + 1 / 16f, 0);
+            Vec3 pos = entity.position().add(0, entity.getEyeHeight() + 1 / 16f, 0);
             Level level = entity.level();
             float yawDeg = 180 - entity.getViewYRot(1);
             var bedPos = entity.getSleepingPos();
@@ -108,7 +108,7 @@ public class SleepTightClient {
 
             level.addParticle(SleepTight.ZZZ_PARTICLE.get(),
                     pos.x, pos.y, pos.z,
-                    yawDeg, 0, 0);
+                    yawDeg, entity.getId(), 0);
         }
     }
 }

@@ -5,19 +5,24 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 public class MimimiParticle extends TextureSheetParticle {
 
     private static final int FADE_START = 40;
 
+    private final float yaw;
+    @Nullable
+    private final Entity owner;
     private float oQuadSize;
     private float quadInc;
 
     private float rollOffset;
-    private final float yaw;
 
-    public MimimiParticle(ClientLevel clientLevel, double x, double y, double z, double yaw, double _a, double _b) {
+    public MimimiParticle(ClientLevel clientLevel, double x, double y, double z, double yaw, double entityId, double _b) {
         super(clientLevel, x, y, z, 0.0, 0.0, 0.0);
         this.friction = 1;
         this.gravity = 0;
@@ -33,6 +38,7 @@ public class MimimiParticle extends TextureSheetParticle {
         this.roll = Mth.sin((this.age / (float) this.lifetime * 3.6f * Mth.PI + rollOffset)) * 0.1f;
         this.oRoll = roll;
         this.rollOffset = Mth.randomBetween(this.random, 0, Mth.PI * 2);
+        this.owner = clientLevel.getEntity((int) entityId);
     }
 
     @Override
@@ -58,6 +64,10 @@ public class MimimiParticle extends TextureSheetParticle {
         int timeLeft = lifetime - age;
         if (timeLeft < FADE_START) {
             alpha = (float) (timeLeft) / FADE_START;
+        }
+
+        if (this.owner != null && (!(this.owner instanceof LivingEntity le) || !le.isSleeping())  && timeLeft > FADE_START) {
+            this.age = this.lifetime - FADE_START; //make it disappear faster
         }
 
         super.tick();

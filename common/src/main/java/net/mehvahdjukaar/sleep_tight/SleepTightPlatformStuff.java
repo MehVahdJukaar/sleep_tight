@@ -1,11 +1,15 @@
 package net.mehvahdjukaar.sleep_tight;
 
 import dev.architectury.injectables.annotations.ExpectPlatform;
+import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
+import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SleepTightPlatformStuff {
 
@@ -20,5 +24,14 @@ public class SleepTightPlatformStuff {
     @ExpectPlatform
     public static Player.BedSleepingProblem invokeSleepChecksEvents(Player player, BlockPos pos) {
         throw new AssertionError();
+    }
+
+    @Nullable
+    public static BedData getBedDataAt(Level level, BlockPos pos) {
+        if (level.getBlockEntity(pos) instanceof IExtraBedDataProvider bed) {
+            return bed.st_getBedData();
+        } else {
+            return null;
+        }
     }
 }

@@ -398,4 +398,14 @@ public class ModEvents {
     }
 
 
+    public static void onPlayerRespawned(ServerPlayer newPlayer) {
+        if (CommonConfigs.RESPAWN_LAYING.get()) {
+            BlockPos pos = newPlayer.getRespawnPosition();
+            BlockState state = newPlayer.level().getBlockState(pos);
+            BedData bedData = SleepTightPlatformStuff.getBedDataAt(newPlayer.level(), pos);
+            if (bedData != null) {
+                BedEntity.layDown(state, newPlayer.level(), pos, newPlayer);
+            }
+        }
+    }
 }

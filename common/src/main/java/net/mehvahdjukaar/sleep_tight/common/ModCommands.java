@@ -1,16 +1,20 @@
-package net.mehvahdjukaar.sleep_tight.common.network;
+package net.mehvahdjukaar.sleep_tight.common;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
+import net.mehvahdjukaar.sleep_tight.core.BedData;
+import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -35,6 +39,9 @@ public class ModCommands {
                                 .then(GetHomeBedNights.register(dispatcher))
                                 .then(SetHomeBedNights.register(dispatcher))
                         )
+                        .then(Commands.literal("home_bed_position")
+                                .then(SetHomeBedPosition.register(dispatcher, commandBuildContext))
+                        )
                         .then(Commands.literal("nightmare_chance")
                                 .then(GetNightmareChance.register(dispatcher))
 
@@ -58,7 +65,7 @@ public class ModCommands {
                 cap.addInsomnia(serverPlayer, cooldown);
                 cap.syncToClient(serverPlayer);
 
-                context.getSource().sendSuccess(()->Component.translatable("message.sleep_tight.command.set_insomnia"), false);
+                context.getSource().sendSuccess(() -> Component.translatable("message.sleep_tight.command.set_insomnia"), false);
                 return cooldown;
             }
             return 0;
@@ -76,7 +83,7 @@ public class ModCommands {
             if (context.getSource().getEntity() instanceof ServerPlayer serverPlayer) {
                 var cap = SleepTightPlatformStuff.getPlayerSleepData(serverPlayer);
                 int timeLeft = (int) cap.getInsomniaTimeLeft(serverPlayer);
-                context.getSource().sendSuccess(()->Component.translatable("message.sleep_tight.command.get_insomnia", timeLeft), false);
+                context.getSource().sendSuccess(() -> Component.translatable("message.sleep_tight.command.get_insomnia", timeLeft), false);
                 return timeLeft;
             }
             return 0;
@@ -99,7 +106,7 @@ public class ModCommands {
                 cap.setConsecutiveNightsSlept(nights);
                 cap.syncToClient(serverPlayer);
 
-                context.getSource().sendSuccess(()->Component.translatable("message.sleep_tight.command.set_nights"), false);
+                context.getSource().sendSuccess(() -> Component.translatable("message.sleep_tight.command.set_nights"), false);
                 return nights;
             }
             return 0;
@@ -118,7 +125,7 @@ public class ModCommands {
                 var cap = SleepTightPlatformStuff.getPlayerSleepData(serverPlayer);
 
                 int timeLeft = cap.getConsecutiveNightsSlept();
-                context.getSource().sendSuccess(()->Component.translatable("message.sleep_tight.command.get_nights", timeLeft), false);
+                context.getSource().sendSuccess(() -> Component.translatable("message.sleep_tight.command.get_nights", timeLeft), false);
 
                 return timeLeft;
             }
@@ -142,7 +149,7 @@ public class ModCommands {
                 cap.setNightsSleptInHomeBed(nights);
                 cap.syncToClient(serverPlayer);
 
-                context.getSource().sendSuccess(()->Component.translatable("message.sleep_tight.command.set_home_bed_nights"), false);
+                context.getSource().sendSuccess(() -> Component.translatable("message.sleep_tight.command.set_home_bed_nights"), false);
                 return nights;
             }
             return 0;
@@ -161,7 +168,7 @@ public class ModCommands {
                 var cap = SleepTightPlatformStuff.getPlayerSleepData(serverPlayer);
 
                 int timeLeft = cap.getNightsSleptInHomeBed();
-                context.getSource().sendSuccess(()->Component.translatable("message.sleep_tight.command.get_home_bed_nights", timeLeft), false);
+                context.getSource().sendSuccess(() -> Component.translatable("message.sleep_tight.command.get_home_bed_nights", timeLeft), false);
 
                 return timeLeft;
             }
@@ -181,7 +188,35 @@ public class ModCommands {
                 var cap = SleepTightPlatformStuff.getPlayerSleepData(serverPlayer);
 
                 double nightmareChance = cap.getNightmareChance(serverPlayer, serverPlayer.getOnPos());
-                context.getSource().sendSuccess(()->Component.translatable("message.sleep_tight.command.nightmare_chance", String.format("%.3f", nightmareChance)), false);
+                context.getSource().sendSuccess(() -> Component.translatable("message.sleep_tight.command.nightmare_chance", String.format("%.3f", nightmareChance)), false);
+            }
+            return 0;
+        }
+    }
+
+    private static class SetHomeBedPosition implements Command<CommandSourceStack> {
+
+        public static ArgumentBuilder<CommandSourceStack, ?> register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
+            return Commands.literal("set")
+                    .then(Commands.argument("pos", BlockPosArgument.blockPos())
+                            .executes(new SetHomeBedPosition()));
+        }
+
+        @Override
+        public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+            if (context.getSource().getEntity() instanceof ServerPlayer serverPlayer) {
+
+                var pos = BlockPosArgument.getLoadedBlockPos(context, "pos");
+                BedData data = SleepTightPlatformStuff.getBedDataAt(serverPlayer.level(), pos);
+                if (data != null) {
+                    PlayerSleepData playerData = SleepTightPlatformStuff.getPlayerSleepData(serverPlayer);
+                    playerData.setLastSleptInto(data);
+                    context.getSource().sendSuccess(() -> Component.translatable("message.sleep_tight.command.set_home_bed_position"), false);
+                    return 1;
+                } else {
+                    context.getSource().sendFailure(Component.translatable("message.sleep_tight.command.set_home_bed_position_fail"));
+                    return 0;
+                }
             }
             return 0;
         }

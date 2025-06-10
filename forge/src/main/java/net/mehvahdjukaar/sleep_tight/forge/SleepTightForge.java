@@ -25,7 +25,6 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 /**
  * Author: MehVahdJukaar
@@ -134,13 +133,20 @@ public class SleepTightForge {
 
     @SubscribeEvent
     public void onPlayerClone(PlayerEvent.Clone event) {
-        if (event.isWasDeath()) {
-            Player old = event.getOriginal();
-            old.reviveCaps();
-            var oldData = SleepTightPlatformStuff.getPlayerSleepData(old);
-            var newData = SleepTightPlatformStuff.getPlayerSleepData(event.getEntity());
-            newData.copyFrom(oldData);
-            old.invalidateCaps();
+        // if (event.isWasDeath()) {
+        Player old = event.getOriginal();
+        old.reviveCaps();
+        var oldData = SleepTightPlatformStuff.getPlayerSleepData(old);
+        var newData = SleepTightPlatformStuff.getPlayerSleepData(event.getEntity());
+        newData.copyFrom(oldData);
+        old.invalidateCaps();
+        //  }
+    }
+
+    @SubscribeEvent
+    public void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            ModEvents.onPlayerRespawned(player);
         }
     }
 

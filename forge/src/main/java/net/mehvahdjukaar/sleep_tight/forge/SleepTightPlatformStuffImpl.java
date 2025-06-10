@@ -1,6 +1,8 @@
 package net.mehvahdjukaar.sleep_tight.forge;
 
 
+import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
+import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.monster.Monster;
@@ -55,5 +57,6 @@ public class SleepTightPlatformStuffImpl {
         }
         return null;
     }
+
 
 }

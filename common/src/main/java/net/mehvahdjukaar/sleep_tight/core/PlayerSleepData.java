@@ -5,10 +5,10 @@ import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncPlayerSleepCapMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
-import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -28,7 +28,7 @@ public abstract class PlayerSleepData {
     protected static final String USING_DOUBLE_BED_NBT = "using_double_bed";
 
     @Nullable
-    private UUID homeBed = null;
+    private UUID lastBedSleptInto = null;
     private long insomniaWillElapseTimeStamp = 0;
     private long lastWokenUpTimeStamp = -1;
     private int consecutiveNightsSlept = 0;
@@ -37,8 +37,8 @@ public abstract class PlayerSleepData {
 
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
-        if (homeBed != null) {
-            tag.putUUID(HOME_BED_NBT, homeBed);
+        if (lastBedSleptInto != null) {
+            tag.putUUID(HOME_BED_NBT, lastBedSleptInto);
         }
         tag.putLong(INSOMNIA_ELAPSE_NBT, insomniaWillElapseTimeStamp);
         tag.putLong(LAST_TIME_SLEPT_NBT, lastWokenUpTimeStamp);
@@ -49,7 +49,7 @@ public abstract class PlayerSleepData {
     }
 
     public void deserializeNBT(CompoundTag tag) {
-        if (tag.contains(HOME_BED_NBT)) this.homeBed = tag.getUUID(HOME_BED_NBT);
+        if (tag.contains(HOME_BED_NBT)) this.lastBedSleptInto = tag.getUUID(HOME_BED_NBT);
         this.insomniaWillElapseTimeStamp = tag.getLong(INSOMNIA_ELAPSE_NBT);
         this.lastWokenUpTimeStamp = tag.getLong(LAST_TIME_SLEPT_NBT);
         this.consecutiveNightsSlept = tag.getInt("consecutive_nights");
@@ -64,7 +64,7 @@ public abstract class PlayerSleepData {
 
     public void maybeIncreaseNightsInHomeBed(BedData bed, Player player) {
         var bedId = bed.getId();
-        if (bedId.equals(homeBed)) {
+        if (bedId.equals(lastBedSleptInto)) {
             int required = CommonConfigs.HOME_BED_REQUIRED_NIGHTS.get();
 
             this.nightsSleptInHomeBed = Math.min(required + CommonConfigs.HOME_BED_MAX_LEVEL.get(), nightsSleptInHomeBed + 1);
@@ -72,7 +72,8 @@ public abstract class PlayerSleepData {
                 bed.setHomeBedFor(player);
             }
         } else {
-            this.homeBed = bedId;
+            player.displayClientMessage(Component.literal("Debug: setting last bed slept into"), false);
+            this.setLastSleptInto(bed);
             this.nightsSleptInHomeBed = 0;
         }
     }
@@ -131,7 +132,7 @@ public abstract class PlayerSleepData {
 
     @Nullable
     public UUID getHomeBed() {
-        return homeBed;
+        return lastBedSleptInto;
     }
 
     public long getInsomniaWillElapseTimeStamp() {
@@ -151,7 +152,7 @@ public abstract class PlayerSleepData {
     }
 
     public void acceptFromServer(UUID id, long insominaElapse, long sleepTimestamp, int nightSlept, int homeBedNights, boolean doubleBed) {
-        this.homeBed = id;
+        this.lastBedSleptInto = id;
         this.insomniaWillElapseTimeStamp = insominaElapse;
         this.consecutiveNightsSlept = nightSlept;
         this.lastWokenUpTimeStamp = sleepTimestamp;
@@ -173,7 +174,7 @@ public abstract class PlayerSleepData {
 
     public void copyFrom(PlayerSleepData oldData) {
         this.consecutiveNightsSlept = oldData.consecutiveNightsSlept;
-        this.homeBed = oldData.homeBed;
+        this.lastBedSleptInto = oldData.lastBedSleptInto;
         this.nightsSleptInHomeBed = oldData.nightsSleptInHomeBed;
         this.insomniaWillElapseTimeStamp = oldData.insomniaWillElapseTimeStamp;
         this.lastWokenUpTimeStamp = oldData.lastWokenUpTimeStamp;
@@ -195,12 +196,14 @@ public abstract class PlayerSleepData {
     @Nullable
     public static BedData getHomeBedIfHere(Player player, BlockPos pos) {
         PlayerSleepData sleepData = SleepTightPlatformStuff.getPlayerSleepData(player);
-        if (player.level().getBlockEntity(pos) instanceof IExtraBedDataProvider bed) {
-            BedData bedCap = bed.st_getBedData();
-            if (bedCap.getId().equals(sleepData.getHomeBed()) && bedCap.isHomeBedFor(player)) {
-                return bedCap;
-            }
+        BedData bedCap = SleepTightPlatformStuff.getBedDataAt(player.level(), pos);
+        if (bedCap != null && bedCap.getId().equals(sleepData.getHomeBed()) && bedCap.isHomeBedFor(player)) {
+            return bedCap;
         }
         return null;
+    }
+
+    public void setLastSleptInto(BedData data) {
+        this.lastBedSleptInto = data.getId();
     }
 }
