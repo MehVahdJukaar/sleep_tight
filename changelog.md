@@ -1,3 +1,4 @@
--added zzz sleep particles to all sleeping entities
--fixed sleep data not being synced on fabric on death
--fixed sleep data being lost on dimension change
+- added zzz sleep particles to all sleeping entities
+- fixed sleep data not being synced on fabric on death
+- fixed sleep data being lost on dimension change
+- fixed respawn only in home bed config not working

@@ -30,14 +30,14 @@ public abstract class BedBlockMixin extends Block implements ISleepTightBed {
     @ModifyArg(method = "use", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/level/Level;explode(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;Lnet/minecraft/world/phys/Vec3;FZLnet/minecraft/world/level/Level$ExplosionInteraction;)Lnet/minecraft/world/level/Explosion;"
     ))
-    public float explodeSmall(@Nullable Entity exploder, @Nullable DamageSource damageSource, @Nullable ExplosionDamageCalculator context,
+    public float sleep_tight$explodeSmall(@Nullable Entity exploder, @Nullable DamageSource damageSource, @Nullable ExplosionDamageCalculator context,
                               Vec3 v, float size, boolean causesFire, Level.ExplosionInteraction mode) {
         if (CommonConfigs.EXPLOSION_BEHAVIOR.get() == CommonConfigs.ExplosionBehavior.TINY_EXPLOSION) return 0;
         return size;
     }
 
     @WrapOperation(method = "use", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/BedBlock;canSetSpawn(Lnet/minecraft/world/level/Level;)Z"))
-    private boolean allowsSleepingInDimension(Level level, Operation<Boolean> original) {
+    private boolean sleep_tight$èèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèallowsSleepingInDimension(Level level, Operation<Boolean> original) {
         if (!CommonConfigs.EXPLOSION_BEHAVIOR.get().canExplode()) {
             return true;
         }

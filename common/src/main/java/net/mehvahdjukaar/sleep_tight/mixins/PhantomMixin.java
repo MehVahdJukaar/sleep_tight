@@ -21,7 +21,7 @@ public abstract class PhantomMixin {
     @ModifyArg(method = "canUse", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/level/Level;getNearbyPlayers(Lnet/minecraft/world/entity/ai/targeting/TargetingConditions;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;")
     )
-    public AABB checkForDreamerEssence(TargetingConditions predicate, LivingEntity phantom, AABB area) {
+    public AABB  sleep_tight$checkForDreamerEssence(TargetingConditions predicate, LivingEntity phantom, AABB area) {
         List<DreamerEssenceTargetEntity> list = phantom.level().getEntitiesOfClass(DreamerEssenceTargetEntity.class, area,
                 e -> ((Mob) phantom).getSensing().hasLineOfSight(e));
         if (!list.isEmpty()) {

@@ -207,7 +207,7 @@ public class ModEvents {
                                 checkExtraSleepConditions(player, pos);
                         if (!extraConditions) return InteractionResult.sidedSuccess(level.isClientSide);
 
-                        BedEntity.layDown(state, level, pos, player);
+                        BedEntity.layDown(state, pos, player);
                         //always success to prevent use action
                         return InteractionResult.SUCCESS;
                     }
@@ -404,7 +404,7 @@ public class ModEvents {
             BlockState state = newPlayer.level().getBlockState(pos);
             BedData bedData = SleepTightPlatformStuff.getBedDataAt(newPlayer.level(), pos);
             if (bedData != null) {
-                BedEntity.layDown(state, newPlayer.level(), pos, newPlayer);
+                BedEntity.layDown(state, pos, newPlayer);
             }
         }
     }

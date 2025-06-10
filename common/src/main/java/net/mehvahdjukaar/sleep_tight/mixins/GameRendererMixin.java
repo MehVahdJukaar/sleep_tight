@@ -18,17 +18,17 @@ public abstract class GameRendererMixin {
 
     @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;renderItemInHand(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/Camera;F)V",
     shift = At.Shift.BEFORE), require = 1)
-    public void bedCameraHackOn(float partialTicks, long finishTimeNano, PoseStack matrixStack, CallbackInfo ci) {
+    public void sleep_tight$bedCameraHackOn(float partialTicks, long finishTimeNano, PoseStack matrixStack, CallbackInfo ci) {
         ClientEvents.cameraHack = true;
     }
 
     @Inject(method = "renderLevel", at = @At(value = "TAIL"))
-    public void bedCameraHackOff(float partialTicks, long finishTimeNano, PoseStack matrixStack, CallbackInfo ci) {
+    public void sleep_tight$bedCameraHackOff(float partialTicks, long finishTimeNano, PoseStack matrixStack, CallbackInfo ci) {
         ClientEvents.cameraHack = false;
     }
 
     @Inject(method = "renderLevel", at = @At(value = "HEAD"))
-    public void mainBedCameraHack(float partialTicks, long finishTimeNano, PoseStack matrixStack, CallbackInfo ci) {
+    public void sleep_tight$mainBedCameraHack(float partialTicks, long finishTimeNano, PoseStack matrixStack, CallbackInfo ci) {
         ClientEvents.rotateCameraOverHammockAxis(partialTicks, matrixStack, this.getMainCamera());
     }
 }

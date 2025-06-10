@@ -30,7 +30,7 @@ public abstract class PlayerSleepData {
     @Nullable
     private UUID lastBedSleptInto = null;
 
-    private long maxLastInsomniaCooldown = 0;
+    private long maxLastInsomniaCooldown = 20;
     private long insomniaCooldown = 0;
     private long timeSinceLastSlept = 0;
 
@@ -117,11 +117,13 @@ public abstract class PlayerSleepData {
     }
 
     public boolean isOnSleepCooldown(Player player) {
+        if (player.getAbilities().instabuild) return false;
         return getInsomniaCooldown() > 0;
     }
 
     public double getNightmareChance(Player player, BlockPos pos) {
-        if (player.isCreative()) return 0;
+        if (player.getAbilities().instabuild) return 0;
+
         int minNights = CommonConfigs.NIGHTMARES_CONSECUTIVE_NIGHTS.get();
         if (consecutiveNightsSlept < minNights) return 0;
         if (DreamEssenceBlock.isInRange(player.blockPosition(), player.level())) return 0;

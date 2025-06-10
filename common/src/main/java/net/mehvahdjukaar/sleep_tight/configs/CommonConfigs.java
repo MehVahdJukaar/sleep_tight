@@ -136,7 +136,7 @@ public class CommonConfigs {
 
         builder.push("misc");
         RESPAWN_LAYING = builder.comment("Makes players respawn by laying on their bed")
-                .define("respawn_laying", true);
+                .define("respawn_laying", false);
         FIX_BED_POSITION = builder.comment("Fixes multiplayer players being positioned 2 pixels above a bed")
                 .define("fix_bed_position", true);
         LAY_WHEN_ON_COOLDOWN = builder.comment("Allows laying on a bed when you are on sleeping cooldown")

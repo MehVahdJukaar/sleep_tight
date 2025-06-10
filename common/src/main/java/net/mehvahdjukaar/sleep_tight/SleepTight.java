@@ -95,9 +95,10 @@ Place a dreamer essence - It's what phantoms crave
 Use a night bag - Glamping
 Use a potion of harming on a bed to remove a bed bug - Pest control
          */
+        //nitwits hammock
         //sleep next to eachother bonus bugged
         //TODO: bedbug spawn
-        //naturalist terry bear
+        //naturalist teddy bear
         //together nightmares
         //bedbug ai behavior
         //pushing players in hammocks

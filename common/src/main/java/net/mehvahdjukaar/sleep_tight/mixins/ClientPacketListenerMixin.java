@@ -28,7 +28,7 @@ public abstract class ClientPacketListenerMixin {
 
     @WrapOperation(method = "handleSetEntityPassengersPacket", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/network/chat/Component;translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;"))
-    public MutableComponent displayBedRidingMessage(String message, Object[] arg, Operation<MutableComponent> translatable,
+    public MutableComponent sleep_tight$displayBedRidingMessage(String message, Object[] arg, Operation<MutableComponent> translatable,
                                                     @Local(ordinal = 0) Entity vehicle) {
         //hack since beds can only have one passenger, so we can cancel
         if (vehicle instanceof BedEntity bed) {

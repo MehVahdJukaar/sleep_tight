@@ -426,7 +426,8 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         }
     }
 
-    public static void layDown(BlockState state, Level level, BlockPos pos, Player player) {
+    public static void layDown(BlockState state, BlockPos pos, Player player) {
+        Level level = player.level();
         if (!level.isClientSide) {
 
             OffsetMode mode = OffsetMode.NONE;

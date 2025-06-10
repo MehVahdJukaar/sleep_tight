@@ -20,7 +20,7 @@ public abstract class ServerPlayerMixin extends LivingEntity {
     }
 
     @WrapOperation(method = "startSleepInBed", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/dimension/DimensionType;natural()Z"))
-    public boolean canSleepInDimension(DimensionType instance, Operation<Boolean> original) {
+    public boolean  sleep_tight$canSleepInDimension(DimensionType instance, Operation<Boolean> original) {
         boolean n = instance.natural();
         if (!n && !CommonConfigs.EXPLOSION_BEHAVIOR.get().canExplode()) {
             return true;
