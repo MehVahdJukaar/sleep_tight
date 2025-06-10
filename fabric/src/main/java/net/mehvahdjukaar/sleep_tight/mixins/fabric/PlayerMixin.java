@@ -31,4 +31,9 @@ public class PlayerMixin implements ISleepTightPlayer {
     public void readAdditional(CompoundTag compound, CallbackInfo ci){
         sleep_tight$sleepData.deserializeNBT(compound.getCompound("sleep_tight_data"));
     }
+
+    @Inject(method = "tick", at = @At("HEAD"))
+    public void tick(CallbackInfo ci) {
+        sleep_tight$sleepData.tick(((Player) (Object) this).level());
+    }
 }

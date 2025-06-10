@@ -59,11 +59,11 @@ public abstract class SleepGuiOverlay<T extends Gui> {
 
 
                 var c = SleepTightPlatformStuff.getPlayerSleepData(player);
-                float f = 1 - c.getInsomniaCooldown(player);
+                float f = 1 - c.getInsomniaCooldownPercentage(player);
                 if (f < 1) {
 
                     if (laying && timer) {
-                        graphics.drawString(mc.font, "" + c.getInsomniaTimeLeft(player) / 20, 2, 2, 14737632);
+                        graphics.drawString(mc.font, "" + c.getInsomniaCooldown() / 20, 2, 2, 14737632);
                     }
 
                     if (cooldown) {

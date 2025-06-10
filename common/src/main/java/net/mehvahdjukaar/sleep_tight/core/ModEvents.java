@@ -254,7 +254,7 @@ public class ModEvents {
     private static void onEncounter(ServerPlayer player, boolean mobSpawned) {
         if (mobSpawned) {
             var c = SleepTightPlatformStuff.getPlayerSleepData(player);
-            c.addInsomnia(player, CommonConfigs.ENCOUNTER_INSOMNIA_DURATION.get());
+            c.setInsomniaCooldown(player, CommonConfigs.ENCOUNTER_INSOMNIA_DURATION.get());
             c.setLasWokenUpTime(player.level());
             c.resetConsecutiveNightSleptCounter();
 
@@ -266,7 +266,7 @@ public class ModEvents {
 
     private static void onNightmare(ServerPlayer player) {
         var c = SleepTightPlatformStuff.getPlayerSleepData(player);
-        c.addInsomnia(player, CommonConfigs.NIGHTMARE_INSOMNIA_DURATION.get());
+        c.setInsomniaCooldown(player, CommonConfigs.NIGHTMARE_INSOMNIA_DURATION.get());
         c.setLasWokenUpTime(player.level());
         c.resetConsecutiveNightSleptCounter();
 
@@ -304,7 +304,7 @@ public class ModEvents {
 
             SleepEffectsHelper.applyEffectsOnWakeUp(playerCap, player, dayTimeDelta, pos, bed, state, data);
 
-            playerCap.addInsomnia(player, bed.st_getCooldown());
+            playerCap.setInsomniaCooldown(player, bed.st_getCooldown());
             playerCap.syncToClient(player);
         }
     }
