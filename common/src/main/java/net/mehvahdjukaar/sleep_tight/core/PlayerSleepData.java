@@ -137,7 +137,7 @@ public abstract class PlayerSleepData {
     }
 
     @Nullable
-    public UUID getHomeBed() {
+    public UUID getLastBedSleptInto() {
         return lastBedSleptInto;
     }
 
@@ -198,8 +198,8 @@ public abstract class PlayerSleepData {
     @Nullable
     public static BedData getHomeBedIfHere(Player player, BlockPos pos) {
         PlayerSleepData sleepData = SleepTightPlatformStuff.getPlayerSleepData(player);
-        BedData bedCap = SleepTightPlatformStuff.getBedDataAt(player.level(), pos);
-        if (bedCap != null && bedCap.getId().equals(sleepData.getHomeBed()) && bedCap.isHomeBedFor(player)) {
+        BedData bedCap = BedData.get(player.level(), pos);
+        if (bedCap != null && bedCap.getId().equals(sleepData.getLastBedSleptInto()) && bedCap.isHomeBedFor(player)) {
             return bedCap;
         }
         return null;

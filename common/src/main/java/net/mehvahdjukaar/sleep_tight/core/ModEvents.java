@@ -401,11 +401,25 @@ public class ModEvents {
     public static void onPlayerRespawned(ServerPlayer newPlayer) {
         if (CommonConfigs.RESPAWN_LAYING.get()) {
             BlockPos pos = newPlayer.getRespawnPosition();
-            BlockState state = newPlayer.level().getBlockState(pos);
-            BedData bedData = SleepTightPlatformStuff.getBedDataAt(newPlayer.level(), pos);
-            if (bedData != null) {
-                BedEntity.layDown(state, pos, newPlayer);
+            if (pos != null) {
+                BlockState state = newPlayer.level().getBlockState(pos);
+                BedData bedData = BedData.get(newPlayer.level(), pos);
+                if (bedData != null) {
+                    BedEntity.layDown(state, pos, newPlayer);
+                }
             }
         }
+    }
+
+    @SuppressWarnings("all")
+    @Nullable
+    public static Optional<Vec3> findSpawnPosition(ServerPlayer player, BlockPos spawnBlockPos, boolean isRespawnForced) {
+        if (!isRespawnForced && CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
+            if (player.level().getBlockState(spawnBlockPos).getBlock() instanceof BedBlock &&
+                    PlayerSleepData.getHomeBedIfHere(player, spawnBlockPos) == null) {
+                  return Optional.empty();
+            }
+        }
+        return null;
     }
 }

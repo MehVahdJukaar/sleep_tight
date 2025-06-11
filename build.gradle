@@ -150,7 +150,10 @@ allprojects {
         maven { url = "https://maven.tterrag.com/" } // Flywheel
         maven { url = "https://mvn.devos.one/snapshots/" } // Registrate, Porting Lib, Forge Tags, Milk Lib
         maven { url = "https://mvn.devos.one/releases/" }
-
+        maven {
+            name = "SmartBrainLib (SBL) Maven Repo"
+            url = "https://dl.cloudsmith.io/public/tslat/sbl/maven/"
+        }
         maven {
             url = "https://api.modrinth.com/maven"
         }
@@ -197,7 +200,8 @@ ext {
             neo_version               : neo_version,
             neo_version_range         : neo_version_range,
             loader_version_range      : loader_version_range,
-            required_moonlight_version: required_moonlight_version
+            required_moonlight_version: required_moonlight_version,
+            sbl_version               : sbl_version
     ]
 }
 

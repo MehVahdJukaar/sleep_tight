@@ -13,7 +13,7 @@ import java.util.UUID;
 
 public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     @Nullable
-    private final UUID id;
+    private final UUID lastBedSleptInto;
     private final long insomniaCooldown;
     private final long timeSinceLastSlept;
     private final int consecutiveNights;
@@ -21,8 +21,8 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     private final boolean doubleBed;
 
     public ClientBoundSyncPlayerSleepCapMessage(FriendlyByteBuf buf) {
-        if (buf.readBoolean()) this.id = buf.readUUID();
-        else id = null;
+        if (buf.readBoolean()) this.lastBedSleptInto = buf.readUUID();
+        else lastBedSleptInto = null;
         this.insomniaCooldown = buf.readLong();
         this.timeSinceLastSlept = buf.readLong();
         this.consecutiveNights = buf.readInt();
@@ -31,7 +31,7 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     }
 
     public ClientBoundSyncPlayerSleepCapMessage(PlayerSleepData c) {
-        this.id = c.getHomeBed();
+        this.lastBedSleptInto = c.getLastBedSleptInto();
         this.insomniaCooldown = c.getInsomniaCooldown();
         this.timeSinceLastSlept = c.getTimeSinceLastSlept();
         this.consecutiveNights = c.getConsecutiveNightsSlept();
@@ -45,8 +45,8 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
 
     @Override
     public void writeToBuffer(FriendlyByteBuf buf) {
-        buf.writeBoolean(id != null);
-        if (id != null) buf.writeUUID(id);
+        buf.writeBoolean(lastBedSleptInto != null);
+        if (lastBedSleptInto != null) buf.writeUUID(lastBedSleptInto);
         buf.writeLong(insomniaCooldown);
         buf.writeLong(timeSinceLastSlept);
         buf.writeInt(consecutiveNights);
@@ -57,10 +57,11 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     @Override
     public void handle(ChannelHandler.Context context) {
         Player p = SleepTightClient.getPlayer();
-        if(p == null){
+        if (p == null) {
             return;
         }
-        var c = SleepTightPlatformStuff.getPlayerSleepData(p);
-        c.acceptFromServer(this.id, this.insomniaCooldown, this.timeSinceLastSlept, this.consecutiveNights, this.homeBedNights, this.doubleBed);
+        PlayerSleepData data = SleepTightPlatformStuff.getPlayerSleepData(p);
+        data.acceptFromServer(this.lastBedSleptInto, this.insomniaCooldown, this.timeSinceLastSlept, this.consecutiveNights,
+                this.homeBedNights, this.doubleBed);
     }
 }

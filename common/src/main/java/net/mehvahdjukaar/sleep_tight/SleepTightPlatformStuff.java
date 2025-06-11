@@ -26,12 +26,5 @@ public class SleepTightPlatformStuff {
         throw new AssertionError();
     }
 
-    @Nullable
-    public static BedData getBedDataAt(Level level, BlockPos pos) {
-        if (level.getBlockEntity(pos) instanceof IExtraBedDataProvider bed) {
-            return bed.st_getBedData();
-        } else {
-            return null;
-        }
-    }
+
 }

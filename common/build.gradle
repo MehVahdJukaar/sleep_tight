@@ -22,6 +22,7 @@ dependencies {
     modCompileOnly("org.violetmoon.quark:Quark-4.0-beta-426")
     modCompileOnly("org.violetmoon.zeta:Zeta-1.0-beta-1")
 
+        modImplementation "net.tslat.smartbrainlib:SmartBrainLib-fabric-${project.minecraft_version}:${project.sbl_version}"
 }
 
 publishing {

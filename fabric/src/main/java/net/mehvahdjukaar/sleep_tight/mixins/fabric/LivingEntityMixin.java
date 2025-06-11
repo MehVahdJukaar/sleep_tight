@@ -31,7 +31,7 @@ public abstract class LivingEntityMixin extends Entity {
 
     @Inject(method = "aiStep", at = @At("HEAD"))
     private void sleepTight$onEntityTick(CallbackInfo ci) {
-        if (this.level().isClientSide()) {
+        if ( this.level().isClientSide()) {
             SleepTightClient.onEntityTick((LivingEntity) (Object) this);
         }
     }

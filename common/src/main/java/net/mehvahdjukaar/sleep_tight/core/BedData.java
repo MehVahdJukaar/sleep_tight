@@ -1,60 +1,37 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
 //only data associated with a vanilla bed here
-public class BedData {
+public final class BedData {
 
-    private final Set<UUID> homeBedTo = new HashSet<>();
-    @Nullable
-    private UUID id = null;
+    public static final Codec<BedData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            UUIDUtil.STRING_CODEC.fieldOf("id").forGetter(BedData::getId),
+            UUIDUtil.STRING_CODEC.listOf().fieldOf("home_bed_to").forGetter(d -> d.homeBedTo.stream().toList())
+    ).apply(instance, BedData::new));
 
-    public CompoundTag serializeNBT() {
-        CompoundTag tag = new CompoundTag();
-        ListTag listtag = new ListTag();
-        if (!homeBedTo.isEmpty()) {
-            for (var e : homeBedTo) {
-                var t = new CompoundTag();
-                t.putUUID("player", e);
-                listtag.add(t);
-            }
-            tag.put("owners", listtag);
-        }
-        if (id != null) {
-            tag.putUUID("id", id);
-        }
-        return tag;
+    private final UUID id;
+    private final Set<UUID> homeBedTo;
+
+    private BedData(UUID id, Collection<UUID> homeBedTo) {
+        this.id = id;
+        this.homeBedTo = new HashSet<>(homeBedTo);
     }
 
-    public void deserializeNBT(CompoundTag tag) {
-        if (tag == null || tag.isEmpty()) return;
-        if (tag.contains("owners")) {
-            ListTag listTag = tag.getList("owners", ListTag.TAG_COMPOUND);
-            this.homeBedTo.clear();
-            for (int i = 0; i < listTag.size(); ++i) {
-                CompoundTag c = listTag.getCompound(i);
-                this.homeBedTo.add(c.getUUID("player"));
-            }
-        }
-        if (tag.contains("id")) {
-            this.id = tag.getUUID("id");
-        }
-    }
-
-    public UUID getId() {
-        if (id == null) id = UUID.randomUUID();
-        return id;
-    }
-
-    public boolean isEmpty() {
-        return this.id == null;
+    public BedData() {
+        this(UUID.randomUUID(), new HashSet<>());
     }
 
     public void setHomeBedFor(Player player) {
@@ -65,4 +42,26 @@ public class BedData {
         return this.homeBedTo.contains(player.getUUID());
     }
 
+    @Nullable
+    public static BedData get(Level level, BlockPos pos) {
+        if (level.getBlockEntity(pos) instanceof IExtraBedDataProvider bed) {
+            return bed.st_getBedData();
+        } else {
+            return null;
+        }
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    @Override
+    public String toString() {
+        return "BedData[" +
+                "id=" + id + ", " +
+                "homeBedTo=" + homeBedTo + ']';
+    }
+
+
 }
+
