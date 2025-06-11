@@ -9,37 +9,31 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 //only data associated with a vanilla bed here
 public final class BedData {
 
     public static final Codec<BedData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             UUIDUtil.STRING_CODEC.fieldOf("id").forGetter(BedData::getId),
-            UUIDUtil.STRING_CODEC.listOf().fieldOf("home_bed_to").forGetter(d -> d.homeBedTo.stream().toList())
-    ).apply(instance, BedData::new));
+            UUIDUtil.STRING_CODEC.listOf().optionalFieldOf("home_bed_to")
+                    .forGetter(d -> d.seenPlayers.isEmpty() ? Optional.empty() : Optional.of(new ArrayList<>(d.seenPlayers)))
+    ).apply(instance, (uuid, uuids) -> new BedData(uuid, uuids.orElse(List.of()))));
 
     private final UUID id;
-    private final Set<UUID> homeBedTo;
+    private final Set<UUID> seenPlayers;//unused
 
     private BedData(UUID id, Collection<UUID> homeBedTo) {
         this.id = id;
-        this.homeBedTo = new HashSet<>(homeBedTo);
+        this.seenPlayers = new HashSet<>(homeBedTo);
     }
 
     public BedData() {
         this(UUID.randomUUID(), new HashSet<>());
     }
 
-    public void setHomeBedFor(Player player) {
-        this.homeBedTo.add(player.getUUID());
-    }
-
-    public boolean isHomeBedFor(Player player) {
-        return this.homeBedTo.contains(player.getUUID());
+    public void onHomeBedSet(Player player) {
+        //this.seenPlayers.add(player.getUUID());
     }
 
     @Nullable
@@ -59,7 +53,7 @@ public final class BedData {
     public String toString() {
         return "BedData[" +
                 "id=" + id + ", " +
-                "homeBedTo=" + homeBedTo + ']';
+                "seenPlayers=" + seenPlayers + ']';
     }
 
 

@@ -14,8 +14,8 @@ import java.util.UUID;
 public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     @Nullable
     private final UUID lastBedSleptInto;
-    private final long insomniaCooldown;
-    private final long timeSinceLastSlept;
+    private final long insomniaWillElapseTimestamp;
+    private final long lastWokenUpTimestamp;
     private final int consecutiveNights;
     private final int homeBedNights;
     private final boolean doubleBed;
@@ -23,8 +23,8 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     public ClientBoundSyncPlayerSleepCapMessage(FriendlyByteBuf buf) {
         if (buf.readBoolean()) this.lastBedSleptInto = buf.readUUID();
         else lastBedSleptInto = null;
-        this.insomniaCooldown = buf.readLong();
-        this.timeSinceLastSlept = buf.readLong();
+        this.insomniaWillElapseTimestamp = buf.readLong();
+        this.lastWokenUpTimestamp = buf.readLong();
         this.consecutiveNights = buf.readInt();
         this.homeBedNights = buf.readInt();
         this.doubleBed = buf.readBoolean();
@@ -32,8 +32,8 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
 
     public ClientBoundSyncPlayerSleepCapMessage(PlayerSleepData c) {
         this.lastBedSleptInto = c.getLastBedSleptInto();
-        this.insomniaCooldown = c.getInsomniaCooldown();
-        this.timeSinceLastSlept = c.getTimeSinceLastSlept();
+        this.insomniaWillElapseTimestamp = c.getInsomniaWillElapseTime();
+        this.lastWokenUpTimestamp = c.getLastWokenUpTime();
         this.consecutiveNights = c.getConsecutiveNightsSlept();
         this.homeBedNights = c.getNightsSleptInHomeBed();
         this.doubleBed = c.usingDoubleBed();
@@ -47,8 +47,8 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     public void writeToBuffer(FriendlyByteBuf buf) {
         buf.writeBoolean(lastBedSleptInto != null);
         if (lastBedSleptInto != null) buf.writeUUID(lastBedSleptInto);
-        buf.writeLong(insomniaCooldown);
-        buf.writeLong(timeSinceLastSlept);
+        buf.writeLong(insomniaWillElapseTimestamp);
+        buf.writeLong(lastWokenUpTimestamp);
         buf.writeInt(consecutiveNights);
         buf.writeInt(homeBedNights);
         buf.writeBoolean(doubleBed);
@@ -61,7 +61,7 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
             return;
         }
         PlayerSleepData data = SleepTightPlatformStuff.getPlayerSleepData(p);
-        data.acceptFromServer(this.lastBedSleptInto, this.insomniaCooldown, this.timeSinceLastSlept, this.consecutiveNights,
+        data.acceptFromServer(this.lastBedSleptInto, this.insomniaWillElapseTimestamp, this.lastWokenUpTimestamp, this.consecutiveNights,
                 this.homeBedNights, this.doubleBed);
     }
 }

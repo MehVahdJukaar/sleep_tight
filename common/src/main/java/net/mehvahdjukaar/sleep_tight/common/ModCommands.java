@@ -82,7 +82,7 @@ public class ModCommands {
         public int run(CommandContext<CommandSourceStack> context) {
             if (context.getSource().getEntity() instanceof ServerPlayer serverPlayer) {
                 var cap = SleepTightPlatformStuff.getPlayerSleepData(serverPlayer);
-                int timeLeft = (int) cap.getInsomniaCooldown();
+                int timeLeft = (int) cap.getInsomniaCooldown(serverPlayer);
                 context.getSource().sendSuccess(() -> Component.translatable("message.sleep_tight.command.get_insomnia", timeLeft), false);
                 return timeLeft;
             }

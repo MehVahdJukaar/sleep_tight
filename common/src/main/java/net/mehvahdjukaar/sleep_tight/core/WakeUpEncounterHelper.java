@@ -1,6 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
@@ -164,7 +165,8 @@ public class WakeUpEncounterHelper {
                 if (DreamEssenceBlock.isInRange(bedPos, level)) return false;
             }
             if (CommonConfigs.ONLY_WHEN_IN_HOME_BED.get()) {
-                if (data == null || !data.isHomeBedFor(player)) return false;
+                PlayerSleepData playerData = SleepTightPlatformStuff.getPlayerSleepData(player);
+                if (data == null || !playerData.isHomeBed(data)) return false;
             }
 
             BlockPos.MutableBlockPos mutable = bedPos.mutable();

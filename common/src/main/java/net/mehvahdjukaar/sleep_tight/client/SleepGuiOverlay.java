@@ -63,7 +63,7 @@ public abstract class SleepGuiOverlay<T extends Gui> {
                 if (f < 1) {
 
                     if (laying && timer) {
-                        graphics.drawString(mc.font, "" + c.getInsomniaCooldown() / 20, 2, 2, 14737632);
+                        graphics.drawString(mc.font, "" + c.getInsomniaCooldown(player) / 20, 2, 2, 14737632);
                     }
 
                     if (cooldown) {
@@ -169,9 +169,10 @@ public abstract class SleepGuiOverlay<T extends Gui> {
         var p = player.getSleepingPos();
         if (p.isPresent()) {
             BlockPos pos = p.get();
-            BedData cap = PlayerSleepData.getHomeBedIfHere(player, pos);
-            isHomeBed = cap != null;
-
+            BedData bedData = BedData.get(player.level(), pos);
+            PlayerSleepData playerData = SleepTightPlatformStuff.getPlayerSleepData(player);
+            isHomeBed = playerData.isHomeBed(bedData);
+            nightInHomeBed = playerData.getNightsSleptInHomeBed();
 
             hasDreamerEssence = !(player.level().getBlockState(pos).getBlock() instanceof NightBagBlock) &&
                     DreamEssenceBlock.isInRange(pos, player.level());
@@ -182,6 +183,6 @@ public abstract class SleepGuiOverlay<T extends Gui> {
     //random static global state yay
     private static boolean isHomeBed = false;
     private static boolean hasDreamerEssence = false;
-
+    private static int nightInHomeBed = 0;
 }
 

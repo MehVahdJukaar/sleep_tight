@@ -114,7 +114,8 @@ public class ModEvents {
 
             if (block instanceof BedBlock) {
                 if (CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
-                    if (PlayerSleepData.getHomeBedIfHere(player, pos) == null) {
+                    PlayerSleepData pd = SleepTightPlatformStuff.getPlayerSleepData(player);
+                    if (pd.isHomeBed(BedData.get(level, pos))) {
                         return false;
                     }
                 }
@@ -415,9 +416,9 @@ public class ModEvents {
     @Nullable
     public static Optional<Vec3> findSpawnPosition(ServerPlayer player, BlockPos spawnBlockPos, boolean isRespawnForced) {
         if (!isRespawnForced && CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
-            if (player.level().getBlockState(spawnBlockPos).getBlock() instanceof BedBlock &&
-                    PlayerSleepData.getHomeBedIfHere(player, spawnBlockPos) == null) {
-                  return Optional.empty();
+            BedData bedData = BedData.get(player.level(), spawnBlockPos);
+            if (bedData != null && !SleepTightPlatformStuff.getPlayerSleepData(player).isHomeBed(bedData)) {
+                return Optional.empty();
             }
         }
         return null;

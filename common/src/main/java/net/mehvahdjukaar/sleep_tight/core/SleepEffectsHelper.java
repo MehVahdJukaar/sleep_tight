@@ -67,7 +67,7 @@ public class SleepEffectsHelper {
 
         BedStatus status = BED_BENEFITS.get();
         if (status == BedStatus.NONE) return;
-        if (status == BedStatus.HOME_BED && !data.isHomeBedFor(player)) return;
+        if (status == BedStatus.HOME_BED && !playerSleepData.isHomeBed(data)) return;
         //healing
         EffectIntensity healing = HEALING.get();
         if (healing != EffectIntensity.NONE) {
