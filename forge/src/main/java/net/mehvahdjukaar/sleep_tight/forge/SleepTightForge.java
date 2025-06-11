@@ -154,8 +154,10 @@ public class SleepTightForge {
     public void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase == TickEvent.Phase.START) {
             Player player = event.player;
-            var sleepData = SleepTightPlatformStuff.getPlayerSleepData(player);
-            sleepData.tick(player.level());
+            if (player instanceof ServerPlayer sp) {
+                var sleepData = SleepTightPlatformStuff.getPlayerSleepData(player);
+                sleepData.tick(sp);
+            }
         }
     }
 

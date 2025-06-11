@@ -9,6 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -25,15 +26,17 @@ public abstract class PlayerSleepData {
     protected static final String CONSECUTIVE_NIGHTS_NBT = "consecutive_nights";
     protected static final String HOME_BED_LEVEL_NBT = "home_bed_nights";
     protected static final String USING_DOUBLE_BED_NBT = "using_double_bed";
+    protected static final String LAST_KNOWN_TIME_NBT = "last_known_time";
 
     @Nullable
     private UUID homeBed = null; //last bed slept into
 
     private long insomniaWillElapseTimeStamp = 0; //need to be timestamps otherwise it wont work whe player logs off or sets the time
     private long lastWokenUpTimeStamp = -1;
+    private long lastKnownTime = 0;  //keeps track of last seen time to prevent time skips in the past and reset cooldowns if it happens to prevent infinite cooldowns
 
     private int consecutiveNightsSlept = 0;
-    private int nightsSleptInHomeBed = 0;
+    private int nightsSleptInSameBed = 0;
     private boolean usingDoubleBed = false;
 
     public CompoundTag serializeNBT() {
@@ -44,8 +47,9 @@ public abstract class PlayerSleepData {
         tag.putLong(INSOMNIA_ELAPSE_NBT, insomniaWillElapseTimeStamp);
         tag.putLong(LAST_TIME_SLEPT_NBT, lastWokenUpTimeStamp);
         tag.putInt(CONSECUTIVE_NIGHTS_NBT, consecutiveNightsSlept);
-        tag.putInt(HOME_BED_LEVEL_NBT, nightsSleptInHomeBed);
+        tag.putInt(HOME_BED_LEVEL_NBT, nightsSleptInSameBed);
         tag.putBoolean(USING_DOUBLE_BED_NBT, usingDoubleBed);
+        tag.putLong(LAST_KNOWN_TIME_NBT, lastKnownTime);
         return tag;
     }
 
@@ -53,41 +57,55 @@ public abstract class PlayerSleepData {
         if (tag.contains(HOME_BED_NBT)) this.homeBed = tag.getUUID(HOME_BED_NBT);
         this.insomniaWillElapseTimeStamp = tag.getLong(INSOMNIA_ELAPSE_NBT);
         this.lastWokenUpTimeStamp = tag.getLong(LAST_TIME_SLEPT_NBT);
-        this.consecutiveNightsSlept = tag.getInt("consecutive_nights");
-        this.nightsSleptInHomeBed = tag.getInt("home_bed_nights");
-        this.usingDoubleBed = tag.getBoolean("using_double_bed");
+        this.consecutiveNightsSlept = tag.getInt(CONSECUTIVE_NIGHTS_NBT);
+        this.nightsSleptInSameBed = tag.getInt(HOME_BED_LEVEL_NBT);
+        this.usingDoubleBed = tag.getBoolean(USING_DOUBLE_BED_NBT);
+        this.lastKnownTime = tag.getLong(LAST_KNOWN_TIME_NBT);
     }
 
-    public void tick(Level level) {
-
+    public void tick(ServerPlayer player) {
+        long gameTime = player.level().getGameTime();
+        if (gameTime < lastKnownTime) {
+            if (isOnSleepCooldown(player)) {
+                player.displayClientMessage(Component.translatable("message.sleep_tight.time_skipped"), true);
+            }
+            //reset cooldowns if time has gone back
+            this.insomniaWillElapseTimeStamp = 0;
+            this.lastWokenUpTimeStamp = -1;
+            this.lastKnownTime = gameTime;
+            syncToClient(player);
+        }
     }
 
     public void setInsomniaCooldown(Player player, long duration) {
         long gameTime = player.level().getGameTime();
         this.insomniaWillElapseTimeStamp = gameTime + duration;
-    }
 
-    public void maybeIncreaseNightsInHomeBed(BedData bed, Player player) {
-        var bedId = bed.getId();
-        if (bedId.equals(homeBed)) {
-            int required = CommonConfigs.HOME_BED_REQUIRED_NIGHTS.get();
-
-            this.nightsSleptInHomeBed = Math.min(required + CommonConfigs.HOME_BED_MAX_LEVEL.get(), nightsSleptInHomeBed + 1);
-            if (this.nightsSleptInHomeBed >= required) {
-                bed.onHomeBedSet(player);
-            }
-        } else {
-            if (nightsSleptInHomeBed != 0) {
-                player.displayClientMessage(Component.translatable("message.sleep_tight.home_bed_lost"), false);
-            }
-            this.setLastSleptInto(bed);
-            this.nightsSleptInHomeBed = 0;
-        }
+        this.lastKnownTime = gameTime;
     }
 
     public void setLasWokenUpTime(Level level) {
         long gameTime = level.getGameTime();
         this.lastWokenUpTimeStamp = gameTime;
+
+        this.lastKnownTime = gameTime;
+    }
+
+    public void increaseNightSleptInThisBed(BedData bed, Player player) {
+        if (this.isHomeBed(bed)) {
+            int required = CommonConfigs.HOME_BED_REWARD_REQUIRED_NIGHTS.get();
+
+            this.nightsSleptInSameBed++;
+            if (this.nightsSleptInSameBed >= required) {
+                bed.onHomeBedActivated(player);
+            }
+        } else {
+            if (nightsSleptInSameBed != 0) {
+                player.displayClientMessage(Component.translatable("message.sleep_tight.home_bed_lost"), false);
+            }
+            this.setLastSleptInto(bed);
+            this.nightsSleptInSameBed = 0;
+        }
     }
 
     public void increaseConsecutiveNightSleptCounter(Player player) {
@@ -148,7 +166,7 @@ public abstract class PlayerSleepData {
     }
 
     public int getNightsSleptInHomeBed() {
-        return nightsSleptInHomeBed;
+        return nightsSleptInSameBed;
     }
 
     public long getLastWokenUpTime() {
@@ -164,7 +182,7 @@ public abstract class PlayerSleepData {
         this.insomniaWillElapseTimeStamp = insominaElapse;
         this.consecutiveNightsSlept = nightSlept;
         this.lastWokenUpTimeStamp = sleepTimestamp;
-        this.nightsSleptInHomeBed = homeBedNights;
+        this.nightsSleptInSameBed = homeBedNights;
         this.usingDoubleBed = doubleBed;
     }
 
@@ -177,20 +195,20 @@ public abstract class PlayerSleepData {
     }
 
     public void setNightsSleptInHomeBed(int nightsSleptInHomeBed) {
-        this.nightsSleptInHomeBed = nightsSleptInHomeBed;
+        this.nightsSleptInSameBed = nightsSleptInHomeBed;
     }
 
     public void copyFrom(PlayerSleepData oldData) {
         this.consecutiveNightsSlept = oldData.consecutiveNightsSlept;
         this.homeBed = oldData.homeBed;
-        this.nightsSleptInHomeBed = oldData.nightsSleptInHomeBed;
+        this.nightsSleptInSameBed = oldData.nightsSleptInSameBed;
         this.insomniaWillElapseTimeStamp = oldData.insomniaWillElapseTimeStamp;
         this.lastWokenUpTimeStamp = oldData.lastWokenUpTimeStamp;
         this.usingDoubleBed = oldData.usingDoubleBed;
     }
 
     public int getHomeBedLevel() {
-        return Math.max(0, this.nightsSleptInHomeBed - CommonConfigs.HOME_BED_REQUIRED_NIGHTS.get());
+        return Mth.clamp( this.nightsSleptInSameBed - CommonConfigs.HOME_BED_REWARD_REQUIRED_NIGHTS.get(), 0, CommonConfigs.HOME_BED_MAX_LEVEL.get());
     }
 
     public boolean usingDoubleBed() {

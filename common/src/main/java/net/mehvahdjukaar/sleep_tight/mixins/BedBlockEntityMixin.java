@@ -12,15 +12,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
-import java.util.HashSet;
-import java.util.UUID;
-
 
 @Mixin(value = BedBlockEntity.class, priority = 1100)
 public abstract class BedBlockEntityMixin extends BlockEntity implements IExtraBedDataProvider {
 
     @Unique
-    private BedData sleep_tight$bedCapability = new BedData();
+    private BedData sleep_tight$bedData = new BedData();
 
     protected BedBlockEntityMixin(BlockEntityType<?> blockEntityType, BlockPos blockPos, BlockState blockState) {
         super(blockEntityType, blockPos, blockState);
@@ -33,12 +30,12 @@ public abstract class BedBlockEntityMixin extends BlockEntity implements IExtraB
 
     @Override
     public BedData st_getBedData() {
-        return sleep_tight$bedCapability;
+        return sleep_tight$bedData;
     }
 
     @ApiStatus.Internal
     @Override
     public void st_setBedData(BedData data) {
-        this.sleep_tight$bedCapability = data;
+        this.sleep_tight$bedData = data;
     }
 }

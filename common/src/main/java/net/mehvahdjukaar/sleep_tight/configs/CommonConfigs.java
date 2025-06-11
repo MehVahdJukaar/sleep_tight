@@ -30,7 +30,7 @@ public class CommonConfigs {
     public static final Supplier<HeartstoneMode> HEARTSTONE_MODE;
     public static final Supplier<List<EffectData>> HEARTSTONE_EFFECT;
 
-    public static final Supplier<Integer> HOME_BED_REQUIRED_NIGHTS;
+    public static final Supplier<Integer> HOME_BED_REWARD_REQUIRED_NIGHTS;
     public static final Supplier<Integer> HOME_BED_MAX_LEVEL;
     public static final Supplier<Boolean> ONLY_RESPAWN_IN_HOME_BED;
     public static final Supplier<Double> INVIGORATED_XP;
@@ -230,8 +230,8 @@ public class CommonConfigs {
 
         builder.push("home_bed");
 
-        HOME_BED_REQUIRED_NIGHTS = builder.comment("Amount of nights needed to mark a bed as home bed")
-                .define("required_nights", diff(8, 6), 1, 50);
+        HOME_BED_REWARD_REQUIRED_NIGHTS = builder.comment("Amount of nights needed to make a home bed start increasing levels")
+                .define("required_nights_for_first_level_up", diff(8, 6), 1, 50);
         INVIGORATED_XP = builder.comment("Percentage of xp added per tier of the effect. Setting to 1 doubles the effect")
                 .define("invigorated_effect_xp", 0.1, 0, 1);
         HOME_BED_MAX_LEVEL = builder.comment("Home bed level cap. Each night slept increases this number")

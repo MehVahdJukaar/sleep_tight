@@ -32,7 +32,7 @@ public final class BedData {
         this(UUID.randomUUID(), new HashSet<>());
     }
 
-    public void onHomeBedSet(Player player) {
+    public void onHomeBedActivated(Player player) {
         //this.seenPlayers.add(player.getUUID());
     }
 

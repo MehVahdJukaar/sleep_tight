@@ -14,7 +14,6 @@ import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundNightmarePacket;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncPlayerSleepCapMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
-import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -290,10 +289,9 @@ public class ModEvents {
             if (state.getBlock() instanceof ISleepTightBed b) {
                 bed = b;
             }
-            BedData data = null;
-            if (level.getBlockEntity(pos) instanceof IExtraBedDataProvider tile) {
-                data = tile.st_getBedData();
-                playerCap.maybeIncreaseNightsInHomeBed(data, player);
+            BedData data = BedData.get(level, pos);
+            if (data != null) {
+                playerCap.increaseNightSleptInThisBed(data, player);
             }
 
             playerCap.increaseConsecutiveNightSleptCounter(player);
