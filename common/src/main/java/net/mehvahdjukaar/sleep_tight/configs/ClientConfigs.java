@@ -2,8 +2,8 @@ package net.mehvahdjukaar.sleep_tight.configs;
 
 import net.mehvahdjukaar.moonlight.api.client.anim.PendulumAnimation;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigBuilder;
-import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigSpec;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
+import net.mehvahdjukaar.moonlight.api.platform.configs.ModConfigHolder;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.util.Mth;
 
@@ -28,7 +28,7 @@ public class ClientConfigs {
     public static final Supplier<Boolean> INSOMNIA_COOLDOWN;
     public static final Supplier<Boolean> SHOW_TIME;
     public static final Supplier<Boolean> TIME_FORMAT_24H;
-    public static final ConfigSpec SPEC;
+    public static final ModConfigHolder SPEC;
 
     static {
         ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.CLIENT);
@@ -43,7 +43,7 @@ public class ClientConfigs {
         SWING_FORCE = builder.comment("Intensity of velocity increment that is applied when controlling a hammock")
                 .define("swing_force", 0.008, 0., 10);
         CAMERA_ROLL_INTENSITY = builder.comment("Camera roll intensity when swinging on a hammock. Set to 0 to turn it off entirely")
-                .define("camera_roll_intensity", 1, 0, 1f);
+                .define("camera_roll_intensity", 1, 0, 1d);
         HAMMOCK_FALL = builder.comment("Swinging too much on a hammock will make you fall. Disable to do a barrel roll")
                 .define("hammock_fall",true);
         builder.pop();
@@ -72,7 +72,7 @@ public class ClientConfigs {
                 .define("zzz_particles", true);
         builder.pop();
 
-        SPEC = builder.buildAndRegister();
+        SPEC = builder.build();
     }
 
     public static void init() {

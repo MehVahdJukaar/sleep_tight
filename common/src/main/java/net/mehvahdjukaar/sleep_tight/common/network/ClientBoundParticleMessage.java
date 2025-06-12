@@ -1,16 +1,22 @@
 package net.mehvahdjukaar.sleep_tight.common.network;
 
-import net.mehvahdjukaar.moonlight.api.platform.network.ChannelHandler;
 import net.mehvahdjukaar.moonlight.api.platform.network.Message;
+import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.common.entities.DreamerEssenceTargetEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.level.Level;
 
 public class ClientBoundParticleMessage implements Message {
+    public static final TypeAndCodec<RegistryFriendlyByteBuf, ClientBoundParticleMessage> TYPE = Message.makeType(
+            SleepTight.res("particle"),
+            ClientBoundParticleMessage::new
+    );
+
     private final BlockPos pos;
     private final int data;
 
@@ -24,34 +30,34 @@ public class ClientBoundParticleMessage implements Message {
         this.data = data;
     }
 
-    public static ClientBoundParticleMessage bedbugInfest(BlockPos pos, Direction direction){
-       return new ClientBoundParticleMessage(pos, direction.get2DDataValue());
+    public static ClientBoundParticleMessage bedbugInfest(BlockPos pos, Direction direction) {
+        return new ClientBoundParticleMessage(pos, direction.get2DDataValue());
     }
 
-    public static ClientBoundParticleMessage bedbugDoor(BlockPos pos){
+    public static ClientBoundParticleMessage bedbugDoor(BlockPos pos) {
         return new ClientBoundParticleMessage(pos, 5);
     }
 
-    public static ClientBoundParticleMessage dreamEssence(BlockPos pos){
+    public static ClientBoundParticleMessage dreamEssence(BlockPos pos) {
         return new ClientBoundParticleMessage(pos, 4);
     }
 
-        @Override
-    public void writeToBuffer(FriendlyByteBuf buf) {
+    @Override
+    public void write(RegistryFriendlyByteBuf buf) {
         buf.writeBlockPos(pos);
         buf.writeInt(data);
     }
 
     @Override
-    public void handle(ChannelHandler.Context context) {
+    public void handle(Context context) {
         Level level = SleepTightClient.getPlayer().level();
 
-        if(data < 4) {
+        if (data < 4) {
             spawnParticleOnBed(pos, level);
             spawnParticleOnBed(pos.relative(Direction.from2DDataValue(data)), level);
-        }else if(data == 4){
+        } else if (data == 4) {
             DreamerEssenceTargetEntity.spawnDeathParticles(level, pos);
-        }else{
+        } else {
             level.addDestroyBlockEffect(pos, level.getBlockState(pos));
         }
     }
@@ -63,5 +69,10 @@ public class ClientBoundParticleMessage implements Message {
             float y = pos.getY() + 9 / 16f;
             level.addParticle(ParticleTypes.SMOKE, x, y, z, 0, 0, 0);
         }
+    }
+
+    @Override
+    public Type<?> type() {
+        return TYPE.type();
     }
 }

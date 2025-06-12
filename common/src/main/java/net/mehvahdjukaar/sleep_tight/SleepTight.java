@@ -6,6 +6,7 @@ import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
 import net.mehvahdjukaar.moonlight.api.set.BlocksColorAPI;
 import net.mehvahdjukaar.sleep_tight.client.PackProvider;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
+import net.mehvahdjukaar.sleep_tight.common.ModCommands;
 import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.InfestedBedBlock;
@@ -15,8 +16,7 @@ import net.mehvahdjukaar.sleep_tight.common.entities.BedbugEntity;
 import net.mehvahdjukaar.sleep_tight.common.entities.DreamerEssenceTargetEntity;
 import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
 import net.mehvahdjukaar.sleep_tight.common.items.NightBagItem;
-import net.mehvahdjukaar.sleep_tight.common.ModCommands;
-import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.common.network.ModNetworking;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.common.tiles.InfestedBedTile;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
@@ -24,7 +24,7 @@ import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.Util;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.ItemTags;
@@ -33,7 +33,7 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.SpawnPlacements;
+import net.minecraft.world.entity.SpawnPlacementType;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -59,7 +59,6 @@ public class SleepTight {
     public static final boolean EASY_MODE = false;
 
 
-
     public static final String MOD_ID = "sleep_tight";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
 
@@ -73,7 +72,7 @@ public class SleepTight {
 
 
     public static void commonInit() {
-        NetworkHandler.registerMessages();
+        ModNetworking.init();
         CommonConfigs.init();
 
         if (PlatHelper.getPhysicalSide().isClient()) {
@@ -85,8 +84,6 @@ public class SleepTight {
         RegHelper.addAttributeRegistration(SleepTight::registerEntityAttributes);
         RegHelper.addSpawnPlacementsRegistration(SleepTight::registerSpawnPlacements);
         RegHelper.addItemsToTabsRegistration(SleepTight::registerItemsToTabs);
-
-        EntityDataSerializers.registerSerializer(BedEntity.SERIALIZER);
 
         /*
         Experience a sleep encounter - Alarmed!
@@ -112,7 +109,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     }
 
     private static void registerItemsToTabs(RegHelper.ItemToTabEvent event) {
-        event.addAfter(CreativeModeTabs.FUNCTIONAL_BLOCKS,i -> i.is(ItemTags.BEDS), DREAMER_ESSENCE.get());
+        event.addAfter(CreativeModeTabs.FUNCTIONAL_BLOCKS, i -> i.is(ItemTags.BEDS), DREAMER_ESSENCE.get());
         event.add(CreativeModeTabs.TOOLS_AND_UTILITIES, NIGHT_BAG.get());
         event.add(CreativeModeTabs.SPAWN_EGGS, BEDBUG_SPAWN_EGG.get());
         event.addAfter(CreativeModeTabs.INGREDIENTS, i -> i.is(Items.SPIDER_EYE), BED_BUG_EGGS.get());
@@ -124,7 +121,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     }
 
     private static void registerSpawnPlacements(RegHelper.SpawnPlacementEvent event) {
-        event.register(BEDBUG_ENTITY.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BedbugEntity::checkMonsterSpawnRules);
+        event.register(BEDBUG_ENTITY.get(), SpawnPlacementType.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BedbugEntity::checkMonsterSpawnRules);
     }
 
     private static void registerEntityAttributes(RegHelper.AttributeEvent event) {
@@ -147,9 +144,12 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     public static final TagKey<BannerPattern> MOON_TAG = TagKey.create(Registries.BANNER_PATTERN, res("pattern_item/moon"));
 
     //banner pattern
-    public static final Supplier<BannerPattern> MOON_PATTERN = RegHelper.register(res("moon"), () -> new BannerPattern("mon"), Registries.BANNER_PATTERN);
 
     public static final TagKey<EntityType<?>> NO_SLEEP_PARTICLES = TagKey.create(Registries.ENTITY_TYPE, res("no_sleep_particles"));
+
+    public static final Supplier<EntityDataSerializer<BedEntity.OffsetMode>> OFFSET_MODE_SERIALIZER =
+            RegHelper.registerEntityDataSerializer(res("offset_mode"),
+                    () -> EntityDataSerializer.forValueType(BedEntity.OffsetMode.STREAM_CODEC));
 
     //particles
 
@@ -176,7 +176,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     //blocks
 
     public static final Supplier<DreamEssenceBlock> DREAMER_ESSENCE = regWithItem("dreamer_essence", () ->
-            new DreamEssenceBlock(BlockBehaviour.Properties.copy(Blocks.AMETHYST_BLOCK)
+            new DreamEssenceBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.AMETHYST_BLOCK)
                     .sound(SoundType.AMETHYST).strength(1))
     );
 
@@ -187,7 +187,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     );
 
     public static final Supplier<InfestedBedBlock> INFESTED_BED = regBlock("infested_bed", () ->
-            new InfestedBedBlock(BlockBehaviour.Properties.copy(Blocks.BROWN_BED))
+            new InfestedBedBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.BROWN_BED))
     );
 
     public static final Map<DyeColor, Supplier<Block>> HAMMOCKS = Util.make(() ->

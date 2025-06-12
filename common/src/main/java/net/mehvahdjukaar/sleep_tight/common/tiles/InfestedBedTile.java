@@ -47,7 +47,7 @@ public class InfestedBedTile extends MimicBlockTile {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+    public void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         if (mobTag != null) {
             tag.put("bedbug", mobTag);

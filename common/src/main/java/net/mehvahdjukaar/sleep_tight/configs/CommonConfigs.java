@@ -1,8 +1,8 @@
 package net.mehvahdjukaar.sleep_tight.configs;
 
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigBuilder;
-import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigSpec;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
+import net.mehvahdjukaar.moonlight.api.platform.configs.ModConfigHolder;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.random.SimpleWeightedRandomList;
@@ -130,10 +130,10 @@ public class CommonConfigs {
     }
 
 
-    public static final ConfigSpec SPEC;
+    public static final ModConfigHolder SPEC;
 
     static {
-        ConfigBuilder builder = ConfigBuilder.create(SleepTight.res(EASY_MODE ? "common_ez" : "common"), ConfigType.COMMON);
+        ConfigBuilder builder = ConfigBuilder.create(SleepTight.res(EASY_MODE ? "common_ez" : "common"), ConfigType.COMMON_SYNCED);
 
         builder.push("misc");
         RESPAWN_LAYING = builder.comment("Makes players respawn by laying on their bed")
@@ -214,7 +214,7 @@ public class CommonConfigs {
         CONSUME_HUNGER_MODE = builder.comment("Method to calculate hunger loss. Can be based off time slept, difficulty or constant")
                 .define("consumed_hunger_mode", HungerMode.TIME_DIFFICULTY_BASED);
         CONSUMED_HUNGER = builder.comment("Base hunger decrement value. Depends on other config. Set to 0 to disable")
-                .define("base_value", diff(5, 0), 0f, 20);
+                .define("base_value", diff(5, 0), 0d, 20);
         builder.pop();
 
         builder.push("sleep_requirements");
@@ -285,8 +285,7 @@ public class CommonConfigs {
 
         builder.pop();
 
-        builder.setSynced();
-        SPEC = builder.buildAndRegister();
+        SPEC = builder.build();
     }
 
     public static void init() {

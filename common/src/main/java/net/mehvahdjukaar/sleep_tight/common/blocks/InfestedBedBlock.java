@@ -1,11 +1,12 @@
 package net.mehvahdjukaar.sleep_tight.common.blocks;
 
 import net.mehvahdjukaar.moonlight.api.block.IWashable;
+import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.tiles.InfestedBedTile;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedbugEntity;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundParticleMessage;
-import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.common.network.ModNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
@@ -24,7 +25,6 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.LingeringPotionItem;
 import net.minecraft.world.item.SplashPotionItem;
-import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.GameRules;
@@ -55,8 +55,9 @@ public class InfestedBedBlock extends BedBlock implements IWashable {
         return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
+
     @Override
-    public boolean isPathfindable(BlockState state, BlockGetter level, BlockPos pos, PathComputationType type) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 
@@ -135,7 +136,7 @@ public class InfestedBedBlock extends BedBlock implements IWashable {
             Direction dir = getNeighbourDirection(state.getValue(PART), state.getValue(FACING));
             BlockPos neighbor = blockPos.relative(dir);
             if (!level.isClientSide) {
-                NetworkHandler.CHANNEL.sendToAllClientPlayersInRange(level, blockPos, 32,
+                NetworkHelper.sendToAllClientPlayersInRange(level, blockPos, 32,
                         ClientBoundParticleMessage.bedbugInfest(blockPos, dir));
             }
             Block bed = tile.getBed().getBlock();

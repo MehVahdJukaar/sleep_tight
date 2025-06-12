@@ -42,10 +42,10 @@ public class NightBagItem extends BlockItem {
 
             //same logic as startSleepingInBed. Performed before actually committing. Hopefully these should match
             var problem = SleepTightPlatformStuff.invokeSleepChecksEvents(sp, pos);
-            if (problem != null) {
+            if (problem.left().isPresent()) {
 
-                Component m = problem.getMessage();
-                if (problem == Player.BedSleepingProblem.NOT_POSSIBLE_HERE) {
+                Component m = problem.left().get().getMessage();
+                if (problem.left().get() == Player.BedSleepingProblem.NOT_POSSIBLE_HERE) {
                     m = Component.translatable("message.sleep_tight.not_possible_here");
                 }
                 if (m != null) player.displayClientMessage(m, true);
@@ -68,6 +68,7 @@ public class NightBagItem extends BlockItem {
                 default -> InteractionResultHolder.pass(stack);
             };
         }
+        return super.use(level, player, usedHand);
     }
 
     @Override

@@ -1,17 +1,24 @@
 package net.mehvahdjukaar.sleep_tight.common.network;
 
-import net.mehvahdjukaar.moonlight.api.platform.network.ChannelHandler;
 import net.mehvahdjukaar.moonlight.api.platform.network.Message;
+import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
 public class ClientBoundSyncPlayerSleepCapMessage implements Message {
+
+    public static final TypeAndCodec<RegistryFriendlyByteBuf, ClientBoundSyncPlayerSleepCapMessage> TYPE = Message.makeType(
+            SleepTight.res("sync_player_sleep_cap"),
+            ClientBoundSyncPlayerSleepCapMessage::new
+    );
     @Nullable
     private final UUID lastBedSleptInto;
     private final long insomniaWillElapseTimestamp;
@@ -44,7 +51,7 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     }
 
     @Override
-    public void writeToBuffer(FriendlyByteBuf buf) {
+    public void write(RegistryFriendlyByteBuf buf) {
         buf.writeBoolean(lastBedSleptInto != null);
         if (lastBedSleptInto != null) buf.writeUUID(lastBedSleptInto);
         buf.writeLong(insomniaWillElapseTimestamp);
@@ -55,7 +62,7 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     }
 
     @Override
-    public void handle(ChannelHandler.Context context) {
+    public void handle(Context context) {
         Player p = SleepTightClient.getPlayer();
         if (p == null) {
             return;
@@ -63,5 +70,10 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
         PlayerSleepData data = SleepTightPlatformStuff.getPlayerSleepData(p);
         data.acceptFromServer(this.lastBedSleptInto, this.insomniaWillElapseTimestamp, this.lastWokenUpTimestamp, this.consecutiveNights,
                 this.homeBedNights, this.doubleBed);
+    }
+
+    @Override
+    public @NotNull Type<?> type() {
+        return TYPE.type();
     }
 }

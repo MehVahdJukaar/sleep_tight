@@ -1,8 +1,10 @@
 package net.mehvahdjukaar.sleep_tight.common.entities;
 
+import io.netty.buffer.ByteBuf;
 import net.mehvahdjukaar.moonlight.api.entity.IControllableVehicle;
 import net.mehvahdjukaar.moonlight.api.entity.IExtraClientSpawnData;
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
+import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
@@ -12,7 +14,7 @@ import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.IModBed;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundAlightCameraOnLayMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSleepImmediatelyMessage;
-import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.common.network.ModNetworking;
 import net.mehvahdjukaar.sleep_tight.common.network.ServerBoundCommitSleepMessage;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
@@ -24,13 +26,15 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.util.ByIdMap;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
@@ -47,11 +51,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.function.IntFunction;
 
 public class BedEntity extends Entity implements IControllableVehicle, IExtraClientSpawnData {
 
-    public static final EntityDataSerializer<OffsetMode> SERIALIZER = EntityDataSerializer.simpleEnum(OffsetMode.class);
-    private static final EntityDataAccessor<OffsetMode> DATA_OFFSET = SynchedEntityData.defineId(BedEntity.class, SERIALIZER);
+    private static final EntityDataAccessor<OffsetMode> DATA_OFFSET = SynchedEntityData.defineId(BedEntity.class, SleepTight. OFFSET_MODE_SERIALIZER.get());
 
     private Direction dir = Direction.NORTH;
     private BlockState bedState = Blocks.AIR.defaultBlockState();
@@ -301,7 +305,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     @Override
     public void onInputUpdate(boolean left, boolean right, boolean up, boolean down, boolean sprint, boolean jumping) {
         if (jumping) {
-            NetworkHandler.CHANNEL.sendToServer(new ServerBoundCommitSleepMessage());
+            NetworkHelper.sendToServer(new ServerBoundCommitSleepMessage());
             if (this.level().isClientSide && SleepTightClient.HAS_SNORE){
                 this.getPassengers().get(0)
                         .playSound(SleepTight.SNORE_SOUND.get(), 1.0f, Mth.randomBetween(this.random, 0.9f, 1.1f));
@@ -375,6 +379,9 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
 
     public enum OffsetMode {
         NONE, HAMMOCK_3L, DOUBLE_BED;
+
+        public static final IntFunction<OffsetMode> BY_ID = ByIdMap.continuous(Enum::ordinal, values(), ByIdMap.OutOfBoundsStrategy.ZERO);
+        public static final StreamCodec<ByteBuf, OffsetMode> STREAM_CODEC = ByteBufCodecs.idMapper(BY_ID, OffsetMode::ordinal);
     }
 
     private static boolean isHammock3L(BlockState state) {
@@ -413,7 +420,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             data.setDoubleBed(isDoubleBed());
             data.syncToClient(player);
 
-            NetworkHandler.CHANNEL.sendToClientPlayer(player, new ClientBoundSleepImmediatelyMessage(pos));
+            NetworkHelper.sendToClientPlayer(player, new ClientBoundSleepImmediatelyMessage(pos));
             //safety check
             Level level = level();
             BlockState blockState = level.getBlockState(pos);
@@ -466,7 +473,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             if (player instanceof ServerPlayer serverPlayer) {
                 //Don't ask me why this is needed. Align camera immediately to prevent camera jerk
                 //TODO: actually this doesnt even work. Fix. Also fix shifting when going off bed
-                NetworkHandler.CHANNEL.sendToClientPlayer(serverPlayer, new ClientBoundAlightCameraOnLayMessage(bedEntity));
+                NetworkHelper.sendToClientPlayer(serverPlayer, new ClientBoundAlightCameraOnLayMessage(bedEntity));
             }
 
         } else if (level.getBlockEntity(pos) instanceof HammockTile tile) {
