@@ -6,6 +6,7 @@ import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncPlayerSleepCa
 import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -39,7 +40,7 @@ public abstract class PlayerSleepData {
     private int nightsSleptInSameBed = 0;
     private boolean usingDoubleBed = false;
 
-    public CompoundTag serializeNBT() {
+    public CompoundTag serializeNBT(HolderLookup.Provider reg) {
         CompoundTag tag = new CompoundTag();
         if (homeBed != null) {
             tag.putUUID(HOME_BED_NBT, homeBed);
@@ -53,7 +54,7 @@ public abstract class PlayerSleepData {
         return tag;
     }
 
-    public void deserializeNBT(CompoundTag tag) {
+    public void deserializeNBT(HolderLookup.Provider reg, CompoundTag tag) {
         if (tag.contains(HOME_BED_NBT)) this.homeBed = tag.getUUID(HOME_BED_NBT);
         this.insomniaWillElapseTimeStamp = tag.getLong(INSOMNIA_ELAPSE_NBT);
         this.lastWokenUpTimeStamp = tag.getLong(LAST_TIME_SLEPT_NBT);

@@ -9,6 +9,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -26,9 +27,9 @@ public class InvigoratedEffect extends MobEffect {
 
     @EventCalled
     public static void onBlcokXpDropped(ServerLevel level, BlockPos pos, int amount) {
-        if(amount > 0){
+        if (amount > 0) {
             Integer amp = BLOCK_XP_LEVEL.get();
-            if(amp != null){
+            if (amp != null) {
                 awardBonusXp(level, Vec3.atCenterOf(pos), amount, amp);
             }
         }
@@ -36,19 +37,19 @@ public class InvigoratedEffect extends MobEffect {
 
     @EventCalled
     public static void onLivingDeath(ServerLevel serverLevel, LivingEntity entity, LivingEntity killer) {
-        MobEffectInstance i = killer.getEffect(SleepTight.INVIGORATED.get());
+        MobEffectInstance i = killer.getEffect(SleepTight.INVIGORATED.getHolder());
         if (i != null) {
             if (entity.lastHurtByPlayerTime > 0 && !entity.wasExperienceConsumed() && !(entity instanceof Player) &&
                     entity.shouldDropExperience() && serverLevel.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
 
-                awardBonusXp(serverLevel, entity.position(), entity.getExperienceReward(),  i.getAmplifier());
+                awardBonusXp(serverLevel, entity.position(), entity.getExperienceReward(serverLevel, killer), i.getAmplifier());
             }
         }
     }
 
     private static void awardBonusXp(ServerLevel serverLevel, Vec3 pos, int oldXp, int amp) {
         double xp = getExtraXp(oldXp, amp, serverLevel.random);
-        if(xp != 0) {
+        if (xp != 0) {
             ExperienceOrb.award(serverLevel, pos, (int) xp);
         }
     }
@@ -64,10 +65,12 @@ public class InvigoratedEffect extends MobEffect {
         return actual;
     }
 
-    public static int onBlockBreak(int i, Player player) {
-        MobEffectInstance e = player.getEffect(SleepTight.INVIGORATED.get());
-        if(e != null){
-            return (int)getExtraXp(i, e.getAmplifier(), player.getRandom());
+    public static int getExtraXpForBlockBroken(int i, Entity breaker) {
+        if(breaker instanceof LivingEntity le) {
+            MobEffectInstance e = le.getEffect(SleepTight.INVIGORATED.getHolder());
+            if (e != null) {
+                return (int) getExtraXp(i, e.getAmplifier(), le.getRandom());
+            }
         }
         return 0;
     }

@@ -19,6 +19,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.LayeredDraw;
 import net.minecraft.client.gui.screens.InBedChatScreen;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
@@ -31,7 +32,7 @@ import net.minecraft.world.phys.BlockHitResult;
 
 import java.util.ArrayList;
 
-public abstract class SleepGuiOverlay<T extends Gui> {
+public class SleepGuiOverlay<T extends Gui> implements LayeredDraw.Layer {
 
     public void render(T gui, GuiGraphics graphics, float partialTicks, int width, int height) {
         Minecraft mc = Minecraft.getInstance();

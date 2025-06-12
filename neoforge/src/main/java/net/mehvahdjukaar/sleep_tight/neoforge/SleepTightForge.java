@@ -1,4 +1,4 @@
-package net.mehvahdjukaar.sleep_tight.forge;
+package net.mehvahdjukaar.sleep_tight.neoforge;
 
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
@@ -10,23 +10,19 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.player.*;
-import net.minecraftforge.event.level.BlockEvent;
-import net.minecraftforge.event.level.SleepFinishedTimeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.*;
+import net.neoforged.neoforge.event.level.BlockDropsEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.SleepFinishedTimeEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 /**
  * Author: MehVahdJukaar
@@ -34,8 +30,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 @Mod(SleepTight.MOD_ID)
 public class SleepTightForge {
 
-    public SleepTightForge() {
-        var bus = FMLJavaModLoadingContext.get().getModEventBus();
+    public SleepTightForge(IEventBus bus) {
         SleepTight.commonInit();
 
         if (PlatHelper.getPhysicalSide().isClient()) {
@@ -43,9 +38,10 @@ public class SleepTightForge {
             SleepTightForgeClient.init(bus);
         }
 
-        MinecraftForge.EVENT_BUS.register(this);
+        ForgePlayerSleepCapability.init();
+
+        NeoForge.EVENT_BUS.register(this);
         bus.addListener(SleepTightForge::setup);
-        bus.addListener(SleepTightForge::registerCaps);
     }
 
     public static void setup(final FMLCommonSetupEvent event) {
@@ -53,31 +49,30 @@ public class SleepTightForge {
     }
 
 
-    public static void registerCaps(RegisterCapabilitiesEvent event) {
-        event.register(ForgePlayerSleepCapability.class);
-    }
-
     @SubscribeEvent
-    public void attachPlayerCapabilities(AttachCapabilitiesEvent<Entity> event) {
-        if (event.getObject() instanceof Player) {
-            event.addCapability(SleepTight.res("player_data"), new ForgePlayerSleepCapability());
-        }
-    }
-
-    @SubscribeEvent
-    public void onSleepConditionCheck(PlayerSleepInBedEvent event) {
+    public void onSleepConditionCheck(CanPlayerSleepEvent event) {
         if (!ModEvents.checkExtraSleepConditions(event.getEntity(), event.getPos())) {
-            event.setResult(Player.BedSleepingProblem.OTHER_PROBLEM);
+            event.setProblem(Player.BedSleepingProblem.OTHER_PROBLEM);
+        }
+        switch (ModEvents.onCheckSleepTime(event.getEntity().level(), event.getPos())) {
+            case FAIL -> {
+                if (event.getVanillaProblem() == null)
+                    event.setProblem(Player.BedSleepingProblem.NOT_POSSIBLE_NOW);
+            }
+            case CONSUME, SUCCESS -> {
+                if (event.getVanillaProblem() == Player.BedSleepingProblem.NOT_POSSIBLE_NOW)
+                    event.setProblem(null);
+            }
         }
     }
 
     @SubscribeEvent
-    public void onSleepTimeCheck(SleepingTimeCheckEvent event) {
-        var p = event.getSleepingLocation();
+    public void canContinueSleeping(CanContinueSleepingEvent event) {
+        var p = event.getEntity().getSleepingPos();
         if (p.isPresent()) {
             switch (ModEvents.onCheckSleepTime(event.getEntity().level(), p.get())) {
-                case FAIL -> event.setResult(Event.Result.DENY);
-                case CONSUME, SUCCESS -> event.setResult(Event.Result.ALLOW);
+                case FAIL -> event.setContinueSleeping(false);
+                case CONSUME, SUCCESS -> event.setContinueSleeping(true);
             }
         }
     }
@@ -138,11 +133,11 @@ public class SleepTightForge {
     public void onPlayerClone(PlayerEvent.Clone event) {
         // if (event.isWasDeath()) {
         Player old = event.getOriginal();
-        old.reviveCaps();
+        //old.reviveCaps();
         var oldData = SleepTightPlatformStuff.getPlayerSleepData(old);
         var newData = SleepTightPlatformStuff.getPlayerSleepData(event.getEntity());
         newData.copyFrom(oldData);
-        old.invalidateCaps();
+      //  old.invalidateCaps();
         //  }
     }
 
@@ -154,13 +149,11 @@ public class SleepTightForge {
     }
 
     @SubscribeEvent
-    public void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase == TickEvent.Phase.START) {
-            Player player = event.player;
-            if (player instanceof ServerPlayer sp) {
-                var sleepData = SleepTightPlatformStuff.getPlayerSleepData(player);
-                sleepData.tick(sp);
-            }
+    public void onPlayerTick(PlayerTickEvent.Post event) {
+        Player player = event.getEntity();
+        if (player instanceof ServerPlayer sp) {
+            var sleepData = SleepTightPlatformStuff.getPlayerSleepData(player);
+            sleepData.tick(sp);
         }
     }
 
@@ -170,11 +163,11 @@ public class SleepTightForge {
     }
 
     @SubscribeEvent
-    public void onBlockBreak(BlockEvent.BreakEvent event) {
-        int i = event.getExpToDrop();
+    public void onBlockBreak(BlockDropsEvent event) {
+        int i = event.getDroppedExperience();
         if (i > 0) {
-            int j = InvigoratedEffect.onBlockBreak(i, event.getPlayer());
-            if (j != 0) event.setExpToDrop(i + j);
+            int j = InvigoratedEffect.getExtraXpForBlockBroken(i, event.getBreaker());
+            if (j != 0) event.setDroppedExperience(i + j);
         }
     }
 

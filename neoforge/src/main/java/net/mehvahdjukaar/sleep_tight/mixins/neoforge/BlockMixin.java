@@ -1,4 +1,4 @@
-package net.mehvahdjukaar.sleep_tight.mixins.forge;
+package net.mehvahdjukaar.sleep_tight.mixins.neoforge;
 
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;

@@ -1,9 +1,12 @@
 package net.mehvahdjukaar.sleep_tight.fabric;
 
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Unit;
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
@@ -21,15 +24,15 @@ public class SleepTightPlatformStuffImpl {
     }
 
     @org.jetbrains.annotations.Contract
-    public static Player.BedSleepingProblem invokeSleepChecksEvents(Player player, BlockPos pos) {
-        if( !ModEvents.checkExtraSleepConditions(player, pos)){
-            return null; //idk why but we need this here to match forge (called by event there)
+    public static Either<Player.BedSleepingProblem, Unit> invokeSleepChecksEvents(ServerPlayer player, BlockPos pos) {
+        if (!ModEvents.checkExtraSleepConditions(player, pos)) {
+            return Either.right(Unit.INSTANCE); //idk why but we need this here to match forge (called by event there)
         }
 
         if (!player.isSleeping() && player.isAlive()) {
             Level level = player.level();
             if (!level.dimensionType().natural()) {
-                return Player.BedSleepingProblem.NOT_POSSIBLE_HERE;
+                return Either.left(Player.BedSleepingProblem.NOT_POSSIBLE_HERE);
             }
 
             if (!player.isCreative()) {
@@ -39,15 +42,15 @@ public class SleepTightPlatformStuffImpl {
                         m -> m.isPreventingPlayerRest(player)
                 );
                 if (!hasNoMonstersNearby(player, list, pos)) {
-                    return Player.BedSleepingProblem.NOT_SAFE;
+                    return Either.left(Player.BedSleepingProblem.NOT_SAFE);
                 }
             }
 
             if (isDay(player, pos)) {
-                return Player.BedSleepingProblem.NOT_POSSIBLE_NOW;
+                return Either.left(Player.BedSleepingProblem.NOT_POSSIBLE_NOW);
             }
         }
-        return null;
+        return Either.right(Unit.INSTANCE);
     }
 
     //same as fabric mixin

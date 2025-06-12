@@ -1,36 +1,33 @@
-package net.mehvahdjukaar.sleep_tight.forge;
+package net.mehvahdjukaar.sleep_tight.neoforge;
 
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.client.SleepGuiOverlay;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
-import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.InBedChatScreen;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
-import net.minecraftforge.client.event.RenderPlayerEvent;
-import net.minecraftforge.client.event.ScreenEvent;
-import net.minecraftforge.client.gui.overlay.ForgeGui;
-import net.minecraftforge.client.gui.overlay.IGuiOverlay;
-import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.RenderPlayerEvent;
+import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
 public class SleepTightForgeClient {
 
     public static void init(IEventBus bus) {
-        MinecraftForge.EVENT_BUS.register(SleepTightForgeClient.class);
+        NeoForge.EVENT_BUS.register(SleepTightForgeClient.class);
         bus.addListener(SleepTightForgeClient::onAddGuiLayers);
     }
 
     @SubscribeEvent
-    public static void onEntityTIck(LivingEvent.LivingTickEvent event) {
-        SleepTightClient.onEntityTick(event.getEntity());
+    public static void onEntityTIck(EntityTickEvent.Post event) {
+        if (event.getEntity() instanceof LivingEntity le)
+            SleepTightClient.onEntityTick(le);
     }
 
     @SubscribeEvent
@@ -58,20 +55,9 @@ public class SleepTightForgeClient {
         }
     }
 
-    public static void onAddGuiLayers(RegisterGuiOverlaysEvent event) {
-        event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "sleep_indicator", new SleepGuiOverlayImpl());
-    }
-
-
-    public static class SleepGuiOverlayImpl extends SleepGuiOverlay<ForgeGui> implements IGuiOverlay {
-
-        public SleepGuiOverlayImpl() {
-        }
-
-        @Override
-        protected void setupOverlayRenderState(ForgeGui gui, boolean blend, boolean depthTest, ResourceLocation icons) {
-            gui.setupOverlayRenderState(blend, depthTest);
-        }
+    public static void onAddGuiLayers(RegisterGuiLayersEvent event) {
+        event.registerAbove(VanillaGuiLayers.CROSSHAIR, SleepTight.res("sleep_indicator"),
+                new SleepGuiOverlay<>());
     }
 
 

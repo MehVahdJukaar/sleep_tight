@@ -1,5 +1,6 @@
 package net.mehvahdjukaar.sleep_tight;
 
+import net.mehvahdjukaar.moonlight.api.misc.RegSupplier;
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
 import net.mehvahdjukaar.moonlight.api.set.BlocksColorAPI;
@@ -158,7 +159,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
 
     //effects
 
-    public static final Supplier<MobEffect> INVIGORATED = RegHelper.registerEffect(res("invigorated"), () ->
+    public static final RegSupplier<MobEffect> INVIGORATED = RegHelper.registerEffect(res("invigorated"), () ->
             new InvigoratedEffect(MobEffectCategory.BENEFICIAL, 0x11ff22));
 
     //entities
