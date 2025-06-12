@@ -65,9 +65,10 @@ public class SleepEffectsHelper {
 
     private static void applyVanillaBedBonuses(ServerPlayer player, long dayTimeDelta, BedData data, PlayerSleepData playerSleepData) {
 
+        //TODO: differentiate between home bed and non home bed. here it should just apply to leveld up bed
         BedStatus status = BED_BENEFITS.get();
         if (status == BedStatus.NONE) return;
-        if (status == BedStatus.HOME_BED && !playerSleepData.isHomeBed(data)) return;
+        if (status == BedStatus.HOME_BED && (!playerSleepData.isHomeBed(data))) return;
         //healing
         EffectIntensity healing = HEALING.get();
         if (healing != EffectIntensity.NONE) {
