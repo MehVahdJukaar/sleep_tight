@@ -41,6 +41,7 @@ public class CommonConfigs {
     public static final Supplier<Boolean> NIGHTMARES_NIGHT_BAG;
     public static final Supplier<Integer> NIGHTMARES_CONSECUTIVE_NIGHTS;
     public static final Supplier<Double> NIGHTMARE_CHANCE_INCREMENT_PER_NIGHT;
+    public static final Supplier<Double> SPECIAL_BED_NIGHTMARE_CHANCE_MULT;
     public static final Supplier<Double> NIGHTMARE_SLEEP_TIME_MULTIPLIER;
     public static final Supplier<Integer> NIGHTMARE_INSOMNIA_DURATION;
 
@@ -252,7 +253,8 @@ public class CommonConfigs {
                 .define("sleep_time_multiplier", diff(0.5, 1), 0.01, 1);
         NIGHTMARE_INSOMNIA_DURATION = builder.comment("Refractory period after a nightmare in which you won't be able to sleep")
                 .define("insomnia_duration", 24000 + 12000, 0, 1000000);
-
+        SPECIAL_BED_NIGHTMARE_CHANCE_MULT = builder.comment("Chance multiplier to have a nightmare when sleeping in a special bed. A 'special bed' is simply any (likely modded) bed that cant be targeted by a villager and or bedbug. Increased chance since you would be skipping bedbugs encounter otherwise")
+                .define("special_bed_nightmare_chance_mult", 1.2, 1, 5);
         builder.pop();
 
         builder.push("wake_up_encounters");

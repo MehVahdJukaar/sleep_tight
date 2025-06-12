@@ -96,9 +96,9 @@ public class ModEvents {
 
         for (var player : sleepingPlayers) {
             switch (wakeReason) {
-                case SLEPT_SUCCESSFULLY -> onPlayerSleepFinished(player, dayTimeDelta);
-                case ENCOUNTER -> onEncounter(player, encounterSpawnedFor.contains(player));
-                case NIGHTMARE -> onNightmare(player);
+                case SLEPT_SUCCESSFULLY -> onPlayerSleepFinished(player, dayTimeDelta, newWakeTime);
+                case ENCOUNTER -> onEncounter(player, encounterSpawnedFor.contains(player), newWakeTime);
+                case NIGHTMARE -> onNightmare(player, newWakeTime);
             }
         }
 
@@ -251,11 +251,11 @@ public class ModEvents {
     }
 
 
-    private static void onEncounter(ServerPlayer player, boolean mobSpawned) {
+    private static void onEncounter(ServerPlayer player, boolean mobSpawned, long wakeTime) {
         if (mobSpawned) {
             var c = SleepTightPlatformStuff.getPlayerSleepData(player);
-            c.setInsomniaCooldown(player, CommonConfigs.ENCOUNTER_INSOMNIA_DURATION.get());
-            c.setLasWokenUpTime(player.level());
+            c.setInsomniaCooldown(wakeTime, CommonConfigs.ENCOUNTER_INSOMNIA_DURATION.get());
+            c.setLasWokenUpTime(wakeTime);
             c.resetConsecutiveNightSleptCounter();
 
             c.syncToClient(player);
@@ -264,10 +264,10 @@ public class ModEvents {
         }
     }
 
-    private static void onNightmare(ServerPlayer player) {
+    private static void onNightmare(ServerPlayer player, long wakeTime) {
         var c = SleepTightPlatformStuff.getPlayerSleepData(player);
-        c.setInsomniaCooldown(player, CommonConfigs.NIGHTMARE_INSOMNIA_DURATION.get());
-        c.setLasWokenUpTime(player.level());
+        c.setInsomniaCooldown(wakeTime, CommonConfigs.NIGHTMARE_INSOMNIA_DURATION.get());
+        c.setLasWokenUpTime(wakeTime);
         c.resetConsecutiveNightSleptCounter();
 
         c.syncToClient(player);
@@ -278,7 +278,7 @@ public class ModEvents {
     }
 
     //server sided
-    public static void onPlayerSleepFinished(ServerPlayer player, long dayTimeDelta) {
+    public static void onPlayerSleepFinished(ServerPlayer player,  long dayTimeDelta, long wakeUpTime) {
         var p = player.getSleepingPos();
         if (p.isPresent()) {
             BlockPos pos = p.get();
@@ -294,8 +294,8 @@ public class ModEvents {
                 playerCap.increaseNightSleptInThisBed(data, player);
             }
 
-            playerCap.increaseConsecutiveNightSleptCounter(player);
-            playerCap.setLasWokenUpTime(player.level());
+            playerCap.increaseConsecutiveNightSleptCounter(wakeUpTime);
+            playerCap.setLasWokenUpTime(wakeUpTime);
 
             if (bed.st_canSpawnBedbugs()) {
                 WakeUpEncounterHelper.trySpawningBedbug(pos, player, data);
@@ -303,7 +303,7 @@ public class ModEvents {
 
             SleepEffectsHelper.applyEffectsOnWakeUp(playerCap, player, dayTimeDelta, pos, bed, state, data);
 
-            playerCap.setInsomniaCooldown(player, bed.st_getCooldown());
+            playerCap.setInsomniaCooldown(wakeUpTime, bed.st_getCooldown());
             playerCap.syncToClient(player);
         }
     }
