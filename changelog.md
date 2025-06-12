@@ -1,1 +1,1 @@
-- fixed bed stand up position
+fixed a bug on forge with sleep data ticing as player was cloned

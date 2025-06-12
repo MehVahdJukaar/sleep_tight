@@ -22,8 +22,7 @@ public class SleepTightPlatformStuffImpl {
     @org.jetbrains.annotations.Contract
     public static PlayerSleepData getPlayerSleepData(Player player) {
         return player.getCapability(ForgePlayerSleepCapability.TOKEN).orElseThrow(
-                () -> new IllegalStateException("Player sleep capability was null. " +
-                        "This should not be possible! Do not Report this to Sleep Tight")
+                () -> new IllegalStateException("Player sleep capability was null. How? ")
         );
     }
 

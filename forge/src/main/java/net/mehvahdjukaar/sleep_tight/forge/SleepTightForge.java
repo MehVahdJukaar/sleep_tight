@@ -136,14 +136,12 @@ public class SleepTightForge {
 
     @SubscribeEvent
     public void onPlayerClone(PlayerEvent.Clone event) {
-        // if (event.isWasDeath()) {
         Player old = event.getOriginal();
         old.reviveCaps();
-        var oldData = SleepTightPlatformStuff.getPlayerSleepData(old);
-        var newData = SleepTightPlatformStuff.getPlayerSleepData(event.getEntity());
-        newData.copyFrom(oldData);
+        var oldCap = SleepTightPlatformStuff.getPlayerSleepData(old);
+        var newCap = SleepTightPlatformStuff.getPlayerSleepData(event.getEntity());
+        newCap.copyFrom(oldCap);
         old.invalidateCaps();
-        //  }
     }
 
     @SubscribeEvent
@@ -157,9 +155,12 @@ public class SleepTightForge {
     public void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase == TickEvent.Phase.START) {
             Player player = event.player;
-            if (player instanceof ServerPlayer sp) {
-                var sleepData = SleepTightPlatformStuff.getPlayerSleepData(player);
-                sleepData.tick(sp);
+            if (player instanceof ServerPlayer sp && sp.isAlive()) {
+                try {
+                    var sleepData = SleepTightPlatformStuff.getPlayerSleepData(player);
+                    sleepData.tick(sp);
+                }catch (Exception ignored) {
+                }
             }
         }
     }
