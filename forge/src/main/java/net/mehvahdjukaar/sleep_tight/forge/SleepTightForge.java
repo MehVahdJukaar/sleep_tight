@@ -26,6 +26,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 /**
  * Author: MehVahdJukaar
@@ -33,7 +34,8 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 @Mod(SleepTight.MOD_ID)
 public class SleepTightForge {
 
-    public SleepTightForge(IEventBus bus) {
+    public SleepTightForge() {
+        var bus = FMLJavaModLoadingContext.get().getModEventBus();
         SleepTight.commonInit();
 
         if (PlatHelper.getPhysicalSide().isClient()) {
@@ -151,6 +153,7 @@ public class SleepTightForge {
         }
     }
 
+    @SubscribeEvent
     public void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase == TickEvent.Phase.START) {
             Player player = event.player;

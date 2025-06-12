@@ -20,6 +20,7 @@ import net.minecraft.client.Options;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.InBedChatScreen;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -67,7 +68,6 @@ public abstract class SleepGuiOverlay<T extends Gui> {
                     }
 
                     if (cooldown) {
-
                         setupOverlayRenderState(gui, true, false, SleepTightClient.ICONS);
                         //gui.setBlitOffset(-90);
 
@@ -92,6 +92,8 @@ public abstract class SleepGuiOverlay<T extends Gui> {
 
 
                         graphics.pose().popPose();
+
+                        RenderSystem.defaultBlendFunc();
                     }
                 }
             }

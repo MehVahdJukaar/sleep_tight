@@ -33,7 +33,7 @@ public abstract class PlayerSleepData {
 
     private long insomniaWillElapseTimeStamp = 0; //need to be timestamps otherwise it wont work whe player logs off or sets the time
     private long lastWokenUpTimeStamp = -1;
-    private long lastKnownTime = 0;  //keeps track of last seen time to prevent time skips in the past and reset cooldowns if it happens to prevent infinite cooldowns
+    private long lastKnownTimeStamp = 0;  //keeps track of last seen time to prevent time skips in the past and reset cooldowns if it happens to prevent infinite cooldowns
 
     private int consecutiveNightsSlept = 0;
     private int nightsSleptInSameBed = 0;
@@ -49,7 +49,7 @@ public abstract class PlayerSleepData {
         tag.putInt(CONSECUTIVE_NIGHTS_NBT, consecutiveNightsSlept);
         tag.putInt(HOME_BED_LEVEL_NBT, nightsSleptInSameBed);
         tag.putBoolean(USING_DOUBLE_BED_NBT, usingDoubleBed);
-        tag.putLong(LAST_KNOWN_TIME_NBT, lastKnownTime);
+        tag.putLong(LAST_KNOWN_TIME_NBT, lastKnownTimeStamp);
         return tag;
     }
 
@@ -60,35 +60,35 @@ public abstract class PlayerSleepData {
         this.consecutiveNightsSlept = tag.getInt(CONSECUTIVE_NIGHTS_NBT);
         this.nightsSleptInSameBed = tag.getInt(HOME_BED_LEVEL_NBT);
         this.usingDoubleBed = tag.getBoolean(USING_DOUBLE_BED_NBT);
-        this.lastKnownTime = tag.getLong(LAST_KNOWN_TIME_NBT);
+        this.lastKnownTimeStamp = tag.getLong(LAST_KNOWN_TIME_NBT);
     }
 
     public void tick(ServerPlayer player) {
-        long gameTime = player.level().getGameTime();
-        if (gameTime < lastKnownTime) {
+        long gameTime = player.level().getDayTime();
+        if (gameTime < lastKnownTimeStamp) {
             if (isOnSleepCooldown(player)) {
-                player.displayClientMessage(Component.translatable("message.sleep_tight.time_skipped"), true);
+                player.displayClientMessage(Component.translatable("message.sleep_tight.time_skipped"), false);
             }
             //reset cooldowns if time has gone back
             this.insomniaWillElapseTimeStamp = 0;
             this.lastWokenUpTimeStamp = -1;
-            this.lastKnownTime = gameTime;
+            this.lastKnownTimeStamp = gameTime;
             syncToClient(player);
         }
     }
 
     public void setInsomniaCooldown(Player player, long duration) {
-        long gameTime = player.level().getGameTime();
+        long gameTime = player.level().getDayTime();
         this.insomniaWillElapseTimeStamp = gameTime + duration;
 
-        this.lastKnownTime = gameTime;
+        this.lastKnownTimeStamp = gameTime;
     }
 
     public void setLasWokenUpTime(Level level) {
-        long gameTime = level.getGameTime();
+        long gameTime = level.getDayTime();
         this.lastWokenUpTimeStamp = gameTime;
 
-        this.lastKnownTime = gameTime;
+        this.lastKnownTimeStamp = gameTime;
     }
 
     public void increaseNightSleptInThisBed(BedData bed, Player player) {
@@ -109,8 +109,8 @@ public abstract class PlayerSleepData {
     }
 
     public void increaseConsecutiveNightSleptCounter(Player player) {
-        long gameTime = player.level().getGameTime();
-        long awakeTime = gameTime - this.lastWokenUpTimeStamp;
+        long dayTime = player.level().getDayTime();
+        long awakeTime = dayTime - this.lastWokenUpTimeStamp;
         if (awakeTime > CommonConfigs.SLEEP_INTERVAL.get()) {
             //reset when hasn't slept for a while
             this.consecutiveNightsSlept = 0;
@@ -125,7 +125,7 @@ public abstract class PlayerSleepData {
 
     public long getInsomniaCooldown(Player player) {
         if (player.getAbilities().instabuild) return 0;
-        return insomniaWillElapseTimeStamp - player.level().getGameTime();
+        return insomniaWillElapseTimeStamp - player.level().getDayTime();
     }
 
     public float getInsomniaCooldownPercentage(Player player) {
