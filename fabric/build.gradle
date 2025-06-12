@@ -7,7 +7,7 @@ loom {
     accessWidenerPath = project(":common").loom.accessWidenerPath
 }
 
-configurations {
+configurations {f
     common
     shadowCommon // Don't use shadow from the shadow plugin because we don't want IDEA to index this.
     compileClasspath.extendsFrom common
@@ -30,6 +30,7 @@ dependencies {
     //  modCompileOnly("net.mehvahdjukaar:heartstone-fabric:1.19.2-1.1.2")
     modImplementation ("net.mehvahdjukaar:moonlight-fabric:${project.moonlight_version}")
 }
+
 
 
 processResources {
@@ -74,7 +75,7 @@ components.java {
 publishing {
     publications {
         mavenFabric(MavenPublication) {
-            artifactId = rootProject.mod_id + "-" + project.name
+            artifactId = mod_id + "-" + project.name
             from components.java
         }
     }
