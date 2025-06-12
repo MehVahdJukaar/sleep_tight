@@ -367,9 +367,10 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
 
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
+
         if (dismountOnTheSpot) return super.getDismountLocationForPassenger(passenger);
         var o = BedBlock.findStandUpPosition(passenger.getType(), passenger.level(),
-                this.blockPosition(), this.dir, passenger.getYRot());
+                this.blockPosition(), this.dir.getOpposite(), passenger.getYRot());
         //this will not quite work for hammocks but its good enough
         return o.orElseGet(() -> super.getDismountLocationForPassenger(passenger));
     }

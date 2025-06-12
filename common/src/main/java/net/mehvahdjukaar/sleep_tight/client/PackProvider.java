@@ -22,7 +22,6 @@ public class PackProvider extends DynClientResourcesGenerator {
 
     public PackProvider() {
         super(new DynamicTexturePack(SleepTight.res("generated_pack"), Pack.Position.BOTTOM, true, true));
-        this.dynamicPack.setGenerateDebugResources( false);
         this.dynamicPack.addNamespaces("minecraft");
     }
 
