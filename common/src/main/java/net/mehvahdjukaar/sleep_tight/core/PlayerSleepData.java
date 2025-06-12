@@ -6,10 +6,12 @@ import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncPlayerSleepCa
 import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -77,18 +79,16 @@ public abstract class PlayerSleepData {
         }
     }
 
-    public void setInsomniaCooldown(Player player, long duration) {
-        long gameTime = player.level().getDayTime();
-        this.insomniaWillElapseTimeStamp = gameTime + duration;
+    public void setInsomniaCooldown(long dayTimeNow, long cooldownDuration) {
+        this.insomniaWillElapseTimeStamp = dayTimeNow + cooldownDuration;
 
-        this.lastKnownTimeStamp = gameTime;
+        this.lastKnownTimeStamp = dayTimeNow;
     }
 
-    public void setLasWokenUpTime(Level level) {
-        long gameTime = level.getDayTime();
-        this.lastWokenUpTimeStamp = gameTime;
+    public void setLasWokenUpTime(long dayTimeNow) {
+        this.lastWokenUpTimeStamp = dayTimeNow;
 
-        this.lastKnownTimeStamp = gameTime;
+        this.lastKnownTimeStamp = dayTimeNow;
     }
 
     public void increaseNightSleptInThisBed(BedData bed, Player player) {
@@ -108,9 +108,8 @@ public abstract class PlayerSleepData {
         }
     }
 
-    public void increaseConsecutiveNightSleptCounter(Player player) {
-        long dayTime = player.level().getDayTime();
-        long awakeTime = dayTime - this.lastWokenUpTimeStamp;
+    public void increaseConsecutiveNightSleptCounter(long wakeUpTime) {
+        long awakeTime = wakeUpTime - this.lastWokenUpTimeStamp;
         if (awakeTime > CommonConfigs.SLEEP_INTERVAL.get()) {
             //reset when hasn't slept for a while
             this.consecutiveNightsSlept = 0;
@@ -151,9 +150,13 @@ public abstract class PlayerSleepData {
         if (state.getBlock() instanceof ISleepTightBed bed) {
             if (!bed.st_canCauseNightmares()) return 0;
         }
-
-        return CommonConfigs.NIGHTMARE_CHANCE_INCREMENT_PER_NIGHT.get()
+        var chance = CommonConfigs.NIGHTMARE_CHANCE_INCREMENT_PER_NIGHT.get()
                 * (consecutiveNightsSlept - minNights - 1);
+
+        if (!BuiltInRegistries.POINT_OF_INTEREST_TYPE.get(PoiTypes.HOME).is(state)) {
+            chance *= CommonConfigs.SPECIAL_BED_NIGHTMARE_CHANCE_MULT.get();
+        }
+        return chance;
     }
 
     @Nullable
@@ -208,7 +211,7 @@ public abstract class PlayerSleepData {
     }
 
     public int getHomeBedLevel() {
-        return Mth.clamp( this.nightsSleptInSameBed - CommonConfigs.HOME_BED_REWARD_REQUIRED_NIGHTS.get(), 0, CommonConfigs.HOME_BED_MAX_LEVEL.get());
+        return Mth.clamp(this.nightsSleptInSameBed - CommonConfigs.HOME_BED_REWARD_REQUIRED_NIGHTS.get(), 0, CommonConfigs.HOME_BED_MAX_LEVEL.get());
     }
 
     public boolean usingDoubleBed() {

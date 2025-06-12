@@ -71,7 +71,9 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         this.bedState = bedState;
         this.setOffsetMode(offsetMode);
 
-        this.setPos(mainPos.getX() + 0.5, mainPos.getY() + 0.25, mainPos.getZ() + 0.5);
+        var shape = bedState.getShape(worldIn, mainPos);
+        double yOffset = shape.max(Direction.Axis.Y);
+        this.setPos(mainPos.getX() + 0.5, mainPos.getY() + yOffset, mainPos.getZ() + 0.5);
     }
 
     @Override
@@ -246,8 +248,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
                 callback.accept(passenger, v.x, v.y, v.z);
             } else {
                 //same as set pos to bed
-                BlockPos pos = this.blockPosition();
-                Vec3 c = new Vec3(pos.getX() + 0.5, pos.getY() + 9 / 16f, pos.getZ() + 0.5);
+                Vec3 c = this.position();
                 if (isDoubleBed()) {
                     c = getDoubleBedOffset(dir.getOpposite(), c);
                 }

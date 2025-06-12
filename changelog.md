@@ -1,1 +1,3 @@
-fixed forge
+- all beds that cant be targeted by villagers and consequentially by bedbugs will have a big nightmare chance increase. Should just apply to modded "beds" that arent added to the BEDS POI
+- Bed entity will now place the player correctly depending on the bed block height
+- fixed sleep cooldown calculation
