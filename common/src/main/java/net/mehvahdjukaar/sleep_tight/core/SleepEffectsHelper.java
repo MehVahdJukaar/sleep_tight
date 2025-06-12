@@ -87,8 +87,9 @@ public class SleepEffectsHelper {
             for (var e : player.getActiveEffects()) {
                 if (switch (type) {
                     case ALL -> true;
-                    case HARMFUL -> e.getEffect().getCategory() == MobEffectCategory.HARMFUL;
-                    case BENEFICIAL -> e.getEffect().getCategory() != MobEffectCategory.HARMFUL;
+                    case HARMFUL -> e.getEffect().value().getCategory() == MobEffectCategory.HARMFUL;
+                    case BENEFICIAL -> e.getEffect().value().getCategory() == MobEffectCategory.BENEFICIAL;
+                    case NEUTRAL -> e.getEffect().value().getCategory() == MobEffectCategory.NEUTRAL;
                 }) {
                     toEditOrRemove.add(e);
                 }
@@ -98,8 +99,7 @@ public class SleepEffectsHelper {
                 if (timeBased) {
                     long remainingTime = e.getDuration() - dayTimeDelta;
                     if (remainingTime > 0) {
-                        CompoundTag tag = new CompoundTag();
-                        e.save(tag);
+                        CompoundTag tag = (CompoundTag) e.save();
                         tag.putInt("Duration", (int) remainingTime);
                         MobEffectInstance load = MobEffectInstance.load(tag);
                         if (load != null) player.addEffect(load);

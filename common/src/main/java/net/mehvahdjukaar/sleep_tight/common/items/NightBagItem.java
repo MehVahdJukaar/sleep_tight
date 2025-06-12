@@ -6,6 +6,7 @@ import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -35,12 +36,12 @@ public class NightBagItem extends BlockItem {
         if (level.isClientSide) {
             return InteractionResultHolder.success(player.getItemInHand(usedHand));
             //player sleep check only works on server side because level.isDay() is true for client
-        } else {
+        } else if(player instanceof ServerPlayer sp){
             BlockPos pos = BlockPos.containing(player.position().add(0, 1 / 16f, 0));
             ItemStack stack = player.getItemInHand(usedHand);
 
             //same logic as startSleepingInBed. Performed before actually committing. Hopefully these should match
-            var problem = SleepTightPlatformStuff.invokeSleepChecksEvents(player, pos);
+            var problem = SleepTightPlatformStuff.invokeSleepChecksEvents(sp, pos);
             if (problem != null) {
 
                 Component m = problem.getMessage();

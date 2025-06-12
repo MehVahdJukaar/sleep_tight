@@ -3,6 +3,7 @@ package net.mehvahdjukaar.sleep_tight.common.tiles;
 import net.mehvahdjukaar.moonlight.api.block.MimicBlockTile;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -46,16 +47,17 @@ public class InfestedBedTile extends MimicBlockTile {
     }
 
     @Override
-    public void saveAdditional(CompoundTag tag) {
-        super.saveAdditional(tag);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
         if (mobTag != null) {
             tag.put("bedbug", mobTag);
         }
     }
 
+
     @Override
-    public void load(CompoundTag tag) {
-        super.load(tag);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
         if (tag.contains("bedbug")) {
             this.mobTag = tag.getCompound("bedbug");
         }
@@ -67,12 +69,11 @@ public class InfestedBedTile extends MimicBlockTile {
     }
 
     @Override
-    public CompoundTag getUpdateTag() {
-        CompoundTag tag = new CompoundTag();
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        CompoundTag tag = super.getUpdateTag(registries);
         tag.put("Mimic", NbtUtils.writeBlockState(mimic));
         return tag;
     }
-
 
     public BlockState getBed() {
         return mimic;

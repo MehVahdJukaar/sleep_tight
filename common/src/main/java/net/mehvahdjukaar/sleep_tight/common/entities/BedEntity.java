@@ -50,13 +50,11 @@ import java.util.UUID;
 
 public class BedEntity extends Entity implements IControllableVehicle, IExtraClientSpawnData {
 
-    private Direction dir = Direction.NORTH;
     public static final EntityDataSerializer<OffsetMode> SERIALIZER = EntityDataSerializer.simpleEnum(OffsetMode.class);
     private static final EntityDataAccessor<OffsetMode> DATA_OFFSET = SynchedEntityData.defineId(BedEntity.class, SERIALIZER);
 
-
+    private Direction dir = Direction.NORTH;
     private BlockState bedState = Blocks.AIR.defaultBlockState();
-
     private boolean dismountOnTheSpot = false;
 
     public BedEntity(EntityType<?> entityType, Level level) {
@@ -75,8 +73,8 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     @Override
-    protected void defineSynchedData() {
-        this.entityData.define(DATA_OFFSET, OffsetMode.NONE);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_OFFSET, OffsetMode.NONE);
     }
 
     public OffsetMode getOffsetMode() {

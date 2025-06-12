@@ -45,8 +45,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.PathFinder;
+import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.level.pathfinder.PathfindingContext;
 import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -54,10 +55,7 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.EnumSet;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class BedbugEntity extends Monster {
@@ -91,9 +89,9 @@ public class BedbugEntity extends Monster {
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(DATA_FLAGS_ID, (byte) 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_FLAGS_ID, (byte) 0);
     }
 
     public float getBurrowing(float partialTicks) {
@@ -196,11 +194,6 @@ public class BedbugEntity extends Monster {
         if (!state.is(Blocks.COBWEB)) {
             super.makeStuckInBlock(state, motionMultiplier);
         }
-    }
-
-    @Override
-    public MobType getMobType() {
-        return MobType.ARTHROPOD;
     }
 
     /**
@@ -497,20 +490,57 @@ public class BedbugEntity extends Monster {
         @Override
         protected double getFloorLevel(BlockPos pos) {
             BlockPos blockPos = pos.below();
-            BlockState state = level.getBlockState(blockPos);
+            BlockGetter blockGetter = this.currentContext.level();
+
+            BlockState state = blockGetter.getBlockState(blockPos);
             if (state.is(SleepTight.BEDBUG_WALK_THROUGH)) return blockPos.getY();
-            VoxelShape voxelShape = state.getCollisionShape(level, blockPos);
+            VoxelShape voxelShape = state.getCollisionShape(blockGetter, blockPos);
             return blockPos.getY() + (voxelShape.isEmpty() ? 0.0 : voxelShape.max(Direction.Axis.Y));
         }
 
+        //same as super
         @Override
-        protected BlockPathTypes evaluateBlockPathType(BlockGetter blockGetter, BlockPos blockPos, BlockPathTypes nodeType) {
-            if (nodeType == BlockPathTypes.DOOR_OPEN || nodeType == BlockPathTypes.DOOR_WOOD_CLOSED ||
-                    nodeType == BlockPathTypes.WALKABLE_DOOR) return BlockPathTypes.OPEN;
-            if (nodeType == BlockPathTypes.BLOCKED && level.getBlockState(blockPos).getBlock() instanceof BedBlock) {
-                return BlockPathTypes.WALKABLE;
+        public Set<PathType> getPathTypeWithinMobBB(PathfindingContext context, int x, int y, int z) {
+            EnumSet<PathType> enumSet = EnumSet.noneOf(PathType.class);
+
+            for(int i = 0; i < this.entityWidth; ++i) {
+                for(int j = 0; j < this.entityHeight; ++j) {
+                    for(int k = 0; k < this.entityDepth; ++k) {
+                        int l = i + x;
+                        int m = j + y;
+                        int n = k + z;
+                        PathType pathType = this.getPathType(context, l, m, n);
+                        pathType = modifyPathType(context, l, m, n, pathType);
+                        BlockPos blockPos = this.mob.blockPosition();
+                        boolean bl = this.canPassDoors();
+                        if (pathType == PathType.DOOR_WOOD_CLOSED && this.canOpenDoors() && bl) {
+                            pathType = PathType.WALKABLE_DOOR;
+                        }
+
+                        if (pathType == PathType.DOOR_OPEN && !bl) {
+                            pathType = PathType.BLOCKED;
+                        }
+
+                        if (pathType == PathType.RAIL && this.getPathType(context, blockPos.getX(), blockPos.getY(), blockPos.getZ()) != PathType.RAIL && this.getPathType(context, blockPos.getX(), blockPos.getY() - 1, blockPos.getZ()) != PathType.RAIL) {
+                            pathType = PathType.UNPASSABLE_RAIL;
+                        }
+
+                        enumSet.add(pathType);
+                    }
+                }
             }
-            return super.evaluateBlockPathType(level, blockPos, nodeType);
+
+            return enumSet;
+        }
+
+        protected PathType modifyPathType(PathfindingContext blockGetter, int x, int y, int z, PathType nodeType) {
+            if (nodeType == PathType.DOOR_OPEN || nodeType == PathType.DOOR_WOOD_CLOSED ||
+                    nodeType == PathType.WALKABLE_DOOR) return PathType.OPEN;
+            if (nodeType == PathType.BLOCKED && blockGetter.getBlockState(BlockPos.containing(x,y,z))
+                    .getBlock() instanceof BedBlock) {
+                return PathType.WALKABLE;
+            }
+            return nodeType;
         }
     }
 

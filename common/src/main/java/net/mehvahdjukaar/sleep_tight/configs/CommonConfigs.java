@@ -101,7 +101,7 @@ public class CommonConfigs {
     }
 
     public enum PotionClearing {
-        ALL, BENEFICIAL, HARMFUL
+        ALL, BENEFICIAL, HARMFUL, NEUTRAL
     }
 
     public enum BedStatus {
@@ -202,7 +202,7 @@ public class CommonConfigs {
                 .define("effect_clearing_types", PotionClearing.ALL);
         WAKE_UP_EFFECTS = builder.comment("Effects to apply when player wakes up. You can add more entries, this is a list")
                 .defineObject("effects_on_wake_up", () -> List.of(
-                                new EffectData(SleepTight.INVIGORATED.get(), 0, 0.075f, 2 * 60 * 20, 30 * 20)),
+                                new EffectData(SleepTight.INVIGORATED.getHolder(), 0, 0.075f, 2 * 60 * 20, 30 * 20)),
                         EffectData.CODEC.listOf());
         builder.pop();
 

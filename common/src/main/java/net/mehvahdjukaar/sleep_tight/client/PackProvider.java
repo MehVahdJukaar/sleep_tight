@@ -22,7 +22,6 @@ public class PackProvider extends DynClientResourcesGenerator {
 
     public PackProvider() {
         super(new DynamicTexturePack(SleepTight.res("generated_pack"), Pack.Position.BOTTOM, true, true));
-        this.dynamicPack.setGenerateDebugResources( false);
         this.dynamicPack.addNamespaces("minecraft");
     }
 
@@ -40,7 +39,7 @@ public class PackProvider extends DynClientResourcesGenerator {
     public void regenerateDynamicAssets(Consumer<ResourceGenTask> executor) {
 
         executor.accept((manager, sink) -> {
-            ResourceLocation res = new ResourceLocation("white_bed");
+            ResourceLocation res = ResourceLocation.withDefaultNamespace("white_bed");
 
 
             var o = manager.getResource(ResType.BLOCKSTATES.getPath(res));
@@ -61,7 +60,8 @@ public class PackProvider extends DynClientResourcesGenerator {
                         }""";
                 for (var c : DyeColor.values()) {
                     var json = JsonParser.parseString(str.replace("#", c.getName()));
-                    sink.addJson(new ResourceLocation(c.getName() + "_bed"), json, ResType.BLOCKSTATES);
+                    sink.addJson(ResourceLocation.withDefaultNamespace(
+                            c.getName() + "_bed"), json, ResType.BLOCKSTATES);
                 }
             }
         });
