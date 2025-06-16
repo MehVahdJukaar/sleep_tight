@@ -1,8 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.common.items;
 
-import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
-import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -36,7 +34,7 @@ public class NightBagItem extends BlockItem {
         if (level.isClientSide) {
             return InteractionResultHolder.success(player.getItemInHand(usedHand));
             //player sleep check only works on server side because level.isDay() is true for client
-        } else if(player instanceof ServerPlayer sp){
+        } else if (player instanceof ServerPlayer sp) {
             BlockPos pos = BlockPos.containing(player.position().add(0, 1 / 16f, 0));
             ItemStack stack = player.getItemInHand(usedHand);
 

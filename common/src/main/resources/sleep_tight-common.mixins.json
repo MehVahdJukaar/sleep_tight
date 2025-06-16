@@ -17,10 +17,8 @@
     "DoorBlockMixin",
     "LivingEntityMixin",
     "PhantomMixin",
-    "fabric.PlayerListMixin",
     "PlayerMixin",
     "ServerLevelMixin",
-    "ServerPlayerMixin",
     "SleepStatusMixin"
   ],
   "injectors": {

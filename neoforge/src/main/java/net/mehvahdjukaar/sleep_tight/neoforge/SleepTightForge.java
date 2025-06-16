@@ -5,11 +5,13 @@ import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
+import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.portal.DimensionTransition;
 import net.neoforged.bus.api.EventPriority;
@@ -176,7 +178,7 @@ public class SleepTightForge {
     public void onBlockBreak(BlockDropsEvent event) {
         int i = event.getDroppedExperience();
         if (i > 0) {
-            int j = InvigoratedEffect.getExtraXpForBlockBroken(i, event.getBreaker());
+            int j = InvigoratedEffect.forgeGetExtraXpForBlockBroken(i, event.getBreaker());
             if (j != 0) event.setDroppedExperience(i + j);
         }
     }

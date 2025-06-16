@@ -26,13 +26,25 @@ public class InvigoratedEffect extends MobEffect {
     public static final ThreadLocal<Integer> BLOCK_XP_LEVEL = new ThreadLocal<>();
 
     @EventCalled
-    public static void onBlcokXpDropped(ServerLevel level, BlockPos pos, int amount) {
-        if (amount > 0) {
+    public static void fabricOnBlockXpDropped(ServerLevel level, BlockPos pos, int oldXp) {
+        if (oldXp > 0) {
             Integer amp = BLOCK_XP_LEVEL.get();
             if (amp != null) {
-                awardBonusXp(level, Vec3.atCenterOf(pos), amount, amp);
+                double extraXp = getExtraXp(oldXp, amp, level.random);
+
+                ExperienceOrb.award(level, pos.getCenter(), (int) extraXp);
             }
         }
+    }
+
+    public static int forgeGetExtraXpForBlockBroken(int i, Entity breaker) {
+        if(breaker instanceof LivingEntity le) {
+            MobEffectInstance e = le.getEffect(SleepTight.INVIGORATED.getHolder());
+            if (e != null) {
+                return (int) getExtraXp(i, e.getAmplifier(), le.getRandom());
+            }
+        }
+        return 0;
     }
 
     @EventCalled
@@ -41,21 +53,17 @@ public class InvigoratedEffect extends MobEffect {
         if (i != null) {
             if (entity.lastHurtByPlayerTime > 0 && !entity.wasExperienceConsumed() && !(entity instanceof Player) &&
                     entity.shouldDropExperience() && serverLevel.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
+                int oldXp = entity.getExperienceReward(serverLevel, killer);
+                int amp = i.getAmplifier();
+                double extraXp = getExtraXp(oldXp, amp, serverLevel.random);
 
-                awardBonusXp(serverLevel, entity.position(), entity.getExperienceReward(serverLevel, killer), i.getAmplifier());
+                ExperienceOrb.award(serverLevel, entity.position(), (int) extraXp);
             }
         }
     }
 
-    private static void awardBonusXp(ServerLevel serverLevel, Vec3 pos, int oldXp, int amp) {
-        double xp = getExtraXp(oldXp, amp, serverLevel.random);
-        if (xp != 0) {
-            ExperienceOrb.award(serverLevel, pos, (int) xp);
-        }
-    }
-
-    private static double getExtraXp(int oldXp, int amp, RandomSource random) {
-        double value = oldXp * CommonConfigs.INVIGORATED_XP.get() * (amp + 1);
+    public static double getExtraXp(int oldXp, int invigoratingLevel, RandomSource random) {
+        double value = oldXp * CommonConfigs.INVIGORATED_XP.get() * (invigoratingLevel + 1);
 
         int actual = (int) (value);
         double remainder = value - actual;
@@ -65,13 +73,5 @@ public class InvigoratedEffect extends MobEffect {
         return actual;
     }
 
-    public static int getExtraXpForBlockBroken(int i, Entity breaker) {
-        if(breaker instanceof LivingEntity le) {
-            MobEffectInstance e = le.getEffect(SleepTight.INVIGORATED.getHolder());
-            if (e != null) {
-                return (int) getExtraXp(i, e.getAmplifier(), le.getRandom());
-            }
-        }
-        return 0;
-    }
+
 }

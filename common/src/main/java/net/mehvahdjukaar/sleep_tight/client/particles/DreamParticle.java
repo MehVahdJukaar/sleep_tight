@@ -52,7 +52,7 @@ public class DreamParticle extends TextureSheetParticle {
 
         this.yd = vy;
 
-        this.setSize(0.1f, 0.1f);
+        this.setSize(0.05f, 0.05f);
 
         this.maxAlpha = (float) (double) ClientConfigs.PARTICLE_ALPHA.get();
         this.renderType = MLRenderTypes.PARTICLE_ADDITIVE_TRANSLUCENCY_RENDER_TYPE;

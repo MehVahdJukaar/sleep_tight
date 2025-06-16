@@ -42,6 +42,6 @@ public abstract class BlockMixin {
     @Inject(method = "popExperience", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ExperienceOrb;award(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/Vec3;I)V",
     shift = At.Shift.AFTER))
     protected void st$addInvigoratedXP(ServerLevel level, BlockPos pos, int amount, CallbackInfo ci) {
-        InvigoratedEffect.onBlcokXpDropped(level, pos, amount);
+        InvigoratedEffect.fabricOnBlockXpDropped(level, pos, amount);
     }
 }

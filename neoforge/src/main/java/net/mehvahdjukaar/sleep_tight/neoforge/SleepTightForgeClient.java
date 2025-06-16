@@ -57,7 +57,7 @@ public class SleepTightForgeClient {
 
     public static void onAddGuiLayers(RegisterGuiLayersEvent event) {
         event.registerAbove(VanillaGuiLayers.CROSSHAIR, SleepTight.res("sleep_indicator"),
-                new SleepGuiOverlay<>());
+                new SleepGuiOverlay(Minecraft.getInstance()));
     }
 
 
