@@ -1,7 +1,9 @@
 package net.mehvahdjukaar.sleep_tight.common.blocks;
 
+import com.mojang.serialization.MapCodec;
 import dev.architectury.injectables.annotations.PlatformOnly;
 import net.mehvahdjukaar.moonlight.api.block.IRotatable;
+import net.mehvahdjukaar.moonlight.api.misc.ForgeOverride;
 import net.mehvahdjukaar.moonlight.api.set.BlocksColorAPI;
 import net.mehvahdjukaar.moonlight.api.util.Utils;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
@@ -49,6 +51,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 
 public class HammockBlock extends HorizontalDirectionalBlock implements EntityBlock, IRotatable, IModBed {
+
+    public static final MapCodec<HammockBlock> CODEC = DyeColor.CODEC.fieldOf("color")
+            .xmap(HammockBlock::new, HammockBlock::getColor);
 
     public static final EnumProperty<HammockPart> PART = EnumProperty.create("part", HammockPart.class);
     public static final BooleanProperty OCCUPIED = BlockStateProperties.OCCUPIED;
@@ -114,7 +119,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
-    public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide && player.isCreative()) {
             //prevents drop
             HammockPart part = state.getValue(PART);
@@ -130,7 +135,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
                 }
             }
         }
-        super.playerWillDestroy(level, pos, state, player);
+        return super.playerWillDestroy(level, pos, state, player);
     }
 
     @Nullable
@@ -253,7 +258,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
-    public boolean isPathfindable(BlockState state, BlockGetter level, BlockPos pos, PathComputationType type) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 
@@ -290,7 +295,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
         Vec3 v = Vec3.atCenterOf(pos).subtract(0, 0.125, 0);
         float off = 3 / 32f;
         if (!state.getValue(PART).isOnFence()) {
-            off += 0.5;
+            off += 0.5f;
         }
         v = v.relative(state.getValue(FACING), off);
         return v;
@@ -357,13 +362,13 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
 
 
     //@Override
-    @PlatformOnly(PlatformOnly.FORGE)
+    @ForgeOverride
     public boolean isBed(BlockState state, BlockGetter level, BlockPos pos, @Nullable Entity player) {
         return true;
     }
 
     //@Override
-    @PlatformOnly(PlatformOnly.FORGE)
+    @ForgeOverride
     public void setBedOccupied(BlockState state, Level level, BlockPos pos, LivingEntity sleeper, boolean occupied) {
         level.setBlock(pos, state.setValue(BedBlock.OCCUPIED, occupied), 3);
     }
@@ -371,6 +376,11 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     //@Override Forge override
     public Direction getBedDirection(BlockState state, LevelReader level, BlockPos pos) {
         return state.getValue(HorizontalDirectionalBlock.FACING);
+    }
+
+    @Override
+    protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
+        return CODEC;
     }
 
     private enum Connection {

@@ -165,7 +165,12 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     //entities
 
     public static final Supplier<EntityType<BedEntity>> BED_ENTITY = RegHelper.registerEntityType(res("bed_entity"),
-            BedEntity::new, MobCategory.MISC, 0.5f, 0.5f, 4, Integer.MAX_VALUE);
+            () -> EntityType.Builder.<BedEntity>of(BedEntity::new, MobCategory.MISC)
+                    .ridingOffset(0.0125f)
+                    .sized(0.5f, 0.5f)
+                    .clientTrackingRange(4)
+                    .updateInterval(Integer.MAX_VALUE)
+                    .build("bed_entity"));
 
     public static final Supplier<EntityType<BedbugEntity>> BEDBUG_ENTITY = RegHelper.registerEntityType(res("bedbug"),
             BedbugEntity::new, MobCategory.MONSTER, 11 / 16f, 6 / 16f, 7, 3);

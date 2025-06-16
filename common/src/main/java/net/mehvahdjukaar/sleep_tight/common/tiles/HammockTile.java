@@ -2,6 +2,7 @@ package net.mehvahdjukaar.sleep_tight.common.tiles;
 
 import dev.architectury.injectables.annotations.PlatformOnly;
 import net.mehvahdjukaar.moonlight.api.client.anim.PendulumAnimation;
+import net.mehvahdjukaar.moonlight.api.misc.ForgeOverride;
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
@@ -76,9 +77,9 @@ public class HammockTile extends BlockEntity {
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
-    @PlatformOnly(PlatformOnly.FORGE)
+    @ForgeOverride
     public AABB getRenderBoundingBox() {
-        return new AABB(worldPosition.offset(-3, 0, -3), worldPosition.offset(3, 2, 3));
+        return AABB.encapsulatingFullBlocks(worldPosition.offset(-3, 0, -3), worldPosition.offset(3, 2, 3));
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, HammockTile e) {

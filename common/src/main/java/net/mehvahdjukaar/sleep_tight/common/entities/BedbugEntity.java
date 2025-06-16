@@ -255,7 +255,7 @@ public class BedbugEntity extends Monster {
     public void readAdditionalSaveData(CompoundTag compound) {
         super.readAdditionalSaveData(compound);
         if (compound.contains("targetBed")) {
-            this.targetBed = NbtUtils.readBlockPos(compound.getCompound("targetBed"));
+            this.targetBed = NbtUtils.readBlockPos(compound, "targetBed").orElse(null);
         }
     }
 

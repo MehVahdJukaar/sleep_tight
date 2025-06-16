@@ -24,6 +24,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -32,6 +33,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.ByIdMap;
@@ -233,13 +235,8 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket() {
-        return PlatHelper.getEntitySpawnPacket(this);
-    }
-
-    @Override
-    public double getPassengersRidingOffset() {
-        return 0.0125;
+    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity entity) {
+        return PlatHelper.getEntitySpawnPacket(this, entity);
     }
 
     @Override
@@ -322,7 +319,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     @Override
-    public void writeSpawnData(FriendlyByteBuf buf) {
+    public void writeSpawnData(RegistryFriendlyByteBuf buf) {
         buf.writeInt(this.dir.get2DDataValue());
         buf.writeInt(this.getOffsetMode().ordinal());
         boolean isValid = !this.getPassengers().isEmpty();
@@ -333,7 +330,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     @Override
-    public void readSpawnData(FriendlyByteBuf buf) {
+    public void readSpawnData(RegistryFriendlyByteBuf buf) {
         this.dir = Direction.from2DDataValue(buf.readInt());
         this.setOffsetMode(OffsetMode.values()[buf.readInt()]);
         if (buf.readBoolean()) {

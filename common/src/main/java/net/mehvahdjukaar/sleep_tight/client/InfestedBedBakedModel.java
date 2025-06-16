@@ -30,7 +30,7 @@ import java.util.function.Function;
 public class InfestedBedBakedModel implements CustomBakedModel {
     private final BlockModelShaper blockModelShaper;
 
-    public InfestedBedBakedModel(ModelBaker modelBaker, Function<Material, TextureAtlasSprite> materialTextureAtlasSpriteFunction, ModelState modelState, ResourceLocation resourceLocation) {
+    public InfestedBedBakedModel(ModelBaker modelBaker, Function<Material, TextureAtlasSprite> materialTextureAtlasSpriteFunction, ModelState state) {
         this.blockModelShaper = Minecraft.getInstance().getBlockRenderer().getBlockModelShaper();
     }
 

@@ -143,8 +143,8 @@ public class ModEvents {
             var state = level.getBlockState(pos);
             Block b = state.getBlock();
 
-            if (b instanceof InfestedBedBlock) {
-                return state.use(level, player, hand, hitResult);
+            if (b instanceof InfestedBedBlock) {//todo check
+                //return state.use(level, player, hand, hitResult);
             }
 
             if (isValidBed(state)) {

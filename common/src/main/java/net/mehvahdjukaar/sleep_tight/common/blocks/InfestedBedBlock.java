@@ -3,10 +3,9 @@ package net.mehvahdjukaar.sleep_tight.common.blocks;
 import net.mehvahdjukaar.moonlight.api.block.IWashable;
 import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
-import net.mehvahdjukaar.sleep_tight.common.tiles.InfestedBedTile;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedbugEntity;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundParticleMessage;
-import net.mehvahdjukaar.sleep_tight.common.network.ModNetworking;
+import net.mehvahdjukaar.sleep_tight.common.tiles.InfestedBedTile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
@@ -26,15 +25,18 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.LingeringPotionItem;
 import net.minecraft.world.item.SplashPotionItem;
 import net.minecraft.world.item.alchemy.PotionContents;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 
@@ -114,7 +116,7 @@ public class InfestedBedBlock extends BedBlock implements IWashable {
     }
 
     @Override
-    public boolean tryWash(Level level, BlockPos pos, BlockState state) {
+    public boolean tryWash(Level level, BlockPos pos, BlockState blockState, Vec3 vec3) {
         if (level.getBlockEntity(pos) instanceof InfestedBedTile tile) {
             //TODO:
             //tile.setHeldBlock(Blocks.WHITE_BED);
@@ -124,33 +126,31 @@ public class InfestedBedBlock extends BedBlock implements IWashable {
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
         if (level.getBlockEntity(pos) instanceof InfestedBedTile tile) {
             return tile.getHeldBlock().getBlock().asItem().getDefaultInstance();
         }
-        return getCloneItemStack(level, pos, state);
+        return super.getCloneItemStack(level, pos, state);
     }
 
     public static void convertToBed(Level level, BlockState state, BlockPos blockPos) {
         if (level.getBlockEntity(blockPos) instanceof InfestedBedTile tile) {
             Direction dir = getNeighbourDirection(state.getValue(PART), state.getValue(FACING));
             BlockPos neighbor = blockPos.relative(dir);
-            if (!level.isClientSide) {
-                NetworkHelper.sendToAllClientPlayersInRange(level, blockPos, 32,
+            if (level instanceof ServerLevel sl) {
+                NetworkHelper.sendToAllClientPlayersInRange(sl, blockPos, 32,
                         ClientBoundParticleMessage.bedbugInfest(blockPos, dir));
             }
             Block bed = tile.getBed().getBlock();
-            if (bed != null) {
-                level.setBlock(blockPos, bed.withPropertiesOf(state), 2 | Block.UPDATE_KNOWN_SHAPE);
-                level.setBlock(neighbor, bed.withPropertiesOf(level.getBlockState(neighbor)), 2 | Block.UPDATE_KNOWN_SHAPE);
-                level.playSound(null, blockPos, SoundEvents.SILVERFISH_DEATH, SoundSource.BLOCKS, 1, 1.3f);
-            }
+            level.setBlock(blockPos, bed.withPropertiesOf(state), 2 | Block.UPDATE_KNOWN_SHAPE);
+            level.setBlock(neighbor, bed.withPropertiesOf(level.getBlockState(neighbor)), 2 | Block.UPDATE_KNOWN_SHAPE);
+            level.playSound(null, blockPos, SoundEvents.SILVERFISH_DEATH, SoundSource.BLOCKS, 1, 1.3f);
         }
     }
 
     public static boolean infestBed(Level level, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
-        if(BedbugEntity.isValidBedForInfestation(state)) {
+        if (BedbugEntity.isValidBedForInfestation(state)) {
             level.setBlock(pos, SleepTight.INFESTED_BED.get().withPropertiesOf(state), Block.UPDATE_KNOWN_SHAPE | 2);
             Direction dir = state.getValue(BedBlock.FACING);
             BlockPos neighborPos = pos.relative(state.getValue(BedBlock.PART) == BedPart.FOOT ? dir : dir.getOpposite());

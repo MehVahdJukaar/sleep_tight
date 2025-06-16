@@ -15,6 +15,7 @@ import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.client.AttackIndicatorStatus;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.Gui;
@@ -32,9 +33,11 @@ import net.minecraft.world.phys.BlockHitResult;
 
 import java.util.ArrayList;
 
-public class SleepGuiOverlay<T extends Gui> implements LayeredDraw.Layer {
+public class SleepGuiOverlay implements LayeredDraw.Layer {
 
-    public void render(T gui, GuiGraphics graphics, float partialTicks, int width, int height) {
+
+    @Override
+    public void render(GuiGraphics graphics, DeltaTracker deltaTracker) {
         Minecraft mc = Minecraft.getInstance();
         Options options = mc.options;
 
@@ -69,7 +72,7 @@ public class SleepGuiOverlay<T extends Gui> implements LayeredDraw.Layer {
                     }
 
                     if (cooldown) {
-                        setupOverlayRenderState(gui, true, false, SleepTightClient.ICONS);
+                        setupOverlayRenderState(graphics, true, false, SleepTightClient.ICONS);
                         //gui.setBlitOffset(-90);
 
                         graphics.pose().pushPose();
@@ -79,17 +82,17 @@ public class SleepGuiOverlay<T extends Gui> implements LayeredDraw.Layer {
                                 GlStateManager.DestFactor.ZERO);
 
 
-                        int j = height / 2 - 7 + 16;
-                        int k = width / 2 - 6;
+                        int py = graphics.guiHeight() / 2 - 7 + 16;
+                        int px = graphics.guiWidth() / 2 - 6;
 
                         if (mc.options.attackIndicator().get() == AttackIndicatorStatus.CROSSHAIR &&
                                 player.getAttackStrengthScale(0.0F) != 1) {
-                            j += 8;
+                            py += 8;
                         }
 
                         int l = (int) (f * 11.0F);
-                        graphics.blit(SleepTightClient.ICONS, k, j, 3, 18, 11, 5, 48, 48);
-                        graphics.blit(SleepTightClient.ICONS, k, j, 16 + 3f, 18, l, 5, 48, 48);
+                        graphics.blit(SleepTightClient.ICONS, px, py, 3, 18, 11, 5, 48, 48);
+                        graphics.blit(SleepTightClient.ICONS, px, py, 16 + 3f, 18, l, 5, 48, 48);
 
 
                         graphics.pose().popPose();
@@ -101,7 +104,9 @@ public class SleepGuiOverlay<T extends Gui> implements LayeredDraw.Layer {
         }
     }
 
-    protected abstract void setupOverlayRenderState(T gui, boolean blend, boolean depthTest, ResourceLocation texture);
+    protected void setupOverlayRenderState(GuiGraphics graphics, boolean blend, boolean depthTest, ResourceLocation texture) {
+
+    }
 
 
     //static stuff
@@ -187,5 +192,7 @@ public class SleepGuiOverlay<T extends Gui> implements LayeredDraw.Layer {
     private static boolean isHomeBed = false;
     private static boolean hasDreamerEssence = false;
     private static int nightInHomeBed = 0;
+
+
 }
 

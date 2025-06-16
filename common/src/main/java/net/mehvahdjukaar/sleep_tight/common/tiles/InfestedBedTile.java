@@ -1,6 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.common.tiles;
 
 import net.mehvahdjukaar.moonlight.api.block.MimicBlockTile;
+import net.mehvahdjukaar.moonlight.api.misc.ForgeOverride;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -121,9 +122,9 @@ public class InfestedBedTile extends MimicBlockTile {
         return mobTag;
     }
 
-    //@Override
+    @ForgeOverride
     public AABB getRenderBoundingBox() {
         BlockPos pos = this.getBlockPos();
-        return new AABB(pos.offset(-1, 0, -1), pos.offset(2, 2, 2));
+        return AABB.encapsulatingFullBlocks(pos.offset(-1, 0, -1), pos.offset(2, 2, 2));
     }
 }

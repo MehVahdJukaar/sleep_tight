@@ -67,7 +67,7 @@ public class WakeUpEncounterHelper {
 
     private static void doSpawnMob(ServerLevel level, Mob mob) {
         mob.finalizeSpawn(level, level.getCurrentDifficultyAt(mob.blockPosition()),
-                MobSpawnType.EVENT, null, null);
+                MobSpawnType.EVENT, null);
         level.addFreshEntityWithPassengers(mob);
     }
 
@@ -101,10 +101,10 @@ public class WakeUpEncounterHelper {
             double f = centerPos.distanceToSqr(d, y, e);
 
             //calling instead of isValidSpawnPositionForType as we already checked the spawn data validity
-            SpawnPlacements.Type type = SpawnPlacements.getPlacementType(entityType);
-            if (!NaturalSpawner.isSpawnPositionOk(type, level, pos, entityType) ||
+            SpawnPlacementType type = SpawnPlacements.getPlacementType(entityType);
+            if (!SpawnPlacements.isSpawnPositionOk(entityType, level, pos) ||
                     !SpawnPlacements.checkSpawnRules(entityType, level, spawnType, pos, level.random) ||
-                    !level.noCollision(entityType.getAABB(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5))) {
+                    !level.noCollision(entityType.getSpawnAABB(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5))) {
                 return null;
             }
             Mob mob = NaturalSpawner.getMobForSpawn(level, entityType);
@@ -145,7 +145,7 @@ public class WakeUpEncounterHelper {
 
         var list = CommonConfigs.ENCOUNTER_WHITELIST.get();
         if (!list.isEmpty()) {
-            return list.getRandom(level.random).map(WeightedEntry.Wrapper::getData);
+            return list.getRandom(level.random).map(WeightedEntry.Wrapper::data);
         }
         return WeightedRandomList.create(NaturalSpawner
                 .mobsAt(level, structureManager, chunkGenerator, category, pos, level.getBiome(pos))
