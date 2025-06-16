@@ -3,9 +3,9 @@
   "group": "hammock",
   "ingredients": [
     {"item": "sleep_tight:hammock_white"},
-    {"item": "minecraft:pink_dye"}
+    {"tag": "c:dyes/red"}
   ],
   "result": {
-    "item": "sleep_tight:hammock_pink"
+    "id": "sleep_tight:hammock_red"
   }
 }

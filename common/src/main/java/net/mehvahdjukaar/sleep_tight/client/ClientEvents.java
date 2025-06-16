@@ -101,7 +101,7 @@ public class ClientEvents {
             var q = new Quaternionf(camera.rotation());
             q.conjugate();
             matrixStack.mulPose(q);
-            float roll = (float) (tile.getRoll(partialTicks) * intensity);
+            float roll = -(float) (tile.getRoll(partialTicks) * intensity);
 
             float o = 6 / 16f - tile.getPivotOffset();
             matrixStack.translate(0, -o, 0);

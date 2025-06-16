@@ -397,7 +397,7 @@ public class ModEvents {
 
     public static boolean isDayTime(Level level) {
         long dayTime = level.getDayTime() % 24000L;
-        if (dayTime > 500L && dayTime < 11500L) {
+        if (dayTime > 100L && dayTime < 11900L) {
             return true;
         }
         return false;
