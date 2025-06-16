@@ -1,6 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.integration.fabric;
 
-import net.mehvahdjukaar.moonlight.api.client.gui.LinkButton;
+import net.mehvahdjukaar.moonlight.api.client.gui.MediaButton;
 import net.mehvahdjukaar.moonlight.api.platform.configs.fabric.FabricConfigListScreen;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
@@ -15,7 +15,8 @@ public class ModConfigSelectScreen extends FabricConfigListScreen {
 
     public ModConfigSelectScreen(Screen parent) {
         super(SleepTight.MOD_ID, SleepTight.NIGHT_BAG.get().asItem().getDefaultInstance(),
-                Component.literal("§9Sleep Tight Configs"), new ResourceLocation("textures/block/blue_wool.png"),
+                Component.literal("§9Sleep Tight Configs"),
+                ResourceLocation.withDefaultNamespace("textures/block/blue_wool.png"),
                 parent, ClientConfigs.SPEC, CommonConfigs.SPEC);
     }
 
@@ -28,30 +29,30 @@ public class ModConfigSelectScreen extends FabricConfigListScreen {
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_BACK, (button) -> this.minecraft.setScreen(this.parent))
                 .bounds(centerX - 45, y, 90, 20).build());
 
-        var patreon = LinkButton.create(this, centerX - 45 - 22, y, 3, 1,
-                "https://www.patreon.com/user?u=53696377", "Support me on Patreon :D");
+        var patreon = MediaButton.patreon(this, centerX - 45 - 22, y,
+                "https://www.patreon.com/user?u=53696377");
 
-        var kofi = LinkButton.create(this, centerX - 45 - 22 * 2, y, 2, 2,
-                "https://ko-fi.com/mehvahdjukaar", "Donate a Coffee");
+        var kofi = MediaButton.koFi(this, centerX - 45 - 22 * 2, y,
+                "https://ko-fi.com/mehvahdjukaar");
 
-        var curseforge = LinkButton.create(this, centerX - 45 - 22 * 3, y, 1, 2,
-                "https://www.curseforge.com/minecraft/mc-mods/speep-tight", "CurseForge Page");
+        var curseforge = MediaButton.curseForge(this, centerX - 45 - 22 * 3, y,
+                "https://www.curseforge.com/minecraft/mc-mods/speep-tight");
 
-        var github = LinkButton.create(this, centerX - 45 - 22 * 4, y, 0, 2,
-                "https://github.com/MehVahdJukaar/Supplementaries/wiki", "Mod Wiki");
+        var github = MediaButton.github(this, centerX - 45 - 22 * 4, y,
+                "https://github.com/MehVahdJukaar/sleep_tight");
 
 
-        var discord = LinkButton.create(this, centerX + 45 + 2, y, 1, 1,
-                "https://discord.com/invite/qdKRTDf8Cv", "Mod Discord");
+        var discord = MediaButton.discord(this, centerX + 45 + 2, y,
+                "https://discord.com/invite/qdKRTDf8Cv");
 
-        var youtube = LinkButton.create(this, centerX + 45 + 2 + 22, y, 0, 1,
-                "https://www.youtube.com/watch?v=LSPNAtAEn28&t=1s", "Youtube Channel");
+        var youtube = MediaButton.youtube(this, centerX + 45 + 2 + 22, y,
+                "https://www.youtube.com/watch?v=LSPNAtAEn28&t=1s");
 
-        var twitter = LinkButton.create(this, centerX + 45 + 2 + 22 * 2, y, 2, 1,
-                "https://twitter.com/Supplementariez?s=09", "Twitter Page");
+        var twitter = MediaButton.twitter(this, centerX + 45 + 2 + 22 * 2, y,
+                "https://twitter.com/Supplementariez?s=09");
 
-        var akliz = LinkButton.create(this, centerX + 45 + 2 + 22 * 3, y, 3, 2,
-                "https://www.akliz.net/supplementaries", "Need a server? Get one with Akliz");
+        var akliz = MediaButton.akliz(this, centerX + 45 + 2 + 22 * 3, y,
+                "https://www.akliz.net/supplementaries");
 
 
         this.addRenderableWidget(kofi);

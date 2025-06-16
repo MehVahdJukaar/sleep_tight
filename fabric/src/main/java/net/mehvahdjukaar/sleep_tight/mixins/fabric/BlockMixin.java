@@ -25,7 +25,7 @@ public abstract class BlockMixin {
                     shift = At.Shift.BEFORE))
     private static void setXpHack(BlockState state, Level level, BlockPos pos, BlockEntity blockEntity, Entity entity, ItemStack tool, CallbackInfo ci) {
         if (entity instanceof LivingEntity le) {
-            var eff = le.getEffect(SleepTight.INVIGORATED.get());
+            var eff = le.getEffect(SleepTight.INVIGORATED.getHolder());
             if (eff != null) InvigoratedEffect.BLOCK_XP_LEVEL.set(eff.getAmplifier());
         }
     }
