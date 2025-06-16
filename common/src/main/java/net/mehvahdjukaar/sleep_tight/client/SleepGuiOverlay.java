@@ -33,8 +33,12 @@ import net.minecraft.world.phys.BlockHitResult;
 
 import java.util.ArrayList;
 
-public class SleepGuiOverlay implements LayeredDraw.Layer {
+public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
 
+
+    public SleepGuiOverlay(Minecraft minecraft) {
+        super(minecraft);
+    }
 
     @Override
     public void render(GuiGraphics graphics, DeltaTracker deltaTracker) {
@@ -42,6 +46,8 @@ public class SleepGuiOverlay implements LayeredDraw.Layer {
         Options options = mc.options;
 
         if (options.hideGui) return;
+        Player player = mc.player;
+        if (player == null || mc.level == null) return;
         var hit = mc.hitResult;
 
         boolean cooldown = ClientConfigs.INSOMNIA_COOLDOWN.get();
@@ -51,9 +57,7 @@ public class SleepGuiOverlay implements LayeredDraw.Layer {
 
 
         if (options.getCameraType().isFirstPerson() && (mc.gameMode.getPlayerMode() != GameType.SPECTATOR ||
-                gui.canRenderCrosshairForSpectator(hit))) {
-
-            Player player = mc.player;
+                this.canRenderCrosshairForSpectator(hit))) {
 
             boolean laying = player.getVehicle() instanceof BedEntity;
             if (laying || (cooldown && (
@@ -105,9 +109,7 @@ public class SleepGuiOverlay implements LayeredDraw.Layer {
     }
 
     protected void setupOverlayRenderState(GuiGraphics graphics, boolean blend, boolean depthTest, ResourceLocation texture) {
-
     }
-
 
     //static stuff
 

@@ -77,42 +77,6 @@ public class DreamParticle extends TextureSheetParticle {
         }
     }
 
-    @Override
-    public void render(VertexConsumer buffer, Camera renderInfo, float partialTicks) {
-        Vec3 pos = renderInfo.getPosition();
-
-        float x = (float) (Mth.lerp(partialTicks, this.xo, this.x) - pos.x());
-        float y = (float) (Mth.lerp(partialTicks, this.yo, this.y) - pos.y());
-        float z = (float) (Mth.lerp(partialTicks, this.zo, this.z) - pos.z());
-        Quaternionf quaternion;
-        if (this.roll == 0.0F) {
-            quaternion = renderInfo.rotation();
-        } else {
-            quaternion = new Quaternionf(renderInfo.rotation());
-            float i = Mth.lerp(partialTicks, this.oRoll, this.roll);
-            quaternion.mul(Axis.ZP.rotation(i));
-        }
-
-        Vector3f[] vector3fs = new Vector3f[]{new Vector3f(-1.0F, -1.0F, 0.0F), new Vector3f(-1.0F, 1.0F, 0.0F), new Vector3f(1.0F, 1.0F, 0.0F), new Vector3f(1.0F, -1.0F, 0.0F)};
-        float size = this.getQuadSize(partialTicks);
-
-        for (int k = 0; k < 4; ++k) {
-            Vector3f vector3f2 = vector3fs[k];
-            vector3f2.rotate(quaternion);
-            vector3f2.mul(size);
-            vector3f2.add(x, y, z);
-        }
-
-        float u0 = this.getU0();
-        float u1 = this.getU1();
-        float v0 = this.getV0();
-        float v1 = this.getV1();
-        int light = this.getLightColor(partialTicks);
-        buffer.addVertex(vector3fs[0].x(), vector3fs[0].y(), vector3fs[0].z()).setUv(u1, v1).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
-        buffer.addVertex(vector3fs[1].x(), vector3fs[1].y(), vector3fs[1].z()).setUv(u1, v0).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
-        buffer.addVertex(vector3fs[2].x(), vector3fs[2].y(), vector3fs[2].z()).setUv(u0, v0).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
-        buffer.addVertex(vector3fs[3].x(), vector3fs[3].y(), vector3fs[3].z()).setUv(u0, v1).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
-    }
 
     @Override
     protected int getLightColor(float partialTick) {

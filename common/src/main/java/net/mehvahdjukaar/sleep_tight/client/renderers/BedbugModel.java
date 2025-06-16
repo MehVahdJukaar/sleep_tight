@@ -80,10 +80,10 @@ public class BedbugModel<T extends BedbugEntity> extends HierarchicalModel<T> {
         float s1 = Math.abs(Mth.sin(limbSwing * speed + Mth.PI * 4 / 3f) * ampl2) * limbSwingAmount;
         float s2 = Math.abs(Mth.sin(limbSwing * speed + Mth.PI * 2 / 3f) * ampl2) * limbSwingAmount;
 
-        float b = entity.getBurrowing(Minecraft.getInstance().getDeltaFrameTime());
+        float burrowing = entity.getBurrowing(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true));
 
-        if (b != 0) {
-            limbSwing = b * 1.6f;
+        if (burrowing != 0) {
+            limbSwing = burrowing * 1.6f;
             float k = 0.25f;
 
             s0 += (-1 + Mth.cos(limbSwing)) * k;

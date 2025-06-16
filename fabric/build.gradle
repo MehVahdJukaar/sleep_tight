@@ -29,6 +29,8 @@ dependencies {
     }
     //  modCompileOnly("net.mehvahdjukaar:heartstone-fabric:1.19.2-1.1.2")
     modImplementation ("net.mehvahdjukaar:moonlight-fabric:${project.moonlight_version}")
+    modImplementation ("curse.maven:handcrafted-538214:6330032")
+    modImplementation ("curse.maven:resourceful-lib-570073:5973189")
 }
 
 

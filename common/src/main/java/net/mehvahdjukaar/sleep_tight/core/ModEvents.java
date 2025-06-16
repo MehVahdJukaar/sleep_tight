@@ -274,7 +274,9 @@ public class ModEvents {
         c.syncToClient(player);
         player.displayClientMessage(Component.translatable("message.sleep_tight.nightmare"), true);
         player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 20 * 3, 0, false, false, false,
-                null, Optional.of(new MobEffectInstance.FactorData(20, 10, 1, 1, 20 * 3, 1, true))));
+                null
+               // , Optional.of(new MobEffectInstance.FactorData(20, 10, 1, 1, 20 * 3, 1, true))
+        ));
         NetworkHelper.sendToClientPlayer(player, new ClientBoundNightmarePacket());
     }
 

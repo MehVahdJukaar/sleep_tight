@@ -264,8 +264,9 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
 
     //bed logic
 
+
     @Override
-    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
         //called on both sides
         pos = getMasterPos(state, pos);
         state = level.getBlockState(pos);

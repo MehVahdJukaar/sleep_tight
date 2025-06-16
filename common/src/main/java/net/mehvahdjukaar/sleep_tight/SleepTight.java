@@ -34,6 +34,7 @@ import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacementType;
+import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -121,7 +122,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     }
 
     private static void registerSpawnPlacements(RegHelper.SpawnPlacementEvent event) {
-        event.register(BEDBUG_ENTITY.get(), SpawnPlacementType.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BedbugEntity::checkMonsterSpawnRules);
+        event.register(BEDBUG_ENTITY.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BedbugEntity::checkMonsterSpawnRules);
     }
 
     private static void registerEntityAttributes(RegHelper.AttributeEvent event) {

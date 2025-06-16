@@ -27,14 +27,18 @@ public class SleepTightFabricClient {
             }
         });
 
-        var overlay = new SleepGuiOverlayImpl();
+        var overlay = new SleepGuiOverlayImpl(Minecraft.getInstance());
         HudRenderCallback.EVENT.register(overlay::render);
     }
 
-    private static class SleepGuiOverlayImpl extends SleepGuiOverlay<Gui> {
+    private static class SleepGuiOverlayImpl extends SleepGuiOverlay {
+
+        public SleepGuiOverlayImpl(Minecraft minecraft) {
+            super(minecraft);
+        }
 
         @Override
-        protected void setupOverlayRenderState(Gui gui, boolean blend, boolean depthTest, ResourceLocation texture) {
+        protected void setupOverlayRenderState(GuiGraphics graphics, boolean blend, boolean depthTest, ResourceLocation texture) {
             if (blend) {
                 RenderSystem.enableBlend();
                 RenderSystem.defaultBlendFunc();
@@ -57,11 +61,6 @@ public class SleepTightFabricClient {
 
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        }
-
-        public void render(GuiGraphics graphics, float partialTicks) {
-            Minecraft mc = Minecraft.getInstance();
-            render(mc.gui, graphics, partialTicks, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
         }
     }
 }
