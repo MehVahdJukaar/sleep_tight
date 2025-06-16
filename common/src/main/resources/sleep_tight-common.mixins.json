@@ -17,7 +17,7 @@
     "DoorBlockMixin",
     "LivingEntityMixin",
     "PhantomMixin",
-    "PlayerListMixin",
+    "fabric.PlayerListMixin",
     "PlayerMixin",
     "ServerLevelMixin",
     "ServerPlayerMixin",

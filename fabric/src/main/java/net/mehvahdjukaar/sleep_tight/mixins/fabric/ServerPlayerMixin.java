@@ -14,7 +14,7 @@ public class ServerPlayerMixin {
 
 
     @Inject(method = "tick", at = @At("HEAD"))
-    public void tick(CallbackInfo ci) {
+    public void sleep_tight$tickData(CallbackInfo ci) {
 
         PlayerSleepData data = SleepTightPlatformStuff.getPlayerSleepData((Player) (Object) this);
         if (data != null) {

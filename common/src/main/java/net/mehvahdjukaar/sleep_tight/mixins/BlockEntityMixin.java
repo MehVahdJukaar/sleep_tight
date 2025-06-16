@@ -2,6 +2,7 @@ package net.mehvahdjukaar.sleep_tight.mixins;
 
 import net.mehvahdjukaar.sleep_tight.common.tiles.IExtraBedDataProvider;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -12,11 +13,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 
 //better compat if here. or something. idk actually
+//yes we could have used data attachments on forge
 @Mixin(value = BlockEntity.class, priority = 1100)
 public abstract class BlockEntityMixin {
 
     @Inject(method = "saveAdditional", at = @At("TAIL"))
-    protected void saveAdditional(CompoundTag tag, CallbackInfo ci) {
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
         if (this instanceof IExtraBedDataProvider provider) {
             var data = provider.st_getBedData();
             var nbt = BedData.CODEC.encodeStart(NbtOps.INSTANCE, data);
@@ -26,8 +28,8 @@ public abstract class BlockEntityMixin {
         }
     }
 
-    @Inject(method = "load", at = @At("TAIL"))
-    public void load(CompoundTag tag, CallbackInfo ci) {
+    @Inject(method = "loadAdditional", at = @At("TAIL"))
+    public void load(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
         if (this instanceof IExtraBedDataProvider provider) {
             var nbt = tag.get("sleep_tight_data");
             if (nbt!= null) {

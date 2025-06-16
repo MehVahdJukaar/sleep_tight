@@ -11,6 +11,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.portal.DimensionTransition;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -20,7 +21,6 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.*;
 import net.neoforged.neoforge.event.level.BlockDropsEvent;
-import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.SleepFinishedTimeEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
@@ -48,6 +48,16 @@ public class SleepTightForge {
         event.enqueueWork(SleepTight::commonSetup);
     }
 
+    @SubscribeEvent
+    public void onPlayerRespawnPositionCheck(PlayerRespawnPositionEvent event) {
+        DimensionTransition transition = event.getDimensionTransition();
+        if (event.getEntity() instanceof ServerPlayer sp && ModEvents.shouldCancelRespawnHere(event.getEntity(), transition)) {
+            //respawn out of bed
+            event.setDimensionTransition(
+                    DimensionTransition.missingRespawnBlock(sp.server.overworld(),
+                            sp, transition.postDimensionTransition()));
+        }
+    }
 
     @SubscribeEvent
     public void onSleepConditionCheck(CanPlayerSleepEvent event) {
@@ -137,7 +147,7 @@ public class SleepTightForge {
         var oldData = SleepTightPlatformStuff.getPlayerSleepData(old);
         var newData = SleepTightPlatformStuff.getPlayerSleepData(event.getEntity());
         newData.copyFrom(oldData);
-      //  old.invalidateCaps();
+        //  old.invalidateCaps();
         //  }
     }
 

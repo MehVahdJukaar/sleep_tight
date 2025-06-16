@@ -30,12 +30,12 @@ public abstract class PlayerMixin extends LivingEntity implements ISleepTightPla
     }
 
     @Inject(method = "addAdditionalSaveData", at = @At("HEAD"))
-    public void saveAdditional(CompoundTag compound, CallbackInfo ci) {
+    public void st$saveAdditional(CompoundTag compound, CallbackInfo ci) {
         compound.put("sleep_tight_data", sleep_tight$sleepData.serializeNBT(registryAccess()));
     }
 
     @Inject(method = "readAdditionalSaveData", at = @At("HEAD"))
-    public void readAdditional(CompoundTag compound, CallbackInfo ci) {
+    public void st$readAdditional(CompoundTag compound, CallbackInfo ci) {
         sleep_tight$sleepData.deserializeNBT(registryAccess(), compound.getCompound("sleep_tight_data"));
     }
 

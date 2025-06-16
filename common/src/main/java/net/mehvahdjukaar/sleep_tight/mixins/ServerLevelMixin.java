@@ -35,7 +35,7 @@ public abstract class ServerLevelMixin extends Level {
     @Inject(method = "announceSleepStatus",
             cancellable = true,
             at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/network/chat/Component;translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;"))
-    private void announceSleepStatus(CallbackInfo ci) {
+    private void sleep_tight$announceSleepStatus(CallbackInfo ci) {
         if (ModEvents.isDayTime(this)) {
             Component c = Component.translatable("message.sleep_tight.skipping_day");
             this.players.forEach(p -> p.displayClientMessage(c, true));

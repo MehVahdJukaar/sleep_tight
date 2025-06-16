@@ -22,9 +22,6 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 @Mixin(ClientPacketListener.class)
 public abstract class ClientPacketListenerMixin {
 
-    @Shadow
-    @Final
-    private Minecraft minecraft;
 
     @WrapOperation(method = "handleSetEntityPassengersPacket", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/network/chat/Component;translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;"))
@@ -33,8 +30,9 @@ public abstract class ClientPacketListenerMixin {
         //hack since beds can only have one passenger, so we can cancel
         if (vehicle instanceof BedEntity bed) {
             if (!CommonConfigs.SLEEP_IMMEDIATELY.get()) {
-                return bed.getRidingMessage(this.minecraft.options.keyJump.getTranslatedKeyMessage(),
-                        this.minecraft.options.keyShift.getTranslatedKeyMessage());
+                Minecraft mc = Minecraft.getInstance();
+                return bed.getRidingMessage(mc.options.keyJump.getTranslatedKeyMessage(),
+                        mc.options.keyShift.getTranslatedKeyMessage());
             }//technically not needed on forge since... idk events i think
         }
         return translatable.call(message, arg);

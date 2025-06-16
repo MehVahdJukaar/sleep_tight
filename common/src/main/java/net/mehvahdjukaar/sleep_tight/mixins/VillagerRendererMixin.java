@@ -15,7 +15,7 @@ public class VillagerRendererMixin {
 
     @Inject(method = "getTextureLocation(Lnet/minecraft/world/entity/npc/Villager;)Lnet/minecraft/resources/ResourceLocation;",
             at = @At("HEAD"), cancellable = true)
-    public void getTextureLocation(Villager entity, CallbackInfoReturnable<ResourceLocation> cir) {
+    public void sleep_tight$addClosedEyes(Villager entity, CallbackInfoReturnable<ResourceLocation> cir) {
         if (entity.isSleeping() && ClientConfigs.VILLAGER_SLEEP.get())
             cir.setReturnValue(SleepTightClient.SLEEPING_VILLAGER_TEXTURE);
     }

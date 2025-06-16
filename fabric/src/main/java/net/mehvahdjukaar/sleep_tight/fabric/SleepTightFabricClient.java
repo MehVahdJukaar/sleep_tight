@@ -27,8 +27,14 @@ public class SleepTightFabricClient {
             }
         });
 
-        var overlay = new SleepGuiOverlayImpl(Minecraft.getInstance());
-        HudRenderCallback.EVENT.register(overlay::render);
+        final SleepGuiOverlayImpl[] overlay = {null};
+        HudRenderCallback.EVENT.register((guiGraphics, deltaTracker) ->
+        {
+            if(overlay[0] == null){
+                overlay[0] = new SleepGuiOverlayImpl(Minecraft.getInstance());
+            }
+            overlay[0].render(guiGraphics, deltaTracker);
+        });
     }
 
     private static class SleepGuiOverlayImpl extends SleepGuiOverlay {

@@ -23,7 +23,7 @@ public abstract class BlockMixin {
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/world/level/block/state/BlockState;spawnAfterBreak(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/item/ItemStack;Z)V",
                     shift = At.Shift.BEFORE))
-    private static void setXpHack(BlockState state, Level level, BlockPos pos, BlockEntity blockEntity, Entity entity, ItemStack tool, CallbackInfo ci) {
+    private static void st$setXpHack(BlockState state, Level level, BlockPos pos, BlockEntity blockEntity, Entity entity, ItemStack tool, CallbackInfo ci) {
         if (entity instanceof LivingEntity le) {
             var eff = le.getEffect(SleepTight.INVIGORATED.getHolder());
             if (eff != null) InvigoratedEffect.BLOCK_XP_LEVEL.set(eff.getAmplifier());
@@ -34,14 +34,14 @@ public abstract class BlockMixin {
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/world/level/block/state/BlockState;spawnAfterBreak(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/item/ItemStack;Z)V",
                     shift = At.Shift.AFTER))
-    private static void unsetXpHack(BlockState state, Level level, BlockPos pos, BlockEntity blockEntity, Entity entity, ItemStack tool, CallbackInfo ci) {
+    private static void st$unsetXpHack(BlockState state, Level level, BlockPos pos, BlockEntity blockEntity, Entity entity, ItemStack tool, CallbackInfo ci) {
         InvigoratedEffect.BLOCK_XP_LEVEL.remove();
     }
     //TODO: figure out another way to do this
 
     @Inject(method = "popExperience", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ExperienceOrb;award(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/Vec3;I)V",
     shift = At.Shift.AFTER))
-    protected void addInvigoratedXP(ServerLevel level, BlockPos pos, int amount, CallbackInfo ci) {
+    protected void st$addInvigoratedXP(ServerLevel level, BlockPos pos, int amount, CallbackInfo ci) {
         InvigoratedEffect.onBlcokXpDropped(level, pos, amount);
     }
 }

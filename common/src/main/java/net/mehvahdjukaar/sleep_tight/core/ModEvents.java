@@ -36,6 +36,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
+import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -172,7 +173,7 @@ public class ModEvents {
                     boolean occupied = state.getValue(BedBlock.OCCUPIED);
                     if (occupied) {
                         var list = level.getEntitiesOfClass(BedEntity.class, new AABB(pos));
-                        if (list.size() > 0) {
+                        if (!list.isEmpty()) {
                             BedEntity bedEntity = list.get(0);
                             if (!bedEntity.isDoubleBed()) return InteractionResult.PASS;
 
@@ -188,7 +189,7 @@ public class ModEvents {
                         } else {
                             BlockPos doublePos = BedEntity.getInverseDoubleBedPos(pos, state);
                             list = level.getEntitiesOfClass(BedEntity.class, new AABB(doublePos));
-                            if (list.size() > 0) {
+                            if (!list.isEmpty()) {
                                 BedEntity bedEntity = list.get(0);
                                 if (!bedEntity.isDoubleBed()) return InteractionResult.PASS;
 
@@ -208,6 +209,9 @@ public class ModEvents {
                                 checkExtraSleepConditions(player, pos);
                         if (!extraConditions) return InteractionResult.sidedSuccess(level.isClientSide);
 
+                        if(player.isSecondaryUseActive()){
+                            return InteractionResult.PASS;//sleep immediately with vanilla logic or perform other interactions
+                        }
                         BedEntity.layDown(state, pos, player);
                         //always success to prevent use action
                         return InteractionResult.SUCCESS;
@@ -413,15 +417,13 @@ public class ModEvents {
         }
     }
 
-    @SuppressWarnings("all")
-    @Nullable
-    public static Optional<Vec3> findSpawnPosition(ServerPlayer player, BlockPos spawnBlockPos, boolean isRespawnForced) {
-        if (!isRespawnForced && CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
-            BedData bedData = BedData.get(player.level(), spawnBlockPos);
+    public static boolean shouldCancelRespawnHere(Player player, DimensionTransition transition) {
+        if ( CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
+            BedData bedData = BedData.get(player.level(), BlockPos.containing(transition.pos()));
             if (bedData != null && !SleepTightPlatformStuff.getPlayerSleepData(player).isHomeBed(bedData)) {
-                return Optional.empty();
+                return true;
             }
         }
-        return null;
+        return false;
     }
 }

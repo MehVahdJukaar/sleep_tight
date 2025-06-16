@@ -286,6 +286,12 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
         } else {
             if (!player.isSecondaryUseActive()) {
                 BedEntity.layDown(state, pos, player);
+            }else{
+                player.startSleepInBed(pos).ifLeft((bedSleepingProblem) -> {
+                    if (bedSleepingProblem.getMessage() != null) {
+                        player.displayClientMessage(bedSleepingProblem.getMessage(), true);
+                    }
+                });
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
