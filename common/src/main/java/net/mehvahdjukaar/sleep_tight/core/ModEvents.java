@@ -171,7 +171,7 @@ public class ModEvents {
                     boolean occupied = state.getValue(BedBlock.OCCUPIED);
                     if (occupied) {
                         var list = level.getEntitiesOfClass(BedEntity.class, new AABB(pos));
-                        if (list.size() > 0) {
+                        if (!list.isEmpty()) {
                             BedEntity bedEntity = list.get(0);
                             if (!bedEntity.isDoubleBed()) return InteractionResult.PASS;
 
@@ -187,7 +187,7 @@ public class ModEvents {
                         } else {
                             BlockPos doublePos = BedEntity.getInverseDoubleBedPos(pos, state);
                             list = level.getEntitiesOfClass(BedEntity.class, new AABB(doublePos));
-                            if (list.size() > 0) {
+                            if (!list.isEmpty()) {
                                 BedEntity bedEntity = list.get(0);
                                 if (!bedEntity.isDoubleBed()) return InteractionResult.PASS;
 
@@ -207,6 +207,9 @@ public class ModEvents {
                                 checkExtraSleepConditions(player, pos);
                         if (!extraConditions) return InteractionResult.sidedSuccess(level.isClientSide);
 
+                        if(player.isSecondaryUseActive()){
+                            return InteractionResult.PASS;
+                        }
                         BedEntity.layDown(state, pos, player);
                         //always success to prevent use action
                         return InteractionResult.SUCCESS;
@@ -390,7 +393,7 @@ public class ModEvents {
 
     public static boolean isDayTime(Level level) {
         long dayTime = level.getDayTime() % 24000L;
-        if (dayTime > 500L && dayTime < 11500L) {
+        if (dayTime > 100L && dayTime < 11900L) {
             return true;
         }
         return false;

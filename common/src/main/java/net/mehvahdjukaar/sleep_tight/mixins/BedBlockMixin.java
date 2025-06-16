@@ -37,7 +37,7 @@ public abstract class BedBlockMixin extends Block implements ISleepTightBed {
     }
 
     @WrapOperation(method = "use", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/BedBlock;canSetSpawn(Lnet/minecraft/world/level/Level;)Z"))
-    private boolean sleep_tight$èèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèèallowsSleepingInDimension(Level level, Operation<Boolean> original) {
+    private boolean sleep_tight$allowsSleepingInDimension(Level level, Operation<Boolean> original) {
         if (!CommonConfigs.EXPLOSION_BEHAVIOR.get().canExplode()) {
             return true;
         }
