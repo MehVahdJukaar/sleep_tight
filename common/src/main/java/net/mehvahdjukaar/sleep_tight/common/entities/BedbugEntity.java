@@ -1,5 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.common.entities;
 
+import net.mehvahdjukaar.moonlight.api.block.MimicBlock;
 import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.blocks.InfestedBedBlock;
@@ -343,7 +344,7 @@ public class BedbugEntity extends Monster {
 
     public static boolean isValidBedForInfestation(BlockState state) {
         Block block = state.getBlock();
-        return block instanceof BedBlock && block != SleepTight.INFESTED_BED && !state.getValue(BedBlock.OCCUPIED);
+        return block instanceof BedBlock && !state.getValue(BedBlock.OCCUPIED);
     }
 
     static class InfestBedGoal extends MoveToBlockGoal {

@@ -5,8 +5,12 @@ import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BedPart;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -17,13 +21,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = BlockEntity.class, priority = 1100)
 public abstract class BlockEntityMixin {
 
+    @Shadow public abstract BlockState getBlockState();
+
     @Inject(method = "saveAdditional", at = @At("TAIL"))
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
         if (this instanceof IExtraBedDataProvider provider) {
-            var data = provider.st_getBedData();
-            var nbt = BedData.CODEC.encodeStart(NbtOps.INSTANCE, data);
-            if (nbt.result().isPresent()) {
-                tag.put("sleep_tight_data", nbt.result().get());
+            BedData data = provider.st_getBedData();
+            if (data != null) {
+                var nbt = BedData.CODEC.encodeStart(NbtOps.INSTANCE, data);
+                if (nbt.result().isPresent()) {
+                    tag.put("sleep_tight_data", nbt.result().get());
+                }
             }
         }
     }
@@ -32,7 +40,7 @@ public abstract class BlockEntityMixin {
     public void load(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
         if (this instanceof IExtraBedDataProvider provider) {
             var nbt = tag.get("sleep_tight_data");
-            if (nbt!= null) {
+            if (nbt != null) {
                 var data = BedData.CODEC.parse(NbtOps.INSTANCE, nbt);
                 if (data.result().isPresent()) {
                     provider.st_setBedData(data.result().get());

@@ -44,9 +44,10 @@ public class PackProvider extends DynClientResourcesGenerator {
 
             var o = manager.getResource(ResType.BLOCKSTATES.getPath(res));
 
-            if (o.isPresent() && !Objects.equals(o.get().sourcePackId(), "Default")) return;
+            if (o.isPresent() && !Objects.equals(o.get().sourcePackId(), "vanilla")) return;
 
 
+            //this replaces bed models to set their particles
             if (!PlatHelper.isModLoaded("enhancedblockentities") &&
                     !PlatHelper.isModLoaded("betterbeds")) {
 

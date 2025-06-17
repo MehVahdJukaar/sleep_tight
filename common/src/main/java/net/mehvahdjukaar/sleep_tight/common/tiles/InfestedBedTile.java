@@ -6,12 +6,10 @@ import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.BedBlock;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -28,14 +26,17 @@ public class InfestedBedTile extends MimicBlockTile {
 
     public InfestedBedTile(BlockPos blockPos, BlockState blockState) {
         super(SleepTight.INFESTED_BED_TILE.get(), blockPos, blockState);
-        mimic = Blocks.RED_BED.defaultBlockState();
+    }
+
+    public void setBed(BlockState bed, @Nullable BlockEntity be){
+        this.setHeldBlock(bed);
+        if (be != null) {
+            this.innerTile = be;
+        }
     }
 
     @Nullable
     public BlockEntity getInner() {
-        if (innerTile == null && mimic.getBlock() instanceof EntityBlock eb && getBlockState().getValue(BedBlock.PART) == BedPart.HEAD) {
-            innerTile = eb.newBlockEntity(worldPosition, mimic);
-        }
         return innerTile;
     }
 
@@ -50,6 +51,10 @@ public class InfestedBedTile extends MimicBlockTile {
     @Override
     public void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
+        if (innerTile != null) {
+            CompoundTag innerTag = innerTile.saveWithFullMetadata();
+            tag.put("InnerTile", innerTag);
+        }
         if (mobTag != null) {
             tag.put("bedbug", mobTag);
         }
@@ -59,6 +64,9 @@ public class InfestedBedTile extends MimicBlockTile {
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
+        if (tag.contains("InnerTile")) {
+            innerTile = BlockEntity.loadStatic(this.worldPosition, this.mimic, tag.getCompound("InnerTile"));
+        }
         if (tag.contains("bedbug")) {
             this.mobTag = tag.getCompound("bedbug");
         }
