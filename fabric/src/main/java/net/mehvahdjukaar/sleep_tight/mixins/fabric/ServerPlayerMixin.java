@@ -1,6 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.mixins.fabric;
 
-import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
+import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -16,7 +16,7 @@ public class ServerPlayerMixin {
     @Inject(method = "tick", at = @At("HEAD"))
     public void tick(CallbackInfo ci) {
 
-        PlayerSleepData data = SleepTightPlatformStuff.getPlayerSleepData((Player) (Object) this);
+        PlayerSleepData data = STPlatStuff.getPlayerSleepData((Player) (Object) this);
         if (data != null) {
             data.tick((ServerPlayer) (Object) this);
         }

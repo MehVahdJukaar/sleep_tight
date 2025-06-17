@@ -20,6 +20,8 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ThrownPotion;
@@ -50,7 +52,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
+import static net.minecraft.world.level.block.BedBlock.PART;
 
+
+@Deprecated(forRemoval = true)
 public class InfestedBedBlock extends MimicBlock implements IWashable, EntityBlock, IRotatable, SimpleWaterloggedBlock {
 
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
@@ -172,7 +177,7 @@ public class InfestedBedBlock extends MimicBlock implements IWashable, EntityBlo
         super.spawnAfterBreak(state, level, pos, stack, bl);
         if (level.getBlockEntity(pos) instanceof InfestedBedTile tile) {
             BlockState bedState = tile.getHeldBlock();
-            if (bedState.getValue(BedBlock.PART) == BedPart.FOOT && level.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS)) {
+            if (bedState.getValue(PART) == BedPart.FOOT && level.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS)) {
                 BedbugEntity entity = SleepTight.BEDBUG_ENTITY.get().create(level);
                 entity.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
                 level.addFreshEntity(entity);
@@ -197,18 +202,61 @@ public class InfestedBedBlock extends MimicBlock implements IWashable, EntityBlo
     }
 
     @Override
-    public BlockState updateShape(BlockState stateIn, Direction facing, BlockState facingState, LevelAccessor worldIn, BlockPos currentPos, BlockPos facingPos) {
-        if (stateIn.getValue(WATERLOGGED)) {
-            worldIn.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(worldIn));
-        }
-
-        return stateIn;
-    }
-
-    @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
         return this.defaultBlockState().setValue(WATERLOGGED, fluidstate.is(FluidTags.WATER) && fluidstate.getAmount() == 8);
+    }
+
+    public void fallOn(Level level, BlockState blockState, BlockPos blockPos, Entity entity, float f) {
+        super.fallOn(level, blockState, blockPos, entity, f * 0.5F);
+    }
+
+    public void updateEntityAfterFallOn(BlockGetter blockGetter, Entity entity) {
+        if (entity.isSuppressingBounce()) {
+            super.updateEntityAfterFallOn(blockGetter, entity);
+        } else {
+            this.bounceUp(entity);
+        }
+
+    }
+
+    private void bounceUp(Entity entity) {
+        Vec3 vec3 = entity.getDeltaMovement();
+        if (vec3.y < 0.0) {
+            double d = entity instanceof LivingEntity ? 1.0 : 0.8;
+            entity.setDeltaMovement(vec3.x, -vec3.y * 0.6600000262260437 * d, vec3.z);
+        }
+
+    }
+
+    @Override
+    public BlockState updateShape(BlockState blockState, Direction direction, BlockState blockState2, LevelAccessor levelAccessor, BlockPos blockPos, BlockPos blockPos2) {
+        if (blockState.getValue(WATERLOGGED)) {
+            levelAccessor.scheduleTick(blockPos, Fluids.WATER, Fluids.WATER.getTickDelay(levelAccessor));
+        }
+        if (direction == getNeighbourDirection(blockState.getValue(PART), blockState.getValue(FACING))) {
+            return blockState2.is(this) && blockState2.getValue(PART) != blockState.getValue(PART) ? blockState : Blocks.AIR.defaultBlockState();
+        } else {
+            return super.updateShape(blockState, direction, blockState2, levelAccessor, blockPos, blockPos2);
+        }
+    }
+
+
+    @Override
+    public void playerWillDestroy(Level level, BlockPos blockPos, BlockState blockState, Player player) {
+        if (!level.isClientSide && player.isCreative()) {
+            BedPart bedPart = (BedPart)blockState.getValue(PART);
+            if (bedPart == BedPart.FOOT) {
+                BlockPos blockPos2 = blockPos.relative(getNeighbourDirection(bedPart, blockState.getValue(FACING)));
+                BlockState blockState2 = level.getBlockState(blockPos2);
+                if (blockState2.is(this) && blockState2.getValue(PART) == BedPart.HEAD) {
+                    level.setBlock(blockPos2, Blocks.AIR.defaultBlockState(), 35);
+                    level.levelEvent(player, 2001, blockPos2, Block.getId(blockState2));
+                }
+            }
+        }
+
+        super.playerWillDestroy(level, blockPos, blockState, player);
     }
 
 
@@ -216,7 +264,7 @@ public class InfestedBedBlock extends MimicBlock implements IWashable, EntityBlo
 
         if (level.getBlockEntity(blockPos) instanceof InfestedBedTile tile) {
             BlockState heldBedState = tile.getHeldBlock();
-            Direction dir = getNeighbourDirection(heldBedState.getValue(BedBlock.PART), myInfested.getValue(FACING));
+            Direction dir = getNeighbourDirection(heldBedState.getValue(PART), myInfested.getValue(FACING));
             BlockPos otherBedPos = blockPos.relative(dir);
 
             BlockState otherInfested = level.getBlockState(otherBedPos);
@@ -255,27 +303,29 @@ public class InfestedBedBlock extends MimicBlock implements IWashable, EntityBlo
         BlockState state = level.getBlockState(pos);
         if (BedbugEntity.isValidBedForInfestation(state)) {
             Direction dir = state.getValue(BedBlock.FACING);
-            BlockPos neighborPos = pos.relative(state.getValue(BedBlock.PART) == BedPart.FOOT ? dir : dir.getOpposite());
+            BlockPos neighborPos = pos.relative(state.getValue(PART) == BedPart.FOOT ? dir : dir.getOpposite());
 
             BlockEntity oldTile = level.getBlockEntity(pos);
             BlockEntity oldNeighborTile = level.getBlockEntity(neighborPos);
 
             BlockState oldNeighborState = level.getBlockState(neighborPos);
 
-            level.setBlock(pos, SleepTight.INFESTED_BED.get().withPropertiesOf(state), Block.UPDATE_KNOWN_SHAPE | 2);
-            level.setBlock(neighborPos, SleepTight.INFESTED_BED.get().withPropertiesOf(level.getBlockState(neighborPos)), 2);
+            level.setBlock(pos, SleepTight.INFESTED_BED.get().withPropertiesOf(state), Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS);
+            level.setBlock(neighborPos, SleepTight.INFESTED_BED.get().withPropertiesOf(level.getBlockState(neighborPos)), Block.UPDATE_CLIENTS);
 
             if (level.getBlockEntity(pos) instanceof InfestedBedTile tile) {
                 if (state.hasProperty(WATERLOGGED)) {
                     state = state.setValue(WATERLOGGED, false);
                 }
                 tile.setBed(state, oldTile);
+                oldTile.setLevel(level);
             }
             if (level.getBlockEntity(neighborPos) instanceof InfestedBedTile tile) {
                 if (oldNeighborState.hasProperty(WATERLOGGED)) {
                     oldNeighborState = oldNeighborState.setValue(WATERLOGGED, false);
                 }
                 tile.setBed(oldNeighborState, oldNeighborTile);
+                oldNeighborTile.setLevel(level);
             }
             return true;
         }

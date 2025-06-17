@@ -4,9 +4,9 @@ import net.mehvahdjukaar.moonlight.api.entity.IControllableVehicle;
 import net.mehvahdjukaar.moonlight.api.entity.IExtraClientSpawnData;
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
+import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
-import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.IModBed;
@@ -201,7 +201,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
 
     private boolean isValidBed(BlockState state) {
         Block b = state.getBlock();
-        if (ModEvents.isValidBed(state)) {
+        if (b instanceof BedBlock) {
             return state.getValue(BedBlock.PART) == BedPart.HEAD;
         }
         if (b instanceof HammockBlock) {
@@ -411,7 +411,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             //Incase player is somehow still riding this
             player.removeVehicle();
 
-            PlayerSleepData data = SleepTightPlatformStuff.getPlayerSleepData(player);
+            PlayerSleepData data = STPlatStuff.getPlayerSleepData(player);
             data.setDoubleBed(isDoubleBed());
             data.syncToClient(player);
 

@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.mixins;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
+import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.SleepStatus;
 import org.spongepowered.asm.mixin.Mixin;
@@ -9,9 +9,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.util.Iterator;
 import java.util.List;
 
 @Mixin(SleepStatus.class)
@@ -23,7 +21,7 @@ public abstract class SleepStatusMixin {
     shift = At.Shift.BEFORE))
     public void sleep_tight$removeOnCooldown(List<ServerPlayer> players, CallbackInfoReturnable<Boolean> cir,
                                              @Local ServerPlayer serverPlayer){
-        if(SleepTightPlatformStuff.getPlayerSleepData(serverPlayer).isOnSleepCooldown(serverPlayer)){
+        if(STPlatStuff.getPlayerSleepData(serverPlayer).isOnSleepCooldown(serverPlayer)){
             this.activePlayers--;
         }
     }

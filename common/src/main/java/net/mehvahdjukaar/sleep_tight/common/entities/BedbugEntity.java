@@ -1,8 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.common.entities;
 
-import net.mehvahdjukaar.moonlight.api.block.MimicBlock;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
-import net.mehvahdjukaar.sleep_tight.common.blocks.InfestedBedBlock;
+import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundParticleMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
@@ -22,7 +21,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.tags.PoiTypeTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
@@ -36,9 +34,7 @@ import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiRecord;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
-import net.minecraft.world.entity.animal.Bee;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.BedBlock;
@@ -143,7 +139,7 @@ public class BedbugEntity extends Monster {
                     }
                 } else {
                     if (burrowingTicks > 40) {
-                        if (InfestedBedBlock.infestBed(level, pos)) {
+                        if (BedbugEggsItem.infestBed(level, pos, this)) {
                             this.spawnAnim();
                             this.discard();
                             level.playSound(null, pos, SoundEvents.WOOL_BREAK, SoundSource.HOSTILE, 1, 1);
@@ -353,6 +349,7 @@ public class BedbugEntity extends Monster {
 
     public static boolean isValidBedForInfestation(BlockState state) {
         Block block = state.getBlock();
+        //TODO: check ebd data and use memory module instead
         return block instanceof BedBlock && !state.getValue(BedBlock.OCCUPIED);
     }
 

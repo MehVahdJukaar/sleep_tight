@@ -1,8 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.common.items;
 
-import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
-import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
-import net.mehvahdjukaar.sleep_tight.core.ModEvents;
+import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -40,7 +38,7 @@ public class NightBagItem extends BlockItem {
             ItemStack stack = player.getItemInHand(usedHand);
 
             //same logic as startSleepingInBed. Performed before actually committing. Hopefully these should match
-            var problem = SleepTightPlatformStuff.invokeSleepChecksEvents(player, pos);
+            var problem = STPlatStuff.invokeSleepChecksEvents(player, pos);
             if (problem != null) {
 
                 Component m = problem.getMessage();

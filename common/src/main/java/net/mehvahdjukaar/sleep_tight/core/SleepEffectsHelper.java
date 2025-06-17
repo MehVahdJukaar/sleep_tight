@@ -63,12 +63,12 @@ public class SleepEffectsHelper {
         player.getFoodData().setFoodLevel(level);
     }
 
-    private static void applyVanillaBedBonuses(ServerPlayer player, long dayTimeDelta, BedData data, PlayerSleepData playerSleepData) {
+    private static void applyVanillaBedBonuses(ServerPlayer player, long dayTimeDelta, BedData bedData, PlayerSleepData playerSleepData) {
 
         //TODO: differentiate between home bed and non home bed. here it should just apply to leveld up bed
         BedStatus status = BED_BENEFITS.get();
         if (status == BedStatus.NONE) return;
-        if (status == BedStatus.HOME_BED && (!playerSleepData.isHomeBed(data))) return;
+        if (status == BedStatus.HOME_BED && (!playerSleepData.isHomeBed(bedData))) return;
         //healing
         EffectIntensity healing = HEALING.get();
         if (healing != EffectIntensity.NONE) {
@@ -108,9 +108,12 @@ public class SleepEffectsHelper {
                 }
             }
         }
-        //effects
-        for (var e : WAKE_UP_EFFECTS.get()) {
-            player.addEffect(e.createInstance(playerSleepData.getHomeBedLevel()));
+        int homeBedLevel = playerSleepData.getHomeBedLevel();
+        if (homeBedLevel > 0) { //TODO: check and change
+            //effects
+            for (var e : WAKE_UP_EFFECTS.get()) {
+                player.addEffect(e.createInstance(homeBedLevel - 1));
+            }
         }
     }
 
@@ -118,8 +121,11 @@ public class SleepEffectsHelper {
                                                @Nullable BedData data, PlayerSleepData playerSleepData) {
         BlockPos otherPos = getPartnerPos(player, state, pos);
         if (otherPos != null) {
-            for (var e : HEARTSTONE_EFFECT.get()) {
-                player.addEffect(e.createInstance(playerSleepData.getHomeBedLevel()));
+            int homeBedLevel = playerSleepData.getHomeBedLevel();
+            if (homeBedLevel > 0) {//TODO: check and change
+                for (var e : HEARTSTONE_EFFECT.get()) {
+                    player.addEffect(e.createInstance(homeBedLevel - 1));
+                }
             }
         }
     }

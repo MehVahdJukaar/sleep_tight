@@ -11,9 +11,8 @@
     "VillagerRendererMixin"
   ],
   "mixins": [
-    "BedBlockEntityMixin",
     "BedBlockMixin",
-    "BlockEntityMixin",
+    "ChunkHolderMixin",
     "DoorBlockMixin",
     "LivingEntityMixin",
     "PhantomMixin",

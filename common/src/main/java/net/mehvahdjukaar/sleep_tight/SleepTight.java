@@ -1,5 +1,6 @@
 package net.mehvahdjukaar.sleep_tight;
 
+import net.mehvahdjukaar.moonlight.api.misc.RegSupplier;
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
 import net.mehvahdjukaar.moonlight.api.set.BlocksColorAPI;
@@ -166,7 +167,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     public static final Supplier<EntityType<BedEntity>> BED_ENTITY = RegHelper.registerEntityType(res("bed_entity"),
             BedEntity::new, MobCategory.MISC, 0.5f, 0.5f, 4, Integer.MAX_VALUE);
 
-    public static final Supplier<EntityType<BedbugEntity>> BEDBUG_ENTITY = RegHelper.registerEntityType(res("bedbug"),
+    public static final RegSupplier<EntityType<BedbugEntity>> BEDBUG_ENTITY = RegHelper.registerEntityType(res("bedbug"),
             BedbugEntity::new, MobCategory.MONSTER, 11 / 16f, 6 / 16f, 7, 3);
 
     public static final Supplier<EntityType<DreamerEssenceTargetEntity>> DREAMER_ESSENCE_ENTITY = RegHelper.registerEntityType(res("dreamer_essence_dummy"),

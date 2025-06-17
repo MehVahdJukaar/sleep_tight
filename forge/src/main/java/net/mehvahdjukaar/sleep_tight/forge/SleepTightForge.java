@@ -1,10 +1,11 @@
 package net.mehvahdjukaar.sleep_tight.forge;
 
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
+import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
-import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
+import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -12,6 +13,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
@@ -22,7 +27,6 @@ import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.level.SleepFinishedTimeEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -52,15 +56,22 @@ public class SleepTightForge {
         event.enqueueWork(SleepTight::commonSetup);
     }
 
-
     public static void registerCaps(RegisterCapabilitiesEvent event) {
         event.register(ForgePlayerSleepCapability.class);
+        event.register(ForgeBedCapability.class);
     }
 
     @SubscribeEvent
     public void attachPlayerCapabilities(AttachCapabilitiesEvent<Entity> event) {
         if (event.getObject() instanceof Player) {
             event.addCapability(SleepTight.res("player_data"), new ForgePlayerSleepCapability());
+        }
+    }
+
+    @SubscribeEvent
+    public void attachBedCapabilities(AttachCapabilitiesEvent<BlockEntity> event) {
+        if (ModEvents.shouldHaveBedData(event.getObject())) {
+            event.addCapability(BedData.ID, new ForgeBedCapability());
         }
     }
 
@@ -119,8 +130,8 @@ public class SleepTightForge {
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onUseBlock(PlayerInteractEvent.RightClickBlock event) {
         if (!event.isCanceled()) {
-            var ret = ModEvents.onRightClickBlock(event.getEntity(), event.getLevel(), event.getHand(), event.getHitVec());
-            if (ret != InteractionResult.PASS) {
+            InteractionResult ret = ModEvents.onRightClickBlock(event.getEntity(), event.getLevel(), event.getHand(), event.getHitVec());
+            if (ret != null) {
                 event.setCanceled(true);
                 event.setCancellationResult(ret);
             }
@@ -138,8 +149,8 @@ public class SleepTightForge {
     public void onPlayerClone(PlayerEvent.Clone event) {
         Player old = event.getOriginal();
         old.reviveCaps();
-        var oldCap = SleepTightPlatformStuff.getPlayerSleepData(old);
-        var newCap = SleepTightPlatformStuff.getPlayerSleepData(event.getEntity());
+        var oldCap = STPlatStuff.getPlayerSleepData(old);
+        var newCap = STPlatStuff.getPlayerSleepData(event.getEntity());
         newCap.copyFrom(oldCap);
         old.invalidateCaps();
     }
@@ -157,9 +168,9 @@ public class SleepTightForge {
             Player player = event.player;
             if (player instanceof ServerPlayer sp && sp.isAlive()) {
                 try {
-                    var sleepData = SleepTightPlatformStuff.getPlayerSleepData(player);
+                    var sleepData = STPlatStuff.getPlayerSleepData(player);
                     sleepData.tick(sp);
-                }catch (Exception ignored) {
+                } catch (Exception ignored) {
                 }
             }
         }
@@ -172,6 +183,8 @@ public class SleepTightForge {
 
     @SubscribeEvent
     public void onBlockBreak(BlockEvent.BreakEvent event) {
+        if (event.getLevel() instanceof ServerLevel sl)
+            ModEvents.spawnAfterBreakBed(event.getState(), sl, event.getPos(), null);
         int i = event.getExpToDrop();
         if (i > 0) {
             int j = InvigoratedEffect.onBlockBreak(i, event.getPlayer());

@@ -4,8 +4,8 @@ package net.mehvahdjukaar.sleep_tight.client;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
+import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
-import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
 import net.mehvahdjukaar.sleep_tight.common.blocks.NightBagBlock;
@@ -20,7 +20,6 @@ import net.minecraft.client.Options;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.InBedChatScreen;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -59,7 +58,7 @@ public abstract class SleepGuiOverlay<T extends Gui> {
             ))) {
 
 
-                var c = SleepTightPlatformStuff.getPlayerSleepData(player);
+                var c = STPlatStuff.getPlayerSleepData(player);
                 float f = 1 - c.getInsomniaCooldownPercentage(player);
                 if (f < 1) {
 
@@ -132,7 +131,7 @@ public abstract class SleepGuiOverlay<T extends Gui> {
         if (isHomeBed) {
             int x = s.width / 2 - 120;
             if (MthUtils.isWithinRectangle(x, y, iconSize, iconSize, mouseX, mouseY)) {
-                var data = SleepTightPlatformStuff.getPlayerSleepData(player);
+                var data = STPlatStuff.getPlayerSleepData(player);
                 double nightmare = data.getNightmareChance(player, player.getSleepingPos().orElse(BlockPos.ZERO));
                 int bedLevel = data.getHomeBedLevel();
                 var lines = new ArrayList<>(mc.font.split(Component.translatable("gui.sleep_tight.home_bed"), 200));
@@ -171,8 +170,8 @@ public abstract class SleepGuiOverlay<T extends Gui> {
         var p = player.getSleepingPos();
         if (p.isPresent()) {
             BlockPos pos = p.get();
-            BedData bedData = BedData.get(player.level(), pos);
-            PlayerSleepData playerData = SleepTightPlatformStuff.getPlayerSleepData(player);
+            BedData bedData = STPlatStuff.getBedData(player.level(), pos);
+            PlayerSleepData playerData = STPlatStuff.getPlayerSleepData(player);
             isHomeBed = playerData.isHomeBed(bedData);
             nightInHomeBed = playerData.getNightsSleptInHomeBed();
 

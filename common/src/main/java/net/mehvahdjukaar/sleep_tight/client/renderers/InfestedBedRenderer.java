@@ -9,7 +9,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import org.joml.Vector3f;
+import net.minecraft.world.level.block.state.properties.BedPart;
 
 public class InfestedBedRenderer implements BlockEntityRenderer<InfestedBedTile> {
     private final BlockEntityRenderDispatcher dispatcher;
@@ -30,6 +30,8 @@ public class InfestedBedRenderer implements BlockEntityRenderer<InfestedBedTile>
     public <B extends BlockEntity> void renderInner(B tile, float pPartialTicks, PoseStack poseStack, MultiBufferSource buffer, int pCombinedLight, int pCombinedOverlay) {
         BlockEntityRenderer<B> renderer = dispatcher.getRenderer(tile);
         if (renderer != null) {
+            if (tile.getBlockState().getValue(BedBlock.PART) == BedPart.FOOT)
+                return;//not ideal. just here because level is null
             poseStack.translate(0.5, 0.5, 0.5);
             poseStack.mulPose(Axis.YP.rotationDegrees(-tile.getBlockState().getValue(BedBlock.FACING).toYRot()));
             poseStack.translate(-0.5, -0.5, -0.5);
