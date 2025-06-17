@@ -23,9 +23,6 @@ public class InfestedBedRenderer implements BlockEntityRenderer<InfestedBedTile>
     public void render(InfestedBedTile blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
         BlockEntity inner = blockEntity.getInner();
         if (inner != null) {
-            poseStack.translate(0.5, 0.5, 0.5);
-            poseStack.mulPose(Axis.YP.rotationDegrees(-blockEntity.getBlockState().getValue(BedBlock.FACING).toYRot()));
-            poseStack.translate(-0.5, -0.5, -0.5);
             renderInner(inner, partialTick, poseStack, bufferSource, packedLight, packedOverlay);
         }
     }
@@ -33,6 +30,9 @@ public class InfestedBedRenderer implements BlockEntityRenderer<InfestedBedTile>
     public <B extends BlockEntity> void renderInner(B tile, float pPartialTicks, PoseStack poseStack, MultiBufferSource buffer, int pCombinedLight, int pCombinedOverlay) {
         BlockEntityRenderer<B> renderer = dispatcher.getRenderer(tile);
         if (renderer != null) {
+            poseStack.translate(0.5, 0.5, 0.5);
+            poseStack.mulPose(Axis.YP.rotationDegrees(-tile.getBlockState().getValue(BedBlock.FACING).toYRot()));
+            poseStack.translate(-0.5, -0.5, -0.5);
             renderer.render(tile, pPartialTicks, poseStack, buffer, pCombinedLight, pCombinedOverlay);
         }
     }

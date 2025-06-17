@@ -101,6 +101,7 @@ dependencies {
     implementation 'org.jetbrains:annotations:22.0.0'
 
     //modImplementation("net.mehvahdjukaar:moonlight-forge:${project.moonlight_version}")
+   // modImplementation("net.mehvahdjukaar:supplementaries-forge:${project.supplementaries_vesion}")
     //modCompileOnly("net.mehvahdjukaar:heartstone-forge:1.19.2-1.1.2")
     modImplementation ("curse.maven:selene-499980:6610968")
     modImplementation ("curse.maven:jei-238222:6600227")

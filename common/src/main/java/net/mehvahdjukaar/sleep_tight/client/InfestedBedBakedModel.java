@@ -3,7 +3,6 @@ package net.mehvahdjukaar.sleep_tight.client;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.mojang.datafixers.util.Pair;
 import net.mehvahdjukaar.moonlight.api.block.MimicBlockTile;
 import net.mehvahdjukaar.moonlight.api.client.model.CustomBakedModel;
 import net.mehvahdjukaar.moonlight.api.client.model.CustomGeometry;
@@ -16,7 +15,10 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.*;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.ModelBaker;
+import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
@@ -36,7 +38,16 @@ public class InfestedBedBakedModel implements CustomBakedModel {
 
     @Override
     public List<BakedQuad> getBlockQuads(BlockState state, Direction side, RandomSource rand, RenderType renderType, ExtraModelData data) {
+        BlockState mimic = data.get(MimicBlockTile.MIMIC_KEY);
+        if (mimic != null && !mimic.isAir()) {
+            BakedModel model = blockModelShaper.getBlockModel(mimic);
+            try {
+                return model.getQuads(mimic, side, rand);
+            } catch (Exception ignored) {
+            }
+        }
         return Collections.emptyList();
+
     }
 
     @Override
@@ -63,7 +74,6 @@ public class InfestedBedBakedModel implements CustomBakedModel {
     public TextureAtlasSprite getBlockParticle(ExtraModelData data) {
         BlockState mimic = data.get(MimicBlockTile.MIMIC_KEY);
         if (mimic != null && !mimic.isAir()) {
-
             BakedModel model = blockModelShaper.getBlockModel(mimic);
             try {
                 return model.getParticleIcon();
