@@ -1,25 +1,32 @@
 package net.mehvahdjukaar.sleep_tight.fabric;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientBlockEntityEvents;
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityCombatEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.CommonLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerBlockEntityEvents;
+import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
+import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
-import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
+import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class SleepTightFabric implements ModInitializer {
+
+    public static AttachmentType<BedData> BED_DATA;
 
     @Override
     public void onInitialize() {
@@ -30,8 +37,33 @@ public class SleepTightFabric implements ModInitializer {
             SleepTightClient.init();
             SleepTightFabricClient.init();
         }
+        //TODO: use attachments api
+        BED_DATA = AttachmentRegistry.<BedData>builder().initializer(BedData::new)
+                .persistent(BedData.CODEC)
+                .buildAndRegister(BedData.ID);
 
-        UseBlockCallback.EVENT.register(ModEvents::onRightClickBlock);
+        //yes not ideal at all. if done in after we might not have the block entity
+        PlayerBlockBreakEvents.BEFORE.register((level, player, blockPos, blockState, blockEntity) -> {
+            if (level instanceof ServerLevel sl)
+                ModEvents.spawnAfterBreakBed(blockState, sl, blockPos, blockEntity);
+            return true;
+        });
+        ServerBlockEntityEvents.BLOCK_ENTITY_LOAD.register((blockEntity, serverLevel) -> {
+            //initialize attachments
+            if (ModEvents.shouldHaveBedData(blockEntity)) {
+                blockEntity.getAttachedOrCreate(BED_DATA);
+            }
+        });
+        ClientBlockEntityEvents.BLOCK_ENTITY_LOAD.register((blockEntity, clientLevel) -> {
+            //initialize attachments
+            if (ModEvents.shouldHaveBedData(blockEntity)) {
+                blockEntity.getAttachedOrCreate(BED_DATA);
+            }
+        });
+        UseBlockCallback.EVENT.register((player, level, interactionHand, blockHitResult) -> {
+            var ret = ModEvents.onRightClickBlock(player, level, interactionHand, blockHitResult);
+            return ret == null ? InteractionResult.PASS : ret;
+        });
 
         EntitySleepEvents.ALLOW_SETTING_SPAWN.register(ModEvents::canSetSpawn);
         EntitySleepEvents.STOP_SLEEPING.register((a, b) -> {
@@ -68,8 +100,8 @@ public class SleepTightFabric implements ModInitializer {
 
         ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) -> {
             //if (!alive) {
-            var oldData = SleepTightPlatformStuff.getPlayerSleepData(oldPlayer);
-            var newData = SleepTightPlatformStuff.getPlayerSleepData(newPlayer);
+            var oldData = STPlatStuff.getPlayerSleepData(oldPlayer);
+            var newData = STPlatStuff.getPlayerSleepData(newPlayer);
             newData.copyFrom(oldData);
             //just server. we must sync
             newData.syncToClient(newPlayer);

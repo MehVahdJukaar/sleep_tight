@@ -2,8 +2,8 @@ package net.mehvahdjukaar.sleep_tight.common.network;
 
 import net.mehvahdjukaar.moonlight.api.platform.network.Message;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
-import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -47,7 +47,7 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     }
 
     public ClientBoundSyncPlayerSleepCapMessage(Player player) {
-        this(SleepTightPlatformStuff.getPlayerSleepData(player));
+        this(STPlatStuff.getPlayerSleepData(player));
     }
 
     @Override
@@ -67,7 +67,7 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
         if (p == null) {
             return;
         }
-        PlayerSleepData data = SleepTightPlatformStuff.getPlayerSleepData(p);
+        PlayerSleepData data = STPlatStuff.getPlayerSleepData(p);
         data.acceptFromServer(this.lastBedSleptInto, this.insomniaWillElapseTimestamp, this.lastWokenUpTimestamp, this.consecutiveNights,
                 this.homeBedNights, this.doubleBed);
     }

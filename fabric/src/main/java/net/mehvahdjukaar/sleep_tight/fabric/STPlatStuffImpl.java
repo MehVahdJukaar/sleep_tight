@@ -3,6 +3,7 @@ package net.mehvahdjukaar.sleep_tight.fabric;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Unit;
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
+import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.core.BlockPos;
@@ -11,12 +12,16 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class SleepTightPlatformStuffImpl {
+public class STPlatStuffImpl {
 
     @org.jetbrains.annotations.Contract
     public static PlayerSleepData getPlayerSleepData(Player player) {
@@ -70,5 +75,11 @@ public class SleepTightPlatformStuffImpl {
         boolean vanillaResult = monsters.isEmpty();
         InteractionResult result = EntitySleepEvents.ALLOW_NEARBY_MONSTERS.invoker().allowNearbyMonsters(player, pos, vanillaResult);
         return result != InteractionResult.PASS ? result.consumesAction() : vanillaResult;
+    }
+
+    @Contract
+    @Nullable
+    public static BedData getBedDataFromThis(BlockEntity be) {
+       return be.getAttached(SleepTightFabric.BED_DATA);
     }
 }

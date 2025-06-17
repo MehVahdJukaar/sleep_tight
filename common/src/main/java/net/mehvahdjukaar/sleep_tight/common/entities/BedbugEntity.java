@@ -3,7 +3,7 @@ package net.mehvahdjukaar.sleep_tight.common.entities;
 import net.mehvahdjukaar.moonlight.api.block.MimicBlock;
 import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
-import net.mehvahdjukaar.sleep_tight.common.blocks.InfestedBedBlock;
+import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundParticleMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.ModNetworking;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
@@ -139,7 +139,7 @@ public class BedbugEntity extends Monster {
                     }
                 } else {
                     if (burrowingTicks > 40) {
-                        if (InfestedBedBlock.infestBed(level, pos)) {
+                        if (BedbugEggsItem.infestBed(level, pos, this)) {
                             this.spawnAnim();
                             this.discard();
                             level.playSound(null, pos, SoundEvents.WOOL_BREAK, SoundSource.HOSTILE, 1, 1);
@@ -344,6 +344,7 @@ public class BedbugEntity extends Monster {
 
     public static boolean isValidBedForInfestation(BlockState state) {
         Block block = state.getBlock();
+        //TODO: check ebd data and use memory module instead
         return block instanceof BedBlock && !state.getValue(BedBlock.OCCUPIED);
     }
 

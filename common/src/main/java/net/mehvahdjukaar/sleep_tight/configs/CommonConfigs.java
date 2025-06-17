@@ -1,5 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.configs;
 
+import com.mojang.math.Constants;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigBuilder;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ModConfigHolder;
@@ -8,6 +9,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.random.SimpleWeightedRandomList;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Contract;
 
 import java.util.List;
@@ -163,6 +165,8 @@ public class CommonConfigs {
         builder.pop();
 
         builder.pop();
+
+
 
         builder.push("bedbugs");
         BEDBUG_SPAWN_CHANCE = builder.comment("Base spawn chance every time you wake up, increases with difficulty")

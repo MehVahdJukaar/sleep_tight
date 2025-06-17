@@ -173,7 +173,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
                     .updateInterval(Integer.MAX_VALUE)
                     .build("bed_entity"));
 
-    public static final Supplier<EntityType<BedbugEntity>> BEDBUG_ENTITY = RegHelper.registerEntityType(res("bedbug"),
+    public static final RegSupplier<EntityType<BedbugEntity>> BEDBUG_ENTITY = RegHelper.registerEntityType(res("bedbug"),
             BedbugEntity::new, MobCategory.MONSTER, 11 / 16f, 6 / 16f, 7, 3);
 
     public static final Supplier<EntityType<DreamerEssenceTargetEntity>> DREAMER_ESSENCE_ENTITY = RegHelper.registerEntityType(res("dreamer_essence_dummy"),

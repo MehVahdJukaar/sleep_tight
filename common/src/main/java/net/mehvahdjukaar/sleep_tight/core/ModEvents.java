@@ -2,8 +2,8 @@ package net.mehvahdjukaar.sleep_tight.core;
 
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
 import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
+import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
-import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
 import net.mehvahdjukaar.sleep_tight.common.blocks.IModBed;
@@ -13,27 +13,42 @@ import net.mehvahdjukaar.sleep_tight.common.blocks.NightBagBlock;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundNightmarePacket;
+import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundParticleMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncPlayerSleepCapMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.ModNetworking;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.ThrownPotion;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.LingeringPotionItem;
+import net.minecraft.world.item.SplashPotionItem;
+import net.minecraft.world.item.alchemy.Potion;
+import net.minecraft.world.item.alchemy.PotionUtils;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.portal.DimensionTransition;
@@ -84,7 +99,7 @@ public class ModEvents {
             int players = 0;
             for (var player : sleepingPlayers) {
                 players++;
-                PlayerSleepData c = SleepTightPlatformStuff.getPlayerSleepData(player);
+                PlayerSleepData c = STPlatStuff.getPlayerSleepData(player);
                 chances += c.getNightmareChance(player, player.getSleepingPos().get());
             }
             double nightmareChance = players == 0 ? 0 : chances / players;
@@ -115,8 +130,8 @@ public class ModEvents {
 
             if (block instanceof BedBlock) {
                 if (CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
-                    PlayerSleepData pd = SleepTightPlatformStuff.getPlayerSleepData(player);
-                    if (pd.isHomeBed(BedData.get(level, pos))) {
+                    PlayerSleepData pd = STPlatStuff.getPlayerSleepData(player);
+                    if (pd.isHomeBed(STPlatStuff.getBedData(level, pos))) {
                         return false;
                     }
                 }
@@ -132,11 +147,8 @@ public class ModEvents {
         return true;
     }
 
-    public static boolean isValidBed(BlockState state) {
-        Block block = state.getBlock();
-        return block instanceof BedBlock && block != SleepTight.INFESTED_BED;
-    }
 
+    @Nullable
     @EventCalled
     public static InteractionResult onRightClickBlock(Player player, Level level, InteractionHand hand, BlockHitResult hitResult) {
         if (!player.isSpectator()) { //is this check even needed?
@@ -148,78 +160,85 @@ public class ModEvents {
                 //return state.use(level, player, hand, hitResult);
             }
 
-            if (isValidBed(state)) {
-                Direction dir = state.getValue(BedBlock.FACING);
-
-                //get head
-                if (state.getValue(BedBlock.PART) != BedPart.HEAD) {
-                    pos = pos.relative(dir);
-                    state = level.getBlockState(pos);
-                    if (!state.is(b)) {
-                        return InteractionResult.PASS;
-                    }
+            BedData data = STPlatStuff.getBedData(level, pos);
+            if (data == null) return null;
+            if (data.isInfested()) {
+                ItemStack stack = player.getItemInHand(hand);
+                if (stack.getItem() instanceof LingeringPotionItem || stack.getItem() instanceof SplashPotionItem) {
+                    return InteractionResult.PASS;
                 }
-                //bed bug egg infestation
-                ItemStack itemInHand = player.getItemInHand(hand);
-                if (itemInHand.getItem() instanceof BedbugEggsItem bb) {
-                    return bb.useOnBed(player, hand, itemInHand, state, pos, hitResult);
-                }
+                player.displayClientMessage(Component.translatable("message.sleep_tight.bedbug"), true);
+                return InteractionResult.sidedSuccess(level.isClientSide);
+            }
 
-                //fallsback on bed logic for non sleep action
-                if (BedBlock.canSetSpawn(level) && !player.isSecondaryUseActive() && !bedBlocked(level, pos, dir) &&
-                        !player.isCrouching()) {
+            Direction dir = state.getValue(BedBlock.FACING);
 
-                    //tries clearing double bed
-                    boolean occupied = state.getValue(BedBlock.OCCUPIED);
-                    if (occupied) {
-                        var list = level.getEntitiesOfClass(BedEntity.class, new AABB(pos));
+            //get head
+            pos = getBedHead(state, pos);
+            state = level.getBlockState(pos);
+            if (!state.is(b)) {
+                return InteractionResult.PASS;
+            }
+            //bed bug egg infestation
+            ItemStack itemInHand = player.getItemInHand(hand);
+            if (itemInHand.getItem() instanceof BedbugEggsItem bb) {
+                return bb.useOnBed(player, hand, itemInHand, state, pos, hitResult);
+            }
+
+            //fallsback on bed logic for non sleep action
+            if (BedBlock.canSetSpawn(level) && !player.isSecondaryUseActive() && !bedBlocked(level, pos, dir) &&
+                    !player.isCrouching()) {
+
+                //tries clearing double bed
+                boolean occupied = state.getValue(BedBlock.OCCUPIED);
+                if (occupied) {
+                    var list = level.getEntitiesOfClass(BedEntity.class, new AABB(pos));
+                    if (!list.isEmpty()) {
+                        BedEntity bedEntity = list.get(0);
+                        if (!bedEntity.isDoubleBed()) return InteractionResult.PASS;
+
+                        //assumes other state is valid because bed would have noticed otherwise
+                        bedEntity.clearDoubleBed();
+
+                        pos = bedEntity.getDoubleBedPos();
+                        state = state.setValue(BedBlock.OCCUPIED, false);
+                        level.setBlockAndUpdate(pos, state);
+
+                        occupied = false;
+
+                    } else {
+                        BlockPos doublePos = BedEntity.getInverseDoubleBedPos(pos, state);
+                        list = level.getEntitiesOfClass(BedEntity.class, new AABB(doublePos));
                         if (!list.isEmpty()) {
                             BedEntity bedEntity = list.get(0);
                             if (!bedEntity.isDoubleBed()) return InteractionResult.PASS;
 
-                            //assumes other state is valid because bed would have noticed otherwise
                             bedEntity.clearDoubleBed();
 
-                            pos = bedEntity.getDoubleBedPos();
                             state = state.setValue(BedBlock.OCCUPIED, false);
                             level.setBlockAndUpdate(pos, state);
 
                             occupied = false;
-
-                        } else {
-                            BlockPos doublePos = BedEntity.getInverseDoubleBedPos(pos, state);
-                            list = level.getEntitiesOfClass(BedEntity.class, new AABB(doublePos));
-                            if (!list.isEmpty()) {
-                                BedEntity bedEntity = list.get(0);
-                                if (!bedEntity.isDoubleBed()) return InteractionResult.PASS;
-
-                                bedEntity.clearDoubleBed();
-
-                                state = state.setValue(BedBlock.OCCUPIED, false);
-                                level.setBlockAndUpdate(pos, state);
-
-                                occupied = false;
-                            }
                         }
                     }
+                }
 
-                    if (!occupied) {
+                if (!occupied) {
 
-                        boolean extraConditions = CommonConfigs.LAY_WHEN_ON_COOLDOWN.get() ||
-                                checkExtraSleepConditions(player, pos);
-                        if (!extraConditions) return InteractionResult.sidedSuccess(level.isClientSide);
+                    boolean extraConditions = CommonConfigs.LAY_WHEN_ON_COOLDOWN.get() ||
+                            checkExtraSleepConditions(player, pos);
+                    if (!extraConditions) return InteractionResult.sidedSuccess(level.isClientSide);
 
-                        if(player.isSecondaryUseActive()){
-                            return InteractionResult.PASS;//sleep immediately with vanilla logic or perform other interactions
-                        }
-                        BedEntity.layDown(state, pos, player);
-                        //always success to prevent use action
-                        return InteractionResult.SUCCESS;
+                    if (player.isSecondaryUseActive()) {
+                        return null;//sleep immediately with vanilla logic or perform other interactions
                     }
+                    BedEntity.layDown(state, pos, player);
+                    //always success to prevent use action
+                    return InteractionResult.SUCCESS;
                 }
             }
         }
-        return InteractionResult.PASS;
+        return null;
     }
 
     private static boolean bedBlocked(Level level, BlockPos pos, Direction direction) {
@@ -245,7 +264,7 @@ public class ModEvents {
                 c = c.add(pos.getX() + 0.5, pos.getY() + 9 / 16f, pos.getZ() + 0.5);
             }
             if (entity instanceof Player player) {
-                PlayerSleepData data = SleepTightPlatformStuff.getPlayerSleepData(player);
+                PlayerSleepData data = STPlatStuff.getPlayerSleepData(player);
                 if (data.usingDoubleBed()) {
                     c = BedEntity.getDoubleBedOffset(state.getValue(BedBlock.FACING), c);
                 }
@@ -258,7 +277,7 @@ public class ModEvents {
 
     private static void onEncounter(ServerPlayer player, boolean mobSpawned, long wakeTime) {
         if (mobSpawned) {
-            var c = SleepTightPlatformStuff.getPlayerSleepData(player);
+            var c = STPlatStuff.getPlayerSleepData(player);
             c.setInsomniaCooldown(wakeTime, CommonConfigs.ENCOUNTER_INSOMNIA_DURATION.get());
             c.setLasWokenUpTime(wakeTime);
             c.resetConsecutiveNightSleptCounter();
@@ -270,7 +289,7 @@ public class ModEvents {
     }
 
     private static void onNightmare(ServerPlayer player, long wakeTime) {
-        var c = SleepTightPlatformStuff.getPlayerSleepData(player);
+        var c = STPlatStuff.getPlayerSleepData(player);
         c.setInsomniaCooldown(wakeTime, CommonConfigs.NIGHTMARE_INSOMNIA_DURATION.get());
         c.setLasWokenUpTime(wakeTime);
         c.resetConsecutiveNightSleptCounter();
@@ -285,18 +304,18 @@ public class ModEvents {
     }
 
     //server sided
-    public static void onPlayerSleepFinished(ServerPlayer player,  long dayTimeDelta, long wakeUpTime) {
+    public static void onPlayerSleepFinished(ServerPlayer player, long dayTimeDelta, long wakeUpTime) {
         var p = player.getSleepingPos();
         if (p.isPresent()) {
             BlockPos pos = p.get();
-            PlayerSleepData playerCap = SleepTightPlatformStuff.getPlayerSleepData(player);
+            PlayerSleepData playerCap = STPlatStuff.getPlayerSleepData(player);
             Level level = player.level();
             BlockState state = level.getBlockState(pos);
             ISleepTightBed bed = (ISleepTightBed) Blocks.RED_BED;
             if (state.getBlock() instanceof ISleepTightBed b) {
                 bed = b;
             }
-            BedData data = BedData.get(level, pos);
+            BedData data = STPlatStuff.getBedData(level, pos);
             if (data != null) {
                 playerCap.increaseNightSleptInThisBed(data, player);
             }
@@ -328,7 +347,7 @@ public class ModEvents {
             }
             //clears double beds
             else if (state.is(BlockTags.BEDS) && player instanceof ServerPlayer serverPlayer) {
-                var data = SleepTightPlatformStuff.getPlayerSleepData(player);
+                var data = STPlatStuff.getPlayerSleepData(player);
                 if (data.usingDoubleBed()) {
                     BlockPos doublePos = BedEntity.getDoubleBedPos(pos, state);
                     BlockState doubleState = level.getBlockState(doublePos);
@@ -364,7 +383,13 @@ public class ModEvents {
     //similar to what below but isnt time related
     @EventCalled
     public static boolean checkExtraSleepConditions(Player player, @Nullable BlockPos bedPos) {
-        if (SleepTightPlatformStuff.getPlayerSleepData(player).isOnSleepCooldown(player)) {
+        Level level = player.level();
+        BedData bedData = STPlatStuff.getBedData(level, bedPos);
+        if (bedData != null && bedData.isInfested()) {
+            player.displayClientMessage(Component.translatable("message.sleep_tight.bedbug"), true);
+            return false;
+        }
+        if (STPlatStuff.getPlayerSleepData(player).isOnSleepCooldown(player)) {
             if (!player.level().isClientSide) {
                 String s = isDayTime(player.level()) ? "message.sleep_tight.insomnia.day" :
                         "message.sleep_tight.insomnia.night";
@@ -396,8 +421,9 @@ public class ModEvents {
 
 
     public static boolean isDayTime(Level level) {
-        long dayTime = level.getDayTime() % 24000L;
-        if (dayTime > 100L && dayTime < 11900L) {
+        int dayDuration = Level.TICKS_PER_DAY;
+        long dayTime = level.getDayTime() % dayDuration;
+        if (dayTime > 100L && dayTime < (dayDuration / 2 - 100)) {
             return true;
         }
         return false;
@@ -409,12 +435,26 @@ public class ModEvents {
             BlockPos pos = newPlayer.getRespawnPosition();
             if (pos != null) {
                 BlockState state = newPlayer.level().getBlockState(pos);
-                BedData bedData = BedData.get(newPlayer.level(), pos);
+                BedData bedData = STPlatStuff.getBedData(newPlayer.level(), pos);
                 if (bedData != null) {
                     BedEntity.layDown(state, pos, newPlayer);
                 }
             }
         }
+    }
+
+    //all called by mixins
+
+    @SuppressWarnings("all")
+    @Nullable
+    public static Optional<Vec3> findSpawnPosition(ServerPlayer player, BlockPos spawnBlockPos, boolean isRespawnForced) {
+        if (!isRespawnForced && CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
+            BedData bedData = STPlatStuff.getBedData(player.level(), spawnBlockPos);
+            if (bedData != null && !STPlatStuff.getPlayerSleepData(player).isHomeBed(bedData)) {
+                return Optional.empty();
+            }
+        }
+        return false;
     }
 
     public static boolean shouldCancelRespawnHere(Player player, DimensionTransition transition) {
@@ -425,5 +465,87 @@ public class ModEvents {
             }
         }
         return false;
+    }
+
+    public static void onProjectileHitBed(Projectile projectile, Level level, BlockState state, BlockHitResult hit) {
+        if (projectile instanceof ThrownPotion tp) {
+            BlockPos myPos = hit.getBlockPos();
+            BlockPos pos = getBedHead(state, myPos);
+            BedData data = STPlatStuff.getBedData(level, pos);
+            if (data != null && data.isInfested()) {
+                Potion p = PotionUtils.getPotion(tp.getItem());
+                if (p.getEffects().stream().anyMatch(e -> e.getEffect() == MobEffects.HARM)) {
+                    level.playSound(null, pos, SoundEvents.SILVERFISH_DEATH, SoundSource.BLOCKS, 1, 1.3f);
+                    if (!level.isClientSide) {
+                        NetworkHandler.CHANNEL.sendToAllClientPlayersInRange(level, pos, 32,
+                                ClientBoundParticleMessage.bedbugInfest(pos,
+                                        state.getValue(BedBlock.FACING).getOpposite()));
+                    }
+                    data.setBedBug(null);
+                    //sync to clients
+                    BlockEntity tile = level.getBlockEntity(pos);
+                    if (tile != null) {
+                        level.sendBlockUpdated(pos, state, state, 3);
+                        tile.setChanged();
+                    }
+                }
+            }
+        }
+    }
+
+    @EventCalled
+    public static void spawnAfterBreakBed(BlockState state, ServerLevel level, BlockPos pos, @Nullable BlockEntity be) {
+        if (level.isClientSide) return;
+        BedData data = STPlatStuff.getBedData(level, pos, be);
+        //just head does it
+        if (data != null && data.isInfested() && level.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS)) {
+            CompoundTag tag = data.getBedBug();
+            var opt = EntityType.create(tag, level);
+            if (opt.isEmpty()) return;
+            Entity entity = opt.get();
+            pos = bedBedFeet(state, pos);
+            entity.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.0F, 0.0F);
+            level.addFreshEntity(entity);
+            if (entity instanceof Mob le) {
+                le.spawnAnim();
+            }
+        }
+    }
+
+    public static void animateTickBed(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (random.nextFloat() < 0.3) {
+            BedData data = STPlatStuff.getBedData(level, pos);
+            if (data != null && data.isInfested()) {
+                float x = pos.getX() + level.random.nextFloat();
+                float z = pos.getZ() + level.random.nextFloat();
+                double y = state.getCollisionShape(level, pos).max(Direction.Axis.Y) + pos.getY();
+                level.addParticle(SleepTight.BEDBUG_PARTICLE.get(), x, y + 0.01, z, 0, 0, 0);
+            }
+        }
+    }
+
+    public static BlockPos getBedHead(BlockState bed, BlockPos pos) {
+        if (!bed.hasProperty(BedBlock.PART)) {
+            return pos;
+        }
+        BedPart part = bed.getValue(BedBlock.PART);
+        if (part == BedPart.HEAD) return pos;
+        Direction dir = bed.getValue(BedBlock.FACING);
+        return pos.relative(dir);
+    }
+
+    public static BlockPos bedBedFeet(BlockState bed, BlockPos pos) {
+        if (!bed.hasProperty(BedBlock.PART)) {
+            return pos;
+        }
+        BedPart part = bed.getValue(BedBlock.PART);
+        if (part == BedPart.FOOT) return pos;
+        Direction dir = bed.getValue(BedBlock.FACING);
+        return pos.relative(dir.getOpposite());
+    }
+
+    public static boolean shouldHaveBedData(BlockEntity blockEntity) {
+        BlockState state = blockEntity.getBlockState();
+        return state.getBlock() instanceof BedBlock && state.getValue(BedBlock.PART) == BedPart.HEAD;
     }
 }

@@ -1,9 +1,9 @@
 package net.mehvahdjukaar.sleep_tight.neoforge;
 
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
+import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
-import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
@@ -50,6 +50,11 @@ public class SleepTightForge {
         event.enqueueWork(SleepTight::commonSetup);
     }
 
+    public static void registerCaps(RegisterCapabilitiesEvent event) {
+        event.register(ForgePlayerSleepCapability.class);
+        event.register(ForgeBedCapability.class);
+    }
+
     @SubscribeEvent
     public void onPlayerRespawnPositionCheck(PlayerRespawnPositionEvent event) {
         DimensionTransition transition = event.getDimensionTransition();
@@ -58,6 +63,13 @@ public class SleepTightForge {
             event.setDimensionTransition(
                     DimensionTransition.missingRespawnBlock(sp.server.overworld(),
                             sp, transition.postDimensionTransition()));
+        }
+    }
+
+    @SubscribeEvent
+    public void attachBedCapabilities(AttachCapabilitiesEvent<BlockEntity> event) {
+        if (ModEvents.shouldHaveBedData(event.getObject())) {
+            event.addCapability(BedData.ID, new ForgeBedCapability());
         }
     }
 
@@ -126,8 +138,8 @@ public class SleepTightForge {
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onUseBlock(PlayerInteractEvent.RightClickBlock event) {
         if (!event.isCanceled()) {
-            var ret = ModEvents.onRightClickBlock(event.getEntity(), event.getLevel(), event.getHand(), event.getHitVec());
-            if (ret != InteractionResult.PASS) {
+            InteractionResult ret = ModEvents.onRightClickBlock(event.getEntity(), event.getLevel(), event.getHand(), event.getHitVec());
+            if (ret != null) {
                 event.setCanceled(true);
                 event.setCancellationResult(ret);
             }
@@ -146,8 +158,8 @@ public class SleepTightForge {
         // if (event.isWasDeath()) {
         Player old = event.getOriginal();
         //old.reviveCaps();
-        var oldData = SleepTightPlatformStuff.getPlayerSleepData(old);
-        var newData = SleepTightPlatformStuff.getPlayerSleepData(event.getEntity());
+        var oldData = STPlatStuff.getPlayerSleepData(old);
+        var newData = STPlatStuff.getPlayerSleepData(event.getEntity());
         newData.copyFrom(oldData);
         //  old.invalidateCaps();
         //  }
@@ -164,7 +176,7 @@ public class SleepTightForge {
     public void onPlayerTick(PlayerTickEvent.Post event) {
         Player player = event.getEntity();
         if (player instanceof ServerPlayer sp) {
-            var sleepData = SleepTightPlatformStuff.getPlayerSleepData(player);
+            var sleepData = STPlatStuff.getPlayerSleepData(player);
             sleepData.tick(sp);
         }
     }
@@ -176,6 +188,8 @@ public class SleepTightForge {
 
     @SubscribeEvent
     public void onBlockBreak(BlockDropsEvent event) {
+        if (event.getLevel() instanceof ServerLevel sl)
+            ModEvents.spawnAfterBreakBed(event.getState(), sl, event.getPos(), null);
         int i = event.getDroppedExperience();
         if (i > 0) {
             int j = InvigoratedEffect.forgeGetExtraXpForBlockBroken(i, event.getBreaker());

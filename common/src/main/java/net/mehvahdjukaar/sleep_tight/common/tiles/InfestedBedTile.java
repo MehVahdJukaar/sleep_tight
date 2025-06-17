@@ -88,48 +88,6 @@ public class InfestedBedTile extends MimicBlockTile {
         return mimic;
     }
 
-    //TODO:
-    private static CompoundTag prepareMobTagForContainer(Entity entity, double yOffset) {
-        //set post relative to center block cage
-        double px = 0.5;
-        double py = yOffset + 0.0001;
-        double pz = 0.5;
-        entity.setPos(px, py, pz);
-        entity.xOld = px;
-        entity.yOld = py;
-        entity.zOld = pz;
-
-        if (entity.isPassenger()) {
-            entity.getVehicle().ejectPassengers();
-        }
-
-        //prepares entity
-        if (entity instanceof LivingEntity le) {
-            le.yHeadRotO = 0;
-            le.yHeadRot = 0;
-            le.walkAnimation.setSpeed(0);
-            le.hurtDuration = 0;
-            le.hurtTime = 0;
-            le.attackAnim = 0;
-        }
-        entity.setYRot(0);
-        entity.yRotO = 0;
-        entity.xRotO = 0;
-        entity.setXRot(0);
-        entity.clearFire();
-        entity.invulnerableTime = 0;
-
-        CompoundTag mobTag = new CompoundTag();
-        entity.save(mobTag);
-        if (mobTag.isEmpty()) {
-            return null;
-        }
-        mobTag.remove("Passengers");
-        mobTag.remove("Leash");
-        mobTag.remove("UUID");//TODO: UUID
-        return mobTag;
-    }
-
     @ForgeOverride
     public AABB getRenderBoundingBox() {
         BlockPos pos = this.getBlockPos();
