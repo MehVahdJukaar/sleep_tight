@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncBedCapMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
@@ -22,19 +23,19 @@ public class BedData {
 
     public static final Codec<BedData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             UUIDUtil.STRING_CODEC.fieldOf("id").forGetter(BedData::getId),
-            UUIDUtil.STRING_CODEC.listOf().optionalFieldOf("home_bed_to")
-                    .forGetter(d -> d.seenPlayers.isEmpty() ? Optional.empty() : Optional.of(new ArrayList<>(d.seenPlayers))),
+            Codec.unboundedMap(UUIDUtil.STRING_CODEC, Codec.BYTE).optionalFieldOf("bed_level")
+                    .forGetter(d -> d.bedLevel.isEmpty() ? Optional.empty() : Optional.of(d.bedLevel)),
             CompoundTag.CODEC.optionalFieldOf("bed_bug").forGetter(d -> Optional.ofNullable(d.bedBug))
     ).apply(instance, BedData::new));
 
     protected UUID id;
-    protected Set<UUID> seenPlayers;//unused
+    protected Map<UUID, Byte> bedLevel;
     @Nullable
     protected CompoundTag bedBug;
 
-    private BedData(UUID id, Optional<List<UUID>> homeBedTo, Optional<CompoundTag> bedBug) {
+    private BedData(UUID id, Optional<Map<UUID, Byte>> homeBedTo, Optional<CompoundTag> bedBug) {
         this.id = id;
-        this.seenPlayers = new HashSet<>(homeBedTo.orElse(List.of()));
+        this.bedLevel = new HashMap<>(homeBedTo.orElse(Collections.emptyMap()));
         this.bedBug = bedBug.orElse(null);
     }
 
@@ -42,8 +43,19 @@ public class BedData {
         this(UUID.randomUUID(), Optional.empty(), Optional.empty());
     }
 
-    public void onHomeBedActivated(Player player) {
-        //this.seenPlayers.add(player.getUUID());
+    public void incrementBedLevel(Player player) {
+        UUID playerId = player.getUUID();
+        byte value = (byte) Math.min(CommonConfigs.HOME_BED_MAX_LEVEL.get(),
+                this.bedLevel.getOrDefault(playerId, (byte) 0) + 1);
+        this.bedLevel.put(playerId, value);
+    }
+
+    public byte getBedLevel(Player player) {
+        return this.bedLevel.getOrDefault(player.getUUID(), (byte) 0);
+    }
+
+    public Map<UUID, Byte> getBedLevels() {
+        return Collections.unmodifiableMap(bedLevel);
     }
 
     public UUID getId() {
@@ -52,10 +64,6 @@ public class BedData {
 
     public boolean isInfested() {
         return bedBug != null;
-    }
-
-    public Set<UUID> getSeenPlayers() {
-        return Collections.unmodifiableSet(seenPlayers);
     }
 
     public void setBedBug(@Nullable CompoundTag entityTag) {
@@ -75,7 +83,8 @@ public class BedData {
         return "BedData[" +
                 "id=" + id + ", " +
                 "bedBug=" + (bedBug != null ? "present" : "null") + ", " +
-                "seenPlayers=" + seenPlayers + ']';
+                "bedLevel=" + bedLevel +
+                ']';
     }
 
     public void acceptFromServer(UUID id, boolean hasBedBug) {

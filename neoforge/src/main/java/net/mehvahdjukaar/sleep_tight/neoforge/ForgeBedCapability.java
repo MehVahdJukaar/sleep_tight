@@ -1,7 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.forge;
 
 import net.mehvahdjukaar.sleep_tight.core.BedData;
-import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -12,6 +11,7 @@ import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.LazyOptional;
 
 import javax.annotation.Nonnull;
+import java.util.HashMap;
 
 //actual capability provider (which provides itself as a cap instance)
 public class ForgeBedCapability extends BedData implements ICapabilitySerializable<CompoundTag> {
@@ -28,7 +28,7 @@ public class ForgeBedCapability extends BedData implements ICapabilitySerializab
     @Override
     public CompoundTag serializeNBT() {
         return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow(
-                false, a-> new RuntimeException("Failed to serialize BedData")
+                false, a -> new RuntimeException("Failed to serialize BedData")
         );
     }
 
@@ -38,8 +38,9 @@ public class ForgeBedCapability extends BedData implements ICapabilitySerializab
                 .getOrThrow(false, a -> new RuntimeException("Failed to deserialize BedData"))
                 .getFirst();
         this.id = newData.getId();
-        this.seenPlayers = newData.getSeenPlayers();
         this.bedBug = newData.getBedBug();
+        this.bedLevel = new HashMap<>();
+        this.bedLevel.putAll(newData.getBedLevels());
     }
 }
 

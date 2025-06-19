@@ -18,7 +18,6 @@ import net.mehvahdjukaar.sleep_tight.common.network.ModNetworking;
 import net.mehvahdjukaar.sleep_tight.common.network.ServerBoundCommitSleepMessage;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
-import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -61,7 +60,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     private static final EntityDataAccessor<OffsetMode> DATA_OFFSET = SynchedEntityData.defineId(BedEntity.class, SleepTight. OFFSET_MODE_SERIALIZER.get());
 
     private Direction dir = Direction.NORTH;
-    private BlockState bedState = Blocks.AIR.defaultBlockState();
+    private BlockState lastBedState = Blocks.AIR.defaultBlockState();
     private boolean dismountOnTheSpot = false;
 
     public BedEntity(EntityType<?> entityType, Level level) {
@@ -73,7 +72,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
         Direction bedDir = bedState.getValue(BedBlock.FACING);
         this.dir = bedDir.getOpposite();
         this.setYRot(this.dir.toYRot());
-        this.bedState = bedState;
+        this.lastBedState = bedState;
         this.setOffsetMode(offsetMode);
 
         var shape = bedState.getShape(worldIn, mainPos);
@@ -109,7 +108,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             BlockPos otherPos = getDoubleBedPos();
             Level level = level();
             BlockState otherState = level.getBlockState(otherPos);
-            if (otherState == bedState) {
+            if (otherState == lastBedState) {
                 level.setBlockAndUpdate(otherPos, otherState.setValue(BedBlock.OCCUPIED, false));
             }
         }
@@ -182,7 +181,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             discard();
         }
 
-        this.bedState = newBedState;
+        this.lastBedState = newBedState;
     }
 
 
@@ -243,8 +242,8 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     @Override
     protected void positionRider(Entity passenger, MoveFunction callback) {
         if (this.hasPassenger(passenger)) {
-            if (bedState.getBlock() instanceof IModBed b) {
-                var v = b.getSleepingPosition(bedState, this.blockPosition());
+            if (lastBedState.getBlock() instanceof IModBed b) {
+                var v = b.getSleepingPosition(lastBedState, this.blockPosition());
                 callback.accept(passenger, v.x, v.y, v.z);
             } else {
                 //same as set pos to bed
@@ -342,8 +341,8 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     public MutableComponent getRidingMessage(Component keyMessage, Component shiftMessage) {
-        this.bedState = level().getBlockState(this.blockPosition());
-        if (bedState.getBlock() instanceof HammockBlock) {
+        this.lastBedState = level().getBlockState(this.blockPosition());
+        if (lastBedState.getBlock() instanceof HammockBlock) {
             return Component.translatable("message.sleep_tight.start_resting", keyMessage, shiftMessage);
         } else {
             return Component.translatable("message.sleep_tight.start_sleeping", keyMessage, shiftMessage);
@@ -404,7 +403,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             player.startRiding(this, true);
             Player.BedSleepingProblem problem = op.get();
             Component m;
-            if (problem == Player.BedSleepingProblem.NOT_POSSIBLE_NOW && this.bedState.getBlock() instanceof IModBed mb) {
+            if (problem == Player.BedSleepingProblem.NOT_POSSIBLE_NOW && this.lastBedState.getBlock() instanceof IModBed mb) {
                 m = mb.getSleepingProblemMessage();
             } else m = problem.getMessage();
             if (m != null) {

@@ -12,11 +12,8 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BedBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,12 +92,11 @@ public abstract class PlayerSleepData {
     }
 
     public void increaseNightSleptInThisBed(BedData bed, Player player) {
-        if (this.isHomeBed(bed)) {
-            int required = CommonConfigs.HOME_BED_REWARD_REQUIRED_NIGHTS.get();
+        if (this.isBedLastSleptInto(bed)) {
 
             this.nightsSleptInSameBed++;
-            if (this.nightsSleptInSameBed >= required) {
-                bed.onHomeBedActivated(player);
+            if (isBedFamiliar()) {
+                bed.incrementBedLevel(player);
             }
         } else {
             if (nightsSleptInSameBed != 0) {
@@ -171,6 +167,14 @@ public abstract class PlayerSleepData {
         return consecutiveNightsSlept;
     }
 
+    public float getBedFamiliarity() {
+        return Math.min(1, (float) nightsSleptInSameBed / CommonConfigs.HOME_BED_REWARD_REQUIRED_NIGHTS.get());
+    }
+
+    public boolean isBedFamiliar() {
+        return getBedFamiliarity() >= 1;
+    }
+
     public int getNightsSleptInHomeBed() {
         return nightsSleptInSameBed;
     }
@@ -213,10 +217,6 @@ public abstract class PlayerSleepData {
         this.usingDoubleBed = oldData.usingDoubleBed;
     }
 
-    public int getHomeBedLevel() {
-        return Mth.clamp(this.nightsSleptInSameBed - CommonConfigs.HOME_BED_REWARD_REQUIRED_NIGHTS.get(), 0, CommonConfigs.HOME_BED_MAX_LEVEL.get());
-    }
-
     public boolean usingDoubleBed() {
         return usingDoubleBed;
     }
@@ -225,7 +225,7 @@ public abstract class PlayerSleepData {
         this.usingDoubleBed = doubleBed;
     }
 
-    public boolean isHomeBed(@Nullable BedData bedData) {
+    public boolean isBedLastSleptInto(@Nullable BedData bedData) {
         return bedData != null && bedData.getId().equals(this.getLastBedSleptInto());
     }
 

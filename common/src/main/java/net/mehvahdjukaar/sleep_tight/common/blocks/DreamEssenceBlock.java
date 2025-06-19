@@ -1,5 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.common.blocks;
 
+import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.common.entities.DreamerEssenceTargetEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -50,6 +51,13 @@ public class DreamEssenceBlock extends Block {
 
 
     public static boolean isInRange(BlockPos pos, Level level) {
+        if (level.isClientSide) {
+            return SleepTightClient.getCachedDreamEssenceInRange(pos, level);
+        }
+        return isInRangeInternal(pos, level);
+    }
+
+    public static boolean isInRangeInternal(BlockPos pos, Level level) {
         return !level.getEntitiesOfClass(DreamerEssenceTargetEntity.class,
                 new AABB(pos).inflate(5)).isEmpty();
     }

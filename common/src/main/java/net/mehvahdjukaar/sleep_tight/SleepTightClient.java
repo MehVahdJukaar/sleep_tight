@@ -9,13 +9,17 @@ import net.mehvahdjukaar.sleep_tight.client.particles.MimimiParticle;
 import net.mehvahdjukaar.sleep_tight.client.renderers.BedbugEntityRenderer;
 import net.mehvahdjukaar.sleep_tight.client.renderers.HammockBlockTileRenderer;
 import net.mehvahdjukaar.sleep_tight.client.renderers.InfestedBedRenderer;
+import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
+import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
+import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.client.resources.model.Material;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
@@ -23,6 +27,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Calendar;
@@ -110,5 +115,27 @@ public class SleepTightClient {
                     pos.x, pos.y, pos.z,
                     yawDeg, entity.getId(), 0);
         }
+    }
+
+    @Nullable
+    public static BedData getLayingBedData() {
+        Player player = getPlayer();
+        Entity vehicle = player.getVehicle();
+        if (vehicle instanceof BedEntity be) {
+            BlockPos pos = be.blockPosition();
+            return STPlatStuff.getBedData(player.level(), pos);
+        }
+        return null;
+    }
+
+    private static long lastTick = 0;
+    private static boolean hasDreamEssenceInRange = false;
+
+    public static boolean getCachedDreamEssenceInRange(BlockPos pos, Level level) {
+        if (level.getGameTime() != lastTick) {
+            hasDreamEssenceInRange = DreamEssenceBlock.isInRangeInternal(pos, level);
+            lastTick = level.getGameTime();
+        }
+        return hasDreamEssenceInRange;
     }
 }

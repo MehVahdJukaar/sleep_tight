@@ -28,7 +28,7 @@ public class STPlatStuffImpl {
         );
     }
 
-    public static @Nullable ForgeBedCapability getBedDataFromThis(BlockEntity be) {
+    public static @Nullable BedData getBedDataFromThis(BlockEntity be) {
         LazyOptional<ForgeBedCapability> capability = be.getCapability(ForgeBedCapability.TOKEN);
         if (capability.isPresent()) {
             return capability.orElseThrow(() -> new IllegalStateException("Bed capability was null. How? "));
