@@ -1,5 +1,3 @@
-big changes to mod internals
-changed how infested beds are. there are now a property of existing beds instead of a differnt block
-possibly improved compat with mods that alter animations and mods that add new beds
-bed data now uses a forge capability on forge and attachments on fabric
-added better status messages
+- bed levels will no longer be rest when sleeping on another bed
+- to unlock an old bed levels simply sleep 6 nights in a row in it, same as you would to fist unlock the fist level 
+- added new gui that will indicate both bed level, home bed unlock progress (familiarity), nightmare chance and dream essence

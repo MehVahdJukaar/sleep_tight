@@ -1,16 +1,14 @@
 package net.mehvahdjukaar.sleep_tight.forge;
 
-import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.client.SleepGuiOverlay;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
-import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.InBedChatScreen;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
+import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.client.gui.overlay.ForgeGui;
@@ -29,6 +27,16 @@ public class SleepTightForgeClient {
     }
 
     @SubscribeEvent
+    public static void onRenderGuiOverlayPre(RenderGuiOverlayEvent.Pre event) {
+        var overlay = event.getOverlay();
+        if (overlay == VanillaGuiOverlay.EXPERIENCE_BAR.type()) {
+            if (SleepTightClient.getLayingBedData() != null) {
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    @SubscribeEvent
     public static void onEntityTIck(LivingEvent.LivingTickEvent event) {
         SleepTightClient.onEntityTick(event.getEntity());
     }
@@ -37,13 +45,6 @@ public class SleepTightForgeClient {
     public static void onRenderScreen(ScreenEvent.Render.Post event) {
         if (event.getScreen() instanceof InBedChatScreen s) {
             SleepGuiOverlay.renderBedScreenOverlay(s, event.getGuiGraphics(), event.getMouseX(), event.getMouseY());
-        }
-    }
-
-    @SubscribeEvent
-    public static void onInitScreen(ScreenEvent.Init.Post event) {
-        if (event.getScreen() instanceof InBedChatScreen s) {
-            SleepGuiOverlay.setupOverlay(s);
         }
     }
 

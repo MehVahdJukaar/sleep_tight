@@ -4,11 +4,12 @@ package net.mehvahdjukaar.sleep_tight.client;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
+import net.mehvahdjukaar.moonlight.api.util.math.colors.HSVColor;
+import net.mehvahdjukaar.moonlight.api.util.math.colors.RGBColor;
 import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
-import net.mehvahdjukaar.sleep_tight.common.blocks.NightBagBlock;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.items.NightBagItem;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
@@ -22,12 +23,15 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.InBedChatScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 
+import java.awt.*;
 import java.util.ArrayList;
 
 public abstract class SleepGuiOverlay<T extends Gui> {
@@ -36,19 +40,31 @@ public abstract class SleepGuiOverlay<T extends Gui> {
         Minecraft mc = Minecraft.getInstance();
         Options options = mc.options;
 
-        if (options.hideGui) return;
-        var hit = mc.hitResult;
+
+        BedData bedData = SleepTightClient.getLayingBedData();
+        Player player = mc.player;
+        if (bedData != null) {
+            PlayerSleepData playerData = STPlatStuff.getPlayerSleepData(player);
+            renderBar(graphics, width, height,
+                    bedData, playerData, mc,
+                    player, partialTicks);
+            return;
+        }
+
+        HitResult hit = mc.hitResult;
 
         boolean cooldown = ClientConfigs.INSOMNIA_COOLDOWN.get();
         boolean timer = ClientConfigs.INSOMNIA_TIMER.get();
 
         if (!timer && !cooldown) return;
 
+        renderCooldownCrossAir(gui, graphics, width, height, options, mc, hit, player, cooldown, timer);
+    }
 
+    private void renderCooldownCrossAir(T gui, GuiGraphics graphics, int width, int height, Options options, Minecraft mc, HitResult hit, Player player, boolean cooldown, boolean timer) {
         if (options.getCameraType().isFirstPerson() && (mc.gameMode.getPlayerMode() != GameType.SPECTATOR ||
                 gui.canRenderCrosshairForSpectator(hit))) {
 
-            Player player = mc.player;
 
             boolean laying = player.getVehicle() instanceof BedEntity;
             if (laying || (cooldown && (
@@ -58,12 +74,12 @@ public abstract class SleepGuiOverlay<T extends Gui> {
             ))) {
 
 
-                var c = STPlatStuff.getPlayerSleepData(player);
-                float f = 1 - c.getInsomniaCooldownPercentage(player);
-                if (f < 1) {
+                PlayerSleepData playerData = STPlatStuff.getPlayerSleepData(player);
+                float insomniaPerc = 1 - playerData.getInsomniaCooldownPercentage(player);
+                if (insomniaPerc < 1) {
 
                     if (laying && timer) {
-                        graphics.drawString(mc.font, "" + c.getInsomniaCooldown(player) / 20, 2, 2, 14737632);
+                        graphics.drawString(mc.font, "" + playerData.getInsomniaCooldown(player) / 20, 2, 2, 14737632);
                     }
 
                     if (cooldown) {
@@ -85,7 +101,7 @@ public abstract class SleepGuiOverlay<T extends Gui> {
                             j += 8;
                         }
 
-                        int l = (int) (f * 11.0F);
+                        int l = (int) (insomniaPerc * 11.0F);
                         graphics.blit(SleepTightClient.ICONS, k, j, 3, 18, 11, 5, 48, 48);
                         graphics.blit(SleepTightClient.ICONS, k, j, 16 + 3f, 18, l, 5, 48, 48);
 
@@ -110,7 +126,14 @@ public abstract class SleepGuiOverlay<T extends Gui> {
     public static void renderBedScreenOverlay(InBedChatScreen s, GuiGraphics graphics, int mouseX, int mouseY) {
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
-
+        if (player == null) return;
+        BlockPos sleepingPos = player.getSleepingPos().orElse(null);
+        if (sleepingPos == null) return;
+        PlayerSleepData playerData = STPlatStuff.getPlayerSleepData(player);
+        BedData bedData = STPlatStuff.getBedData(player.level(), sleepingPos);
+        if (bedData == null) return;
+        boolean hasDreamerEssence = DreamEssenceBlock.isInRange(sleepingPos, player.level());
+        boolean isBedFamiliar = playerData.isBedFamiliar();
 
         if (ClientConfigs.SHOW_TIME.get()) {
             graphics.drawString(mc.font, getCurrentTime(player.level()), 2, 2, 14737632);
@@ -119,34 +142,91 @@ public abstract class SleepGuiOverlay<T extends Gui> {
         //ModBedCapability cap = ModBedCapability.getHomeBedIfHere(player, p.get());
         int y = s.height - 39;
         int iconSize = 18;
-        if (isHomeBed) {
-            int x = s.width / 2 - 120;
-            graphics.blit(SleepTightClient.ICONS, x, y, 0, 0, iconSize, iconSize, 48, 48);
-        }
+        int bx = s.width / 2 - 120;
+        int bh = isBedFamiliar ? 0 : 28;
+        graphics.blit(SleepTightClient.ICONS, bx, y, 0, bh, iconSize, iconSize, 48, 48);
+
         if (hasDreamerEssence) {
             int x = s.width / 2 + 120 - iconSize;
             graphics.blit(SleepTightClient.ICONS, x, y, iconSize, 0, iconSize, iconSize, 48, 48);
         }
 
-        if (isHomeBed) {
-            int x = s.width / 2 - 120;
-            if (MthUtils.isWithinRectangle(x, y, iconSize, iconSize, mouseX, mouseY)) {
-                var data = STPlatStuff.getPlayerSleepData(player);
-                double nightmare = data.getNightmareChance(player, player.getSleepingPos().orElse(BlockPos.ZERO));
-                int bedLevel = data.getHomeBedLevel();
-                var lines = new ArrayList<>(mc.font.split(Component.translatable("gui.sleep_tight.home_bed"), 200));
-                lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.bed_level", bedLevel), 200));
-                lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.nightmare", nightmare), 200));
-                graphics.renderTooltip(mc.font, lines, mouseX, mouseY);
+        if (MthUtils.isWithinRectangle(bx, y, iconSize, iconSize, mouseX, mouseY)) {
+            double nightmare = playerData.getNightmareChance(player, sleepingPos);
+            int bedLevel = bedData.getBedLevel(player);
+            MutableComponent title = isBedFamiliar ?
+                    Component.translatable("gui.sleep_tight.home_bed") :
+                    Component.translatable("gui.sleep_tight.bed");
+            var lines = new ArrayList<>(mc.font.split(title, 200));
+            if (!isBedFamiliar) {
+                lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.familiarity",
+                        (int) (playerData.getBedFamiliarity() * 100)), 200));
             }
+            lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.bed_level", bedLevel), 200));
+            lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.nightmare", nightmare), 200));
+            graphics.renderTooltip(mc.font, lines, mouseX, mouseY);
         }
         if (hasDreamerEssence) {
-            int x = s.width / 2 + 120 - iconSize;
-            if (MthUtils.isWithinRectangle(x, y, iconSize, iconSize, mouseX, mouseY)) {
+            int dx = s.width / 2 + 120 - iconSize;
+            if (MthUtils.isWithinRectangle(dx, y, iconSize, iconSize, mouseX, mouseY)) {
 
                 graphics.renderTooltip(mc.font, mc.font.split(Component.translatable("gui.sleep_tight.dreamer_essence"), 200), mouseX, mouseY);
             }
         }
+    }
+
+
+    private static void renderBar(GuiGraphics graphics, int screenWidth, int screenHeight,
+                                  BedData bedData, PlayerSleepData playerData,
+                                  Minecraft mc, Player player,
+                                  float partialTicks) {
+        ResourceLocation texture = new ResourceLocation("minecraft:textures/gui/bars.png");
+        int xpBarLeft = screenWidth / 2 - 91;
+
+        float familiarity = playerData.getBedFamiliarity();
+        boolean hasDreamerEssence = DreamEssenceBlock.isInRange(player.blockPosition(), player.level());
+        double nightmareChance = playerData.getNightmareChance(player, player.blockPosition());
+
+        int barColor = hasDreamerEssence ? 0xc93095 : 0xc0cf08;//  0xDCB402
+
+        HSVColor color = new RGBColor(barColor).asHSV();
+        if (hasDreamerEssence) {
+            float desaturation = (float) (1 - (nightmareChance * 0.5));
+            color = color.withSaturation(color.saturation() * desaturation)
+                    .withValue(color.value() * desaturation);
+        }
+        var rgb = color.asRGB();
+
+        RenderSystem.setShaderColor(rgb.red(), rgb.green(), rgb.blue(), 1.0F);
+
+        int k = (int) (familiarity * 183.0F);
+        int xpBarTop = screenHeight - 32 + 3;
+        int baY = 60;
+        graphics.blit(texture, xpBarLeft, xpBarTop, 0, baY, 183, 5);
+
+
+        graphics.blit(texture, xpBarLeft, xpBarTop, 0, baY + 5, k, 5);
+        graphics.blit(texture, xpBarLeft, xpBarTop, 0, 85, 182, 5);
+
+
+        int power = bedData.getBedLevel(player);
+
+        var c = new Color(0x602680);
+        var c1 = new Color(0x18756D);
+        int textCol = hasDreamerEssence ?
+                (playerData.isBedFamiliar() ? 0xBC46FF : 0x602680) :
+                (playerData.isBedFamiliar() ? 0x00FFEC : 0x18756D);
+
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+
+        String bedLevelStr = String.valueOf(power);
+        int cx = (screenWidth - mc.font.width(bedLevelStr)) / 2;
+        int cy = screenHeight - 31 - 4;
+        graphics.drawString(mc.font, bedLevelStr, cx + 1, cy, 0, false);
+        graphics.drawString(mc.font, bedLevelStr, cx - 1, cy, 0, false);
+        graphics.drawString(mc.font, bedLevelStr, cx, cy + 1, 0, false);
+        graphics.drawString(mc.font, bedLevelStr, cx, cy - 1, 0, false);
+        graphics.drawString(mc.font, bedLevelStr, cx, cy, textCol, false);
     }
 
     private static Component getCurrentTime(Level level) {
@@ -160,30 +240,8 @@ public abstract class SleepGuiOverlay<T extends Gui> {
             if (h == 0) h = 12;
         }
         return Component.literal(h + ":" + ((m < 10) ? "0" : "") + m + a);
-
     }
 
-    public static void setupOverlay(InBedChatScreen screen) {
-        isHomeBed = false;
-        hasDreamerEssence = false;
-        Player player = Minecraft.getInstance().player;
-        var p = player.getSleepingPos();
-        if (p.isPresent()) {
-            BlockPos pos = p.get();
-            BedData bedData = STPlatStuff.getBedData(player.level(), pos);
-            PlayerSleepData playerData = STPlatStuff.getPlayerSleepData(player);
-            isHomeBed = playerData.isHomeBed(bedData);
-            nightInHomeBed = playerData.getNightsSleptInHomeBed();
 
-            hasDreamerEssence = !(player.level().getBlockState(pos).getBlock() instanceof NightBagBlock) &&
-                    DreamEssenceBlock.isInRange(pos, player.level());
-        }
-
-    }
-
-    //random static global state yay
-    private static boolean isHomeBed = false;
-    private static boolean hasDreamerEssence = false;
-    private static int nightInHomeBed = 0;
 }
 

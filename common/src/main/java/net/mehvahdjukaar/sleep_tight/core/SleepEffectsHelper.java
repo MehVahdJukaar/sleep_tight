@@ -63,12 +63,13 @@ public class SleepEffectsHelper {
         player.getFoodData().setFoodLevel(level);
     }
 
-    private static void applyVanillaBedBonuses(ServerPlayer player, long dayTimeDelta, BedData bedData, PlayerSleepData playerSleepData) {
+    private static void applyVanillaBedBonuses(ServerPlayer player, long dayTimeDelta,
+                                               BedData bedData, PlayerSleepData playerSleepData) {
 
         //TODO: differentiate between home bed and non home bed. here it should just apply to leveld up bed
         BedStatus status = BED_BENEFITS.get();
         if (status == BedStatus.NONE) return;
-        if (status == BedStatus.HOME_BED && (!playerSleepData.isHomeBed(bedData))) return;
+        if (status == BedStatus.HOME_BED && (!playerSleepData.isBedLastSleptInto(bedData))) return;
         //healing
         EffectIntensity healing = HEALING.get();
         if (healing != EffectIntensity.NONE) {
@@ -108,23 +109,21 @@ public class SleepEffectsHelper {
                 }
             }
         }
-        int homeBedLevel = playerSleepData.getHomeBedLevel();
-        if (homeBedLevel > 0) { //TODO: check and change
+        if (playerSleepData.isBedFamiliar()) {
             //effects
             for (var e : WAKE_UP_EFFECTS.get()) {
-                player.addEffect(e.createInstance(homeBedLevel - 1));
+                player.addEffect(e.createInstance(bedData.getBedLevel(player) - 1));
             }
         }
     }
 
     private static void applyHeartstoneBonuses(ServerPlayer player, BlockPos pos, BlockState state,
-                                               @Nullable BedData data, PlayerSleepData playerSleepData) {
+                                               BedData data, PlayerSleepData playerSleepData) {
         BlockPos otherPos = getPartnerPos(player, state, pos);
         if (otherPos != null) {
-            int homeBedLevel = playerSleepData.getHomeBedLevel();
-            if (homeBedLevel > 0) {//TODO: check and change
+            if (playerSleepData.isBedFamiliar()) {
                 for (var e : HEARTSTONE_EFFECT.get()) {
-                    player.addEffect(e.createInstance(homeBedLevel - 1));
+                    player.addEffect(e.createInstance(data.getBedLevel(player) - 1));
                 }
             }
         }

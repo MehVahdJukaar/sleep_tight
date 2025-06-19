@@ -34,6 +34,8 @@ import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacements;
+import net.minecraft.world.entity.ai.village.poi.PoiType;
+import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -88,6 +90,9 @@ public class SleepTight {
 
         EntityDataSerializers.registerSerializer(BedEntity.SERIALIZER);
 
+        //TODO: xp bar sleep
+        //todo: soap copy capabilities and attachment of block entities
+        //bedrbug sbl
         /*
         Experience a sleep encounter - Alarmed!
 Get invigorated effect - You awaken feeling Well Rested
@@ -131,6 +136,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
         event.register(DREAMER_ESSENCE_ENTITY.get(), DreamerEssenceTargetEntity.makeAttributes());
         event.register(BEDBUG_ENTITY.get(), BedbugEntity.makeAttributes());
     }
+
 
     //sound events
 
@@ -245,6 +251,5 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     public static <T extends Item> Supplier<T> regItem(String name, Supplier<T> sup) {
         return RegHelper.registerItem(res(name), sup);
     }
-
 
 }

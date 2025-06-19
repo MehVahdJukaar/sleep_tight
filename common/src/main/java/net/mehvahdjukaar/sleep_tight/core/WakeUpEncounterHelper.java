@@ -165,7 +165,7 @@ public class WakeUpEncounterHelper {
             }
             if (CommonConfigs.ONLY_WHEN_IN_HOME_BED.get()) {
                 PlayerSleepData playerData = STPlatStuff.getPlayerSleepData(player);
-                if (data == null || !playerData.isHomeBed(data)) return false;
+                if (data == null || !playerData.isBedLastSleptInto(data)) return false;
             }
 
             BlockPos.MutableBlockPos mutable = bedPos.mutable();

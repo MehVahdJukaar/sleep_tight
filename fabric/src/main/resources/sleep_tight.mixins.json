@@ -4,6 +4,7 @@
   "package": "net.mehvahdjukaar.sleep_tight.mixins.fabric",
   "compatibilityLevel": "JAVA_16",
   "client": [
+    "GuiMixin"
   ],
   "mixins": [
     "BlockMixin",
