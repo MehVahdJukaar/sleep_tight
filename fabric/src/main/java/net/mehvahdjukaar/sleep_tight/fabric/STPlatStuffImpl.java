@@ -79,4 +79,5 @@ public class STPlatStuffImpl {
     public static BedData getBedDataFromThis(BlockEntity be) {
        return be.getAttached(SleepTightFabric.BED_DATA);
     }
+
 }

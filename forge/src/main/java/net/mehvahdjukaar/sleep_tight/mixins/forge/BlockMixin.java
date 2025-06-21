@@ -1,5 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.mixins.forge;
 
+import earth.terrarium.handcrafted.common.blocks.FancyBedBlock;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
 import net.minecraft.core.BlockPos;

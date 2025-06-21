@@ -186,11 +186,10 @@ public abstract class SleepGuiOverlay<T extends Gui> {
         float familiarity = playerData.getBedFamiliarity();
         boolean hasDreamerEssence = DreamEssenceBlock.isInRange(player.blockPosition(), player.level());
         double nightmareChance = playerData.getNightmareChance(player, player.blockPosition());
-
-        int barColor = hasDreamerEssence ? 0xc93095 : 0xc0cf08;//  0xDCB402
+        int barColor = hasDreamerEssence ? 0xc93095 : 0xDCAC07;//  0xDCB402
 
         HSVColor color = new RGBColor(barColor).asHSV();
-        if (hasDreamerEssence) {
+        if (!hasDreamerEssence) {
             float desaturation = (float) (1 - (nightmareChance * 0.5));
             color = color.withSaturation(color.saturation() * desaturation)
                     .withValue(color.value() * desaturation);
@@ -211,11 +210,11 @@ public abstract class SleepGuiOverlay<T extends Gui> {
 
         int power = bedData.getBedLevel(player);
 
-        var c = new Color(0x602680);
-        var c1 = new Color(0x18756D);
+        var c = new Color(0x00E1FF);
+        var c1 = new Color(0x186475);
         int textCol = hasDreamerEssence ?
                 (playerData.isBedFamiliar() ? 0xBC46FF : 0x602680) :
-                (playerData.isBedFamiliar() ? 0x00FFEC : 0x18756D);
+                (playerData.isBedFamiliar() ? 0x00E1FF : 0x186475);
 
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 

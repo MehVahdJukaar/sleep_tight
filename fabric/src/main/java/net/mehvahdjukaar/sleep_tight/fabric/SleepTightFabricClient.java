@@ -1,15 +1,19 @@
 package net.mehvahdjukaar.sleep_tight.fabric;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientBlockEntityEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.mehvahdjukaar.sleep_tight.client.SleepGuiOverlay;
+import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.InBedChatScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.resources.ResourceLocation;
+
+import static net.mehvahdjukaar.sleep_tight.fabric.SleepTightFabric.BED_DATA;
 
 public class SleepTightFabricClient {
 
@@ -22,6 +26,12 @@ public class SleepTightFabricClient {
             }
         });
 
+        ClientBlockEntityEvents.BLOCK_ENTITY_LOAD.register((blockEntity, clientLevel) -> {
+            //initialize attachments
+            if (ModEvents.shouldHaveBedData(blockEntity)) {
+                blockEntity.getAttachedOrCreate(BED_DATA);
+            }
+        });
         var overlay = new SleepGuiOverlayImpl();
         HudRenderCallback.EVENT.register(overlay::render);
     }

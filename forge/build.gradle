@@ -109,6 +109,8 @@ dependencies {
     modCompileOnly ("curse.maven:supplementaries-412082:4375776")
     modImplementation ("curse.maven:upgrade-aquatic-326895:6393133")
     modImplementation ("curse.maven:blueprint-382216:6408581")
+    modImplementation ("curse.maven:handcrafted-538214:5118729")
+    modImplementation ("curse.maven:resourceful-lib-570073:5659871")
 
 }
 
