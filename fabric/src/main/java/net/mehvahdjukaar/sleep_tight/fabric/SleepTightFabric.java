@@ -16,12 +16,18 @@ import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
+import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncBedCapMessage;
+import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
+import net.minecraft.server.TickTask;
+import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BedBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class SleepTightFabric implements ModInitializer {
@@ -51,13 +57,12 @@ public class SleepTightFabric implements ModInitializer {
         ServerBlockEntityEvents.BLOCK_ENTITY_LOAD.register((blockEntity, serverLevel) -> {
             //initialize attachments
             if (ModEvents.shouldHaveBedData(blockEntity)) {
-                blockEntity.getAttachedOrCreate(BED_DATA);
-            }
-        });
-        ClientBlockEntityEvents.BLOCK_ENTITY_LOAD.register((blockEntity, clientLevel) -> {
-            //initialize attachments
-            if (ModEvents.shouldHaveBedData(blockEntity)) {
-                blockEntity.getAttachedOrCreate(BED_DATA);
+                //Thanks fabric. Without this it just deadlocks the game LMAO. GG
+                //both attachments and cap api seems failed systems to me, without synching and even issues like these, I should just use mixins next time
+                serverLevel.getServer().tell(new TickTask(serverLevel.getServer().getTickCount(), () -> {
+                    blockEntity.getAttachedOrCreate(BED_DATA);
+                }));
+                //blockEntity.getAttachedOrCreate(BED_DATA);
             }
         });
         UseBlockCallback.EVENT.register((player, level, interactionHand, blockHitResult) -> {

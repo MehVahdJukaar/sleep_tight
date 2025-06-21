@@ -13,6 +13,7 @@
   "mixins": [
     "BedBlockMixin",
     "ChunkHolderMixin",
+    "CompatHandcraftedBedMixin",
     "DoorBlockMixin",
     "LivingEntityMixin",
     "PhantomMixin",

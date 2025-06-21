@@ -17,10 +17,13 @@ import net.mehvahdjukaar.sleep_tight.common.entities.DreamerEssenceTargetEntity;
 import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
 import net.mehvahdjukaar.sleep_tight.common.items.NightBagItem;
 import net.mehvahdjukaar.sleep_tight.common.network.ModNetworking;
+import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
+import net.mehvahdjukaar.sleep_tight.common.tiles.CompatBedTile;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.common.tiles.InfestedBedTile;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
+import net.mehvahdjukaar.sleep_tight.integration.HandcraftedCompat;
 import net.minecraft.Util;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
@@ -35,8 +38,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacementType;
 import net.minecraft.world.entity.SpawnPlacementTypes;
-import net.minecraft.world.entity.ai.village.poi.PoiType;
-import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -68,6 +69,7 @@ public class SleepTight {
     public static final boolean SUPP = PlatHelper.isModLoaded("supplementaries");
     public static final boolean HS = PlatHelper.isModLoaded("heartstone");
     public static final boolean QUARK = PlatHelper.isModLoaded("quark");
+    public static final boolean HANDCRAFTED = PlatHelper.isModLoaded("handcrafted");
 
     public static ResourceLocation res(String name) {
         return ResourceLocation.fromNamespaceAndPath(MOD_ID, name);
@@ -90,8 +92,6 @@ public class SleepTight {
 
         EntityDataSerializers.registerSerializer(BedEntity.SERIALIZER);
 
-        //TODO: xp bar sleep
-        //todo: soap copy capabilities and attachment of block entities
         //bedrbug sbl
         /*
         Experience a sleep encounter - Alarmed!
@@ -101,8 +101,7 @@ Place a dreamer essence - It's what phantoms crave
 Use a night bag - Glamping
 Use a potion of harming on a bed to remove a bed bug - Pest control
          */
-        //nitwits hammock
-        //sleep next to eachother bonus bugged
+        //nitwits hammock!!
         //TODO: bedbug spawn
         //naturalist teddy bear
         //together nightmares
@@ -200,6 +199,12 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
                     .sound(SoundType.WOOL).strength(0.1F))
     );
 
+    static {
+        if (PlatHelper.isModLoaded("handcrafted")) {
+
+        }
+    }
+
     public static final Supplier<InfestedBedBlock> INFESTED_BED = regBlock("infested_bed", () ->
             new InfestedBedBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.BROWN_BED))
     );
@@ -210,6 +215,11 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
             ));
 
     //tile
+
+    public static final Supplier<BlockEntityType<CompatBedTile>> COMPAT_BED_TILE = SleepTight.HANDCRAFTED ?
+            RegHelper.registerBlockEntityType(
+                    res("compat_bed"), () -> PlatHelper.newBlockEntityType(CompatBedTile::new,
+                            HandcraftedCompat.getAllFancyBeds())) : null;
 
     public static final Supplier<BlockEntityType<HammockTile>> HAMMOCK_TILE = RegHelper.registerBlockEntityType(
             res("hammock"), () -> PlatHelper.newBlockEntityType(HammockTile::new,

@@ -24,6 +24,9 @@ dependencies {
     modCompileOnly("org.violetmoon.zeta:Zeta-1.0-beta-1")
 
     modImplementation "net.tslat.smartbrainlib:SmartBrainLib-fabric-${project.minecraft_version}:${project.sbl_version}"
+    modImplementation ("curse.maven:handcrafted-538214:5118729")
+    modImplementation ("curse.maven:resourceful-lib-570073:5659871")
+        modImplementation "net.tslat.smartbrainlib:SmartBrainLib-fabric-${project.minecraft_version}:${project.sbl_version}"
 }
 
 publishing {
