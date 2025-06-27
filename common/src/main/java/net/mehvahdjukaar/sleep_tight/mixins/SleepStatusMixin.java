@@ -15,14 +15,19 @@ import java.util.List;
 @Mixin(SleepStatus.class)
 public abstract class SleepStatusMixin {
 
-    @Shadow private int activePlayers;
+    @Shadow
+    private int activePlayers;
 
-    @Inject(method = "update",at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;isSleeping()Z",
-    shift = At.Shift.BEFORE))
+    @Inject(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;isSleeping()Z",
+            shift = At.Shift.BEFORE))
     public void sleep_tight$removeOnCooldown(List<ServerPlayer> players, CallbackInfoReturnable<Boolean> cir,
-                                             @Local ServerPlayer serverPlayer){
-        if(STPlatStuff.getPlayerSleepData(serverPlayer).isOnSleepCooldown(serverPlayer)){
-            this.activePlayers--;
+                                             @Local ServerPlayer serverPlayer) {
+        try {
+            if (STPlatStuff.getPlayerSleepData(serverPlayer).isOnSleepCooldown(serverPlayer)) {
+                this.activePlayers--;
+            }
+        }catch (Exception e){
+            //just here since this can be called before cap is assigned. band-aid for dumb forge
         }
     }
 }
