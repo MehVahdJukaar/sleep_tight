@@ -148,6 +148,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     public static final TagKey<EntityType<?>> WAKE_UP_BLACKLIST = TagKey.create(Registries.ENTITY_TYPE, res("wake_up_blacklist"));
     public static final TagKey<Block> BEDBUG_WALK_THROUGH = TagKey.create(Registries.BLOCK, res("bedbug_walk_through"));
     public static final TagKey<BannerPattern> MOON_TAG = TagKey.create(Registries.BANNER_PATTERN, res("pattern_item/moon"));
+    public static final TagKey<Block> LAYING_BED_BLACKLIST = TagKey.create(Registries.BLOCK, res("laying_beds_blacklist"));
 
     //banner pattern
     public static final Supplier<BannerPattern> MOON_PATTERN = RegHelper.register(res("moon"), () -> new BannerPattern("mon"), Registries.BANNER_PATTERN);

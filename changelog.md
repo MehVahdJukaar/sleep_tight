@@ -1,2 +1,2 @@
-- fixed a cash on fabric on servers
-- added direct compat with handcrafted so that its sheet items can be placed without shifting and making its beds have a tile entity (using mega hack mixins) so that they can have sleep right data
+added a blacklist tag
+fixed a translation

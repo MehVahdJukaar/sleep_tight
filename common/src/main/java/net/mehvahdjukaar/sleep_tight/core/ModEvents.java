@@ -174,7 +174,7 @@ public class ModEvents {
         Direction dir = state.getValue(BedBlock.FACING);
 
         if (SleepTight.HANDCRAFTED) {
-            var ret = HandcraftedCompat.placeSheet(state, pos, player, hand, hitResult);
+            InteractionResult ret = HandcraftedCompat.placeSheet(state, pos, player, hand, hitResult);
             if (ret != InteractionResult.PASS) {
                 return ret;
             }
@@ -191,7 +191,6 @@ public class ModEvents {
         if (itemInHand.getItem() instanceof BedbugEggsItem bb) {
             return bb.useOnBed(player, hand, itemInHand, state, pos, hitResult);
         }
-
 
 
         //fallsback on bed logic for non sleep action
@@ -539,6 +538,7 @@ public class ModEvents {
 
     public static boolean shouldHaveBedData(BlockEntity blockEntity) {
         BlockState state = blockEntity.getBlockState();
+        if (state.is(SleepTight.LAYING_BED_BLACKLIST)) return false;
         return (state.getBlock() instanceof BedBlock && state.getValue(BedBlock.PART) == BedPart.HEAD)
                 || (blockEntity instanceof BedBlockEntity be && be.getBlockState().hasProperty(BedBlock.PART) &&
                 be.getBlockState().getValue(BedBlock.PART) == BedPart.HEAD);

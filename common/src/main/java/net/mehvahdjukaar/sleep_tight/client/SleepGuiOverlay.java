@@ -159,8 +159,8 @@ public abstract class SleepGuiOverlay<T extends Gui> {
                     Component.translatable("gui.sleep_tight.bed");
             var lines = new ArrayList<>(mc.font.split(title, 200));
             if (!isBedFamiliar) {
-                lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.familiarity",
-                        (int) (playerData.getBedFamiliarity() * 100)), 200));
+                String percent = String.format("%1f", playerData.getBedFamiliarity() * 100) + "%";
+                lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.familiarity", percent), 200));
             }
             lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.bed_level", bedLevel), 200));
             lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.nightmare", nightmare), 200));
