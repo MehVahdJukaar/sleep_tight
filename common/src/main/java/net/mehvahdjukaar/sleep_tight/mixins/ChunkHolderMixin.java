@@ -1,8 +1,8 @@
 package net.mehvahdjukaar.sleep_tight.mixins;
 
+import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncBedCapMessage;
-import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
@@ -32,8 +32,7 @@ public abstract class ChunkHolderMixin {
                 if (cap != null) {
                     ServerChunkCache chunkSource = serverLevel.getChunkSource();
                     chunkSource.chunkMap.getPlayers(new ChunkPos(pos), false).forEach(p ->
-                            NetworkHandler.CHANNEL.sendToClientPlayer(p,
-                                    new ClientBoundSyncBedCapMessage(pos, cap)));
+                            NetworkHelper.sendToClientPlayer(p, new ClientBoundSyncBedCapMessage(pos, cap)));
                 }
             }));
         }

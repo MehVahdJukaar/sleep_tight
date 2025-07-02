@@ -6,8 +6,8 @@
   "client": [
   ],
   "mixins": [
-    "ServerPlayerMixin",
-    "BlockMixin"
+    "LevelMixin",
+    "ServerPlayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

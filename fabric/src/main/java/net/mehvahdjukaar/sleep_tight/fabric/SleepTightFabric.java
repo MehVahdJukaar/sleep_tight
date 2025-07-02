@@ -20,6 +20,7 @@ import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncBedCapMessage
 import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
+import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
@@ -33,6 +34,7 @@ import net.minecraft.world.level.block.state.BlockState;
 public class SleepTightFabric implements ModInitializer {
 
     public static AttachmentType<BedData> BED_DATA;
+    public static AttachmentType<PlayerSleepData> PLAYER_SLEEP_DATA;
 
     @Override
     public void onInitialize() {

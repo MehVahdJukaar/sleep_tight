@@ -8,18 +8,17 @@ import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
 import net.mehvahdjukaar.sleep_tight.common.blocks.IModBed;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
-import net.mehvahdjukaar.sleep_tight.common.blocks.InfestedBedBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.NightBagBlock;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundNightmarePacket;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundParticleMessage;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncPlayerSleepCapMessage;
-import net.mehvahdjukaar.sleep_tight.common.network.ModNetworking;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.integration.HandcraftedCompat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -42,8 +41,6 @@ import net.minecraft.world.entity.projectile.ThrownPotion;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.LingeringPotionItem;
 import net.minecraft.world.item.SplashPotionItem;
-import net.minecraft.world.item.alchemy.Potion;
-import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
@@ -63,6 +60,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.StreamSupport;
 
 public class ModEvents {
 
@@ -157,10 +155,6 @@ public class ModEvents {
         BlockPos pos = hitResult.getBlockPos();
         var state = level.getBlockState(pos);
         Block b = state.getBlock();
-
-        if (b instanceof InfestedBedBlock) {//todo check
-            //return state.use(level, player, hand, hitResult);
-        }
 
         BedData data = STPlatStuff.getBedData(level, pos);
         if (data == null) return null;
@@ -303,7 +297,7 @@ public class ModEvents {
         player.displayClientMessage(Component.translatable("message.sleep_tight.nightmare"), true);
         player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 20 * 3, 0, false, false, false,
                 null
-               // , Optional.of(new MobEffectInstance.FactorData(20, 10, 1, 1, 20 * 3, 1, true))
+                // , Optional.of(new MobEffectInstance.FactorData(20, 10, 1, 1, 20 * 3, 1, true))
         ));
         NetworkHelper.sendToClientPlayer(player, new ClientBoundNightmarePacket());
     }
@@ -463,9 +457,9 @@ public class ModEvents {
     }
 
     public static boolean shouldCancelRespawnHere(Player player, DimensionTransition transition) {
-        if ( CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
-            BedData bedData = BedData.get(player.level(), BlockPos.containing(transition.pos()));
-            if (bedData != null && !SleepTightPlatformStuff.getPlayerSleepData(player).isHomeBed(bedData)) {
+        if (CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
+            BedData bedData = STPlatStuff.getBedData(player.level(), BlockPos.containing(transition.pos()));
+            if (bedData != null && !STPlatStuff.getPlayerSleepData(player).isBedLastSleptInto(bedData)) {
                 return true;
             }
         }
@@ -478,11 +472,12 @@ public class ModEvents {
             BlockPos pos = getBedHead(state, myPos);
             BedData data = STPlatStuff.getBedData(level, pos);
             if (data != null && data.isInfested()) {
-                Potion p = PotionUtils.getPotion(tp.getItem());
-                if (p.getEffects().stream().anyMatch(e -> e.getEffect() == MobEffects.HARM)) {
+                var p = tp.getItem().get(DataComponents.POTION_CONTENTS);
+                if (p != null && StreamSupport.stream(p.getAllEffects().spliterator(),false)
+                        .anyMatch(e -> e.getEffect() == MobEffects.HARM)) {
                     level.playSound(null, pos, SoundEvents.SILVERFISH_DEATH, SoundSource.BLOCKS, 1, 1.3f);
-                    if (!level.isClientSide) {
-                        NetworkHandler.CHANNEL.sendToAllClientPlayersInRange(level, pos, 32,
+                    if (level instanceof ServerLevel sl) {
+                        NetworkHelper.sendToAllClientPlayersInRange(sl, pos, 32,
                                 ClientBoundParticleMessage.bedbugInfest(pos,
                                         state.getValue(BedBlock.FACING).getOpposite()));
                     }

@@ -1,41 +1,39 @@
-package net.mehvahdjukaar.sleep_tight.forge;
+package net.mehvahdjukaar.sleep_tight.neoforge;
 
+import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
+import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
-import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
-import net.minecraftforge.common.capabilities.ICapabilitySerializable;
-import net.minecraftforge.common.util.LazyOptional;
+import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.common.util.INBTSerializable;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
-import javax.annotation.Nonnull;
 import java.util.HashMap;
+import java.util.function.Supplier;
 
 //actual capability provider (which provides itself as a cap instance)
-public class ForgeBedCapability extends BedData implements ICapabilitySerializable<CompoundTag> {
+public class ForgeBedCapability extends BedData implements INBTSerializable<CompoundTag> {
 
-    public static final Capability<ForgeBedCapability> TOKEN = CapabilityManager.get(new CapabilityToken<>() {
-    });
+    public static final Supplier<AttachmentType<ForgeBedCapability>> SLEEP_ATTACHMENT =
+            RegHelper.register(SleepTight.res("bed_data"),
+                    () -> AttachmentType.serializable(ForgeBedCapability::new).build(),
+                    NeoForgeRegistries.Keys.ATTACHMENT_TYPES);
 
-    @Nonnull
-    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> capability, Direction facing) {
-        return capability == TOKEN ?
-                LazyOptional.of(() -> this).cast() : LazyOptional.empty();
+    public static void init() {
+
     }
 
     @Override
-    public CompoundTag serializeNBT() {
-        return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow(
-                false, a -> new RuntimeException("Failed to serialize BedData")
-        );
+    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
+        return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow();
     }
 
     @Override
-    public void deserializeNBT(CompoundTag nbt) {
+    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
         BedData newData = CODEC.decode(NbtOps.INSTANCE, nbt)
-                .getOrThrow(false, a -> new RuntimeException("Failed to deserialize BedData"))
+                .getOrThrow()
                 .getFirst();
         this.id = newData.getId();
         this.bedBug = newData.getBedBug();

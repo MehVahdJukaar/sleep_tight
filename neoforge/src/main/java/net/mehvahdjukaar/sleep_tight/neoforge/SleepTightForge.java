@@ -6,6 +6,7 @@ import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
+import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -13,6 +14,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.EventPriority;
@@ -20,11 +22,11 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.*;
-import net.neoforged.neoforge.event.level.BlockDropsEvent;
-import net.neoforged.neoforge.event.level.SleepFinishedTimeEvent;
+import net.neoforged.neoforge.event.level.*;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 /**
@@ -42,6 +44,7 @@ public class SleepTightForge {
         }
 
         ForgePlayerSleepCapability.init();
+        ForgeBedCapability.init();
 
         NeoForge.EVENT_BUS.register(this);
         bus.addListener(SleepTightForge::setup);
@@ -51,10 +54,6 @@ public class SleepTightForge {
         event.enqueueWork(SleepTight::commonSetup);
     }
 
-    public static void registerCaps(RegisterCapabilitiesEvent event) {
-        event.register(ForgePlayerSleepCapability.class);
-        event.register(ForgeBedCapability.class);
-    }
 
     @SubscribeEvent
     public void onPlayerRespawnPositionCheck(PlayerRespawnPositionEvent event) {
@@ -64,13 +63,6 @@ public class SleepTightForge {
             event.setDimensionTransition(
                     DimensionTransition.missingRespawnBlock(sp.server.overworld(),
                             sp, transition.postDimensionTransition()));
-        }
-    }
-
-    @SubscribeEvent
-    public void attachBedCapabilities(AttachCapabilitiesEvent<BlockEntity> event) {
-        if (ModEvents.shouldHaveBedData(event.getObject())) {
-            event.addCapability(BedData.ID, new ForgeBedCapability());
         }
     }
 

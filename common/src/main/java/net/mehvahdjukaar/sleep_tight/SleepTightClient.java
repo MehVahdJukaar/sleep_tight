@@ -8,7 +8,6 @@ import net.mehvahdjukaar.sleep_tight.client.particles.DreamParticle;
 import net.mehvahdjukaar.sleep_tight.client.particles.MimimiParticle;
 import net.mehvahdjukaar.sleep_tight.client.renderers.BedbugEntityRenderer;
 import net.mehvahdjukaar.sleep_tight.client.renderers.HammockBlockTileRenderer;
-import net.mehvahdjukaar.sleep_tight.client.renderers.InfestedBedRenderer;
 import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
@@ -83,7 +82,6 @@ public class SleepTightClient {
 
     private static void registerBlockEntityRenderers(ClientHelper.BlockEntityRendererEvent event) {
         event.register(SleepTight.HAMMOCK_TILE.get(), HammockBlockTileRenderer::new);
-        event.register(SleepTight.INFESTED_BED_TILE.get(), InfestedBedRenderer::new);
     }
 
     @EventCalled

@@ -1,6 +1,5 @@
 package net.mehvahdjukaar.sleep_tight.common.items;
 
-import net.mehvahdjukaar.sleep_tight.SleepTightPlatformStuff;
 import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

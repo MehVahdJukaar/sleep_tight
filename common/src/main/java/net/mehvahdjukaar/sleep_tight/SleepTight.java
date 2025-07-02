@@ -9,7 +9,6 @@ import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
 import net.mehvahdjukaar.sleep_tight.common.ModCommands;
 import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
-import net.mehvahdjukaar.sleep_tight.common.blocks.InfestedBedBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.NightBagBlock;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedbugEntity;
@@ -17,10 +16,8 @@ import net.mehvahdjukaar.sleep_tight.common.entities.DreamerEssenceTargetEntity;
 import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
 import net.mehvahdjukaar.sleep_tight.common.items.NightBagItem;
 import net.mehvahdjukaar.sleep_tight.common.network.ModNetworking;
-import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
 import net.mehvahdjukaar.sleep_tight.common.tiles.CompatBedTile;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
-import net.mehvahdjukaar.sleep_tight.common.tiles.InfestedBedTile;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.integration.HandcraftedCompat;
@@ -28,6 +25,7 @@ import net.minecraft.Util;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.syncher.EntityDataSerializer;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.ItemTags;
@@ -200,16 +198,6 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
                     .sound(SoundType.WOOL).strength(0.1F))
     );
 
-    static {
-        if (PlatHelper.isModLoaded("handcrafted")) {
-
-        }
-    }
-
-    public static final Supplier<InfestedBedBlock> INFESTED_BED = regBlock("infested_bed", () ->
-            new InfestedBedBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.BROWN_BED))
-    );
-
     public static final Map<DyeColor, Supplier<Block>> HAMMOCKS = Util.make(() ->
             Arrays.stream(DyeColor.values()).collect(Collectors.toUnmodifiableMap(d -> d, d ->
                     regWithItem("hammock_" + d.getName(), () -> new HammockBlock(d)))
@@ -225,10 +213,6 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     public static final Supplier<BlockEntityType<HammockTile>> HAMMOCK_TILE = RegHelper.registerBlockEntityType(
             res("hammock"), () -> PlatHelper.newBlockEntityType(HammockTile::new,
                     HAMMOCKS.values().stream().map(Supplier::get).toArray(Block[]::new))
-    );
-
-    public static final Supplier<BlockEntityType<InfestedBedTile>> INFESTED_BED_TILE = RegHelper.registerBlockEntityType(
-            res("infested_bed"), () -> PlatHelper.newBlockEntityType(InfestedBedTile::new, INFESTED_BED.get())
     );
 
     //items

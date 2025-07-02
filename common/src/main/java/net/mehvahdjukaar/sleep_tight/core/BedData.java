@@ -2,9 +2,9 @@ package net.mehvahdjukaar.sleep_tight.core;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncBedCapMessage;
-import net.mehvahdjukaar.sleep_tight.common.network.NetworkHandler;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
@@ -75,7 +75,7 @@ public class BedData {
     }
 
     public void syncToClient(ServerPlayer player, BlockPos pos) {
-        NetworkHandler.CHANNEL.sendToClientPlayer(player, new ClientBoundSyncBedCapMessage(pos, this));
+        NetworkHelper.sendToClientPlayer(player, new ClientBoundSyncBedCapMessage(pos, this));
     }
 
     @Override

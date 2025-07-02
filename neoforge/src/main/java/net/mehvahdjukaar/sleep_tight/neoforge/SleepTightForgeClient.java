@@ -1,17 +1,17 @@
 package net.mehvahdjukaar.sleep_tight.neoforge;
 
+import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.client.SleepGuiOverlay;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.InBedChatScreen;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.IEventBus;
-import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
 import net.neoforged.neoforge.client.event.RenderPlayerEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
@@ -26,9 +26,9 @@ public class SleepTightForgeClient {
     }
 
     @SubscribeEvent
-    public static void onRenderGuiOverlayPre(RenderGuiOverlayEvent.Pre event) {
-        var overlay = event.getOverlay();
-        if (overlay == VanillaGuiOverlay.EXPERIENCE_BAR.type()) {
+    public static void onRenderGuiOverlayPre(RenderGuiLayerEvent.Pre event) {
+        var overlay = event.getName();
+        if (overlay == VanillaGuiLayers.EXPERIENCE_BAR) {
             if (SleepTightClient.getLayingBedData() != null) {
                 event.setCanceled(true);
             }

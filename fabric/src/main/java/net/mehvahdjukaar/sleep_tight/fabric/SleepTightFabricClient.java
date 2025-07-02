@@ -31,11 +31,8 @@ public class SleepTightFabricClient {
             if (ModEvents.shouldHaveBedData(blockEntity)) {
                 blockEntity.getAttachedOrCreate(BED_DATA);
             }
-        });a
+        });
 
-
-        var overlay = new SleepGuiOverlayImpl();
-        HudRenderCallback.EVENT.register(overlay::render);
 
         final SleepGuiOverlayImpl[] overlay = {null};
         HudRenderCallback.EVENT.register((guiGraphics, deltaTracker) ->

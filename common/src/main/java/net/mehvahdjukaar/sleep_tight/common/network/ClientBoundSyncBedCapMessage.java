@@ -1,13 +1,12 @@
 package net.mehvahdjukaar.sleep_tight.common.network;
 
-import net.mehvahdjukaar.moonlight.api.platform.network.ChannelHandler;
 import net.mehvahdjukaar.moonlight.api.platform.network.Message;
 import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
-import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.UUID;
@@ -31,14 +30,14 @@ public class ClientBoundSyncBedCapMessage implements Message {
     }
 
     @Override
-    public void writeToBuffer(FriendlyByteBuf buf) {
+    public void write(RegistryFriendlyByteBuf buf) {
         buf.writeUUID(this.id);
         buf.writeBoolean(this.hasBedBug);
         buf.writeBlockPos(pos);
     }
 
     @Override
-    public void handle(ChannelHandler.Context context) {
+    public void handle(Context context) {
         Player p = SleepTightClient.getPlayer();
         if (p == null) {
             return;
