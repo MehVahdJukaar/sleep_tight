@@ -33,7 +33,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 
-import java.awt.*;
 import java.util.ArrayList;
 
 public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
@@ -66,7 +65,7 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
 
         if (!timer && !cooldown) return;
 
-        renderCooldownCrossAir( graphics, options, mc, hit, player, cooldown, timer);
+        renderCooldownCrossAir(graphics, options, mc, hit, player, cooldown, timer);
     }
 
     private void renderCooldownCrossAir(GuiGraphics graphics, Options options, Minecraft mc, HitResult hit, Player player, boolean cooldown, boolean timer) {
@@ -183,13 +182,18 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
     }
 
 
+    private static final ResourceLocation BACKGROUND = ResourceLocation.withDefaultNamespace("boss_bar/white_background");
+    private static final ResourceLocation PROGRESS = ResourceLocation.withDefaultNamespace("boss_bar/white_progress");
+    private static final ResourceLocation OVERLAY_BACKGROUND = ResourceLocation.withDefaultNamespace("boss_bar/notched_6_background");
+    private static final ResourceLocation OVERLAY_PROGRESS = ResourceLocation.withDefaultNamespace("boss_bar/notched_6_progress");
+
+
     private static void renderBar(GuiGraphics graphics,
                                   BedData bedData, PlayerSleepData playerData,
                                   Minecraft mc, Player player,
                                   float partialTicks) {
         int screenHeight = graphics.guiHeight();
         int screenWidth = graphics.guiWidth();
-        ResourceLocation texture = ResourceLocation.withDefaultNamespace("textures/gui/bars.png");
         int xpBarLeft = screenWidth / 2 - 91;
 
         float familiarity = playerData.getBedFamiliarity();
@@ -206,21 +210,20 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
         var rgb = color.asRGB();
 
         RenderSystem.setShaderColor(rgb.red(), rgb.green(), rgb.blue(), 1.0F);
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.enableBlend();
 
         int k = (int) (familiarity * 183.0F);
         int xpBarTop = screenHeight - 32 + 3;
-        int baY = 60;
-        graphics.blit(texture, xpBarLeft, xpBarTop, 0, baY, 183, 5);
+        graphics.blitSprite(BACKGROUND, xpBarLeft, xpBarTop, 183, 5);
 
 
-        graphics.blit(texture, xpBarLeft, xpBarTop, 0, baY + 5, k, 5);
-        graphics.blit(texture, xpBarLeft, xpBarTop, 0, 85, 182, 5);
-
+        graphics.blitSprite(PROGRESS, xpBarLeft, xpBarTop, k, 5);
+        graphics.blitSprite(OVERLAY_PROGRESS, xpBarLeft, xpBarTop, 182, 5);
+        RenderSystem.disableBlend();
 
         int power = bedData.getBedLevel(player);
 
-        var c = new Color(0x00E1FF);
-        var c1 = new Color(0x186475);
         int textCol = hasDreamerEssence ?
                 (playerData.isBedFamiliar() ? 0xBC46FF : 0x602680) :
                 (playerData.isBedFamiliar() ? 0x00E1FF : 0x186475);

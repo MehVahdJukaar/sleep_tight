@@ -1,5 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.mixins.neoforge;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.mehvahdjukaar.sleep_tight.neoforge.ForgeBedCapability;
 import net.minecraft.world.level.Level;
@@ -18,14 +19,13 @@ public class LevelMixin {
 
     @Shadow
     @Final
-    private ArrayList<BlockEntity> pendingFreshBlockEntities;
+    private ArrayList<BlockEntity> freshBlockEntities;
 
     @Inject(method = "tickBlockEntities", at = @At(value = "INVOKE",
-            shift = At.Shift.AFTER,
-            target = "Ljava/util/ArrayList;forEach(Ljava/util/function/Consumer;)V", ordinal = 0),
-            remap = false)
+            target = "Ljava/util/ArrayList;forEach(Ljava/util/function/Consumer;)V",
+    shift = At.Shift.AFTER))
     private void sleepTight$initializeDataAttachmentsWhyIsntThereAnEvent(CallbackInfo ci) {
-        this.pendingFreshBlockEntities.forEach(be -> {
+     this.freshBlockEntities.forEach(be -> {
             if (be != null) {
                 if (ModEvents.shouldHaveBedData(be)) {
                     be.getData(ForgeBedCapability.SLEEP_ATTACHMENT);

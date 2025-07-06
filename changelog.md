@@ -1,1 +1,1 @@
-fixed issue on neo
+ported all recent changes, noticeably the UI improvements and bed  data changes

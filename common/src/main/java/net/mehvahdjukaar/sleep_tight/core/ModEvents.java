@@ -444,18 +444,6 @@ public class ModEvents {
 
     //all called by mixins
 
-    @SuppressWarnings("all")
-    @Nullable
-    public static Optional<Vec3> findSpawnPosition(ServerPlayer player, BlockPos spawnBlockPos, boolean isRespawnForced) {
-        if (!isRespawnForced && CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
-            BedData bedData = STPlatStuff.getBedData(player.level(), spawnBlockPos);
-            if (bedData != null && !STPlatStuff.getPlayerSleepData(player).isBedLastSleptInto(bedData)) {
-                return Optional.empty();
-            }
-        }
-        return false;
-    }
-
     public static boolean shouldCancelRespawnHere(Player player, DimensionTransition transition) {
         if (CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
             BedData bedData = STPlatStuff.getBedData(player.level(), BlockPos.containing(transition.pos()));
