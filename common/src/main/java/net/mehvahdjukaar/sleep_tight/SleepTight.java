@@ -88,8 +88,6 @@ public class SleepTight {
         RegHelper.addSpawnPlacementsRegistration(SleepTight::registerSpawnPlacements);
         RegHelper.addItemsToTabsRegistration(SleepTight::registerItemsToTabs);
 
-        EntityDataSerializers.registerSerializer(BedEntity.SERIALIZER);
-
         //bedrbug sbl
         /*
         Experience a sleep encounter - Alarmed!

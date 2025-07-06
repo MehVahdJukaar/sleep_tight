@@ -53,9 +53,9 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
         Player player = mc.player;
         if (bedData != null) {
             PlayerSleepData playerData = STPlatStuff.getPlayerSleepData(player);
-            renderBar(graphics, width, height,
+            renderBar(graphics,
                     bedData, playerData, mc,
-                    player, partialTicks);
+                    player, deltaTracker.getGameTimeDeltaTicks());
             return;
         }
 
@@ -66,10 +66,10 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
 
         if (!timer && !cooldown) return;
 
-        renderCooldownCrossAir(gui, graphics, width, height, options, mc, hit, player, cooldown, timer);
+        renderCooldownCrossAir( graphics, options, mc, hit, player, cooldown, timer);
     }
 
-    private void renderCooldownCrossAir(T gui, GuiGraphics graphics, int width, int height, Options options, Minecraft mc, HitResult hit, Player player, boolean cooldown, boolean timer) {
+    private void renderCooldownCrossAir(GuiGraphics graphics, Options options, Minecraft mc, HitResult hit, Player player, boolean cooldown, boolean timer) {
         if (options.getCameraType().isFirstPerson() && (mc.gameMode.getPlayerMode() != GameType.SPECTATOR ||
                 this.canRenderCrosshairForSpectator(hit))) {
 
@@ -183,11 +183,13 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
     }
 
 
-    private static void renderBar(GuiGraphics graphics, int screenWidth, int screenHeight,
+    private static void renderBar(GuiGraphics graphics,
                                   BedData bedData, PlayerSleepData playerData,
                                   Minecraft mc, Player player,
                                   float partialTicks) {
-        ResourceLocation texture = new ResourceLocation("minecraft:textures/gui/bars.png");
+        int screenHeight = graphics.guiHeight();
+        int screenWidth = graphics.guiWidth();
+        ResourceLocation texture = ResourceLocation.withDefaultNamespace("textures/gui/bars.png");
         int xpBarLeft = screenWidth / 2 - 91;
 
         float familiarity = playerData.getBedFamiliarity();

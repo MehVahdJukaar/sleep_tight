@@ -1,6 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.neoforge;
 
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
+import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
 import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
@@ -36,6 +37,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 public class SleepTightForge {
 
     public SleepTightForge(IEventBus bus) {
+        RegHelper.startRegisteringFor(bus);
         SleepTight.commonInit();
 
         if (PlatHelper.getPhysicalSide().isClient()) {

@@ -2,16 +2,21 @@ package net.mehvahdjukaar.sleep_tight.common.network;
 
 import net.mehvahdjukaar.moonlight.api.platform.network.Message;
 import net.mehvahdjukaar.sleep_tight.STPlatStuff;
+import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.UUID;
 
 public class ClientBoundSyncBedCapMessage implements Message {
+
+    public static final TypeAndCodec<RegistryFriendlyByteBuf, ClientBoundSyncBedCapMessage> TYPE = Message.makeType(
+            SleepTight.res("sync_bed_cap"), ClientBoundSyncBedCapMessage::new);
 
     private final  BlockPos pos;
     private final UUID id;
@@ -47,4 +52,10 @@ public class ClientBoundSyncBedCapMessage implements Message {
             data.acceptFromServer(this.id, this.hasBedBug);
         }
     }
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE.type();
+    }
+
 }

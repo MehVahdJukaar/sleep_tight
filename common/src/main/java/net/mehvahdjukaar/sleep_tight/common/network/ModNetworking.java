@@ -17,6 +17,7 @@ public class ModNetworking {
         event.registerClientBound(ClientBoundAlightCameraOnLayMessage.TYPE);
         event.registerClientBound(ClientBoundSleepImmediatelyMessage.TYPE);
         event.registerClientBound(ClientBoundNightmarePacket.TYPE);
+        event.registerClientBound(ClientBoundSyncBedCapMessage.TYPE);
     }
 
 }
