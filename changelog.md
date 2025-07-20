@@ -1,1 +1,1 @@
-ported all recent changes, noticeably the UI improvements and bed  data changes
+- fixed xp level not being hidden on fabric
