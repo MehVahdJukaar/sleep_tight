@@ -1,2 +1,1 @@
-added a blacklist tag
-fixed a translation
+- fixed xp level not being hidden on fabric
