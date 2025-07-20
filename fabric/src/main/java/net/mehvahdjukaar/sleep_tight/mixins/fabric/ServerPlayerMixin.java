@@ -36,19 +36,3 @@ public class ServerPlayerMixin {
     }
 }
 
-//1.20 belo
-
-@Mixin(ServerPlayer.class)
-public class ServerPlayerMixin {
-
-
-    @Inject(method = "tick", at = @At("HEAD"))
-    public void tick(CallbackInfo ci) {
-
-        PlayerSleepData data = STPlatStuff.getPlayerSleepData((Player) (Object) this);
-        if (data != null) {
-            data.tick((ServerPlayer) (Object) this);
-        }
-    }
-}
-

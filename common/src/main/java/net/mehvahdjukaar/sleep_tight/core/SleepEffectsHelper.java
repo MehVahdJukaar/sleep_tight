@@ -38,7 +38,7 @@ public class SleepEffectsHelper {
             applyHeartstoneBonuses(player, pos, state, data, playerCap);
 
         }
-        if (player.gameMode.isSurvival()) {
+        if (!player.isCreative()) {
             if (bed.st_hasPenalties()) applySleepPenalties(player, dayTimeDelta);
             if (bed.st_hasRequirements()) paySleepRequirements(player);
         }
