@@ -1,1 +1,1 @@
-- fixed xp level not being hidden on fabric
+- added mixin to hack into EMF so it dosnt foce you to stend legs up while riding my god darn bed
