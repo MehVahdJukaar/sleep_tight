@@ -6,7 +6,6 @@ import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityCombatEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerBlockEntityEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -23,10 +22,6 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-
-import java.util.Comparator;
-import java.util.PriorityQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class SleepTightFabric implements ModInitializer {
 
@@ -58,7 +53,7 @@ public class SleepTightFabric implements ModInitializer {
                 //both attachments and cap api seems failed systems to me, without synching and even issues like these, I should just use mixins next time
 
                 int ticTime = serverLevel.getServer().getTickCount() + 1;
-                schedule(new TickTask(ticTime, () -> {
+                DumbTaskScheduler.schedule(new TickTask(ticTime, () -> {
                     //if(true)return;
                     SleepTight.BED_DATA.getOrCreate(blockEntity);
                 }));
@@ -122,39 +117,7 @@ public class SleepTightFabric implements ModInitializer {
         });
 
 
-        //because mc tick task is also dumb
-        ServerTickEvents.END_SERVER_TICK.register(server -> {
-            final int now = server.getTickCount();
-
-            // Drain inbound (lock-free, safe for multi-producer)
-            for (TickTask t; (t = INBOUND.poll()) != null; ) {
-                SCHEDULED.add(t); // server thread only
-            }
-
-            // Run due tasks in tick order
-            while (!SCHEDULED.isEmpty() && SCHEDULED.peek().getTick() <= now) {
-                TickTask t = SCHEDULED.poll();
-                try {
-                    t.run();
-                } catch (Throwable ex) {
-                    // don't let one task break the tick loop
-                    SleepTight.LOGGER.error("TickTask failed", ex);
-                }
-            }
-        });
-
-
     }
-
-    public static void schedule(TickTask task) {
-        INBOUND.add(task);
-    }
-
-    // Tasks arriving from any thread
-    private static final ConcurrentLinkedQueue<TickTask> INBOUND = new java.util.concurrent.ConcurrentLinkedQueue<>();
-    // Only the server thread touches this
-    private static final PriorityQueue<TickTask> SCHEDULED =
-            new PriorityQueue<>(Comparator.comparingInt(TickTask::getTick));
 
 
 }
