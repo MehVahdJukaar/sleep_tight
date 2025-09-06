@@ -45,3 +45,9 @@ ordering = "NONE"
 side = "BOTH"
 
 
+[[dependencies.${mod_id}]]
+modId = "betterdays"
+type = "incompatible"
+versionRange = ""
+reason = "Mod makes almost the entirety of Sleep Tight not work. Not to mention the sleep bugg (time sped up) thematically conflicts with it."
+

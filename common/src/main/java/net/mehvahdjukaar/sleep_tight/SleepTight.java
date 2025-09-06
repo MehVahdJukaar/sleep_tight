@@ -1,10 +1,11 @@
 package net.mehvahdjukaar.sleep_tight;
 
+import net.mehvahdjukaar.moonlight.api.misc.IAttachmentType;
 import net.mehvahdjukaar.moonlight.api.misc.RegSupplier;
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
 import net.mehvahdjukaar.moonlight.api.set.BlocksColorAPI;
-import net.mehvahdjukaar.sleep_tight.client.PackProvider;
+import net.mehvahdjukaar.sleep_tight.client.ModClientDynamicResources;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
 import net.mehvahdjukaar.sleep_tight.common.ModCommands;
 import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
@@ -20,12 +21,12 @@ import net.mehvahdjukaar.sleep_tight.common.tiles.CompatBedTile;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
+import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.integration.HandcraftedCompat;
 import net.minecraft.Util;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.syncher.EntityDataSerializer;
-import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.ItemTags;
@@ -34,7 +35,6 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.SpawnPlacementType;
 import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Block;
@@ -79,7 +79,7 @@ public class SleepTight {
         CommonConfigs.init();
 
         if (PlatHelper.getPhysicalSide().isClient()) {
-            PackProvider.INSTANCE.register();
+            RegHelper.registerDynamicResourceProvider(new ModClientDynamicResources());
             ClientConfigs.init();
         }
 
@@ -132,6 +132,14 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
         event.register(BEDBUG_ENTITY.get(), BedbugEntity.makeAttributes());
     }
 
+    //attachments
+
+    public static final IAttachmentType<BedData> BED_DATA = RegHelper.regDataAttachment(
+            SleepTight.res("bed_data"), () -> RegHelper.AttachmentBuilder.create(BedData::initializeWithRandomId)
+                    .persistent(BedData.CODEC)
+                    .copyOnDeath()
+                    .syncWith(BedData.STREAM_CODEC)
+    );
 
     //sound events
 
@@ -170,18 +178,24 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     //entities
 
     public static final Supplier<EntityType<BedEntity>> BED_ENTITY = RegHelper.registerEntityType(res("bed_entity"),
-            () -> EntityType.Builder.<BedEntity>of(BedEntity::new, MobCategory.MISC)
+             EntityType.Builder.<BedEntity>of(BedEntity::new, MobCategory.MISC)
                     .ridingOffset(0.0125f)
                     .sized(0.5f, 0.5f)
                     .clientTrackingRange(4)
-                    .updateInterval(Integer.MAX_VALUE)
-                    .build("bed_entity"));
+                    .updateInterval(Integer.MAX_VALUE));
 
     public static final RegSupplier<EntityType<BedbugEntity>> BEDBUG_ENTITY = RegHelper.registerEntityType(res("bedbug"),
-            BedbugEntity::new, MobCategory.MONSTER, 11 / 16f, 6 / 16f, 7, 3);
+            EntityType.Builder.<BedbugEntity>of(BedbugEntity::new, MobCategory.MONSTER)
+                    .sized(11 / 16f, 6 / 16f)
+                    .clientTrackingRange(7)
+                    .updateInterval(3));
 
-    public static final Supplier<EntityType<DreamerEssenceTargetEntity>> DREAMER_ESSENCE_ENTITY = RegHelper.registerEntityType(res("dreamer_essence_dummy"),
-            DreamerEssenceTargetEntity::new, MobCategory.MISC, 0.2f, 12 / 16f, 5, Integer.MAX_VALUE);
+    public static final Supplier<EntityType<DreamerEssenceTargetEntity>> DREAMER_ESSENCE_ENTITY = RegHelper.registerEntityType(
+            res("dreamer_essence_dummy"),
+            EntityType.Builder.<DreamerEssenceTargetEntity>of(DreamerEssenceTargetEntity::new, MobCategory.MISC)
+                    .sized(0.2f,  12 / 16f)
+                    .clientTrackingRange(5)
+                    .updateInterval(Integer.MAX_VALUE));
 
     //blocks
 

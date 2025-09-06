@@ -12,7 +12,6 @@
   ],
   "mixins": [
     "BedBlockMixin",
-    "ChunkHolderMixin",
     "CompatEMFMixin",
     "CompatHandcraftedBedMixin",
     "DoorBlockMixin",

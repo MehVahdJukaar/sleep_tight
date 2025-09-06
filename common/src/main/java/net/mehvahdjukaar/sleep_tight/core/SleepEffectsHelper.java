@@ -109,7 +109,7 @@ public class SleepEffectsHelper {
                 }
             }
         }
-        if (playerSleepData.isBedFamiliar()) {
+        if (playerSleepData.isBedFamiliarityMaxed(bedData)) {
             //effects
             for (var e : WAKE_UP_EFFECTS.get()) {
                 player.addEffect(e.createInstance(bedData.getBedLevel(player) - 1));
@@ -118,12 +118,12 @@ public class SleepEffectsHelper {
     }
 
     private static void applyHeartstoneBonuses(ServerPlayer player, BlockPos pos, BlockState state,
-                                               BedData data, PlayerSleepData playerSleepData) {
+                                               BedData bedData, PlayerSleepData playerSleepData) {
         BlockPos otherPos = getPartnerPos(player, state, pos);
         if (otherPos != null) {
-            if (playerSleepData.isBedFamiliar()) {
+            if (playerSleepData.isBedFamiliarityMaxed(bedData)) {
                 for (var e : HEARTSTONE_EFFECT.get()) {
-                    player.addEffect(e.createInstance(data.getBedLevel(player) - 1));
+                    player.addEffect(e.createInstance(bedData.getBedLevel(player) - 1));
                 }
             }
         }

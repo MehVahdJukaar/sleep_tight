@@ -77,10 +77,4 @@ public class STPlatStuffImpl {
         return result != InteractionResult.PASS ? result.consumesAction() : vanillaResult;
     }
 
-    @Contract
-    @Nullable
-    public static BedData getBedDataFromThis(BlockEntity be) {
-       return be.getAttached(SleepTightFabric.BED_DATA);
-    }
-
 }

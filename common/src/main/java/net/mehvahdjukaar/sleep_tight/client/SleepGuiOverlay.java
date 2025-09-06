@@ -3,6 +3,7 @@ package net.mehvahdjukaar.sleep_tight.client;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.moonlight.api.util.math.colors.HSVColor;
 import net.mehvahdjukaar.moonlight.api.util.math.colors.RGBColor;
@@ -139,7 +140,7 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
         BedData bedData = STPlatStuff.getBedData(player.level(), sleepingPos);
         if (bedData == null) return;
         boolean hasDreamerEssence = DreamEssenceBlock.isInRange(sleepingPos, player.level());
-        boolean isBedFamiliar = playerData.isBedFamiliar();
+        boolean isMaxFamiliar = playerData.isBedFamiliarityMaxed(bedData);
 
         if (ClientConfigs.SHOW_TIME.get()) {
             graphics.drawString(mc.font, getCurrentTime(player.level()), 2, 2, 14737632);
@@ -149,7 +150,7 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
         int y = s.height - 39;
         int iconSize = 18;
         int bx = s.width / 2 - 120;
-        int bh = isBedFamiliar ? 0 : 28;
+        int bh = isMaxFamiliar ? 0 : 28;
         graphics.blit(SleepTightClient.ICONS, bx, y, 0, bh, iconSize, iconSize, 48, 48);
 
         if (hasDreamerEssence) {
@@ -160,14 +161,15 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
         if (MthUtils.isWithinRectangle(bx, y, iconSize, iconSize, mouseX, mouseY)) {
             double nightmare = playerData.getNightmareChance(player, sleepingPos);
             int bedLevel = bedData.getBedLevel(player);
-            MutableComponent title = isBedFamiliar ?
+            MutableComponent title = isMaxFamiliar ?
                     Component.translatable("gui.sleep_tight.home_bed") :
                     Component.translatable("gui.sleep_tight.bed");
             var lines = new ArrayList<>(mc.font.split(title, 200));
-            if (!isBedFamiliar) {
-                String percent = String.format("%1f", playerData.getBedFamiliarity() * 100) + "%";
+            if (!isMaxFamiliar) {
+                String percent = String.format("%.1f", playerData.getBedFamiliarity(bedData) * 100) + "%";
                 lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.familiarity", percent), 200));
             }
+            if(PlatHelper.isDev()) lines.addAll(mc.font.split(Component.literal( "LastId Bits: " + bedData.getId()), 400));
             lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.bed_level", bedLevel), 200));
             lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.nightmare", nightmare), 200));
             graphics.renderTooltip(mc.font, lines, mouseX, mouseY);
@@ -196,7 +198,7 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
         int screenWidth = graphics.guiWidth();
         int xpBarLeft = screenWidth / 2 - 91;
 
-        float familiarity = playerData.getBedFamiliarity();
+        float familiarity = playerData.getBedFamiliarity(bedData);
         boolean hasDreamerEssence = DreamEssenceBlock.isInRange(player.blockPosition(), player.level());
         double nightmareChance = playerData.getNightmareChance(player, player.blockPosition());
         int barColor = hasDreamerEssence ? 0xc93095 : 0xDCAC07;//  0xDCB402
@@ -224,9 +226,10 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
 
         int power = bedData.getBedLevel(player);
 
+        boolean bedFamiliarityMaxed = playerData.isBedFamiliarityMaxed(bedData);
         int textCol = hasDreamerEssence ?
-                (playerData.isBedFamiliar() ? 0xBC46FF : 0x602680) :
-                (playerData.isBedFamiliar() ? 0x00E1FF : 0x186475);
+                (bedFamiliarityMaxed ? 0xBC46FF : 0x602680) :
+                (bedFamiliarityMaxed ? 0x00E1FF : 0x186475);
 
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 

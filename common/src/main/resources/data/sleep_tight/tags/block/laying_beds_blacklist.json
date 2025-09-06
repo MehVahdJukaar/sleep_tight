@@ -1,9 +1,9 @@
 {
   "replace": false,
   "values": [
-    "good_nights_sleep:luxurious_bed",
-    "good_nights_sleep:wretched_bed",
-    "good_nights_sleep:strange_bed"
+    {"id":"good_nights_sleep:luxurious_bed","required":false},
+    {"id":"good_nights_sleep:strange_bed","required":false},
+    {"id":"good_nights_sleep:wretched_bed","required":false}
   ]
 }
 

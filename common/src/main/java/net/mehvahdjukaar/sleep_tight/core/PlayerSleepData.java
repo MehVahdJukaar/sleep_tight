@@ -4,7 +4,6 @@ import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncPlayerSleepCapMessage;
-import net.mehvahdjukaar.sleep_tight.common.network.ModNetworking;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -95,7 +94,7 @@ public abstract class PlayerSleepData {
         if (this.isBedLastSleptInto(bed)) {
 
             this.nightsSleptInSameBed++;
-            if (isBedFamiliar()) {
+            if (isBedFamiliarityMaxed(bed)) {
                 bed.incrementBedLevel(player);
             }
         } else {
@@ -167,12 +166,13 @@ public abstract class PlayerSleepData {
         return consecutiveNightsSlept;
     }
 
-    public float getBedFamiliarity() {
+    public float getBedFamiliarity(BedData currentBed) {
+        if (!isBedLastSleptInto(currentBed)) return 0;
         return Math.min(1, (float) nightsSleptInSameBed / CommonConfigs.HOME_BED_REWARD_REQUIRED_NIGHTS.get());
     }
 
-    public boolean isBedFamiliar() {
-        return getBedFamiliarity() >= 1;
+    public boolean isBedFamiliarityMaxed(BedData data) {
+        return getBedFamiliarity(data) >= 1;
     }
 
     public int getNightsSleptInHomeBed() {

@@ -1,38 +1,28 @@
 package net.mehvahdjukaar.sleep_tight.client;
 
 import com.google.gson.JsonParser;
+import net.mehvahdjukaar.moonlight.api.events.AfterLanguageLoadEvent;
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.moonlight.api.resources.ResType;
-import net.mehvahdjukaar.moonlight.api.resources.pack.DynClientResourcesGenerator;
-import net.mehvahdjukaar.moonlight.api.resources.pack.DynamicTexturePack;
-import net.mehvahdjukaar.moonlight.api.resources.pack.ResourceGenTask;
+import net.mehvahdjukaar.moonlight.api.resources.pack.*;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.repository.Pack;
-import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.item.DyeColor;
-import org.apache.logging.log4j.Logger;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public class PackProvider extends DynClientResourcesGenerator {
+public class ModClientDynamicResources extends DynamicClientResourceProvider {
 
-    public static final PackProvider INSTANCE = new PackProvider();
-
-    public PackProvider() {
-        super(new DynamicTexturePack(SleepTight.res("generated_pack"), Pack.Position.BOTTOM, true, true));
-        this.dynamicPack.addNamespaces("minecraft");
+    public ModClientDynamicResources() {
+        super(SleepTight.res("generated_pack"), PackGenerationStrategy.REGEN_ON_EVERY_RELOAD);
     }
 
     @Override
-    public Logger getLogger() {
-        return SleepTight.LOGGER;
-    }
-
-    @Override
-    public boolean dependsOnLoadedPacks() {
-        return true;
+    protected Collection<String> gatherSupportedNamespaces() {
+        return List.of("minecraft");
     }
 
     @Override
@@ -68,4 +58,8 @@ public class PackProvider extends DynClientResourcesGenerator {
         });
     }
 
+    @Override
+    protected void addDynamicTranslations(AfterLanguageLoadEvent afterLanguageLoadEvent) {
+
+    }
 }

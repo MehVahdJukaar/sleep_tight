@@ -46,7 +46,6 @@ public class SleepTightForge {
         }
 
         ForgePlayerSleepCapability.init();
-        ForgeBedCapability.init();
 
         NeoForge.EVENT_BUS.register(this);
         bus.addListener(SleepTightForge::setup);

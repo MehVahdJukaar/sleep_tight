@@ -19,15 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class STPlatStuff {
 
-    //get bed data. 1 per bed. both ved positions can be passed here
-    @ApiStatus.Internal
-    @Nullable
-    @Contract
-    @ExpectPlatform
-    public static BedData getBedDataFromThis(BlockEntity be) {
-        throw new AssertionError();
-    }
-
     @Nullable
     public static BedData getBedData(Level level, BlockPos pos) {
         return getBedData(level, pos, null);
@@ -42,7 +33,7 @@ public class STPlatStuff {
             be = level.getBlockEntity(headPos);
         }
         if (be != null) {
-            return getBedDataFromThis(be);
+            return SleepTight.BED_DATA.getOrNull(be);
         }
         return null;
     }

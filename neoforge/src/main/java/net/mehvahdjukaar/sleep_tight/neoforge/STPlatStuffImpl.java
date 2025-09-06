@@ -1,29 +1,20 @@
 package net.mehvahdjukaar.sleep_tight.neoforge;
 
 import com.mojang.datafixers.util.Either;
-import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
-import net.mehvahdjukaar.sleep_tight.neoforge.ForgeBedCapability;
-import net.mehvahdjukaar.sleep_tight.neoforge.ForgePlayerSleepCapability;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Unit;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.EventHooks;
 import org.jetbrains.annotations.Contract;
 
-import javax.annotation.Nullable;
 import java.util.List;
 
 public class STPlatStuffImpl {
-
-    public static @Nullable BedData getBedDataFromThis(BlockEntity be) {
-        return be.getExistingData(ForgeBedCapability.SLEEP_ATTACHMENT).orElse(null);
-    }
 
     @Contract
     public static PlayerSleepData getPlayerSleepData(Player player) {

@@ -30,5 +30,8 @@
     "fabric": "*",
     "minecraft": ">=${minecraft_min_version} <${minecraft_max_version}",
     "moonlight": ">=${required_moonlight_version}"
+  },
+  "breaks": {
+    "betterdays": "*"
   }
 }

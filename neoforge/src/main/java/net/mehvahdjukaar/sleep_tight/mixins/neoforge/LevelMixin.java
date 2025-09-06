@@ -1,8 +1,8 @@
 package net.mehvahdjukaar.sleep_tight.mixins.neoforge;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
-import net.mehvahdjukaar.sleep_tight.neoforge.ForgeBedCapability;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Final;
@@ -28,7 +28,7 @@ public class LevelMixin {
      this.freshBlockEntities.forEach(be -> {
             if (be != null) {
                 if (ModEvents.shouldHaveBedData(be)) {
-                    be.getData(ForgeBedCapability.SLEEP_ATTACHMENT);
+                    SleepTight.BED_DATA.getOrCreate(be);
                 }
             }
         });

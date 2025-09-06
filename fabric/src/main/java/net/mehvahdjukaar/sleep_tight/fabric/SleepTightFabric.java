@@ -1,12 +1,12 @@
 package net.mehvahdjukaar.sleep_tight.fabric;
 
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityCombatEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerBlockEntityEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -15,22 +15,22 @@ import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
-import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.server.TickTask;
-import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BedBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+
+import java.util.Comparator;
+import java.util.PriorityQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class SleepTightFabric implements ModInitializer {
 
-    public static AttachmentType<BedData> BED_DATA;
+    //TODO:
     public static AttachmentType<PlayerSleepData> PLAYER_SLEEP_DATA;
 
     @Override
@@ -42,10 +42,6 @@ public class SleepTightFabric implements ModInitializer {
             SleepTightClient.init();
             SleepTightFabricClient.init();
         }
-        //TODO: use attachments api
-        BED_DATA = AttachmentRegistry.<BedData>builder().initializer(BedData::new)
-                .persistent(BedData.CODEC)
-                .buildAndRegister(BedData.ID);
 
         //yes not ideal at all. if done in after we might not have the block entity
         PlayerBlockBreakEvents.BEFORE.register((level, player, blockPos, blockState, blockEntity) -> {
@@ -56,10 +52,15 @@ public class SleepTightFabric implements ModInitializer {
         ServerBlockEntityEvents.BLOCK_ENTITY_LOAD.register((blockEntity, serverLevel) -> {
             //initialize attachments
             if (ModEvents.shouldHaveBedData(blockEntity)) {
+                //Thanks fabric
+                //https://github.com/FabricMC/fabric/issues/4718
                 //Thanks fabric. Without this it just deadlocks the game LMAO. GG
                 //both attachments and cap api seems failed systems to me, without synching and even issues like these, I should just use mixins next time
-                serverLevel.getServer().tell(new TickTask(serverLevel.getServer().getTickCount(), () -> {
-                    blockEntity.getAttachedOrCreate(BED_DATA);
+
+                int ticTime = serverLevel.getServer().getTickCount() + 1;
+                schedule(new TickTask(ticTime, () -> {
+                    //if(true)return;
+                    SleepTight.BED_DATA.getOrCreate(blockEntity);
                 }));
                 //blockEntity.getAttachedOrCreate(BED_DATA);
             }
@@ -121,6 +122,39 @@ public class SleepTightFabric implements ModInitializer {
         });
 
 
+        //because mc tick task is also dumb
+        ServerTickEvents.END_SERVER_TICK.register(server -> {
+            final int now = server.getTickCount();
+
+            // Drain inbound (lock-free, safe for multi-producer)
+            for (TickTask t; (t = INBOUND.poll()) != null; ) {
+                SCHEDULED.add(t); // server thread only
+            }
+
+            // Run due tasks in tick order
+            while (!SCHEDULED.isEmpty() && SCHEDULED.peek().getTick() <= now) {
+                TickTask t = SCHEDULED.poll();
+                try {
+                    t.run();
+                } catch (Throwable ex) {
+                    // don't let one task break the tick loop
+                    SleepTight.LOGGER.error("TickTask failed", ex);
+                }
+            }
+        });
+
+
     }
+
+    public static void schedule(TickTask task) {
+        INBOUND.add(task);
+    }
+
+    // Tasks arriving from any thread
+    private static final ConcurrentLinkedQueue<TickTask> INBOUND = new java.util.concurrent.ConcurrentLinkedQueue<>();
+    // Only the server thread touches this
+    private static final PriorityQueue<TickTask> SCHEDULED =
+            new PriorityQueue<>(Comparator.comparingInt(TickTask::getTick));
+
 
 }
