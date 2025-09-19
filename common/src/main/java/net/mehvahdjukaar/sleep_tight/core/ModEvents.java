@@ -170,7 +170,7 @@ public class ModEvents {
         Direction dir = state.getValue(BedBlock.FACING);
 
         if (SleepTight.HANDCRAFTED) {
-            InteractionResult ret = HandcraftedCompat.placeSheet(state, pos, player, hand, hitResult);
+            var ret = HandcraftedCompat.placeSheet(state, pos, player, hand, hitResult).result();
             if (ret != InteractionResult.PASS) {
                 return ret;
             }

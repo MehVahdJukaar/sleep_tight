@@ -32,6 +32,7 @@ public class SleepTightFabric implements ModInitializer {
     public void onInitialize() {
 
         SleepTight.commonInit();
+        DumbTaskScheduler.init();
 
         if (PlatHelper.getPhysicalSide().isClient()) {
             SleepTightClient.init();

@@ -1,2 +1,1 @@
-- improved bed syncing
-- improved UI tooltips
+fixed an issue on fabric
