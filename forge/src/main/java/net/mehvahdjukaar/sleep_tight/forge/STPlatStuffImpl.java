@@ -4,11 +4,11 @@ package net.mehvahdjukaar.sleep_tight.forge;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.util.LazyOptional;
@@ -24,6 +24,9 @@ public class STPlatStuffImpl {
 
     @Contract
     public static PlayerSleepData getPlayerSleepData(Player player) {
+        if (player.isDeadOrDying()) {
+            player.reviveCaps();
+        }
         return player.getCapability(ForgePlayerSleepCapability.TOKEN).orElseThrow(
                 () -> new IllegalStateException("Player sleep capability was null. How? ")
         );

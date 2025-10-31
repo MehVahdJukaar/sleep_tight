@@ -449,7 +449,7 @@ public class ModEvents {
     @SuppressWarnings("all")
     @Nullable
     public static Optional<Vec3> findSpawnPosition(ServerPlayer player, BlockPos spawnBlockPos, boolean isRespawnForced) {
-        if (!isRespawnForced && CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
+        if (!isRespawnForced && (CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get() || true)) {
             BedData bedData = STPlatStuff.getBedData(player.level(), spawnBlockPos);
             if (bedData != null && !STPlatStuff.getPlayerSleepData(player).isBedLastSleptInto(bedData)) {
                 return Optional.empty();

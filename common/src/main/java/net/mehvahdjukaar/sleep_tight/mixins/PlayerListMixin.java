@@ -26,6 +26,7 @@ public class PlayerListMixin {
                                                                  Operation<Optional<Vec3>> original, @Local(argsOnly = true) ServerPlayer player) {
         Optional<Vec3> vec = ModEvents.findSpawnPosition(player, spawnBlockPos, isRespawnForced);
         if (vec != null) return vec;
+
         return original.call(serverLevel, spawnBlockPos, playerOrientation, isRespawnForced, respawnAfterWinningTheGame);
     }
 }

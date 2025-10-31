@@ -1,1 +1,1 @@
-- added mixin to hack into EMF so it dosnt foce you to stend legs up while riding my god darn bed
+- fixed a broken config on forge
