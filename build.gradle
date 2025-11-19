@@ -42,7 +42,7 @@ allprojects {
         maven { url = "https://mvn.devos.one/snapshots/" } // Registrate, Porting Lib (snapshots)
         maven { url = "https://maven.terraformersmc.com/" } // TerraformersMC mods
         maven { url = "https://maven.saps.dev/releases" } // FTB Mods
-
+        maven { url = "https://dl.cloudsmith.io/public/tslat/sbl/maven/"}
         maven { url = "https://maven.theillusivec4.top/" } // Curios API
         maven { url = "https://maven.squiddev.cc" } // CC: Tweaked
         maven { url = "https://maven.su5ed.dev/releases" } // SU5ED mods

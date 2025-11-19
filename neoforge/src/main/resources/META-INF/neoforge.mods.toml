@@ -40,7 +40,7 @@ side = "BOTH"
 modId = "moonlight"
 type = "required"
 referralUrl = "https://www.curseforge.com/minecraft/mc-mods/selene"
-versionRange = "[${required_moonlight_version},]"
+versionRange = "[${moonlight_min_version},]"
 ordering = "NONE"
 side = "BOTH"
 
