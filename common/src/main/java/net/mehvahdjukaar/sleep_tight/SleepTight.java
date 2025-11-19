@@ -89,7 +89,10 @@ public class SleepTight {
         RegHelper.addItemsToTabsRegistration(SleepTight::registerItemsToTabs);
 
         //bedrbug sbl
+        //nightmares change depend on local diff
+        //nightmare chance isnt reset on night not slept just decremented
         /*
+
         Experience a sleep encounter - Alarmed!
 Get invigorated effect - You awaken feeling Well Rested
 Establish a home bed by sleeping in it 8 times - There are many like it, but this one is mine

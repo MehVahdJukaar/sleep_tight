@@ -1,1 +1,1 @@
-fixed an issue on fabric
+slight imporvements to bed cooldowns to hopefully work better with set time command

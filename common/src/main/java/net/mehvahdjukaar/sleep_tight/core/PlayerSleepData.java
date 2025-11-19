@@ -6,8 +6,8 @@ import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncPlayerSleepCapMessage;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -71,9 +71,8 @@ public abstract class PlayerSleepData {
                 player.displayClientMessage(Component.translatable("message.sleep_tight.time_skipped"), false);
             }
             //reset cooldowns if time has gone back
-            this.insomniaWillElapseTimeStamp = 0;
             this.lastWokenUpTimeStamp = -1;
-            this.lastKnownTimeStamp = gameTime;
+            this.setInsomniaCooldown(gameTime, 0);
             syncToClient(player);
         }
     }
