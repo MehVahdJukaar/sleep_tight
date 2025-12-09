@@ -235,8 +235,8 @@ public class CommonConfigs {
 
         builder.push("home_bed");
 
-        HOME_BED_REWARD_REQUIRED_NIGHTS = builder.comment("Amount of nights needed to make a home bed start increasing levels")
-                .define("home_bed_benefit_required_nights", diff(6, 3), 1, 50);
+        HOME_BED_REWARD_REQUIRED_NIGHTS = builder.comment("Amount of nights needed to make a home bed start increasing levels. Set to -1 to effectively disable home bed leveling")
+                .define("home_bed_benefit_required_nights", diff(6, 3), -1, 50);
         INVIGORATED_XP = builder.comment("Percentage of xp added per tier of the effect. Setting to 1 doubles the effect")
                 .define("invigorated_effect_xp", 0.1, 0, 1);
         HOME_BED_MAX_LEVEL = builder.comment("Home bed level cap. Each night slept increases this number")

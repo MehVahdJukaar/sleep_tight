@@ -1,1 +1,1 @@
-slight imporvements to bed cooldowns to hopefully work better with set time command
+improved lost sleep cooldown message
