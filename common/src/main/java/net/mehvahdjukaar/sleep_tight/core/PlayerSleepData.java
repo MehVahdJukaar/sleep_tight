@@ -97,7 +97,7 @@ public abstract class PlayerSleepData {
                 bed.incrementBedLevel(player);
             }
         } else {
-            if (nightsSleptInSameBed != 0) {
+            if (nightsSleptInSameBed != 0 && homeBed != null) {
                 player.displayClientMessage(Component.translatable("message.sleep_tight.home_bed_lost"), false);
             }
             this.setLastSleptInto(bed);

@@ -30,7 +30,7 @@
   "message.sleep_tight.xp": "You don't have enough xp",
   "message.sleep_tight.hunger": "You feel too hungry to sleep",
   "message.sleep_tight.bedbug": "This bed is infested!",
-  "message.sleep_tight.home_bed_lost": "Lost last home bed progress",
+  "message.sleep_tight.home_bed_lost": "Lost last bed progress",
   "message.sleep_tight.time_skipped": "Reset sleep cooldown as day time was set back",
   "message.sleep_tight.command.get_home_bed_nights": "Time slept in home bed: %s",
   "message.sleep_tight.command.set_home_bed_nights": "Set time slept in home bed",
