@@ -23,7 +23,17 @@ public class InvigoratedEffect extends MobEffect {
     }
 
 
-    public static final ThreadLocal<Integer> BLOCK_XP_LEVEL = new ThreadLocal<>();
+    private static final ThreadLocal<Integer> BLOCK_XP_LEVEL = new ThreadLocal<>();
+
+
+    public static void captureLevel(LivingEntity le) {
+        var eff = le.getEffect(SleepTight.INVIGORATED.getHolder());
+        if (eff != null) BLOCK_XP_LEVEL.set(eff.getAmplifier());
+    }
+
+    public static void clearCapturedLevel() {
+        BLOCK_XP_LEVEL.remove();
+    }
 
     @EventCalled
     public static void fabricOnBlockXpDropped(ServerLevel level, BlockPos pos, int oldXp) {

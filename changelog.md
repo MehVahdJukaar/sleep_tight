@@ -1,1 +1,1 @@
-improved lost sleep cooldown message
+improved home bed config

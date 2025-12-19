@@ -25,8 +25,8 @@ public abstract class BlockMixin {
                     shift = At.Shift.BEFORE))
     private static void st$setXpHack(BlockState state, Level level, BlockPos pos, BlockEntity blockEntity, Entity entity, ItemStack tool, CallbackInfo ci) {
         if (entity instanceof LivingEntity le) {
-            var eff = le.getEffect(SleepTight.INVIGORATED.getHolder());
-            if (eff != null) InvigoratedEffect.BLOCK_XP_LEVEL.set(eff.getAmplifier());
+            InvigoratedEffect.captureLevel(le);
+
         }
     }
 
@@ -35,7 +35,7 @@ public abstract class BlockMixin {
                     target = "Lnet/minecraft/world/level/block/state/BlockState;spawnAfterBreak(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/item/ItemStack;Z)V",
                     shift = At.Shift.AFTER))
     private static void st$unsetXpHack(BlockState state, Level level, BlockPos pos, BlockEntity blockEntity, Entity entity, ItemStack tool, CallbackInfo ci) {
-        InvigoratedEffect.BLOCK_XP_LEVEL.remove();
+        InvigoratedEffect.clearCapturedLevel();
     }
     //TODO: figure out another way to do this
 

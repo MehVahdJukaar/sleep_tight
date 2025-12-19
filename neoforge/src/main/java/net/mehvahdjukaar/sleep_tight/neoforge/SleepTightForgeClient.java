@@ -6,6 +6,7 @@ import net.mehvahdjukaar.sleep_tight.client.SleepGuiOverlay;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.InBedChatScreen;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.IEventBus;
@@ -27,8 +28,8 @@ public class SleepTightForgeClient {
 
     @SubscribeEvent
     public static void onRenderGuiOverlayPre(RenderGuiLayerEvent.Pre event) {
-        var overlay = event.getName();
-        if (overlay == VanillaGuiLayers.EXPERIENCE_BAR) {
+        ResourceLocation overlay = event.getName();
+        if (overlay == VanillaGuiLayers.EXPERIENCE_BAR || overlay == VanillaGuiLayers.EXPERIENCE_LEVEL) {
             if (SleepTightClient.getLayingBedData() != null) {
                 event.setCanceled(true);
             }

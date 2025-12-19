@@ -3,6 +3,7 @@ package net.mehvahdjukaar.sleep_tight.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
+import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
