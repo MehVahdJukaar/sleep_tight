@@ -27,7 +27,7 @@ public class InvigoratedEffect extends MobEffect {
 
 
     public static void captureLevel(LivingEntity le) {
-        var eff = le.getEffect(SleepTight.INVIGORATED.getHolder());
+        var eff = le.getEffect(SleepTight.INVIGORATED);
         if (eff != null) BLOCK_XP_LEVEL.set(eff.getAmplifier());
     }
 
@@ -49,7 +49,7 @@ public class InvigoratedEffect extends MobEffect {
 
     public static int forgeGetExtraXpForBlockBroken(int i, Entity breaker) {
         if(breaker instanceof LivingEntity le) {
-            MobEffectInstance e = le.getEffect(SleepTight.INVIGORATED.getHolder());
+            MobEffectInstance e = le.getEffect(SleepTight.INVIGORATED);
             if (e != null) {
                 return (int) getExtraXp(i, e.getAmplifier(), le.getRandom());
             }
@@ -59,7 +59,7 @@ public class InvigoratedEffect extends MobEffect {
 
     @EventCalled
     public static void onLivingDeath(ServerLevel serverLevel, LivingEntity entity, LivingEntity killer) {
-        MobEffectInstance i = killer.getEffect(SleepTight.INVIGORATED.getHolder());
+        MobEffectInstance i = killer.getEffect(SleepTight.INVIGORATED);
         if (i != null) {
             if (entity.lastHurtByPlayerTime > 0 && !entity.wasExperienceConsumed() && !(entity instanceof Player) &&
                     entity.shouldDropExperience() && serverLevel.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {

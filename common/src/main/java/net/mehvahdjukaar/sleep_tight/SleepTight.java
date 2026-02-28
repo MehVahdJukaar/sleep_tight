@@ -41,6 +41,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BannerPattern;
+import net.minecraft.world.level.block.entity.BedBlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -136,12 +138,13 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     }
 
     //attachments
-
-    public static final IAttachmentType<BedData> BED_DATA = RegHelper.regDataAttachment(
-            SleepTight.res("bed_data"), () -> RegHelper.AttachmentBuilder.create(BedData::initializeWithRandomId)
+    public static final IAttachmentType<BedData, BlockEntity> BED_DATA = RegHelper.registerDataAttachment(
+            SleepTight.res("bed_data"),
+            () -> RegHelper.AttachmentBuilder.create(BedData::initializeWithRandomId)
                     .persistent(BedData.CODEC)
                     .copyOnDeath()
-                    .syncWith(BedData.STREAM_CODEC)
+                    .syncWith(BedData.STREAM_CODEC),
+            BlockEntity.class
     );
 
     //sound events
@@ -181,7 +184,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     //entities
 
     public static final Supplier<EntityType<BedEntity>> BED_ENTITY = RegHelper.registerEntityType(res("bed_entity"),
-             EntityType.Builder.<BedEntity>of(BedEntity::new, MobCategory.MISC)
+            EntityType.Builder.<BedEntity>of(BedEntity::new, MobCategory.MISC)
                     .ridingOffset(0.0125f)
                     .sized(0.5f, 0.5f)
                     .clientTrackingRange(4)
@@ -196,7 +199,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     public static final Supplier<EntityType<DreamerEssenceTargetEntity>> DREAMER_ESSENCE_ENTITY = RegHelper.registerEntityType(
             res("dreamer_essence_dummy"),
             EntityType.Builder.<DreamerEssenceTargetEntity>of(DreamerEssenceTargetEntity::new, MobCategory.MISC)
-                    .sized(0.2f,  12 / 16f)
+                    .sized(0.2f, 12 / 16f)
                     .clientTrackingRange(5)
                     .updateInterval(Integer.MAX_VALUE));
 

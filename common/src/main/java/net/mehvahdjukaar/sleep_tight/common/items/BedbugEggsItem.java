@@ -59,7 +59,7 @@ public class BedbugEggsItem extends Item {
     }
 
     public static boolean infestBed(Level level, BlockPos pos, @Nullable BedbugEntity entity) {
-        BedData data = STPlatStuff.getBedData(level, pos);
+        BedData data = STPlatStuff.getBedDataIfPresent(level, pos);
         if (data != null && !data.isInfested()) {
             CompoundTag mobTag;
             if (entity != null) {

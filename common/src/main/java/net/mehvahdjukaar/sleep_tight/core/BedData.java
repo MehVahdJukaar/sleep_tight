@@ -10,7 +10,6 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,8 +17,6 @@ import java.util.*;
 
 //only data associated with a vanilla bed here
 public class BedData {
-
-    public static final ResourceLocation ID = SleepTight.res("bed_data");
 
     public static final Codec<BedData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             UUIDUtil.STRING_CODEC.fieldOf("id").forGetter(BedData::getId),
@@ -84,7 +81,7 @@ public class BedData {
         this.bedBug = entityTag;
     }
 
-    public CompoundTag getBedBug() {
+    public @Nullable CompoundTag getBedBug() {
         return bedBug;
     }
 

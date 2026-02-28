@@ -137,7 +137,7 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
         BlockPos sleepingPos = player.getSleepingPos().orElse(null);
         if (sleepingPos == null) return;
         PlayerSleepData playerData = STPlatStuff.getPlayerSleepData(player);
-        BedData bedData = STPlatStuff.getBedData(player.level(), sleepingPos);
+        BedData bedData = STPlatStuff.getBedDataIfPresent(player.level(), sleepingPos);
         if (bedData == null) return;
         boolean hasDreamerEssence = DreamEssenceBlock.isInRange(sleepingPos, player.level());
         boolean isMaxFamiliar = playerData.isBedFamiliarityMaxed(bedData);

@@ -207,7 +207,7 @@ public class ModCommands {
             if (context.getSource().getEntity() instanceof ServerPlayer serverPlayer) {
 
                 var pos = BlockPosArgument.getLoadedBlockPos(context, "pos");
-                BedData data = STPlatStuff.getBedData(serverPlayer.level(), pos);
+                BedData data = STPlatStuff.getBedDataIfPresent(serverPlayer.level(), pos);
                 if (data != null) {
                     PlayerSleepData playerData = STPlatStuff.getPlayerSleepData(serverPlayer);
                     playerData.setLastSleptInto(data);

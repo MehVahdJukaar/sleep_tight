@@ -58,7 +58,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.StreamSupport;
 
@@ -131,7 +130,7 @@ public class ModEvents {
             if (block instanceof BedBlock) {
                 if (CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
                     PlayerSleepData pd = STPlatStuff.getPlayerSleepData(player);
-                    if (pd.isBedLastSleptInto(STPlatStuff.getBedData(level, pos))) {
+                    if (pd.isBedLastSleptInto(STPlatStuff.getBedDataIfPresent(level, pos))) {
                         return false;
                     }
                 }
@@ -156,7 +155,7 @@ public class ModEvents {
         var state = level.getBlockState(pos);
         Block b = state.getBlock();
 
-        BedData data = STPlatStuff.getBedData(level, pos);
+        BedData data = STPlatStuff.getBedDataIfPresent(level, pos);
         if (data == null) return null;
         if (data.isInfested()) {
             ItemStack stack = player.getItemInHand(hand);
@@ -314,7 +313,7 @@ public class ModEvents {
             if (state.getBlock() instanceof ISleepTightBed b) {
                 bed = b;
             }
-            BedData data = STPlatStuff.getBedData(level, pos);
+            BedData data = STPlatStuff.getBedDataIfPresent(level, pos);
             if (data != null) {
                 playerCap.increaseNightSleptInThisBed(data, player);
             }
@@ -383,7 +382,7 @@ public class ModEvents {
     @EventCalled
     public static boolean checkExtraSleepConditions(Player player, @Nullable BlockPos bedPos) {
         Level level = player.level();
-        BedData bedData = STPlatStuff.getBedData(level, bedPos);
+        BedData bedData = STPlatStuff.getBedDataIfPresent(level, bedPos);
         if (bedData != null && bedData.isInfested()) {
             player.displayClientMessage(Component.translatable("message.sleep_tight.bedbug"), true);
             return false;
@@ -434,7 +433,7 @@ public class ModEvents {
             BlockPos pos = newPlayer.getRespawnPosition();
             if (pos != null) {
                 BlockState state = newPlayer.level().getBlockState(pos);
-                BedData bedData = STPlatStuff.getBedData(newPlayer.level(), pos);
+                BedData bedData = STPlatStuff.getBedDataIfPresent(newPlayer.level(), pos);
                 if (bedData != null) {
                     BedEntity.layDown(state, pos, newPlayer);
                 }
@@ -446,7 +445,7 @@ public class ModEvents {
 
     public static boolean shouldCancelRespawnHere(Player player, DimensionTransition transition) {
         if (CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
-            BedData bedData = STPlatStuff.getBedData(player.level(), BlockPos.containing(transition.pos()));
+            BedData bedData = STPlatStuff.getBedDataIfPresent(player.level(), BlockPos.containing(transition.pos()));
             if (bedData != null && !STPlatStuff.getPlayerSleepData(player).isBedLastSleptInto(bedData)) {
                 return true;
             }
@@ -458,7 +457,7 @@ public class ModEvents {
         if (projectile instanceof ThrownPotion tp) {
             BlockPos myPos = hit.getBlockPos();
             BlockPos pos = getBedHead(state, myPos);
-            BedData data = STPlatStuff.getBedData(level, pos);
+            BedData data = STPlatStuff.getBedDataIfPresent(level, pos);
             if (data != null && data.isInfested()) {
                 var p = tp.getItem().get(DataComponents.POTION_CONTENTS);
                 if (p != null && StreamSupport.stream(p.getAllEffects().spliterator(),false)
@@ -484,7 +483,7 @@ public class ModEvents {
     @EventCalled
     public static void spawnAfterBreakBed(BlockState state, ServerLevel level, BlockPos pos, @Nullable BlockEntity be) {
         if (level.isClientSide) return;
-        BedData data = STPlatStuff.getBedData(level, pos, be);
+        BedData data = be == null ? STPlatStuff.getBedDataIfPresent(level, pos) : STPlatStuff.getBedDataIfPresent(be);
         //just head does it
         if (data != null && data.isInfested() && level.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS)) {
             CompoundTag tag = data.getBedBug();
@@ -502,7 +501,7 @@ public class ModEvents {
 
     public static void animateTickBed(BlockState state, Level level, BlockPos pos, RandomSource random) {
         if (random.nextFloat() < 0.3) {
-            BedData data = STPlatStuff.getBedData(level, pos);
+            BedData data = STPlatStuff.getBedDataIfPresent(level, pos);
             if (data != null && data.isInfested()) {
                 float x = pos.getX() + level.random.nextFloat();
                 float z = pos.getZ() + level.random.nextFloat();

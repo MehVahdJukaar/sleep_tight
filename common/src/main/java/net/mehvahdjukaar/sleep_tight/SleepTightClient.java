@@ -121,7 +121,7 @@ public class SleepTightClient {
         Entity vehicle = player.getVehicle();
         if (vehicle instanceof BedEntity be) {
             BlockPos pos = be.blockPosition();
-            return STPlatStuff.getBedData(player.level(), pos);
+            return STPlatStuff.getBedDataIfPresent(player.level(), pos);
         }
         return null;
     }
