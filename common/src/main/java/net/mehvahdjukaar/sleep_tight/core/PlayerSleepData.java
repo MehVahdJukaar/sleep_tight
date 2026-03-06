@@ -1,33 +1,50 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
-import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.mehvahdjukaar.moonlight.api.util.codec.BiggerStreamCodecs;
+import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
-import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncPlayerSleepCapMessage;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
 import java.util.UUID;
 
-//ideally only data associated with a player here. Does contain some logic...
-public abstract class PlayerSleepData {
+public class PlayerSleepData {
 
-    protected static final String HOME_BED_NBT = "home_bed_id";
-    protected static final String INSOMNIA_ELAPSE_NBT = "insomnia_elapses_at";
-    protected static final String LAST_TIME_SLEPT_NBT = "last_time_slept";
-    protected static final String CONSECUTIVE_NIGHTS_NBT = "consecutive_nights";
-    protected static final String HOME_BED_LEVEL_NBT = "home_bed_nights";
-    protected static final String USING_DOUBLE_BED_NBT = "using_double_bed";
-    protected static final String LAST_KNOWN_TIME_NBT = "last_known_time";
+    public static final Codec<PlayerSleepData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            UUIDUtil.CODEC.optionalFieldOf("home_bed_id").forGetter(d -> Optional.ofNullable(d.homeBed)),
+            Codec.LONG.fieldOf("insomnia_elapses_at").forGetter(d -> d.insomniaWillElapseTimeStamp),
+            Codec.LONG.fieldOf("last_time_slept").forGetter(PlayerSleepData::getLastWokenUpTime),
+            Codec.INT.fieldOf("consecutive_nights").forGetter(PlayerSleepData::getConsecutiveNightsSlept),
+            Codec.INT.fieldOf("home_bed_nights").forGetter(d -> d.nightsSleptInSameBed),
+            Codec.BOOL.fieldOf("using_double_bed").forGetter(d -> d.usingDoubleBed),
+            Codec.LONG.fieldOf("last_known_time").forGetter(d -> d.lastKnownTimeStamp)
+    ).apply(instance, PlayerSleepData::new));
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, PlayerSleepData> STREAM_CODEC = BiggerStreamCodecs.composite(
+            UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs::optional), d -> Optional.ofNullable(d.homeBed),
+            ByteBufCodecs.VAR_LONG, d -> d.insomniaWillElapseTimeStamp,
+            ByteBufCodecs.VAR_LONG, PlayerSleepData::getLastWokenUpTime,
+            ByteBufCodecs.INT, PlayerSleepData::getConsecutiveNightsSlept,
+            ByteBufCodecs.INT, d -> d.nightsSleptInSameBed,
+            ByteBufCodecs.BOOL, d -> d.usingDoubleBed,
+            ByteBufCodecs.VAR_LONG, d -> d.lastKnownTimeStamp,
+            PlayerSleepData::new
+    );
 
     @Nullable
     private UUID homeBed = null; //last bed slept into
@@ -40,28 +57,17 @@ public abstract class PlayerSleepData {
     private int nightsSleptInSameBed = 0;
     private boolean usingDoubleBed = false;
 
-    public CompoundTag serializeNBT(HolderLookup.Provider reg) {
-        CompoundTag tag = new CompoundTag();
-        if (homeBed != null) {
-            tag.putUUID(HOME_BED_NBT, homeBed);
-        }
-        tag.putLong(INSOMNIA_ELAPSE_NBT, insomniaWillElapseTimeStamp);
-        tag.putLong(LAST_TIME_SLEPT_NBT, lastWokenUpTimeStamp);
-        tag.putInt(CONSECUTIVE_NIGHTS_NBT, consecutiveNightsSlept);
-        tag.putInt(HOME_BED_LEVEL_NBT, nightsSleptInSameBed);
-        tag.putBoolean(USING_DOUBLE_BED_NBT, usingDoubleBed);
-        tag.putLong(LAST_KNOWN_TIME_NBT, lastKnownTimeStamp);
-        return tag;
+    public PlayerSleepData() {
     }
 
-    public void deserializeNBT(HolderLookup.Provider reg, CompoundTag tag) {
-        if (tag.contains(HOME_BED_NBT)) this.homeBed = tag.getUUID(HOME_BED_NBT);
-        this.insomniaWillElapseTimeStamp = tag.getLong(INSOMNIA_ELAPSE_NBT);
-        this.lastWokenUpTimeStamp = tag.getLong(LAST_TIME_SLEPT_NBT);
-        this.consecutiveNightsSlept = tag.getInt(CONSECUTIVE_NIGHTS_NBT);
-        this.nightsSleptInSameBed = tag.getInt(HOME_BED_LEVEL_NBT);
-        this.usingDoubleBed = tag.getBoolean(USING_DOUBLE_BED_NBT);
-        this.lastKnownTimeStamp = tag.getLong(LAST_KNOWN_TIME_NBT);
+    public PlayerSleepData(Optional<UUID> homeBed, long insomniaWillElapseTimeStamp, long lastWokenUpTimeStamp, int consecutiveNightsSlept, int nightsSleptInSameBed, boolean usingDoubleBed, long lastKnownTimeStamp) {
+        this.homeBed = homeBed.orElse(null);
+        this.insomniaWillElapseTimeStamp = insomniaWillElapseTimeStamp;
+        this.lastWokenUpTimeStamp = lastWokenUpTimeStamp;
+        this.consecutiveNightsSlept = consecutiveNightsSlept;
+        this.nightsSleptInSameBed = nightsSleptInSameBed;
+        this.usingDoubleBed = usingDoubleBed;
+        this.lastKnownTimeStamp = lastKnownTimeStamp;
     }
 
     public void tick(ServerPlayer player) {
@@ -106,17 +112,17 @@ public abstract class PlayerSleepData {
     }
 
     public void increaseConsecutiveNightSleptCounter(long wakeUpTime) {
-        long awakeTime = wakeUpTime - this.lastWokenUpTimeStamp;
+        long awakeTime = wakeUpTime - this.lastWokenUpTimeStamp; //this breaks when players log off and time passes...
         if (awakeTime > CommonConfigs.SLEEP_INTERVAL.get()) {
             //reset when hasn't slept for a while
-            this.consecutiveNightsSlept = 0;
+            setConsecutiveNightsSlept(0);
         } else {
             this.consecutiveNightsSlept += 1;
         }
     }
 
-    public void resetConsecutiveNightSleptCounter() {
-        consecutiveNightsSlept = 0;
+    public void setConsecutiveNightsSlept(int consecutiveNightsSlept) {
+        this.consecutiveNightsSlept = consecutiveNightsSlept;
     }
 
     public long getInsomniaCooldown(Player player) {
@@ -161,6 +167,7 @@ public abstract class PlayerSleepData {
         return homeBed;
     }
 
+    // Affects nightmare chance
     public int getConsecutiveNightsSlept() {
         return consecutiveNightsSlept;
     }
@@ -186,34 +193,13 @@ public abstract class PlayerSleepData {
         return insomniaWillElapseTimeStamp;
     }
 
-    public void acceptFromServer(UUID id, long insominaElapse, long sleepTimestamp, int nightSlept, int homeBedNights, boolean doubleBed) {
-        this.homeBed = id;
-        this.insomniaWillElapseTimeStamp = insominaElapse;
-        this.consecutiveNightsSlept = nightSlept;
-        this.lastWokenUpTimeStamp = sleepTimestamp;
-        this.nightsSleptInSameBed = homeBedNights;
-        this.usingDoubleBed = doubleBed;
-    }
-
     public void syncToClient(ServerPlayer player) {
-        NetworkHelper.sendToClientPlayer(player, new ClientBoundSyncPlayerSleepCapMessage(this));
+        SleepTight.PLAYER_DATA.sync(player);
     }
 
-    public void setConsecutiveNightsSlept(int consecutiveNightsSlept) {
-        this.consecutiveNightsSlept = consecutiveNightsSlept;
-    }
 
     public void setNightsSleptInHomeBed(int nightsSleptInHomeBed) {
         this.nightsSleptInSameBed = nightsSleptInHomeBed;
-    }
-
-    public void copyFrom(PlayerSleepData oldData) {
-        this.consecutiveNightsSlept = oldData.consecutiveNightsSlept;
-        this.homeBed = oldData.homeBed;
-        this.nightsSleptInSameBed = oldData.nightsSleptInSameBed;
-        this.insomniaWillElapseTimeStamp = oldData.insomniaWillElapseTimeStamp;
-        this.lastWokenUpTimeStamp = oldData.lastWokenUpTimeStamp;
-        this.usingDoubleBed = oldData.usingDoubleBed;
     }
 
     public boolean usingDoubleBed() {

@@ -25,9 +25,6 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class SleepTightFabric implements ModInitializer {
 
-    //TODO:
-    public static AttachmentType<PlayerSleepData> PLAYER_SLEEP_DATA;
-
     @Override
     public void onInitialize() {
 
@@ -95,18 +92,6 @@ public class SleepTightFabric implements ModInitializer {
                 return hb.getBedDirection(state, level, sleepingPos);
             }
             return sleepingDirection;
-        });
-
-        ServerPlayConnectionEvents.JOIN.register((l, s, m) -> ModEvents.onPlayerLoggedIn(l.player));
-
-        ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) -> {
-            //if (!alive) {
-            var oldData = STPlatStuff.getPlayerSleepData(oldPlayer);
-            var newData = STPlatStuff.getPlayerSleepData(newPlayer);
-            newData.copyFrom(oldData);
-            //just server. we must sync
-            newData.syncToClient(newPlayer);
-            //}
         });
 
         ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {

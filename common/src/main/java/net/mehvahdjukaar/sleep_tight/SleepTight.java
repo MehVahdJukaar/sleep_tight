@@ -22,6 +22,7 @@ import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
+import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.mehvahdjukaar.sleep_tight.integration.HandcraftedCompat;
 import net.minecraft.Util;
 import net.minecraft.core.particles.SimpleParticleType;
@@ -36,12 +37,12 @@ import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacementTypes;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BannerPattern;
-import net.minecraft.world.level.block.entity.BedBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -145,6 +146,15 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
                     .copyOnDeath()
                     .syncWith(BedData.STREAM_CODEC),
             BlockEntity.class
+    );
+
+    public static final IAttachmentType<PlayerSleepData, Player> PLAYER_DATA = RegHelper.registerDataAttachment(
+            SleepTight.res("player_sleep_data"),
+            () -> RegHelper.AttachmentBuilder.create(PlayerSleepData::new)
+                    .persistent(PlayerSleepData.CODEC)
+                    .copyOnDeath()
+                    .syncWith(PlayerSleepData.STREAM_CODEC),
+            Player.class
     );
 
     //sound events

@@ -19,6 +19,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class STPlatStuff {
 
+    public static PlayerSleepData getPlayerSleepData(Player player) {
+        return SleepTight.PLAYER_DATA.getOrCreate(player);
+    }
+
     @Nullable
     public static BedData getBedDataIfPresent(Level level, BlockPos pos) {
         if (level.getBlockEntity(pos) instanceof BedBlockEntity be) {
@@ -41,13 +45,6 @@ public class STPlatStuff {
             return null;
         }
         return SleepTight.BED_DATA.getOrNull(be);
-    }
-
-    @NotNull
-    @Contract
-    @ExpectPlatform
-    public static PlayerSleepData getPlayerSleepData(Player player) {
-        throw new AssertionError();
     }
 
     @Contract

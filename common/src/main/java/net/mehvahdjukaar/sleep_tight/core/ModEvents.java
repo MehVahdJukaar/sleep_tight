@@ -13,7 +13,6 @@ import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundNightmarePacket;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundParticleMessage;
-import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncPlayerSleepCapMessage;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.integration.HandcraftedCompat;
 import net.minecraft.core.BlockPos;
@@ -278,7 +277,7 @@ public class ModEvents {
             var c = STPlatStuff.getPlayerSleepData(player);
             c.setInsomniaCooldown(wakeTime, CommonConfigs.ENCOUNTER_INSOMNIA_DURATION.get());
             c.setLasWokenUpTime(wakeTime);
-            c.resetConsecutiveNightSleptCounter();
+            c.setConsecutiveNightsSlept(0);
 
             c.syncToClient(player);
         } else {
@@ -290,7 +289,7 @@ public class ModEvents {
         var c = STPlatStuff.getPlayerSleepData(player);
         c.setInsomniaCooldown(wakeTime, CommonConfigs.NIGHTMARE_INSOMNIA_DURATION.get());
         c.setLasWokenUpTime(wakeTime);
-        c.resetConsecutiveNightSleptCounter();
+        c.setConsecutiveNightsSlept(0);
 
         c.syncToClient(player);
         player.displayClientMessage(Component.translatable("message.sleep_tight.nightmare"), true);
@@ -370,12 +369,6 @@ public class ModEvents {
             return !bed.canSetSpawn();
         }
         return false;
-    }
-
-    @EventCalled
-    public static void onPlayerLoggedIn(ServerPlayer player) {
-        NetworkHelper.sendToClientPlayer(player,
-                new ClientBoundSyncPlayerSleepCapMessage(player));
     }
 
     //similar to what below but isnt time related

@@ -24,11 +24,6 @@ import java.util.List;
 public class STPlatStuffImpl {
 
     @org.jetbrains.annotations.Contract
-    public static PlayerSleepData getPlayerSleepData(Player player) {
-        return ((ISleepTightPlayer) player).st$getSleepData();
-    }
-
-    @org.jetbrains.annotations.Contract
     public static Either<Player.BedSleepingProblem, Unit> invokeSleepChecksEvents(ServerPlayer player, BlockPos pos) {
         if (!ModEvents.checkExtraSleepConditions(player, pos)) {
             return Either.right(Unit.INSTANCE); //idk why but we need this here to match forge (called by event there)

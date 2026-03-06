@@ -10,7 +10,6 @@
     "BlockMixin",
     "LivingEntityMixin",
     "PlayerListMixin",
-    "PlayerMixin",
     "ServerLevelMixin",
     "ServerPlayerMixin"
   ],

@@ -220,7 +220,7 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
         graphics.blitSprite(BACKGROUND, xpBarLeft, xpBarTop, 183, 5);
 
 
-        graphics.blitSprite(PROGRESS, xpBarLeft, xpBarTop, k, 5);
+        graphics.blitSprite(PROGRESS, 183, 5, 0, 0, xpBarLeft, xpBarTop, k,5);
         graphics.blitSprite(OVERLAY_PROGRESS, xpBarLeft, xpBarTop, 182, 5);
         RenderSystem.disableBlend();
 

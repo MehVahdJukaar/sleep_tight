@@ -12,7 +12,6 @@ public class ModNetworking {
         event.registerServerBound(ServerBoundCommitSleepMessage.TYPE);
         event.registerServerBound(ServerBoundFallFromHammockMessage.TYPE);
         event.registerBidirectional(AccelerateHammockMessage.TYPE);
-        event.registerClientBound(ClientBoundSyncPlayerSleepCapMessage.TYPE);
         event.registerClientBound(ClientBoundParticleMessage.TYPE);
         event.registerClientBound(ClientBoundAlightCameraOnLayMessage.TYPE);
         event.registerClientBound(ClientBoundSleepImmediatelyMessage.TYPE);

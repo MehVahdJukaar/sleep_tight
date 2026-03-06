@@ -23,6 +23,8 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.attachment.IAttachmentHolder;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -44,8 +46,6 @@ public class SleepTightForge {
             SleepTightClient.init();
             SleepTightForgeClient.init(bus);
         }
-
-        ForgePlayerSleepCapability.init();
 
         NeoForge.EVENT_BUS.register(this);
         bus.addListener(SleepTightForge::setup);
@@ -138,25 +138,6 @@ public class SleepTightForge {
                 event.setCancellationResult(ret);
             }
         }
-    }
-
-    @SubscribeEvent
-    public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            ModEvents.onPlayerLoggedIn(player);
-        }
-    }
-
-    @SubscribeEvent
-    public void onPlayerClone(PlayerEvent.Clone event) {
-        // if (event.isWasDeath()) {
-        Player old = event.getOriginal();
-        //old.reviveCaps();
-        var oldData = STPlatStuff.getPlayerSleepData(old);
-        var newData = STPlatStuff.getPlayerSleepData(event.getEntity());
-        newData.copyFrom(oldData);
-        //  old.invalidateCaps();
-        //  }
     }
 
     @SubscribeEvent

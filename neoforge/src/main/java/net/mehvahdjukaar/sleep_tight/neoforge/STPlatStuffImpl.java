@@ -17,11 +17,6 @@ import java.util.List;
 public class STPlatStuffImpl {
 
     @Contract
-    public static PlayerSleepData getPlayerSleepData(Player player) {
-        return player.getData(ForgePlayerSleepCapability.SLEEP_ATTACHMENT);
-    }
-
-    @Contract
     public static Either<Player.BedSleepingProblem, Unit> invokeSleepChecksEvents(ServerPlayer player, BlockPos bedPos) {
         Either<Player.BedSleepingProblem, Unit> vanillaResult = getVanillaSleepChecks(player, bedPos);
         vanillaResult = EventHooks.canPlayerStartSleeping(player, bedPos, vanillaResult);

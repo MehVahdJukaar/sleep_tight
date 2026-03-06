@@ -16,6 +16,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 public class ModCommands {
@@ -42,12 +43,44 @@ public class ModCommands {
                         .then(Commands.literal("home_bed_position")
                                 .then(SetHomeBedPosition.register(dispatcher, commandBuildContext))
                         )
+                        .then(NextNight.register(dispatcher, commandBuildContext))
+
                         .then(Commands.literal("nightmare_chance")
                                 .then(GetNightmareChance.register(dispatcher))
 
                         )
         );
     }
+
+    private static class NextNight implements Command<CommandSourceStack> {
+
+        public static ArgumentBuilder<CommandSourceStack, ?> register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext) {
+            return Commands.literal("next_night").executes(new NextNight());
+        }
+
+        @Override
+        public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+
+            if (context.getSource().getEntity().level() instanceof ServerLevel level) {
+                long time = level.dayTime();
+                long dayTime = time % 24000;
+
+                long newTime;
+                if (dayTime < 13000) {
+                    // night is later this same day
+                    newTime = time + (13000 - dayTime);
+                } else {
+                    // night is next day
+                    newTime = time + (24000 - dayTime) + 13000;
+                }
+                level.setDayTime(newTime);
+                context.getSource().sendSuccess(() -> Component.translatable("message.sleep_tight.command.next_night", newTime), false);
+            }
+
+            return 0;
+        }
+    }
+
 
     private static class SetInsomnia implements Command<CommandSourceStack> {
 
