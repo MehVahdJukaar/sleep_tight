@@ -15,17 +15,17 @@ dependencies {
 
     modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
 
-    modImplementation("net.mehvahdjukaar:moonlight:${project.moonlight_version}")
-    modImplementation("net.mehvahdjukaar:heartstone:${project.heartstone_version}")
-    modImplementation ("curse.maven:supplementaries-412082:4375776")
+    modImplementation("curse.maven:selene-499980:7541534");
+    modImplementation("curse.maven:heartstone-573152:6173171");
+    modImplementation("curse.maven:supplementaries-412082:4375776")
     modImplementation("curse.maven:entity-model-features-844662:5717218")
     modImplementation("curse.maven:entity-texture-features-fabric-568563:5000985")
 
     modCompileOnly("org.violetmoon.quark:Quark-4.0-beta-426")
     modCompileOnly("org.violetmoon.zeta:Zeta-1.0-beta-1")
-    modImplementation ("curse.maven:handcrafted-538214:5118729")
-    modImplementation ("curse.maven:resourceful-lib-570073:5659871")
-        modImplementation "net.tslat.smartbrainlib:SmartBrainLib-fabric-${project.minecraft_version}:${project.sbl_version}"
+    modImplementation("curse.maven:handcrafted-538214:5118729")
+    modImplementation("curse.maven:resourceful-lib-570073:5659871")
+    modImplementation "net.tslat.smartbrainlib:SmartBrainLib-fabric-${project.minecraft_version}:${project.sbl_version}"
 }
 
 publishing {

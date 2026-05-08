@@ -30,7 +30,6 @@ public class PackProvider extends DynClientResourcesGenerator {
         return SleepTight.LOGGER;
     }
 
-    @Override
     public boolean dependsOnLoadedPacks() {
         return true;
     }

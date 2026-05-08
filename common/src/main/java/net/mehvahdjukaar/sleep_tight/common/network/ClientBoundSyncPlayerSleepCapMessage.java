@@ -3,6 +3,7 @@ package net.mehvahdjukaar.sleep_tight.common.network;
 import net.mehvahdjukaar.moonlight.api.platform.network.ChannelHandler;
 import net.mehvahdjukaar.moonlight.api.platform.network.Message;
 import net.mehvahdjukaar.sleep_tight.STPlatStuff;
+import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.network.FriendlyByteBuf;
@@ -58,6 +59,7 @@ public class ClientBoundSyncPlayerSleepCapMessage implements Message {
     public void handle(ChannelHandler.Context context) {
         Player p = SleepTightClient.getPlayer();
         if (p == null) {
+            SleepTight.LOGGER.error("Failed to find local player!");
             return;
         }
         PlayerSleepData data = STPlatStuff.getPlayerSleepData(p);
