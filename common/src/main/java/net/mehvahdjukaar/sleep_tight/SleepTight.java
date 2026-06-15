@@ -91,6 +91,8 @@ public class SleepTight {
         RegHelper.addSpawnPlacementsRegistration(SleepTight::registerSpawnPlacements);
         RegHelper.addItemsToTabsRegistration(SleepTight::registerItemsToTabs);
 
+
+        //fix repsawn point set message appearing onnon home beds
         //bedrbug sbl
         //nightmares change depend on local diff
         //nightmare chance isnt reset on night not slept just decremented
