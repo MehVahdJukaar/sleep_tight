@@ -32,7 +32,8 @@ public class PlayerSleepData {
             Codec.INT.fieldOf("consecutive_nights").forGetter(PlayerSleepData::getConsecutiveNightsSlept),
             Codec.INT.fieldOf("home_bed_nights").forGetter(d -> d.nightsSleptInSameBed),
             Codec.BOOL.fieldOf("using_double_bed").forGetter(d -> d.usingDoubleBed),
-            Codec.LONG.fieldOf("last_known_time").forGetter(d -> d.lastKnownTimeStamp)
+            Codec.LONG.fieldOf("last_known_time").forGetter(d -> d.lastKnownTimeStamp),
+            Codec.LONG.optionalFieldOf("insomnia_elapses_at_game_time", 0L).forGetter(d -> d.insomniaWillElapseGameTime)
     ).apply(instance, PlayerSleepData::new));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, PlayerSleepData> STREAM_CODEC = BiggerStreamCodecs.composite(
@@ -43,6 +44,7 @@ public class PlayerSleepData {
             ByteBufCodecs.INT, d -> d.nightsSleptInSameBed,
             ByteBufCodecs.BOOL, d -> d.usingDoubleBed,
             ByteBufCodecs.VAR_LONG, d -> d.lastKnownTimeStamp,
+            ByteBufCodecs.VAR_LONG, d -> d.insomniaWillElapseGameTime,
             PlayerSleepData::new
     );
 
@@ -50,6 +52,7 @@ public class PlayerSleepData {
     private UUID homeBed = null; //last bed slept into
 
     private long insomniaWillElapseTimeStamp = 0; //need to be timestamps otherwise it wont work whe player logs off or sets the time
+    private long insomniaWillElapseGameTime = 0;  //monotonic game-time backstop: ensures cooldown ends even if day time is frozen (daylight cycle off) or rewound
     private long lastWokenUpTimeStamp = -1;
     private long lastKnownTimeStamp = 0;  //keeps track of last seen time to prevent time skips in the past and reset cooldowns if it happens to prevent infinite cooldowns
 
@@ -60,7 +63,7 @@ public class PlayerSleepData {
     public PlayerSleepData() {
     }
 
-    public PlayerSleepData(Optional<UUID> homeBed, long insomniaWillElapseTimeStamp, long lastWokenUpTimeStamp, int consecutiveNightsSlept, int nightsSleptInSameBed, boolean usingDoubleBed, long lastKnownTimeStamp) {
+    public PlayerSleepData(Optional<UUID> homeBed, long insomniaWillElapseTimeStamp, long lastWokenUpTimeStamp, int consecutiveNightsSlept, int nightsSleptInSameBed, boolean usingDoubleBed, long lastKnownTimeStamp, long insomniaWillElapseGameTime) {
         this.homeBed = homeBed.orElse(null);
         this.insomniaWillElapseTimeStamp = insomniaWillElapseTimeStamp;
         this.lastWokenUpTimeStamp = lastWokenUpTimeStamp;
@@ -68,23 +71,25 @@ public class PlayerSleepData {
         this.nightsSleptInSameBed = nightsSleptInSameBed;
         this.usingDoubleBed = usingDoubleBed;
         this.lastKnownTimeStamp = lastKnownTimeStamp;
+        this.insomniaWillElapseGameTime = insomniaWillElapseGameTime;
     }
 
     public void tick(ServerPlayer player) {
-        long gameTime = player.level().getDayTime();
-        if (gameTime < lastKnownTimeStamp) {
+        long dayTime = player.level().getDayTime();
+        if (dayTime < lastKnownTimeStamp) {
             if (isOnSleepCooldown(player)) {
                 player.displayClientMessage(Component.translatable("message.sleep_tight.time_skipped"), false);
             }
             //reset cooldowns if time has gone back
             this.lastWokenUpTimeStamp = -1;
-            this.setInsomniaCooldown(gameTime, 0);
+            this.setInsomniaCooldown(dayTime, player.level().getGameTime(), 0);
             syncToClient(player);
         }
     }
 
-    public void setInsomniaCooldown(long dayTimeNow, long cooldownDuration) {
+    public void setInsomniaCooldown(long dayTimeNow, long gameTimeNow, long cooldownDuration) {
         this.insomniaWillElapseTimeStamp = dayTimeNow + cooldownDuration;
+        this.insomniaWillElapseGameTime = gameTimeNow + cooldownDuration;
 
         this.lastKnownTimeStamp = dayTimeNow;
     }
@@ -127,7 +132,13 @@ public class PlayerSleepData {
 
     public long getInsomniaCooldown(Player player) {
         if (player.getAbilities().instabuild) return 0;
-        return insomniaWillElapseTimeStamp - player.level().getDayTime();
+        //cooldown is over as soon as EITHER clock passes its deadline.
+        //day time gives the intended sleep-cycle behaviour and tuning (these advance in
+        //lockstep during normal play, so this is a no-op then); game time is a monotonic
+        //backstop so a frozen (daylight cycle off) or rewound day time can't stall the cooldown forever.
+        long dayRemaining = insomniaWillElapseTimeStamp - player.level().getDayTime();
+        long gameRemaining = insomniaWillElapseGameTime - player.level().getGameTime();
+        return Math.min(dayRemaining, gameRemaining);
     }
 
     public float getInsomniaCooldownPercentage(Player player) {

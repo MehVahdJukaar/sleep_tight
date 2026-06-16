@@ -20,6 +20,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -40,8 +41,12 @@ import net.minecraft.world.entity.projectile.ThrownPotion;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.LingeringPotionItem;
 import net.minecraft.world.item.SplashPotionItem;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -55,6 +60,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -275,7 +281,7 @@ public class ModEvents {
     private static void onEncounter(ServerPlayer player, boolean mobSpawned, long wakeTime) {
         if (mobSpawned) {
             var c = STPlatStuff.getPlayerSleepData(player);
-            c.setInsomniaCooldown(wakeTime, CommonConfigs.ENCOUNTER_INSOMNIA_DURATION.get());
+            c.setInsomniaCooldown(wakeTime, player.level().getGameTime(), CommonConfigs.ENCOUNTER_INSOMNIA_DURATION.get());
             c.setLasWokenUpTime(wakeTime);
             c.setConsecutiveNightsSlept(0);
 
@@ -287,7 +293,7 @@ public class ModEvents {
 
     private static void onNightmare(ServerPlayer player, long wakeTime) {
         var c = STPlatStuff.getPlayerSleepData(player);
-        c.setInsomniaCooldown(wakeTime, CommonConfigs.NIGHTMARE_INSOMNIA_DURATION.get());
+        c.setInsomniaCooldown(wakeTime, player.level().getGameTime(), CommonConfigs.NIGHTMARE_INSOMNIA_DURATION.get());
         c.setLasWokenUpTime(wakeTime);
         c.setConsecutiveNightsSlept(0);
 
@@ -326,7 +332,7 @@ public class ModEvents {
 
             SleepEffectsHelper.applyEffectsOnWakeUp(playerCap, player, dayTimeDelta, pos, bed, state, data);
 
-            playerCap.setInsomniaCooldown(wakeUpTime, bed.st_getCooldown());
+            playerCap.setInsomniaCooldown(wakeUpTime, player.level().getGameTime(), bed.st_getCooldown());
             playerCap.syncToClient(player);
         }
     }
@@ -522,6 +528,49 @@ public class ModEvents {
         if (part == BedPart.FOOT) return pos;
         Direction dir = bed.getValue(BedBlock.FACING);
         return pos.relative(dir.getOpposite());
+    }
+
+    //infests a random subset of beds that a structure piece (woodland mansion) just placed.
+    //works on any bed block entity (vanilla or modded) since it matches BlockTags.BEDS, not a specific block.
+    public static void infestStructureBeds(WorldGenLevel level, ChunkPos chunkPos, BoundingBox pieceBox, RandomSource random) {
+        double chance = CommonConfigs.MANSION_INFESTATION_CHANCE.get();
+        if (chance <= 0) return;
+
+        //iterate only the positions that actually have a block entity in this chunk, rather than probing
+        //every coordinate. copy the set since we read block states/entities while walking it.
+        ChunkAccess chunk = level.getChunk(chunkPos.x, chunkPos.z);
+        List<BlockEntity> toInfest = null;
+        for (BlockPos p : new ArrayList<>(chunk.getBlockEntitiesPos())) {
+            if (!pieceBox.isInside(p)) continue;
+            BlockState state = level.getBlockState(p);
+            if (!state.is(BlockTags.BEDS)) continue;
+            //only the head holds the data; skips feet so a double bed is counted once
+            if (!state.hasProperty(BedBlock.PART) || state.getValue(BedBlock.PART) != BedPart.HEAD) continue;
+            if (random.nextFloat() >= chance) continue;
+
+            BlockEntity be = level.getBlockEntity(p);
+            if (be == null) continue;
+            if (toInfest == null) toInfest = new ArrayList<>();
+            toInfest.add(be);
+        }
+        if (toInfest == null) return;
+
+        //defer mutating the data attachment to the main thread, since postProcess runs on a worldgen worker thread.
+
+        MinecraftServer server = level.getLevel().getServer();
+        if (server == null) return;
+        List<BlockEntity> beds = toInfest;
+        server.executeIfPossible(() -> {
+            for (BlockEntity be : beds) {
+                if (be.isRemoved()) continue;
+                BedData data = SleepTight.BED_DATA.getOrCreate(be);
+                if (data.isInfested()) continue;
+                CompoundTag tag = new CompoundTag();
+                tag.putString("id", SleepTight.BEDBUG_ENTITY.getId().toString());
+                data.setBedBug(tag);
+                be.setChanged();
+            }
+        });
     }
 
     public static boolean shouldHaveBedData(BlockEntity blockEntity) {

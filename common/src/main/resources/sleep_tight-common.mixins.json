@@ -19,7 +19,8 @@
     "PhantomMixin",
     "PlayerMixin",
     "ServerLevelMixin",
-    "SleepStatusMixin"
+    "SleepStatusMixin",
+    "TemplateStructurePieceMixin"
   ],
   "injectors": {
     "defaultRequire": 1

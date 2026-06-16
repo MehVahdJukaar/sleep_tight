@@ -185,7 +185,7 @@ public class WakeUpEncounterHelper {
                     Path path = mob.getNavigation().createPath(mutable, 0);
                     if (path != null) {
 
-                        mob.setBedTarget(mutable);
+                        mob.setBedTarget(bedPos);
 
                         doSpawnMob(level, mob);
 

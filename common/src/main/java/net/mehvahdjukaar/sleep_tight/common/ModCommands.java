@@ -95,7 +95,7 @@ public class ModCommands {
             if (context.getSource().getEntity() instanceof ServerPlayer serverPlayer) {
                 var cap = STPlatStuff.getPlayerSleepData(serverPlayer);
                 int cooldown = IntegerArgumentType.getInteger(context, "cooldown");
-                cap.setInsomniaCooldown(serverPlayer.level().dayTime(), cooldown);
+                cap.setInsomniaCooldown(serverPlayer.level().getDayTime(), serverPlayer.level().getGameTime(), cooldown);
                 cap.syncToClient(serverPlayer);
 
                 context.getSource().sendSuccess(() -> Component.translatable("message.sleep_tight.command.set_insomnia"), false);

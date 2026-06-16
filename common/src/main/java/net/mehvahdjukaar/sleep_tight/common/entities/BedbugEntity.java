@@ -14,8 +14,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -27,17 +25,21 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
+import com.google.common.collect.ImmutableList;
+import com.mojang.serialization.Dynamic;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.*;
+import net.minecraft.world.entity.ai.goal.ClimbOnTopOfPowderSnowGoal;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
-import net.minecraft.world.entity.ai.village.poi.PoiManager;
-import net.minecraft.world.entity.ai.village.poi.PoiRecord;
-import net.minecraft.world.entity.ai.village.poi.PoiTypes;
+import net.minecraft.world.entity.ai.sensing.Sensor;
+import net.minecraft.world.entity.ai.sensing.SensorType;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
@@ -55,11 +57,24 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 public class BedbugEntity extends Monster {
     private static final EntityDataAccessor<Byte> DATA_FLAGS_ID = SynchedEntityData.defineId(BedbugEntity.class, EntityDataSerializers.BYTE);
-    private BlockPos targetBed;
+
+    private static final ImmutableList<? extends SensorType<? extends Sensor<? super BedbugEntity>>> SENSOR_TYPES =
+            ImmutableList.of(SensorType.NEAREST_LIVING_ENTITIES, SensorType.NEAREST_PLAYERS);
+    private static final ImmutableList<? extends MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(
+            MemoryModuleType.HOME,
+            MemoryModuleType.NEAREST_LIVING_ENTITIES,
+            MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES,
+            MemoryModuleType.NEAREST_VISIBLE_PLAYER,
+            MemoryModuleType.NEAREST_VISIBLE_ATTACKABLE_PLAYER,
+            MemoryModuleType.LOOK_TARGET,
+            MemoryModuleType.WALK_TARGET,
+            MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
+            MemoryModuleType.PATH,
+            MemoryModuleType.ATTACK_TARGET,
+            MemoryModuleType.ATTACK_COOLING_DOWN);
 
     //client
     private int burrowingTicks = 0;
@@ -75,16 +90,54 @@ public class BedbugEntity extends Monster {
 
     @Override
     protected void registerGoals() {
+        // Reactive, non-navigation goals coexist fine with the brain (neither drives WALK_TARGET).
+        // Everything that moves the bedbug now lives in the brain (see makeBrain).
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(1, new ClimbOnTopOfPowderSnowGoal(this, this.level()));
-        this.goalSelector.addGoal(2, new InfestBedGoal(this, 1, 20));
-        this.goalSelector.addGoal(3, new BedbugLeapGoal(this, 0.25F));
-        this.goalSelector.addGoal(4, new BedbugAttackGoal(this));
-        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8));
-        this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
+    }
 
-        // this.targetSelector.addGoal(8, new NearestAttackableTargetGoal<>(this, Player.class, true));
+    @Override
+    protected Brain.Provider<BedbugEntity> brainProvider() {
+        return Brain.provider(MEMORY_TYPES, SENSOR_TYPES);
+    }
+
+    @Override
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        return BedbugAi.makeBrain(this.brainProvider().makeBrain(dynamic));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Brain<BedbugEntity> getBrain() {
+        return (Brain<BedbugEntity>) super.getBrain();
+    }
+
+    @Override
+    protected void customServerAiStep() {
+        this.getBrain().tick((ServerLevel) this.level(), this);
+        BedbugAi.updateActivity(this);
+        super.customServerAiStep();
+    }
+
+    public boolean hasBed() {
+        return this.getBrain().hasMemoryValue(MemoryModuleType.HOME);
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        boolean hurt = super.hurt(source, amount);
+        // Provoked retaliation only when there's no bed to run to; otherwise it keeps fleeing toward the bed.
+        if (!this.level().isClientSide && hurt && !this.hasBed()
+                && source.getEntity() instanceof LivingEntity attacker && this.canAttack(attacker)) {
+            this.getBrain().eraseMemory(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE);
+            this.getBrain().setMemoryWithExpiry(MemoryModuleType.ATTACK_TARGET, attacker, 200L);
+        }
+        return hurt;
+    }
+
+    @Override
+    public LivingEntity getTarget() {
+        return this.getTargetFromBrain();
     }
 
     @Override
@@ -110,9 +163,6 @@ public class BedbugEntity extends Monster {
     @Override
     public void tick() {
         super.tick();
-
-        if (this.getTarget() != null)
-            this.getLookControl().setLookAt(this.getTarget());
 
         Level level = this.level();
         if (!level.isClientSide) {
@@ -198,49 +248,44 @@ public class BedbugEntity extends Monster {
     /**
      * Returns true if the WatchableObject (Byte) is 0x01 otherwise returns false. The WatchableObject is updated using setBesideClimableBlock.
      */
+    // independent bit flags: climbing = bit0 (1), splattered = bit1 (2), burrowing = bit2 (4).
+    // they must NOT overlap: the per-tick setClimbing(horizontalCollision) would otherwise clobber the burrow flag.
+    private static final int FLAG_CLIMBING = 1;
+    private static final int FLAG_SPLATTERED = 2;
+    private static final int FLAG_BURROWING = 4;
+
     public boolean isClimbing() {
-        return (this.entityData.get(DATA_FLAGS_ID) & 1) != 0;
+        return (this.entityData.get(DATA_FLAGS_ID) & FLAG_CLIMBING) != 0;
     }
 
     public boolean isSplattered() {
-        return (this.entityData.get(DATA_FLAGS_ID) & 3) != 0;
+        return (this.entityData.get(DATA_FLAGS_ID) & FLAG_SPLATTERED) != 0;
     }
 
     public boolean isBurrowing() {
-        return (this.entityData.get(DATA_FLAGS_ID) & 5) != 0;
+        return (this.entityData.get(DATA_FLAGS_ID) & FLAG_BURROWING) != 0;
     }
 
-    /**
-     * Updates the WatchableObject (Byte) created in entityInit(), setting it to 0x01 if par1 is true or 0x00 if it is false.
-     */
-    public void setClimbing(boolean climbing) {
+    private void setFlag(int flag, boolean value) {
         byte b = this.entityData.get(DATA_FLAGS_ID);
-        if (climbing) {
-            b = (byte) (b | 1);
+        if (value) {
+            b = (byte) (b | flag);
         } else {
-            b &= -2;
+            b = (byte) (b & ~flag);
         }
         this.entityData.set(DATA_FLAGS_ID, b);
+    }
+
+    public void setClimbing(boolean climbing) {
+        setFlag(FLAG_CLIMBING, climbing);
     }
 
     public void setSplattered(boolean splattered) {
-        byte b = this.entityData.get(DATA_FLAGS_ID);
-        if (splattered) {
-            b = (byte) (b | 3);
-        } else {
-            b &= -3;
-        }
-        this.entityData.set(DATA_FLAGS_ID, b);
+        setFlag(FLAG_SPLATTERED, splattered);
     }
 
     public void setBurrowing(boolean burrowing) {
-        byte b = this.entityData.get(DATA_FLAGS_ID);
-        if (burrowing) {
-            b = (byte) (b | 5);
-        } else {
-            b &= -5;
-        }
-        this.entityData.set(DATA_FLAGS_ID, b);
+        setFlag(FLAG_BURROWING, burrowing);
     }
 
     @Override
@@ -248,24 +293,13 @@ public class BedbugEntity extends Monster {
         return new BedbugNavigation(this, level);
     }
 
+    /**
+     * Seeds the bedbug's initial target bed (e.g. the bed a player just slept in). Stored as the brain's
+     * HOME memory; once this bed is infested or becomes invalid, AcquirePoi finds and claims a new one.
+     * HOME persists across save/load via the brain, so no manual NBT is needed.
+     */
     public void setBedTarget(BlockPos pos) {
-        this.targetBed = new BlockPos(pos); //for mutable
-    }
-
-    @Override
-    public void readAdditionalSaveData(CompoundTag compound) {
-        super.readAdditionalSaveData(compound);
-        if (compound.contains("targetBed")) {
-            this.targetBed = NbtUtils.readBlockPos(compound, "targetBed").orElse(null);
-        }
-    }
-
-    @Override
-    public void addAdditionalSaveData(CompoundTag compound) {
-        super.addAdditionalSaveData(compound);
-        if (targetBed != null) {
-            compound.put("targetBed", NbtUtils.writeBlockPos(targetBed));
-        }
+        this.getBrain().setMemory(MemoryModuleType.HOME, GlobalPos.of(this.level().dimension(), pos.immutable()));
     }
 
     protected void onInsideBlock(BlockState state, BlockPos pos) {
@@ -325,143 +359,10 @@ public class BedbugEntity extends Monster {
         return super.isColliding(pos, state);
     }
 
-    static class BedbugLeapGoal extends LeapAtTargetGoal {
-
-        private final Mob mob;
-
-        public BedbugLeapGoal(Mob mob, float f) {
-            super(mob, f);
-            this.mob = mob;
-        }
-
-        @Override
-        public void start() {
-            //doesnt even work
-            this.mob.getLookControl().setLookAt(this.mob.getTarget());
-            super.start();
-        }
-    }
-
     public static boolean isValidBedForInfestation(BlockState state) {
         Block block = state.getBlock();
-        //TODO: check ebd data and use memory module instead
         return block instanceof BedBlock && !state.getValue(BedBlock.OCCUPIED);
     }
-
-    static class InfestBedGoal extends MoveToBlockGoal {
-
-        private final List<BlockPos> blacklist = new ArrayList<>();
-
-        private final BedbugEntity bedBug;
-        private final int searchRange;
-        private int ticksOnTarget = 0;
-        private boolean reachedTarget;
-
-        public InfestBedGoal(BedbugEntity pathfinderMob, double speed, int searchRange) {
-            super(pathfinderMob, speed, searchRange);
-            this.setFlags(EnumSet.of(Flag.MOVE, Flag.JUMP, Flag.LOOK, Flag.TARGET));
-            this.bedBug = pathfinderMob;
-            this.searchRange = searchRange;
-        }
-
-        @Override
-        protected boolean isReachedTarget() {
-            return reachedTarget;
-        }
-
-        @Override
-        protected BlockPos getMoveToTarget() {
-            return this.blockPos;
-        }
-
-        @Override
-        public void tick() {
-            BlockPos blockPos = this.getMoveToTarget();
-            double dist = blockPos.distToCenterSqr(this.mob.position());
-            if (dist >= 1) {
-                this.reachedTarget = false;
-                ++this.tryTicks;
-                if (this.shouldRecalculatePath()) {
-                    double s = this.speedModifier;
-                    if (dist < (1.5 * 1.5)) s /= 2;
-                    this.mob.getNavigation().moveTo((blockPos.getX()) + 0.5, blockPos.getY() + 0.25,
-                            (blockPos.getZ()) + 0.5, s);
-                }
-            } else {
-                this.reachedTarget = true;
-                --this.tryTicks;
-            }
-
-            if (this.isReachedTarget()) {
-                ticksOnTarget++;
-                this.bedBug.setBurrowing(true);
-
-            } else ticksOnTarget = 0;
-        }
-
-        @Override
-        protected boolean isValidTarget(LevelReader level, BlockPos pos) {
-            return isValidBedForInfestation(level.getBlockState(pos));
-        }
-
-        @Override
-        protected int nextStartTick(PathfinderMob creature) {
-            return super.nextStartTick(creature) * 100;
-        }
-
-        @Override
-        protected boolean findNearestBlock() {
-            if (bedBug.targetBed != null && this.isValidTarget(this.mob.level(), bedBug.targetBed)) {
-                this.blockPos = bedBug.targetBed;
-                return true;
-            }
-            //TODO: account for occupied
-            var v = findNearestBed();
-            if (!v.isEmpty()) {
-                bedBug.targetBed = v.get(0);
-                this.blockPos = v.get(0);
-                return true;
-            }
-
-            return false;// super.findNearestBlock();
-        }
-
-        private List<BlockPos> findNearestBed() {
-            BlockPos pos = bedBug.blockPosition();
-            ServerLevel level = (ServerLevel) bedBug.level();
-            PoiManager poiManager = level.getPoiManager();
-            Stream<PoiRecord> stream = poiManager.getInRange((h) ->
-                    h.is(PoiTypes.HOME), pos, searchRange, PoiManager.Occupancy.ANY);
-            return stream.map(PoiRecord::getPos)
-                    .filter(p -> isValidTarget(level, p))
-                    .sorted(Comparator.comparingDouble((p) -> p.distSqr(pos)))
-                    .toList();
-        }
-    }
-
-
-    static class BedbugAttackGoal extends MeleeAttackGoal {
-        private final BedbugEntity bedbug;
-
-        public BedbugAttackGoal(BedbugEntity spider) {
-            super(spider, 1.0, true);
-            this.bedbug = spider;
-        }
-
-        public boolean canUse() {
-            return super.canUse();
-        }
-
-        public boolean canContinueToUse() {
-            if (this.bedbug.targetBed != null && this.mob.getRandom().nextInt(100) == 0) {
-                this.mob.setTarget(null);
-                return false;
-            } else {
-                return super.canContinueToUse();
-            }
-        }
-    }
-
 
     public static AttributeSupplier.Builder makeAttributes() {
         return Monster.createMonsterAttributes().add(Attributes.MAX_HEALTH, 9.0)

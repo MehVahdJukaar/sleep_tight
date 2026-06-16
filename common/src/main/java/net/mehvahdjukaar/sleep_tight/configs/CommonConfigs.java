@@ -86,6 +86,7 @@ public class CommonConfigs {
     public static final Supplier<Integer> BEDBUG_MAX_LIGHT;
     public static final Supplier<Boolean> PREVENTED_BY_DREAM_CATCHER;
     public static final Supplier<Boolean> ONLY_WHEN_IN_HOME_BED;
+    public static final Supplier<Double> MANSION_INFESTATION_CHANCE;
 
     public enum ExplosionBehavior {
         DEFAULT, TINY_EXPLOSION, ALLOWS_SLEEPING, ALLOWS_SLEEPING_NO_RESPAWN;
@@ -184,6 +185,8 @@ public class CommonConfigs {
                 .define("prevented_by_dream_essence", false);
         ONLY_WHEN_IN_HOME_BED = builder.comment("Only spawns bedbugs when sleeping in your home bed")
                 .define("only_when_in_home_bed", false);
+        MANSION_INFESTATION_CHANCE = builder.comment("Chance for each bed generated in a woodland mansion to start out infested with a bedbug. Set to 0 to disable")
+                .define("mansion_infestation_chance", 0.5, 0, 1);
         builder.pop();
 
         builder.push("sleep_cooldown");

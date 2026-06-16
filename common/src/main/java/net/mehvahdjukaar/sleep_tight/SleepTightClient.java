@@ -2,7 +2,6 @@ package net.mehvahdjukaar.sleep_tight;
 
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
 import net.mehvahdjukaar.moonlight.api.platform.ClientHelper;
-import net.mehvahdjukaar.sleep_tight.client.InfestedBedBakedModel;
 import net.mehvahdjukaar.sleep_tight.client.particles.BedbugParticle;
 import net.mehvahdjukaar.sleep_tight.client.particles.DreamParticle;
 import net.mehvahdjukaar.sleep_tight.client.particles.MimimiParticle;
@@ -55,7 +54,6 @@ public class SleepTightClient {
         ClientHelper.addEntityRenderersRegistration(SleepTightClient::registerEntityRenderers);
         ClientHelper.addBlockEntityRenderersRegistration(SleepTightClient::registerBlockEntityRenderers);
         ClientHelper.addParticleRegistration(SleepTightClient::registerParticles);
-        ClientHelper.addModelLoaderRegistration(SleepTightClient::registerModelLoaders);
     }
 
 
@@ -82,11 +80,6 @@ public class SleepTightClient {
 
     private static void registerBlockEntityRenderers(ClientHelper.BlockEntityRendererEvent event) {
         event.register(SleepTight.HAMMOCK_TILE.get(), HammockBlockTileRenderer::new);
-    }
-
-    @EventCalled
-    private static void registerModelLoaders(ClientHelper.ModelLoaderEvent event) {
-        event.register(SleepTight.res("infested_bed"), new InfestedBedBakedModel.Loader());
     }
 
     public static Player getPlayer() {
