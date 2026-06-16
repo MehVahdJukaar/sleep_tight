@@ -1,7 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.common.blocks;
 
 import com.mojang.serialization.MapCodec;
-import dev.architectury.injectables.annotations.PlatformOnly;
 import net.mehvahdjukaar.moonlight.api.block.IRotatable;
 import net.mehvahdjukaar.moonlight.api.misc.ForgeOverride;
 import net.mehvahdjukaar.moonlight.api.set.BlocksColorAPI;

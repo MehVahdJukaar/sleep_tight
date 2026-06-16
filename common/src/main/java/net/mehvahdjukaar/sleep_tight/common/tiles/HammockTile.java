@@ -1,6 +1,5 @@
 package net.mehvahdjukaar.sleep_tight.common.tiles;
 
-import dev.architectury.injectables.annotations.PlatformOnly;
 import net.mehvahdjukaar.moonlight.api.client.anim.PendulumAnimation;
 import net.mehvahdjukaar.moonlight.api.misc.ForgeOverride;
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
@@ -9,7 +8,6 @@ import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.network.AccelerateHammockMessage;
-import net.mehvahdjukaar.sleep_tight.common.network.ModNetworking;
 import net.mehvahdjukaar.sleep_tight.common.network.ServerBoundFallFromHammockMessage;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.minecraft.core.BlockPos;

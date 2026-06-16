@@ -1,4 +1,4 @@
-package net.mehvahdjukaar.sleep_tight.fabric;
+package net.mehvahdjukaar.sleep_tight.platform;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.mehvahdjukaar.sleep_tight.SleepTight;

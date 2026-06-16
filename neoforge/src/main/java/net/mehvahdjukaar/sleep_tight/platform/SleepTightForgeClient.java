@@ -1,4 +1,4 @@
-package net.mehvahdjukaar.sleep_tight.neoforge;
+package net.mehvahdjukaar.sleep_tight.platform;
 
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;

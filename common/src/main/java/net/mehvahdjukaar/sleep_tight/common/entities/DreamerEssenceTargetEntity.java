@@ -1,11 +1,10 @@
 package net.mehvahdjukaar.sleep_tight.common.entities;
 
-import dev.architectury.injectables.annotations.PlatformOnly;
+import net.mehvahdjukaar.moonlight.api.misc.ForgeOverride;
 import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundParticleMessage;
-import net.mehvahdjukaar.sleep_tight.common.network.ModNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -36,8 +35,7 @@ public class DreamerEssenceTargetEntity extends LivingEntity {
         super(entityEntityType, level);
     }
 
-    //@Override
-    @PlatformOnly(PlatformOnly.FORGE)
+    @ForgeOverride
     public ItemStack getPickedResult(HitResult target) {
         return new ItemStack(SleepTight.DREAMER_ESSENCE.get());
     }

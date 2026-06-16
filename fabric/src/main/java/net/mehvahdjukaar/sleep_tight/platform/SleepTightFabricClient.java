@@ -1,10 +1,9 @@
-package net.mehvahdjukaar.sleep_tight.fabric;
+package net.mehvahdjukaar.sleep_tight.platform;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientBlockEntityEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.client.SleepGuiOverlay;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.minecraft.client.Minecraft;
