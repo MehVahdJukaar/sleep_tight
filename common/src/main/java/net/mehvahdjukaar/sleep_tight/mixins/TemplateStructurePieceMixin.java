@@ -21,11 +21,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(TemplateStructurePiece.class)
 public abstract class TemplateStructurePieceMixin {
 
+    /*
     @Inject(method = "postProcess", at = @At("TAIL"))
     private void sleep_tight$infestMansionBeds(WorldGenLevel level, StructureManager structureManager,
                                                ChunkGenerator generator, RandomSource random, BoundingBox box,
                                                ChunkPos chunkPos, BlockPos pos, CallbackInfo ci) {
         if (!((Object) this instanceof WoodlandMansionPieces.WoodlandMansionPiece)) return;
         ModEvents.infestStructureBeds(level, chunkPos, ((StructurePiece) (Object) this).getBoundingBox(), random);
-    }
+    }*/
+    //Mansions dont even have beds...
 }

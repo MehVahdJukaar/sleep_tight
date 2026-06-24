@@ -132,7 +132,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     }
 
     private static void registerSpawnPlacements(RegHelper.SpawnPlacementEvent event) {
-        event.register(BEDBUG_ENTITY.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BedbugEntity::checkMonsterSpawnRules);
+        event.register(BEDBUG_ENTITY.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BedbugEntity::checkBedbugSpawnRules);
     }
 
     private static void registerEntityAttributes(RegHelper.AttributeEvent event) {
@@ -203,7 +203,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
                     .updateInterval(Integer.MAX_VALUE));
 
     public static final RegSupplier<EntityType<BedbugEntity>> BEDBUG_ENTITY = RegHelper.registerEntityType(res("bedbug"),
-            EntityType.Builder.<BedbugEntity>of(BedbugEntity::new, MobCategory.MONSTER)
+            EntityType.Builder.<BedbugEntity>of(BedbugEntity::new, MobCategory.CREATURE)
                     .sized(11 / 16f, 6 / 16f)
                     .clientTrackingRange(7)
                     .updateInterval(3));

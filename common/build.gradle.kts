@@ -25,6 +25,6 @@ dependencies {
 
     modCompileOnly("curse.maven:entity-model-features-844662:5722728")
     modCompileOnly("curse.maven:entity-texture-features-fabric-568563:5000985")
-    modCompileOnly("org.violetmoon.quark:Quark-4.0-beta-426")
-    modCompileOnly("org.violetmoon.zeta:Zeta-1.0-beta-1")
+    modCompileOnly("curse.maven:quark-243121:8146177")
+    modCompileOnly("curse.maven:zeta-968868:7980010")
 }

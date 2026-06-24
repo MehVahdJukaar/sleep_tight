@@ -3,6 +3,7 @@ package net.mehvahdjukaar.sleep_tight.common.entities;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.datafixers.util.Pair;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.behavior.AcquirePoi;
 import net.minecraft.world.entity.ai.behavior.DoNothing;
@@ -14,6 +15,7 @@ import net.minecraft.world.entity.ai.behavior.RunOne;
 import net.minecraft.world.entity.ai.behavior.SetWalkTargetFromAttackTargetIfTargetOutOfReach;
 import net.minecraft.world.entity.ai.behavior.StopAttackingIfTargetInvalid;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.schedule.Activity;
 
@@ -64,22 +66,28 @@ public class BedbugAi {
     }
 
     private static void initFightActivity(Brain<BedbugEntity> brain) {
-        brain.addActivityAndRemoveMemoryWhenStopped(Activity.FIGHT, 10, ImmutableList.of(
-                SetWalkTargetFromAttackTargetIfTargetOutOfReach.create(SPEED_WHEN_FIGHTING),
-                MeleeAttack.create(MELEE_COOLDOWN),
-                StopAttackingIfTargetInvalid.create()), MemoryModuleType.ATTACK_TARGET);
+        // Timid: FIGHT only when provoked (ATTACK_TARGET) and bedless (no HOME).
+        brain.addActivityAndRemoveMemoriesWhenStopped(
+                Activity.FIGHT,
+                ImmutableList.of(
+                        Pair.of(0, SetWalkTargetFromAttackTargetIfTargetOutOfReach.create(SPEED_WHEN_FIGHTING)),
+                        Pair.of(1, MeleeAttack.create(MELEE_COOLDOWN)),
+                        Pair.of(2, StopAttackingIfTargetInvalid.create())),
+                ImmutableSet.of(
+                        Pair.of(MemoryModuleType.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT),
+                        Pair.of(MemoryModuleType.HOME, MemoryStatus.VALUE_ABSENT)),
+                ImmutableSet.of(MemoryModuleType.ATTACK_TARGET));
     }
 
     public static void updateActivity(BedbugEntity bedbug) {
         Brain<BedbugEntity> brain = bedbug.getBrain();
-        // Timid: a bedbug with a bed always runs for it and never fights, even while being hit.
-        // It only enters FIGHT when it has no bed to flee to (and was provoked).
-        if (bedbug.hasBed()) {
-            brain.setActiveActivityToFirstValid(ImmutableList.of(Activity.IDLE));
-        } else {
-            brain.setActiveActivityToFirstValid(ImmutableList.of(Activity.FIGHT, Activity.IDLE));
+        if (bedbug.level().getDifficulty() == Difficulty.PEACEFUL) {
+            brain.eraseMemory(MemoryModuleType.ATTACK_TARGET);
+            bedbug.setAggressive(false);
         }
-        bedbug.setAggressive(brain.isActive(Activity.FIGHT)
+        brain.setActiveActivityToFirstValid(ImmutableList.of(Activity.FIGHT, Activity.IDLE));
+        bedbug.setAggressive(bedbug.level().getDifficulty() != Difficulty.PEACEFUL
+                && brain.isActive(Activity.FIGHT)
                 && brain.hasMemoryValue(MemoryModuleType.ATTACK_TARGET));
     }
 }

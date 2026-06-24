@@ -11,7 +11,6 @@ import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -36,20 +35,15 @@ import net.minecraft.world.entity.ai.goal.ClimbOnTopOfPowderSnowGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
 import net.minecraft.world.entity.ai.sensing.Sensor;
 import net.minecraft.world.entity.ai.sensing.SensorType;
-import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.pathfinder.PathFinder;
-import net.minecraft.world.level.pathfinder.PathType;
-import net.minecraft.world.level.pathfinder.PathfindingContext;
-import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BooleanOp;
@@ -58,7 +52,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.*;
 
-public class BedbugEntity extends Monster {
+public class BedbugEntity extends PathfinderMob {
     private static final EntityDataAccessor<Byte> DATA_FLAGS_ID = SynchedEntityData.defineId(BedbugEntity.class, EntityDataSerializers.BYTE);
 
     private static final ImmutableList<? extends SensorType<? extends Sensor<? super BedbugEntity>>> SENSOR_TYPES =
@@ -80,7 +74,7 @@ public class BedbugEntity extends Monster {
     private int burrowingTicks = 0;
     private int prevBurrowingTicks = 0;
 
-    public BedbugEntity(EntityType<? extends Monster> entityType, Level level) {
+    public BedbugEntity(EntityType<? extends BedbugEntity> entityType, Level level) {
         super(entityType, level);
     }
 
@@ -127,7 +121,8 @@ public class BedbugEntity extends Monster {
     public boolean hurt(DamageSource source, float amount) {
         boolean hurt = super.hurt(source, amount);
         // Provoked retaliation only when there's no bed to run to; otherwise it keeps fleeing toward the bed.
-        if (!this.level().isClientSide && hurt && !this.hasBed()
+        if (!this.level().isClientSide && hurt && this.level().getDifficulty() != Difficulty.PEACEFUL
+                && !this.hasBed()
                 && source.getEntity() instanceof LivingEntity attacker && this.canAttack(attacker)) {
             this.getBrain().eraseMemory(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE);
             this.getBrain().setMemoryWithExpiry(MemoryModuleType.ATTACK_TARGET, attacker, 200L);
@@ -365,98 +360,21 @@ public class BedbugEntity extends Monster {
     }
 
     public static AttributeSupplier.Builder makeAttributes() {
-        return Monster.createMonsterAttributes().add(Attributes.MAX_HEALTH, 9.0)
+        return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 9.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.325).add(Attributes.ATTACK_DAMAGE, 1.0);
     }
 
-    private static class BedbugNavigation extends WallClimberNavigation {
-        BedbugNavigation(BedbugEntity frog, Level level) {
-            super(frog, level);
+    public static boolean checkBedbugSpawnRules(EntityType<? extends BedbugEntity> type, ServerLevelAccessor level,
+                                                MobSpawnType spawnType, BlockPos pos, RandomSource random) {
+        if (spawnType != MobSpawnType.EVENT) {
+            return false;
         }
-
-        @Override
-        protected PathFinder createPathFinder(int maxVisitedNodes) {
-            this.nodeEvaluator = new BedbugNodeEvaluator();
-            this.nodeEvaluator.setCanPassDoors(true);
-            return new PathFinder(this.nodeEvaluator, maxVisitedNodes);
+        int maxLight = CommonConfigs.BEDBUG_MAX_LIGHT.get();
+        if (maxLight < 15) {
+            int light = Math.max(level.getBrightness(LightLayer.BLOCK, pos), level.getBrightness(LightLayer.SKY, pos));
+            return light <= maxLight;
         }
-    }
-
-    private static class BedbugNodeEvaluator extends WalkNodeEvaluator {
-
-        public BedbugNodeEvaluator() {
-            super();
-        }
-
-        @Override
-        protected double getFloorLevel(BlockPos pos) {
-            BlockPos blockPos = pos.below();
-            BlockGetter blockGetter = this.currentContext.level();
-
-            BlockState state = blockGetter.getBlockState(blockPos);
-            if (state.is(SleepTight.BEDBUG_WALK_THROUGH)) return blockPos.getY();
-            VoxelShape voxelShape = state.getCollisionShape(blockGetter, blockPos);
-            return blockPos.getY() + (voxelShape.isEmpty() ? 0.0 : voxelShape.max(Direction.Axis.Y));
-        }
-
-        //same as super
-        @Override
-        public Set<PathType> getPathTypeWithinMobBB(PathfindingContext context, int x, int y, int z) {
-            EnumSet<PathType> enumSet = EnumSet.noneOf(PathType.class);
-
-            for(int i = 0; i < this.entityWidth; ++i) {
-                for(int j = 0; j < this.entityHeight; ++j) {
-                    for(int k = 0; k < this.entityDepth; ++k) {
-                        int l = i + x;
-                        int m = j + y;
-                        int n = k + z;
-                        PathType pathType = this.getPathType(context, l, m, n);
-                        pathType = modifyPathType(context, l, m, n, pathType);
-                        BlockPos blockPos = this.mob.blockPosition();
-                        boolean bl = this.canPassDoors();
-                        if (pathType == PathType.DOOR_WOOD_CLOSED && this.canOpenDoors() && bl) {
-                            pathType = PathType.WALKABLE_DOOR;
-                        }
-
-                        if (pathType == PathType.DOOR_OPEN && !bl) {
-                            pathType = PathType.BLOCKED;
-                        }
-
-                        if (pathType == PathType.RAIL && this.getPathType(context, blockPos.getX(), blockPos.getY(), blockPos.getZ()) != PathType.RAIL && this.getPathType(context, blockPos.getX(), blockPos.getY() - 1, blockPos.getZ()) != PathType.RAIL) {
-                            pathType = PathType.UNPASSABLE_RAIL;
-                        }
-
-                        enumSet.add(pathType);
-                    }
-                }
-            }
-
-            return enumSet;
-        }
-
-        protected PathType modifyPathType(PathfindingContext blockGetter, int x, int y, int z, PathType nodeType) {
-            if (nodeType == PathType.DOOR_OPEN || nodeType == PathType.DOOR_WOOD_CLOSED ||
-                    nodeType == PathType.WALKABLE_DOOR) return PathType.OPEN;
-            if (nodeType == PathType.BLOCKED && blockGetter.getBlockState(BlockPos.containing(x,y,z))
-                    .getBlock() instanceof BedBlock) {
-                return PathType.WALKABLE;
-            }
-            return nodeType;
-        }
-    }
-
-    public static boolean checkMonsterSpawnRules(EntityType<? extends Monster> type, ServerLevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random) {
-        if (spawnType == MobSpawnType.EVENT) {
-            if (level.getDifficulty() != Difficulty.PEACEFUL) {
-                int maxLight = CommonConfigs.BEDBUG_MAX_LIGHT.get();
-                if (maxLight < 15) {
-                    int light = Math.max(level.getBrightness(LightLayer.BLOCK, pos), level.getBrightness(LightLayer.SKY, pos));
-                    return light <= maxLight;
-                }
-                return true;
-            }
-        }
-        return Monster.checkMonsterSpawnRules(type, level, spawnType, pos, random);
+        return true;
     }
 
 }

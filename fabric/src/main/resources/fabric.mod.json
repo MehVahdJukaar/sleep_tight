@@ -17,7 +17,7 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "net.mehvahdjukaar.sleep_tight.fabric.SleepTightFabric"
+      "net.mehvahdjukaar.sleep_tight.platform.SleepTightFabric"
     ],
     "modmenu": [
       "net.mehvahdjukaar.sleep_tight.integration.fabric.ModMenuCompat"

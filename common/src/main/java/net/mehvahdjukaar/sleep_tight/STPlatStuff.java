@@ -2,7 +2,7 @@ package net.mehvahdjukaar.sleep_tight;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Unit;
-import dev.architectury.injectables.annotations.ExpectPlatform;
+import net.mehvahdjukaar.candlelight.api.PlatformImpl;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
@@ -48,7 +48,7 @@ public class STPlatStuff {
     }
 
     @Contract
-    @ExpectPlatform
+    @PlatformImpl
     public static Either<Player.BedSleepingProblem, Unit> invokeSleepChecksEvents(ServerPlayer player, BlockPos pos) {
         throw new AssertionError();
     }

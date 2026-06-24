@@ -61,7 +61,6 @@
   "advancements.adventure.hammock.description": "Fall off a Hammock",
   "item.sleep_tight.moon_banner_pattern": "Banner Pattern",
   "item.sleep_tight.moon_banner_pattern.desc": "Moon Charge",
-
   "block.minecraft.banner.creeper.black": "Black Moon Charge",
   "block.minecraft.banner.creeper.blue": "Blue Moon Charge",
   "block.minecraft.banner.creeper.brown": "Brown Moon Charge",
@@ -77,5 +76,10 @@
   "block.minecraft.banner.creeper.purple": "Purple Moon Charge",
   "block.minecraft.banner.creeper.red": "Red Moon Charge",
   "block.minecraft.banner.creeper.white": "White Moon Charge",
-  "block.minecraft.banner.creeper.yellow": "Yellow Moon Charge"
+  "block.minecraft.banner.creeper.yellow": "Yellow Moon Charge",
+  "tag.banner_pattern.sleep_tight.pattern_item.moon": "Moon",
+  "tag.block.sleep_tight.hammocks": "Hammocks",
+  "tag.block.sleep_tight.laying_beds_blacklist": "Laying Beds Blacklist",
+  "tag.entity_type.sleep_tight.no_sleep_particles": "No Sleep Particles",
+  "tag.item.sleep_tight.hammocks": "Hammocks"
 }
