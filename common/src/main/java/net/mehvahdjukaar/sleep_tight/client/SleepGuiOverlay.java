@@ -142,7 +142,7 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
         boolean hasDreamerEssence = DreamEssenceBlock.isInRange(sleepingPos, player.level());
         boolean isMaxFamiliar = playerData.isBedFamiliarityMaxed(bedData);
 
-        if (ClientConfigs.SHOW_TIME.get()) {
+        if (ClientConfigs.SHOW_TIME.get().shouldShow(player)) {
             graphics.drawString(mc.font, getCurrentTime(player.level()), 2, 2, 14737632);
         }
 

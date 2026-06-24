@@ -173,6 +173,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     public static final TagKey<Block> BEDBUG_WALK_THROUGH = TagKey.create(Registries.BLOCK, res("bedbug_walk_through"));
     public static final TagKey<BannerPattern> MOON_TAG = TagKey.create(Registries.BANNER_PATTERN, res("pattern_item/moon"));
     public static final TagKey<Block> LAYING_BED_BLACKLIST = TagKey.create(Registries.BLOCK, res("laying_beds_blacklist"));
+    public static final TagKey<Item> CLOCKS = TagKey.create(Registries.ITEM, res("shows_bed_time"));
 
     //banner pattern
 

@@ -26,4 +26,7 @@ dependencies {
     modCompileOnly("curse.maven:entity-texture-features-fabric-568563:5000985")
     modCompileOnly("curse.maven:quark-243121:8146177")
     modCompileOnly("curse.maven:zeta-968868:7980010")
+
+    modRuntimeOnly("curse.maven:artsandcrafts-1034791:8041066")
+    modRuntimeOnly("curse.maven:jinxedlib-1203401:6727690")
 }

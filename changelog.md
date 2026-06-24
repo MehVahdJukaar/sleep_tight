@@ -1,2 +1,3 @@
 - splatter
 - natural spawner
+- more configs

@@ -32,6 +32,8 @@ public class BedbugAi {
     private static final float SPEED_WHEN_GOING_TO_BED = 1.15F;
     private static final float SPEED_WHEN_SEARCHING = 0.6F;
     private static final float SPEED_WHEN_FIGHTING = 1.0F;
+    // pretty fast, but never faster than its dash for a bed (which keeps priority over panic)
+    private static final float SPEED_WHEN_PANICKING = 1.1F;
     private static final int MELEE_COOLDOWN = 20;
 
     private BedbugAi() {
@@ -59,6 +61,9 @@ public class BedbugAi {
                 AcquirePoi.create(holder -> holder.is(PoiTypes.HOME), MemoryModuleType.HOME, false, Optional.empty()),
                 // make a run for the remembered bed and burrow into it (faster than the search wander)
                 new InfestBedBehavior(SPEED_WHEN_GOING_TO_BED),
+                // bedless + can't fight back (peaceful): flee from whatever just hit us. Ordered after
+                // InfestBedBehavior and gated on HOME absent, so running for a bed always takes priority.
+                new BedbugPanicBehavior(SPEED_WHEN_PANICKING),
                 // no bed yet: calmly wander in search of one (only runs while WALK_TARGET is unset)
                 new RunOne<>(ImmutableList.of(
                         Pair.of(RandomStroll.stroll(SPEED_WHEN_SEARCHING), 2),

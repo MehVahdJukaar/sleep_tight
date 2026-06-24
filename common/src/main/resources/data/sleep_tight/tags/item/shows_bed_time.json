@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:clock",
+    {"id":"supplementaries:clock_block","required":false}
+  ]
+}
+
+

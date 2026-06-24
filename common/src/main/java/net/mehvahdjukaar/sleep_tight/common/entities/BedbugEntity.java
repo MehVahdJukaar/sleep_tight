@@ -57,7 +57,7 @@ public class BedbugEntity extends PathfinderMob {
     private static final EntityDataAccessor<Byte> DATA_FLAGS_ID = SynchedEntityData.defineId(BedbugEntity.class, EntityDataSerializers.BYTE);
 
     private static final ImmutableList<? extends SensorType<? extends Sensor<? super BedbugEntity>>> SENSOR_TYPES =
-            ImmutableList.of(SensorType.NEAREST_LIVING_ENTITIES, SensorType.NEAREST_PLAYERS);
+            ImmutableList.of(SensorType.NEAREST_LIVING_ENTITIES, SensorType.NEAREST_PLAYERS, SensorType.HURT_BY);
     private static final ImmutableList<? extends MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(
             MemoryModuleType.HOME,
             MemoryModuleType.NEAREST_LIVING_ENTITIES,
@@ -69,7 +69,9 @@ public class BedbugEntity extends PathfinderMob {
             MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
             MemoryModuleType.PATH,
             MemoryModuleType.ATTACK_TARGET,
-            MemoryModuleType.ATTACK_COOLING_DOWN);
+            MemoryModuleType.ATTACK_COOLING_DOWN,
+            MemoryModuleType.HURT_BY,
+            MemoryModuleType.HURT_BY_ENTITY);
 
     //client
     private int burrowingTicks = 0;
@@ -122,8 +124,8 @@ public class BedbugEntity extends PathfinderMob {
     public boolean hurt(DamageSource source, float amount) {
         float healthBefore = this.getHealth();
         boolean hurt = super.hurt(source, amount);
-        if (!this.level().isClientSide && hurt && !this.isAlive() && amount >= healthBefore) {
-            this.setBurrowing(false);
+        this.setBurrowing(false);
+        if (!this.level().isClientSide && hurt && !this.isAlive() && healthBefore >= this.getMaxHealth()) {
             this.setSplattered(true);
         }
         // Provoked retaliation only when there's no bed to run to; otherwise it keeps fleeing toward the bed.
@@ -168,30 +170,17 @@ public class BedbugEntity extends PathfinderMob {
         Level level = this.level();
         if (!level.isClientSide) {
             this.setClimbing(this.horizontalCollision);
-        } else {
-            this.prevBurrowingTicks = burrowingTicks;
-        }
 
-        if (this.isBurrowing()) {
-            // burrow into the nearest valid bed (under our feet or right next to us), matching the
-            // proximity trigger in InfestBedBehavior. Computed the same way on both sides so the
-            // particles/sound and the actual infestation all target the same bed.
-            BlockPos pos = this.findBedToBurrow();
-
-            if (pos == null) {
-                this.setBurrowing(false);
-            } else {
-                BlockState bedState = level.getBlockState(pos);
-                burrowingTicks++;
-                if (level.isClientSide) {
-                    for (int i = 0; i < 6 + level.random.nextInt(10); i++) {
-                        float x = pos.getX() + level.random.nextFloat();
-                        float z = pos.getZ() + level.random.nextFloat();
-                        float y = pos.getY() + 9 / 16f;
-                        level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, bedState),
-                                x, y, z, 0, 0, 0);
-                    }
+            // Server is authoritative over the burrow: it re-checks the bed under the bug each tick,
+            // advances the timer, infests, plays the (broadcast) sounds, and clears the flag once the
+            // bug is no longer on a valid bed. FLAG_BURROWING is synced, so clients drive the animation
+            // straight off it (below) rather than re-deciding for themselves.
+            if (this.isBurrowing()) {
+                BlockPos pos = this.findBedToBurrow();
+                if (pos == null) {
+                    this.setBurrowing(false);
                 } else {
+                    burrowingTicks++;
                     if (burrowingTicks > 40) {
                         if (BedbugEggsItem.infestBed(level, pos, this)) {
                             this.spawnAnim();
@@ -200,14 +189,36 @@ public class BedbugEntity extends PathfinderMob {
                         } else {
                             this.setBurrowing(false);
                         }
-                    } else {
-                        if (burrowingTicks % 4 == 0)
-                            level.playSound(null, pos, SoundEvents.WOOL_HIT, SoundSource.HOSTILE, 0.5f, 1.2f);
+                    } else if (burrowingTicks % 4 == 0) {
+                        level.playSound(null, pos, SoundEvents.WOOL_HIT, SoundSource.HOSTILE, 0.5f, 1.2f);
                     }
                 }
+            } else if (burrowingTicks > 0) {
+                this.burrowingTicks = Math.max(0, this.burrowingTicks - 4);
             }
-        } else if (burrowingTicks > 0) {
-            this.burrowingTicks = Math.max(0, this.burrowingTicks - 4);
+        } else {
+            this.prevBurrowingTicks = burrowingTicks;
+
+            // Drive the burrow animation purely off the synced flag. Re-deriving the bed client-side is
+            // fragile: the bug's interpolated position (and, briefly, the bed's OCCUPIED state) can lag
+            // the server while it walks onto the bed, which would stall or flicker the animation even
+            // though the server is burrowing. Particles still need a bed block, so they stay best-effort.
+            if (this.isBurrowing()) {
+                burrowingTicks++;
+                BlockPos pos = this.findBedToBurrow();
+                if (pos != null) {
+                    BlockState bedState = level.getBlockState(pos);
+                    for (int i = 0; i < 6 + level.random.nextInt(10); i++) {
+                        float x = pos.getX() + level.random.nextFloat();
+                        float z = pos.getZ() + level.random.nextFloat();
+                        float y = pos.getY() + 9 / 16f;
+                        level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, bedState),
+                                x, y, z, 0, 0, 0);
+                    }
+                }
+            } else if (burrowingTicks > 0) {
+                this.burrowingTicks = Math.max(0, this.burrowingTicks - 4);
+            }
         }
 
     }
@@ -385,7 +396,11 @@ public class BedbugEntity extends PathfinderMob {
 
     public static AttributeSupplier.Builder makeAttributes() {
         return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 9.0)
-                .add(Attributes.MOVEMENT_SPEED, 0.325).add(Attributes.ATTACK_DAMAGE, 1.0);
+                .add(Attributes.MOVEMENT_SPEED, 0.325).add(Attributes.ATTACK_DAMAGE, 1.0)
+                // pathfinding reach is bounded by follow range, so without this the bug detects beds it can
+                // never path to and never claims them (gives up ~16 blocks). Kept below AcquirePoi.SCAN_RANGE
+                // (48) to cap pathfinding cost - beds farther than this just won't get infested.
+                .add(Attributes.FOLLOW_RANGE, 38.0);
     }
 
     public static boolean checkBedbugSpawnRules(EntityType<? extends BedbugEntity> type, ServerLevelAccessor level,

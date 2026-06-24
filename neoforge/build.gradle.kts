@@ -15,11 +15,11 @@ dependencies {
     modImplementation("net.mehvahdjukaar:moonlight-neoforge:${moonlight_version}")
     accessTransformers("net.mehvahdjukaar:moonlight-neoforge:${moonlight_version}")
 
-    modImplementation("curse.maven:supplementaries-412082:4375776")
+    modCompileOnly("curse.maven:supplementaries-412082:4375776")
     modImplementation("curse.maven:heartstone-573152:7278328")
     modImplementation("curse.maven:handcrafted-538214:6330030")
-    modImplementation("curse.maven:resourceful-lib-570073:5659871")
-    modImplementation("net.tslat.smartbrainlib:SmartBrainLib-fabric-${mc_version}:${sbl_version}")
+    modImplementation("curse.maven:resourceful-lib-570073:5973188")
+    //modImplementation("net.tslat.smartbrainlib:SmartBrainLib-fabric-${mc_version}:${sbl_version}")
 
     modCompileOnly("curse.maven:jei-238222:6600227")
     modCompileOnly("curse.maven:configured-457570:4011355")
@@ -29,4 +29,9 @@ dependencies {
     modCompileOnly("curse.maven:entity-texture-features-fabric-568563:5000985")
     modCompileOnly("curse.maven:quark-243121:8146177")
     modCompileOnly("curse.maven:zeta-968868:7980010")
+
+    modRuntimeOnly("curse.maven:farmers-delight-398521:8083481")
+    modRuntimeOnly("curse.maven:artsandcrafts-1034791:8041062")
+    modRuntimeOnly("curse.maven:jinxedlib-1203401:6727693")
+    modRuntimeOnly("curse.maven:delighto-flight-1347014:8012635")
 }

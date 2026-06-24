@@ -5,11 +5,27 @@ import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigBuilder;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ModConfigHolder;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
-import net.minecraft.util.Mth;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Items;
 
 import java.util.function.Supplier;
 
 public class ClientConfigs {
+
+    public enum SleepTimeDisplay {
+        OFF,
+        ALWAYS,
+        WITH_CLOCK;
+
+        public boolean shouldShow(Player player) {
+            return switch (this) {
+                case OFF -> false;
+                case ALWAYS -> true;
+                case WITH_CLOCK -> player.getInventory().contains(SleepTight.CLOCKS);
+            };
+        }
+    }
 
     public static final Supplier<Double> SWING_FORCE;
     public static final Supplier<Double> CAMERA_ROLL_INTENSITY;
@@ -26,7 +42,7 @@ public class ClientConfigs {
 
     public static final Supplier<Boolean> INSOMNIA_TIMER;
     public static final Supplier<Boolean> INSOMNIA_COOLDOWN;
-    public static final Supplier<Boolean> SHOW_TIME;
+    public static final Supplier<SleepTimeDisplay> SHOW_TIME;
     public static final Supplier<Boolean> TIME_FORMAT_24H;
     public static final ModConfigHolder SPEC;
 
@@ -64,8 +80,8 @@ public class ClientConfigs {
                 .define("show_insomnia_timer", false);
         INSOMNIA_COOLDOWN = builder.comment("Show insomnia cooldown as a small bed icon above crossair when aiming at a bed or in one")
                 .define("crossair_insomnia_cooldown", true);
-        SHOW_TIME = builder.comment("Displays current time when sleeping")
-                .define("show_time_when_sleeping", true);
+        SHOW_TIME = builder.comment("Displays current time when sleeping. WITH_CLOCK only shows it while a clock is in the inventory")
+                .define("show_time_when_sleeping", SleepTimeDisplay.ALWAYS);
         VILLAGER_SLEEP = builder.comment("Makes villagers close their eyes when sleeping")
                         .define("sleeping_villagers_eyes", true);
         ZZZ_PARTICLES = builder.comment("Spawn particles when sleeping. Set to 0 to disable")
