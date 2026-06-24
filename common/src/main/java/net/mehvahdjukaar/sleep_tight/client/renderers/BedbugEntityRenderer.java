@@ -22,8 +22,16 @@ public class BedbugEntityRenderer<T extends BedbugEntity> extends MobRenderer<T,
     }
 
     @Override
-    protected float getFlipDegrees(T livingEntity) {
-        return 180.0F;
+    protected float getFlipDegrees(T entity) {
+        return entity.isSplattered() ? 0.0F : 180.0F;
+    }
+
+    @Override
+    protected void scale(T entity, PoseStack poseStack, float partialTickTime) {
+        if (entity.isSplattered() && entity.deathTime > 0) {
+            float progress = Mth.clamp((entity.deathTime + partialTickTime) / 2.0F, 0.0F, 1.0F);
+            poseStack.scale(1, Mth.lerp(progress, 1.0F, 0.18F), 1);
+        }
     }
 
     @Override

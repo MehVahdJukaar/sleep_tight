@@ -11,6 +11,7 @@ import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
 import net.minecraft.core.BlockPos;
+import org.jetbrains.annotations.Nullable;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -119,9 +120,14 @@ public class BedbugEntity extends PathfinderMob {
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
+        float healthBefore = this.getHealth();
         boolean hurt = super.hurt(source, amount);
+        if (!this.level().isClientSide && hurt && !this.isAlive() && amount >= healthBefore) {
+            this.setBurrowing(false);
+            this.setSplattered(true);
+        }
         // Provoked retaliation only when there's no bed to run to; otherwise it keeps fleeing toward the bed.
-        if (!this.level().isClientSide && hurt && this.level().getDifficulty() != Difficulty.PEACEFUL
+        if (!this.level().isClientSide && hurt && this.isAlive() && this.level().getDifficulty() != Difficulty.PEACEFUL
                 && !this.hasBed()
                 && source.getEntity() instanceof LivingEntity attacker && this.canAttack(attacker)) {
             this.getBrain().eraseMemory(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE);
@@ -167,19 +173,22 @@ public class BedbugEntity extends PathfinderMob {
         }
 
         if (this.isBurrowing()) {
-            BlockPos pos = this.blockPosition();
+            // burrow into the nearest valid bed (under our feet or right next to us), matching the
+            // proximity trigger in InfestBedBehavior. Computed the same way on both sides so the
+            // particles/sound and the actual infestation all target the same bed.
+            BlockPos pos = this.findBedToBurrow();
 
-            BlockState feetBlockState = level.getBlockState(pos);
-            if (!(feetBlockState.getBlock() instanceof BedBlock)) {
+            if (pos == null) {
                 this.setBurrowing(false);
             } else {
+                BlockState bedState = level.getBlockState(pos);
                 burrowingTicks++;
                 if (level.isClientSide) {
                     for (int i = 0; i < 6 + level.random.nextInt(10); i++) {
                         float x = pos.getX() + level.random.nextFloat();
                         float z = pos.getZ() + level.random.nextFloat();
                         float y = pos.getY() + 9 / 16f;
-                        level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, feetBlockState),
+                        level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, bedState),
                                 x, y, z, 0, 0, 0);
                     }
                 } else {
@@ -354,6 +363,21 @@ public class BedbugEntity extends PathfinderMob {
         return super.isColliding(pos, state);
     }
 
+    /**
+     * Finds the bed this bedbug is standing on and burrowing straight down into: the block at its feet, or
+     * the block directly below (when it rests on top of the bed). Strictly vertical - a bed merely next to
+     * the bug does not count, since it buries into the bed it stands on. Null clears the burrowing state.
+     */
+    @Nullable
+    private BlockPos findBedToBurrow() {
+        Level level = this.level();
+        BlockPos feet = this.blockPosition();
+        if (isValidBedForInfestation(level.getBlockState(feet))) return feet;
+        BlockPos below = feet.below();
+        if (isValidBedForInfestation(level.getBlockState(below))) return below;
+        return null;
+    }
+
     public static boolean isValidBedForInfestation(BlockState state) {
         Block block = state.getBlock();
         return block instanceof BedBlock && !state.getValue(BedBlock.OCCUPIED);
@@ -366,7 +390,7 @@ public class BedbugEntity extends PathfinderMob {
 
     public static boolean checkBedbugSpawnRules(EntityType<? extends BedbugEntity> type, ServerLevelAccessor level,
                                                 MobSpawnType spawnType, BlockPos pos, RandomSource random) {
-        if (spawnType != MobSpawnType.EVENT) {
+        if (spawnType != MobSpawnType.EVENT && spawnType != MobSpawnType.NATURAL) {
             return false;
         }
         int maxLight = CommonConfigs.BEDBUG_MAX_LIGHT.get();

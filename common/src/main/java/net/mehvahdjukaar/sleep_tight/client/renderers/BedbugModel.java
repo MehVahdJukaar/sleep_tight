@@ -38,8 +38,7 @@ public class BedbugModel<T extends BedbugEntity> extends HierarchicalModel<T> {
 
     @Override
     public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-
-        this.head.xRot = (27.5f + headPitch) * 0.017453292F;
+        boolean splattered = entity.isSplattered();
 
         float fortyFive = 0.7853982F + 0.1f; //45
         float thirtyThree = 0.58119464F + 0.1f; //33.3
@@ -61,6 +60,16 @@ public class BedbugModel<T extends BedbugEntity> extends HierarchicalModel<T> {
         this.leftMiddleLeg.yRot = 0;
         this.rightFrontLeg.yRot = -fortyFive2;
         this.leftFrontLeg.yRot = fortyFive2;
+
+        // When squashed, keep the legs (splayed rest pose above) but drop the head tilt
+        // and skip the walking animation below.
+        if (splattered) {
+            this.head.xRot = 0.0F;
+            this.antenna.xRot = 0.0F;
+            return;
+        }
+
+        this.head.xRot = (27.5f + headPitch) * 0.017453292F;
 
 
         float speed = 0.6662F + 1.2f;

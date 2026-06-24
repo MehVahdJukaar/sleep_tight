@@ -1,1 +1,2 @@
-- fixed a forge override method not working
+- splatter
+- natural spawner

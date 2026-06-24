@@ -1,6 +1,5 @@
 package net.mehvahdjukaar.sleep_tight.configs;
 
-import com.mojang.math.Constants;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigBuilder;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ModConfigHolder;
@@ -9,7 +8,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.random.SimpleWeightedRandomList;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Contract;
 
 import java.util.List;
@@ -84,9 +82,13 @@ public class CommonConfigs {
     public static final Supplier<Integer> BEDBUG_SPAWN_MIN_RANGE;
     public static final Supplier<Integer> BEDBUG_TRIES;
     public static final Supplier<Integer> BEDBUG_MAX_LIGHT;
-    public static final Supplier<Boolean> PREVENTED_BY_DREAM_CATCHER;
+    public static final Supplier<Boolean> PREVENTED_BY_DREAM_ESSENCE;
     public static final Supplier<Boolean> ONLY_WHEN_IN_HOME_BED;
     public static final Supplier<Double> MANSION_INFESTATION_CHANCE;
+    public static final Supplier<Boolean> BEDBUG_AMBIENT_SPAWNER;
+    public static final Supplier<Integer> BEDBUG_AMBIENT_MIN_NIGHTS;
+    public static final Supplier<Integer> BEDBUG_AMBIENT_MIN_RANGE;
+    public static final Supplier<Integer> BEDBUG_AMBIENT_MAX_RANGE;
 
     public enum ExplosionBehavior {
         DEFAULT, TINY_EXPLOSION, ALLOWS_SLEEPING, ALLOWS_SLEEPING_NO_RESPAWN;
@@ -181,12 +183,20 @@ public class CommonConfigs {
         BEDBUG_TRIES = builder.comment("The game will perform x attempts to spawn a bedbug around each player when they wake up. This already takes into account the chance config." +
                         "High values will decrease failed attempts")
                 .define("tries", 20, 0, 1000);
-        PREVENTED_BY_DREAM_CATCHER = builder.comment("Prevents bedbugs when using dream essence")
+        PREVENTED_BY_DREAM_ESSENCE = builder.comment("Prevents bedbugs when using dream essence")
                 .define("prevented_by_dream_essence", false);
         ONLY_WHEN_IN_HOME_BED = builder.comment("Only spawns bedbugs when sleeping in your home bed")
                 .define("only_when_in_home_bed", false);
         MANSION_INFESTATION_CHANCE = builder.comment("Chance for each bed generated in a woodland mansion to start out infested with a bedbug. Set to 0 to disable")
                 .define("mansion_infestation_chance", 0.5, 0, 1);
+        BEDBUG_AMBIENT_SPAWNER = builder.comment("Enables phantom-style ambient bedbug spawning while awake (requires consistent recent sleep, opposite of phantoms)")
+                .define("ambient_spawner", true);
+        BEDBUG_AMBIENT_MIN_NIGHTS = builder.comment("Consecutive nights slept before ambient bedbugs can appear (phantoms use ~3 nights without sleep)")
+                .define("ambient_min_consecutive_nights", diff(3, 2), 1, 50);
+        BEDBUG_AMBIENT_MIN_RANGE = builder.comment("Min horizontal spawn distance from the player for ambient bedbugs")
+                .define("ambient_min_spawn_radius", 8, 1, 64);
+        BEDBUG_AMBIENT_MAX_RANGE = builder.comment("Max horizontal spawn distance from the player for ambient bedbugs")
+                .define("ambient_max_spawn_radius", 24, 1, 64);
         builder.pop();
 
         builder.push("sleep_cooldown");

@@ -327,7 +327,7 @@ public class ModEvents {
             playerCap.setLasWokenUpTime(wakeUpTime);
 
             if (bed.st_canSpawnBedbugs()) {
-                WakeUpEncounterHelper.trySpawningBedbug(pos, player, data);
+                BedbugSpawner.tryWakeUpSpawn(pos, player, data);
             }
 
             SleepEffectsHelper.applyEffectsOnWakeUp(playerCap, player, dayTimeDelta, pos, bed, state, data);

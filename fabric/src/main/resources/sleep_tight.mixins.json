@@ -7,6 +7,7 @@
     "GuiMixin"
   ],
   "mixins": [
+    "BedbugSpawnerMixin",
     "BlockMixin",
     "LivingEntityMixin",
     "PlayerListMixin",

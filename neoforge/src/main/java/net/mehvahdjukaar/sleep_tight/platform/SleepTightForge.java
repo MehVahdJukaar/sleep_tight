@@ -6,6 +6,7 @@ import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
+import net.mehvahdjukaar.sleep_tight.core.BedbugSpawner;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -47,6 +48,11 @@ public class SleepTightForge {
         event.enqueueWork(SleepTight::commonSetup);
     }
 
+
+    @SubscribeEvent
+    public void onModifyCustomSpawners(ModifyCustomSpawnersEvent event) {
+        event.addCustomSpawner(new BedbugSpawner());
+    }
 
     @SubscribeEvent
     public void onPlayerRespawnPositionCheck(PlayerRespawnPositionEvent event) {

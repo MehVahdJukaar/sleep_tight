@@ -9,7 +9,6 @@ import net.minecraft.world.entity.ai.behavior.Behavior;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
-import net.minecraft.world.level.block.BedBlock;
 
 /**
  * Drives a bedbug to its remembered bed ({@link MemoryModuleType#HOME}) and starts burrowing once it is
@@ -61,13 +60,15 @@ public class InfestBedBehavior extends Behavior<BedbugEntity> {
             return;
         }
 
-        if (level.getBlockState(mob.blockPosition()).getBlock() instanceof BedBlock) {
-            // we made it onto a bed: stop shuffling and let the entity tick run the burrow countdown
+        // burrow only while standing on top of the bed (its feet block, or one above with the bed
+        // directly below): the bug buries straight down into the bed it stands on, not from beside it.
+        BlockPos feet = mob.blockPosition();
+        if (feet.equals(bed) || feet.equals(bed.above())) {
             brain.eraseMemory(MemoryModuleType.WALK_TARGET);
             mob.setBurrowing(true);
         } else {
             mob.setBurrowing(false);
-            // closeEnoughDist 0: keep moving until actually on the bed block, not merely adjacent
+            // closeEnoughDist 0: keep walking right onto the bed, not merely next to it
             brain.setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(bed, this.speedModifier, 0));
         }
     }
