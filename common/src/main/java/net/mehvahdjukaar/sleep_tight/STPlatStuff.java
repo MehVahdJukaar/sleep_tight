@@ -10,7 +10,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.mehvahdjukaar.sleep_tight.common.tiles.CompatBedTile;
 import net.minecraft.world.level.block.entity.BedBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -27,7 +26,7 @@ public class STPlatStuff {
     @Nullable
     public static BedData getBedDataIfPresent(Level level, BlockPos pos) {
         BlockEntity be = level.getBlockEntity(pos);
-        if (be instanceof BedBlockEntity || be instanceof CompatBedTile) {
+        if (be != null) {
             return getBedDataIfPresent(be);
         }
         return null;

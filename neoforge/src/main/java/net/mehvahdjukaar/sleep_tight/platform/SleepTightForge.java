@@ -69,6 +69,7 @@ public class SleepTightForge {
     public void onSleepConditionCheck(CanPlayerSleepEvent event) {
         if (!ModEvents.checkExtraSleepConditions(event.getEntity(), event.getPos())) {
             event.setProblem(Player.BedSleepingProblem.OTHER_PROBLEM);
+            return;
         }
         switch (ModEvents.onCheckSleepTime(event.getEntity().level(), event.getPos())) {
             case FAIL -> {

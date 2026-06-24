@@ -33,7 +33,7 @@ public interface IModBed extends ISleepTightBed {
         if (!BedBlock.canSetSpawn(level)) {
             if (!level.isClientSide) {
                 var c = CommonConfigs.EXPLOSION_BEHAVIOR.get();
-                if (c == CommonConfigs.ExplosionBehavior.ALLOWS_SLEEPING) return false;
+                if (!c.canExplode()) return false;
                 level.removeBlock(pos, false);
                 float size = c == CommonConfigs.ExplosionBehavior.TINY_EXPLOSION ? 0 : 5.0F;
                 level.explode(null, level.damageSources().badRespawnPointExplosion(pos.getCenter()),

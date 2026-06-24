@@ -135,12 +135,15 @@ public class ModEvents {
             if (block instanceof BedBlock) {
                 if (CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
                     PlayerSleepData pd = STPlatStuff.getPlayerSleepData(player);
-                    if (pd.isBedLastSleptInto(STPlatStuff.getBedDataIfPresent(level, pos))) {
+                    if (!pd.isBedLastSleptInto(STPlatStuff.getBedDataIfPresent(level, pos))) {
                         return false;
                     }
                 }
-                if (!BedBlock.canSetSpawn(level) && !CommonConfigs.EXPLOSION_BEHAVIOR.get().canRespawn()) {
-                    return false;
+                var behavior = CommonConfigs.EXPLOSION_BEHAVIOR.get();
+                if (!behavior.canRespawn()) {
+                    if (!BedBlock.canSetSpawn(level) || !level.dimensionType().natural()) {
+                        return false;
+                    }
                 }
             }
             if ((block instanceof NightBagBlock)) {
