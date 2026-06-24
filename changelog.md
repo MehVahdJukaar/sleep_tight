@@ -3,6 +3,7 @@
 - bedbugs can target a bed from mcuh farther away
 - bedbugs use the brain system and are much smarter now
 - more configs
+- made sleeping cooldown much more resiliant
 - bedbugs can pani panic in peaceful (and they wont despawn here)
 - and they can attack in survival when no bed is around
 - improved compat with other mod beds

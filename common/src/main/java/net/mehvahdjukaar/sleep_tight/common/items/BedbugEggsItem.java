@@ -4,6 +4,7 @@ import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedbugEntity;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
+import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -19,7 +20,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -69,12 +69,7 @@ public class BedbugEggsItem extends Item {
                 mobTag.putString("id", SleepTight.BEDBUG_ENTITY.getId().toString());
             }
             data.setBedBug(mobTag);
-            //sync to clients
-            BlockEntity tile = level.getBlockEntity(pos);
-            if (tile != null) {
-                level.sendBlockUpdated(pos, tile.getBlockState(), tile.getBlockState(), 3);
-                tile.setChanged();
-            }
+            ModEvents.syncBedDataToClients(level.getBlockEntity(pos));
             return true;
         }
 

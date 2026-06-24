@@ -471,12 +471,7 @@ public class ModEvents {
                                         state.getValue(BedBlock.FACING).getOpposite()));
                     }
                     data.setBedBug(null);
-                    //sync to clients
-                    BlockEntity tile = level.getBlockEntity(pos);
-                    if (tile != null) {
-                        level.sendBlockUpdated(pos, state, state, 3);
-                        tile.setChanged();
-                    }
+                    syncBedDataToClients(level.getBlockEntity(pos));
                 }
             }
         }
@@ -499,6 +494,14 @@ public class ModEvents {
                 le.spawnAnim();
             }
         }
+    }
+
+    public static void syncBedDataToClients(@Nullable BlockEntity be) {
+        if (be == null) return;
+        Level level = be.getLevel();
+        if (level == null || level.isClientSide) return;
+        SleepTight.BED_DATA.sync(be);
+        be.setChanged();
     }
 
     public static void animateTickBed(BlockState state, Level level, BlockPos pos, RandomSource random) {
@@ -571,7 +574,7 @@ public class ModEvents {
                 CompoundTag tag = new CompoundTag();
                 tag.putString("id", SleepTight.BEDBUG_ENTITY.getId().toString());
                 data.setBedBug(tag);
-                be.setChanged();
+                syncBedDataToClients(be);
             }
         });
     }
