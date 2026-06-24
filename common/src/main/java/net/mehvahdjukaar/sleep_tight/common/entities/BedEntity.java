@@ -259,13 +259,10 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     @Override
     public void onPassengerTurned(Entity entity) {
         float diff = Mth.wrapDegrees(entity.getYHeadRot() - this.getYRot());
-        float clampedDiff = Mth.clamp(diff, -90, 90);
+        float clampedDiff = Mth.clamp(diff, -70, 70);
         float subtract = clampedDiff - diff;
-        //((LivingEntity)  entity).yHeadRotO += subtract;
-
         ((LivingEntity) entity).yHeadRot += subtract;
-        //   entity.setYRot(entity.getYRot() + f1 - diff);
-        entity.setXRot(Mth.clamp(entity.getXRot(), -75, 0));
+        entity.setXRot(Mth.clamp(entity.getXRot(), -75, 75));
     }
 
     @Override

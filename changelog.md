@@ -1,3 +1,6 @@
 - splatter
 - natural spawner
 - more configs
+- panic goal
+- attack goal
+- brain

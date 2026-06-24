@@ -52,13 +52,15 @@ public class BedbugAi {
     private static void initCoreActivity(Brain<BedbugEntity> brain) {
         brain.addActivity(Activity.CORE, 0, ImmutableList.of(
                 new LookAtTargetSink(45, 90),
-                new MoveToTargetSink()));
+                new MoveToTargetSink(),
+                // find + claim (POI ticket) the nearest reachable bed, remembered as HOME. In CORE so it keeps
+                // scanning even while FIGHTing: claiming a bed clears the FIGHT condition (HOME absent), making
+                // the bug break off and flee to a bed placed mid-fight.
+                AcquirePoi.create(holder -> holder.is(PoiTypes.HOME), MemoryModuleType.HOME, false, Optional.empty())));
     }
 
     private static void initIdleActivity(Brain<BedbugEntity> brain) {
         brain.addActivity(Activity.IDLE, 10, ImmutableList.of(
-                // find + claim (POI ticket) the nearest reachable bed, remembered as HOME
-                AcquirePoi.create(holder -> holder.is(PoiTypes.HOME), MemoryModuleType.HOME, false, Optional.empty()),
                 // make a run for the remembered bed and burrow into it (faster than the search wander)
                 new InfestBedBehavior(SPEED_WHEN_GOING_TO_BED),
                 // bedless + can't fight back (peaceful): flee from whatever just hit us. Ordered after
