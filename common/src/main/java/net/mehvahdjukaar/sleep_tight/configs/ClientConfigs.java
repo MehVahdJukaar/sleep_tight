@@ -2,8 +2,8 @@ package net.mehvahdjukaar.sleep_tight.configs;
 
 import net.mehvahdjukaar.moonlight.api.client.anim.PendulumAnimation;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigBuilder;
+import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigSpec;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
-import net.mehvahdjukaar.moonlight.api.platform.configs.ModConfigHolder;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.entity.player.Player;
@@ -44,7 +44,7 @@ public class ClientConfigs {
     public static final Supplier<Boolean> INSOMNIA_COOLDOWN;
     public static final Supplier<SleepTimeDisplay> SHOW_TIME;
     public static final Supplier<Boolean> TIME_FORMAT_24H;
-    public static final ModConfigHolder SPEC;
+    public static final ConfigSpec SPEC;
 
     static {
         ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.CLIENT);
@@ -88,7 +88,7 @@ public class ClientConfigs {
                 .define("zzz_particles", true);
         builder.pop();
 
-        SPEC = builder.build();
+        SPEC = builder.buildAndRegister();
     }
 
     public static void init() {

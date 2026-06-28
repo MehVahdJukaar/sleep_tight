@@ -1,0 +1,43 @@
+architectury {
+    common(rootProject.enabled_platforms.split(","))
+}
+
+loom {
+    accessWidenerPath = file("src/main/resources/sleep_tight.accesswidener")
+}
+
+shadowJar {
+    zip64 true
+
+}
+
+dependencies {
+
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+
+    modImplementation "maven.modrinth:moonlight:${rootProject.moonlight_version}-fabric"
+
+    modImplementation("curse.maven:heartstone-573152:6173171")
+    modImplementation("curse.maven:supplementaries-412082:4375776")
+    modImplementation("curse.maven:entity-model-features-844662:5717218")
+    modImplementation("curse.maven:entity-texture-features-fabric-568563:5000985")
+
+    modCompileOnly("org.violetmoon.quark:Quark-4.0-beta-426")
+    modCompileOnly("org.violetmoon.zeta:Zeta-1.0-beta-1")
+    modImplementation("curse.maven:handcrafted-538214:5118729")
+    modImplementation("curse.maven:resourceful-lib-570073:5659871")
+    modImplementation "net.tslat.smartbrainlib:SmartBrainLib-fabric-${project.minecraft_version}:${project.sbl_version}"
+}
+
+publishing {
+    publications {
+        mavenCommon(MavenPublication) {
+            artifactId = rootProject.mod_id
+            from components.java
+        }
+    }
+
+    repositories {
+        // Add repositories to publish to here.
+    }
+}

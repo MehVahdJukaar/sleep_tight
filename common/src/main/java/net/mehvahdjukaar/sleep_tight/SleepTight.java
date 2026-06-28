@@ -1,6 +1,5 @@
 package net.mehvahdjukaar.sleep_tight;
 
-import net.mehvahdjukaar.moonlight.api.misc.IAttachmentType;
 import net.mehvahdjukaar.moonlight.api.misc.RegSupplier;
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
 import net.mehvahdjukaar.moonlight.api.platform.RegHelper;
@@ -36,7 +35,7 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.SpawnPlacementTypes;
+import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Block;
@@ -73,7 +72,7 @@ public class SleepTight {
     public static final boolean HANDCRAFTED = PlatHelper.isModLoaded("handcrafted");
 
     public static ResourceLocation res(String name) {
-        return ResourceLocation.fromNamespaceAndPath(MOD_ID, name);
+        return new ResourceLocation(MOD_ID, name);
     }
 
 
@@ -82,7 +81,7 @@ public class SleepTight {
         CommonConfigs.init();
 
         if (PlatHelper.getPhysicalSide().isClient()) {
-            RegHelper.registerDynamicResourceProvider(new ModClientDynamicResources());
+            new ModClientDynamicResources().register();
             ClientConfigs.init();
         }
 
@@ -132,7 +131,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     }
 
     private static void registerSpawnPlacements(RegHelper.SpawnPlacementEvent event) {
-        event.register(BEDBUG_ENTITY.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BedbugEntity::checkBedbugSpawnRules);
+        event.register(BEDBUG_ENTITY.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BedbugEntity::checkBedbugSpawnRules);
     }
 
     private static void registerEntityAttributes(RegHelper.AttributeEvent event) {
@@ -140,24 +139,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
         event.register(BEDBUG_ENTITY.get(), BedbugEntity.makeAttributes());
     }
 
-    //attachments
-    public static final IAttachmentType<BedData, BlockEntity> BED_DATA = RegHelper.registerDataAttachment(
-            SleepTight.res("bed_data"),
-            () -> RegHelper.AttachmentBuilder.create(BedData::initializeWithRandomId)
-                    .persistent(BedData.CODEC)
-                    .copyOnDeath()
-                    .syncWith(BedData.STREAM_CODEC),
-            BlockEntity.class
-    );
-
-    public static final IAttachmentType<PlayerSleepData, Player> PLAYER_DATA = RegHelper.registerDataAttachment(
-            SleepTight.res("player_sleep_data"),
-            () -> RegHelper.AttachmentBuilder.create(PlayerSleepData::new)
-                    .persistent(PlayerSleepData.CODEC)
-                    .copyOnDeath()
-                    .syncWith(PlayerSleepData.STREAM_CODEC),
-            Player.class
-    );
+    //attachments are stored per-platform via capabilities/attachments; see STPlatStuff + the platform impls
 
     //sound events
 
@@ -180,8 +162,8 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     public static final TagKey<EntityType<?>> NO_SLEEP_PARTICLES = TagKey.create(Registries.ENTITY_TYPE, res("no_sleep_particles"));
 
     public static final Supplier<EntityDataSerializer<BedEntity.OffsetMode>> OFFSET_MODE_SERIALIZER =
-            RegHelper.registerEntityDataSerializer(res("offset_mode"),
-                    () -> EntityDataSerializer.forValueType(BedEntity.OffsetMode.STREAM_CODEC));
+            RegHelper.regEntityDataSerializer(res("offset_mode"),
+                    () -> EntityDataSerializer.simpleEnum(BedEntity.OffsetMode.class));
 
     //particles
 
@@ -197,29 +179,19 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     //entities
 
     public static final Supplier<EntityType<BedEntity>> BED_ENTITY = RegHelper.registerEntityType(res("bed_entity"),
-            EntityType.Builder.<BedEntity>of(BedEntity::new, MobCategory.MISC)
-                    .ridingOffset(0.0125f)
-                    .sized(0.5f, 0.5f)
-                    .clientTrackingRange(4)
-                    .updateInterval(Integer.MAX_VALUE));
+            BedEntity::new, MobCategory.MISC, 0.5f, 0.5f, 4, Integer.MAX_VALUE);
 
     public static final RegSupplier<EntityType<BedbugEntity>> BEDBUG_ENTITY = RegHelper.registerEntityType(res("bedbug"),
-            EntityType.Builder.<BedbugEntity>of(BedbugEntity::new, MobCategory.CREATURE)
-                    .sized(11 / 16f, 6 / 16f)
-                    .clientTrackingRange(7)
-                    .updateInterval(3));
+            BedbugEntity::new, MobCategory.CREATURE, 11 / 16f, 6 / 16f, 7, 3);
 
     public static final Supplier<EntityType<DreamerEssenceTargetEntity>> DREAMER_ESSENCE_ENTITY = RegHelper.registerEntityType(
             res("dreamer_essence_dummy"),
-            EntityType.Builder.<DreamerEssenceTargetEntity>of(DreamerEssenceTargetEntity::new, MobCategory.MISC)
-                    .sized(0.2f, 12 / 16f)
-                    .clientTrackingRange(5)
-                    .updateInterval(Integer.MAX_VALUE));
+            DreamerEssenceTargetEntity::new, MobCategory.MISC, 0.2f, 12 / 16f, 5, Integer.MAX_VALUE);
 
     //blocks
 
     public static final Supplier<DreamEssenceBlock> DREAMER_ESSENCE = regWithItem("dreamer_essence", () ->
-            new DreamEssenceBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.AMETHYST_BLOCK)
+            new DreamEssenceBlock(BlockBehaviour.Properties.copy(Blocks.AMETHYST_BLOCK)
                     .sound(SoundType.AMETHYST).strength(1))
     );
 

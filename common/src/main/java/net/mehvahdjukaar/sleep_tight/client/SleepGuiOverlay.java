@@ -17,12 +17,10 @@ import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.minecraft.client.AttackIndicatorStatus;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.LayeredDraw;
 import net.minecraft.client.gui.screens.InBedChatScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -36,15 +34,9 @@ import net.minecraft.world.phys.HitResult;
 
 import java.util.ArrayList;
 
-public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
+public abstract class SleepGuiOverlay<T extends Gui> {
 
-
-    public SleepGuiOverlay(Minecraft minecraft) {
-        super(minecraft);
-    }
-
-    @Override
-    public void render(GuiGraphics graphics, DeltaTracker deltaTracker) {
+    public void render(T gui, GuiGraphics graphics, float partialTicks, int width, int height) {
         Minecraft mc = Minecraft.getInstance();
         Options options = mc.options;
 
@@ -53,9 +45,9 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
         Player player = mc.player;
         if (bedData != null) {
             PlayerSleepData playerData = STPlatStuff.getPlayerSleepData(player);
-            renderBar(graphics,
+            renderBar(graphics, width, height,
                     bedData, playerData, mc,
-                    player, deltaTracker.getGameTimeDeltaTicks());
+                    player, partialTicks);
             return;
         }
 
@@ -66,12 +58,12 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
 
         if (!timer && !cooldown) return;
 
-        renderCooldownCrossAir(graphics, options, mc, hit, player, cooldown, timer);
+        renderCooldownCrossAir(gui, graphics, width, height, options, mc, hit, player, cooldown, timer);
     }
 
-    private void renderCooldownCrossAir(GuiGraphics graphics, Options options, Minecraft mc, HitResult hit, Player player, boolean cooldown, boolean timer) {
+    private void renderCooldownCrossAir(T gui, GuiGraphics graphics, int width, int height, Options options, Minecraft mc, HitResult hit, Player player, boolean cooldown, boolean timer) {
         if (options.getCameraType().isFirstPerson() && (mc.gameMode.getPlayerMode() != GameType.SPECTATOR ||
-                this.canRenderCrosshairForSpectator(hit))) {
+                gui.canRenderCrosshairForSpectator(hit))) {
 
             boolean laying = player.getVehicle() instanceof BedEntity;
             if (laying || (cooldown && (
@@ -90,8 +82,7 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
                     }
 
                     if (cooldown) {
-                        setupOverlayRenderState(graphics, true, false, SleepTightClient.ICONS);
-                        //gui.setBlitOffset(-90);
+                        setupOverlayRenderState(gui, true, false, SleepTightClient.ICONS);
 
                         graphics.pose().pushPose();
 
@@ -100,8 +91,8 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
                                 GlStateManager.DestFactor.ZERO);
 
 
-                        int py = graphics.guiHeight() / 2 - 7 + 16;
-                        int px = graphics.guiWidth() / 2 - 6;
+                        int py = height / 2 - 7 + 16;
+                        int px = width / 2 - 6;
 
                         if (mc.options.attackIndicator().get() == AttackIndicatorStatus.CROSSHAIR &&
                                 player.getAttackStrengthScale(0.0F) != 1) {
@@ -122,13 +113,9 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
         }
     }
 
-    protected void setupOverlayRenderState(GuiGraphics graphics, boolean blend, boolean depthTest, ResourceLocation texture) {
-    }
+    protected abstract void setupOverlayRenderState(T gui, boolean blend, boolean depthTest, ResourceLocation texture);
 
     //static stuff
-
-    //I have a player and a block entity serializable capability which i want to have access on client too. When is the correct time to sync them? For example player enters a world and its serverside caps are read and initialized but client one isnt.
-
 
     public static void renderBedScreenOverlay(InBedChatScreen s, GuiGraphics graphics, int mouseX, int mouseY) {
         Minecraft mc = Minecraft.getInstance();
@@ -146,7 +133,6 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
             graphics.drawString(mc.font, getCurrentTime(player.level()), 2, 2, 14737632);
         }
 
-        //ModBedCapability cap = ModBedCapability.getHomeBedIfHere(player, p.get());
         int y = s.height - 39;
         int iconSize = 18;
         int bx = s.width / 2 - 120;
@@ -169,7 +155,7 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
                 String percent = String.format("%.1f", playerData.getBedFamiliarity(bedData) * 100) + "%";
                 lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.familiarity", percent), 200));
             }
-            if(PlatHelper.isDev()) lines.addAll(mc.font.split(Component.literal( "LastId Bits: " + bedData.getId()), 400));
+            if (PlatHelper.isDev()) lines.addAll(mc.font.split(Component.literal("LastId Bits: " + bedData.getId()), 400));
             lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.bed_level", bedLevel), 200));
             lines.addAll(mc.font.split(Component.translatable("gui.sleep_tight.nightmare", nightmare), 200));
             graphics.renderTooltip(mc.font, lines, mouseX, mouseY);
@@ -184,18 +170,11 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
     }
 
 
-    private static final ResourceLocation BACKGROUND = ResourceLocation.withDefaultNamespace("boss_bar/white_background");
-    private static final ResourceLocation PROGRESS = ResourceLocation.withDefaultNamespace("boss_bar/white_progress");
-    private static final ResourceLocation OVERLAY_BACKGROUND = ResourceLocation.withDefaultNamespace("boss_bar/notched_6_background");
-    private static final ResourceLocation OVERLAY_PROGRESS = ResourceLocation.withDefaultNamespace("boss_bar/notched_6_progress");
-
-
-    private static void renderBar(GuiGraphics graphics,
+    private static void renderBar(GuiGraphics graphics, int screenWidth, int screenHeight,
                                   BedData bedData, PlayerSleepData playerData,
                                   Minecraft mc, Player player,
                                   float partialTicks) {
-        int screenHeight = graphics.guiHeight();
-        int screenWidth = graphics.guiWidth();
+        ResourceLocation texture = new ResourceLocation("minecraft:textures/gui/bars.png");
         int xpBarLeft = screenWidth / 2 - 91;
 
         float familiarity = playerData.getBedFamiliarity(bedData);
@@ -212,16 +191,16 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
         var rgb = color.asRGB();
 
         RenderSystem.setShaderColor(rgb.red(), rgb.green(), rgb.blue(), 1.0F);
-        RenderSystem.defaultBlendFunc();
         RenderSystem.enableBlend();
 
         int k = (int) (familiarity * 183.0F);
         int xpBarTop = screenHeight - 32 + 3;
-        graphics.blitSprite(BACKGROUND, xpBarLeft, xpBarTop, 183, 5);
+        int baY = 60;
+        graphics.blit(texture, xpBarLeft, xpBarTop, 0, baY, 183, 5);
 
 
-        graphics.blitSprite(PROGRESS, 183, 5, 0, 0, xpBarLeft, xpBarTop, k,5);
-        graphics.blitSprite(OVERLAY_PROGRESS, xpBarLeft, xpBarTop, 182, 5);
+        graphics.blit(texture, xpBarLeft, xpBarTop, 0, baY + 5, k, 5);
+        graphics.blit(texture, xpBarLeft, xpBarTop, 0, 85, 182, 5);
         RenderSystem.disableBlend();
 
         int power = bedData.getBedLevel(player);
@@ -258,4 +237,3 @@ public class SleepGuiOverlay extends Gui implements LayeredDraw.Layer {
 
 
 }
-

@@ -3,7 +3,6 @@ package net.mehvahdjukaar.sleep_tight.mixins;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.minecraft.client.Camera;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
@@ -18,12 +17,12 @@ public abstract class LevelRendererMixin {
 
     @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientLevel;entitiesForRendering()Ljava/lang/Iterable;",
             shift = At.Shift.AFTER), require = 1)
-    public void sleep_tight$bedCameraHackOn(DeltaTracker deltaTracker, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f frustumMatrix, Matrix4f projectionMatrix, CallbackInfo ci) {
+    public void sleep_tight$bedCameraHackOn(PoseStack poseStack, float partialTick, long finishNanoTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f projectionMatrix, CallbackInfo ci) {
         ClientEvents.cameraHack = true;
     }
 
     @Inject(method = "renderLevel", at = @At(value = "TAIL"))
-    public void sleep_tight$bedCameraHackOff(DeltaTracker deltaTracker, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f frustumMatrix, Matrix4f projectionMatrix, CallbackInfo ci) {
+    public void sleep_tight$bedCameraHackOff(PoseStack poseStack, float partialTick, long finishNanoTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f projectionMatrix, CallbackInfo ci) {
         ClientEvents.cameraHack = false;
     }
 }

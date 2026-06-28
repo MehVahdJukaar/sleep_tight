@@ -2,17 +2,15 @@ package net.mehvahdjukaar.sleep_tight.core;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
+import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncPlayerSleepCapMessage;
+import net.mehvahdjukaar.sleep_tight.common.network.ModNetworking;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.player.Player;
@@ -32,16 +30,6 @@ public class PlayerSleepData {
             Codec.INT.fieldOf("home_bed_nights").forGetter(d -> d.nightsSleptInSameBed),
             Codec.BOOL.fieldOf("using_double_bed").forGetter(d -> d.usingDoubleBed)
     ).apply(instance, PlayerSleepData::new));
-
-    public static final StreamCodec<RegistryFriendlyByteBuf, PlayerSleepData> STREAM_CODEC = StreamCodec.composite(
-            UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs::optional), d -> Optional.ofNullable(d.homeBed),
-            InsomniaCooldown.STREAM_CODEC, d -> d.insomnia,
-            ByteBufCodecs.VAR_LONG, PlayerSleepData::getLastWokenUpTime,
-            ByteBufCodecs.INT, PlayerSleepData::getConsecutiveNightsSlept,
-            ByteBufCodecs.INT, d -> d.nightsSleptInSameBed,
-            ByteBufCodecs.BOOL, d -> d.usingDoubleBed,
-            PlayerSleepData::new
-    );
 
     @Nullable
     private UUID homeBed = null; //last bed slept into
@@ -179,7 +167,22 @@ public class PlayerSleepData {
     }
 
     public void syncToClient(ServerPlayer player) {
-        SleepTight.PLAYER_DATA.sync(player);
+        ModNetworking.CHANNEL.sendToClientPlayer(player, new ClientBoundSyncPlayerSleepCapMessage(this));
+    }
+
+    public InsomniaCooldown getInsomnia() {
+        return insomnia;
+    }
+
+    //called on the client when receiving a sync packet from the server
+    public void acceptFromServer(@Nullable UUID homeBed, long dayDeadline, long gameDeadline, long lastKnownDayTime,
+                                 long lastWokenUp, int consecutiveNights, int homeBedNights, boolean doubleBed) {
+        this.homeBed = homeBed;
+        this.insomnia = new InsomniaCooldown(dayDeadline, gameDeadline, lastKnownDayTime);
+        this.lastWokenUpTimeStamp = lastWokenUp;
+        this.consecutiveNightsSlept = consecutiveNights;
+        this.nightsSleptInSameBed = homeBedNights;
+        this.usingDoubleBed = doubleBed;
     }
 
 

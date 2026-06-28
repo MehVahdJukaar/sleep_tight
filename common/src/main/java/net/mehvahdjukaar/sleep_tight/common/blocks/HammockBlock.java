@@ -1,6 +1,5 @@
 package net.mehvahdjukaar.sleep_tight.common.blocks;
 
-import com.mojang.serialization.MapCodec;
 import net.mehvahdjukaar.moonlight.api.block.IRotatable;
 import net.mehvahdjukaar.moonlight.api.misc.ForgeOverride;
 import net.mehvahdjukaar.moonlight.api.set.BlocksColorAPI;
@@ -50,9 +49,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 
 public class HammockBlock extends HorizontalDirectionalBlock implements EntityBlock, IRotatable, IModBed {
-
-    public static final MapCodec<HammockBlock> CODEC = DyeColor.CODEC.fieldOf("color")
-            .xmap(HammockBlock::new, HammockBlock::getColor);
 
     public static final EnumProperty<HammockPart> PART = EnumProperty.create("part", HammockPart.class);
     public static final BooleanProperty OCCUPIED = BlockStateProperties.OCCUPIED;
@@ -118,7 +114,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
-    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+    public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide && player.isCreative()) {
             //prevents drop
             HammockPart part = state.getValue(PART);
@@ -134,7 +130,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
                 }
             }
         }
-        return super.playerWillDestroy(level, pos, state, player);
+        super.playerWillDestroy(level, pos, state, player);
     }
 
     @Nullable
@@ -257,7 +253,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
     @Override
-    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
+    public boolean isPathfindable(BlockState state, BlockGetter level, BlockPos pos, PathComputationType type) {
         return false;
     }
 
@@ -265,7 +261,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
 
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
         //called on both sides
         pos = getMasterPos(state, pos);
         state = level.getBlockState(pos);
@@ -374,11 +370,6 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     @ForgeOverride
     public Direction getBedDirection(BlockState state, LevelReader level, BlockPos pos) {
         return state.getValue(HorizontalDirectionalBlock.FACING);
-    }
-
-    @Override
-    protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
-        return CODEC;
     }
 
     private enum Connection {

@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.common.entities;
 
 import net.mehvahdjukaar.moonlight.api.misc.ForgeOverride;
-import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
+import net.mehvahdjukaar.sleep_tight.common.network.ModNetworking;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundParticleMessage;
@@ -71,7 +71,7 @@ public class DreamerEssenceTargetEntity extends LivingEntity {
     @Override
     public void remove(RemovalReason reason) {
         if (!this.isRemoved() && !level().isClientSide) {
-            NetworkHelper.sendToAllClientPlayersTrackingEntity(this, ClientBoundParticleMessage.dreamEssence(this.blockPosition()));
+            ModNetworking.CHANNEL.sentToAllClientPlayersTrackingEntity(this, ClientBoundParticleMessage.dreamEssence(this.blockPosition()));
         }
         super.remove(reason);
     }
@@ -172,7 +172,7 @@ public class DreamerEssenceTargetEntity extends LivingEntity {
     }
 
     @Override
-    protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
+    protected void dropCustomDeathLoot(DamageSource damageSource, int looting, boolean recentlyHit) {
     }
 
     @Override

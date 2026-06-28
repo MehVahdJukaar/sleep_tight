@@ -89,7 +89,7 @@ public class BedbugModel<T extends BedbugEntity> extends HierarchicalModel<T> {
         float s1 = Math.abs(Mth.sin(limbSwing * speed + Mth.PI * 4 / 3f) * ampl2) * limbSwingAmount;
         float s2 = Math.abs(Mth.sin(limbSwing * speed + Mth.PI * 2 / 3f) * ampl2) * limbSwingAmount;
 
-        float burrowing = entity.getBurrowing(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true));
+        float burrowing = entity.getBurrowing(Minecraft.getInstance().getFrameTime());
 
         if (burrowing != 0) {
             limbSwing = burrowing * 1.6f;

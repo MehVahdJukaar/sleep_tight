@@ -2,10 +2,7 @@ package net.mehvahdjukaar.sleep_tight.core;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
@@ -31,13 +28,6 @@ public class InsomniaCooldown {
             Codec.LONG.fieldOf("game_deadline").forGetter(c -> c.gameDeadline),
             Codec.LONG.fieldOf("last_known_day_time").forGetter(c -> c.lastKnownDayTime)
     ).apply(instance, InsomniaCooldown::new));
-
-    public static final StreamCodec<ByteBuf, InsomniaCooldown> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.VAR_LONG, c -> c.dayDeadline,
-            ByteBufCodecs.VAR_LONG, c -> c.gameDeadline,
-            ByteBufCodecs.VAR_LONG, c -> c.lastKnownDayTime,
-            InsomniaCooldown::new
-    );
 
     private long dayDeadline;
     private long gameDeadline;
@@ -68,6 +58,16 @@ public class InsomniaCooldown {
     /** Deadline against the day clock; basis for the on-screen cooldown bar. */
     public long dayDeadline() {
         return dayDeadline;
+    }
+
+    /** Deadline against the monotonic game clock; backstop for frozen/rewound day time. */
+    public long gameDeadline() {
+        return gameDeadline;
+    }
+
+    /** Day time observed when the cooldown was last (re)started; used for rewind detection. */
+    public long lastKnownDayTime() {
+        return lastKnownDayTime;
     }
 
     /**

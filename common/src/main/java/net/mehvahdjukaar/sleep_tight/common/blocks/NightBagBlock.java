@@ -163,7 +163,7 @@ public class NightBagBlock extends BedBlock implements IModBed {
             if(CommonConfigs.NIGHT_BAG_BORING.get())return;
 
             if (placer instanceof Player player) {
-                this.useWithoutItem(state, level, pos, player, new BlockHitResult(Vec3.atBottomCenterOf(pos), Direction.DOWN, pos, false));
+                this.use(state, level, pos, player, placer.getUsedItemHand(), new BlockHitResult(Vec3.atBottomCenterOf(pos), Direction.DOWN, pos, false));
             }
         } else {
             super.setPlacedBy(level, pos, state, placer, stack);

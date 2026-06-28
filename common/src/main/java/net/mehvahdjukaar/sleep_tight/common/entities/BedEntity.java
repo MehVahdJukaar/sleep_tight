@@ -1,10 +1,9 @@
 package net.mehvahdjukaar.sleep_tight.common.entities;
 
-import io.netty.buffer.ByteBuf;
 import net.mehvahdjukaar.moonlight.api.entity.IControllableVehicle;
 import net.mehvahdjukaar.moonlight.api.entity.IExtraClientSpawnData;
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
-import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
+import net.mehvahdjukaar.sleep_tight.common.network.ModNetworking;
 import net.mehvahdjukaar.moonlight.api.util.math.MthUtils;
 import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
@@ -23,11 +22,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -35,7 +31,6 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.util.ByIdMap;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
@@ -53,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.function.IntFunction;
 
 public class BedEntity extends Entity implements IControllableVehicle, IExtraClientSpawnData {
 
@@ -81,8 +75,8 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        builder.define(DATA_OFFSET, OffsetMode.NONE);
+    protected void defineSynchedData() {
+        this.entityData.define(DATA_OFFSET, OffsetMode.NONE);
     }
 
     public OffsetMode getOffsetMode() {
@@ -235,8 +229,8 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity entity) {
-        return PlatHelper.getEntitySpawnPacket(this, entity);
+    public Packet<ClientGamePacketListener> getAddEntityPacket() {
+        return PlatHelper.getEntitySpawnPacket(this);
     }
 
     @Override
@@ -299,7 +293,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     @Override
     public void onInputUpdate(boolean left, boolean right, boolean up, boolean down, boolean sprint, boolean jumping) {
         if (jumping) {
-            NetworkHelper.sendToServer(new ServerBoundCommitSleepMessage());
+            ModNetworking.CHANNEL.sendToServer(new ServerBoundCommitSleepMessage());
             if (this.level().isClientSide && SleepTightClient.HAS_SNORE){
                 this.getPassengers().get(0)
                         .playSound(SleepTight.SNORE_SOUND.get(), 1.0f, Mth.randomBetween(this.random, 0.9f, 1.1f));
@@ -316,7 +310,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     @Override
-    public void writeSpawnData(RegistryFriendlyByteBuf buf) {
+    public void writeSpawnData(FriendlyByteBuf buf) {
         buf.writeInt(this.dir.get2DDataValue());
         buf.writeInt(this.getOffsetMode().ordinal());
         boolean isValid = !this.getPassengers().isEmpty();
@@ -327,7 +321,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     @Override
-    public void readSpawnData(RegistryFriendlyByteBuf buf) {
+    public void readSpawnData(FriendlyByteBuf buf) {
         this.dir = Direction.from2DDataValue(buf.readInt());
         this.setOffsetMode(OffsetMode.values()[buf.readInt()]);
         if (buf.readBoolean()) {
@@ -372,10 +366,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
     }
 
     public enum OffsetMode {
-        NONE, HAMMOCK_3L, DOUBLE_BED;
-
-        public static final IntFunction<OffsetMode> BY_ID = ByIdMap.continuous(Enum::ordinal, values(), ByIdMap.OutOfBoundsStrategy.ZERO);
-        public static final StreamCodec<ByteBuf, OffsetMode> STREAM_CODEC = ByteBufCodecs.idMapper(BY_ID, OffsetMode::ordinal);
+        NONE, HAMMOCK_3L, DOUBLE_BED
     }
 
     private static boolean isHammock3L(BlockState state) {
@@ -414,7 +405,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             data.setDoubleBed(isDoubleBed());
             data.syncToClient(player);
 
-            NetworkHelper.sendToClientPlayer(player, new ClientBoundSleepImmediatelyMessage(pos));
+            ModNetworking.CHANNEL.sendToClientPlayer(player, new ClientBoundSleepImmediatelyMessage(pos));
             //safety check
             Level level = level();
             BlockState blockState = level.getBlockState(pos);
@@ -467,7 +458,7 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
             if (player instanceof ServerPlayer serverPlayer) {
                 //Don't ask me why this is needed. Align camera immediately to prevent camera jerk
                 //TODO: actually this doesnt even work. Fix. Also fix shifting when going off bed
-                NetworkHelper.sendToClientPlayer(serverPlayer, new ClientBoundAlightCameraOnLayMessage(bedEntity));
+                ModNetworking.CHANNEL.sendToClientPlayer(serverPlayer, new ClientBoundAlightCameraOnLayMessage(bedEntity));
             }
 
         } else if (level.getBlockEntity(pos) instanceof HammockTile tile) {

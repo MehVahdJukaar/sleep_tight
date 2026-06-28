@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.core;
 
 import net.mehvahdjukaar.moonlight.api.misc.EventCalled;
-import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
+import net.mehvahdjukaar.sleep_tight.common.network.ModNetworking;
 import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
@@ -17,7 +17,7 @@ import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.integration.HandcraftedCompat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -54,7 +54,7 @@ import net.minecraft.world.level.block.entity.BedBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
-import net.minecraft.world.level.portal.DimensionTransition;
+import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundSyncBedCapMessage;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -178,7 +178,7 @@ public class ModEvents {
         Direction dir = state.getValue(BedBlock.FACING);
 
         if (SleepTight.HANDCRAFTED) {
-            var ret = HandcraftedCompat.placeSheet(state, pos, player, hand, hitResult).result();
+            var ret = HandcraftedCompat.placeSheet(state, pos, player, hand, hitResult);
             if (ret != InteractionResult.PASS) {
                 return ret;
             }
@@ -303,11 +303,8 @@ public class ModEvents {
 
         c.syncToClient(player);
         player.displayClientMessage(Component.translatable("message.sleep_tight.nightmare"), true);
-        player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 20 * 3, 0, false, false, false,
-                null
-                // , Optional.of(new MobEffectInstance.FactorData(20, 10, 1, 1, 20 * 3, 1, true))
-        ));
-        NetworkHelper.sendToClientPlayer(player, new ClientBoundNightmarePacket());
+        player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 20 * 3, 0, false, false, false));
+        ModNetworking.CHANNEL.sendToClientPlayer(player, new ClientBoundNightmarePacket());
     }
 
     //server sided
@@ -446,9 +443,9 @@ public class ModEvents {
 
     //all called by mixins
 
-    public static boolean shouldCancelRespawnHere(Player player, DimensionTransition transition) {
+    public static boolean shouldCancelRespawnHere(Player player, BlockPos respawnPos) {
         if (CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
-            BedData bedData = STPlatStuff.getBedDataIfPresent(player.level(), BlockPos.containing(transition.pos()));
+            BedData bedData = STPlatStuff.getBedDataIfPresent(player.level(), respawnPos);
             if (bedData != null && !STPlatStuff.getPlayerSleepData(player).isBedLastSleptInto(bedData)) {
                 return true;
             }
@@ -462,12 +459,11 @@ public class ModEvents {
             BlockPos pos = getBedHead(state, myPos);
             BedData data = STPlatStuff.getBedDataIfPresent(level, pos);
             if (data != null && data.isInfested()) {
-                var p = tp.getItem().get(DataComponents.POTION_CONTENTS);
-                if (p != null && StreamSupport.stream(p.getAllEffects().spliterator(),false)
+                if (PotionUtils.getMobEffects(tp.getItem()).stream()
                         .anyMatch(e -> e.getEffect() == MobEffects.HARM)) {
                     level.playSound(null, pos, SoundEvents.SILVERFISH_DEATH, SoundSource.BLOCKS, 1, 1.3f);
                     if (level instanceof ServerLevel sl) {
-                        NetworkHelper.sendToAllClientPlayersInRange(sl, pos, 32,
+                        ModNetworking.CHANNEL.sendToAllClientPlayersInRange(sl, pos, 32,
                                 ClientBoundParticleMessage.bedbugInfest(pos,
                                         state.getValue(BedBlock.FACING).getOpposite()));
                     }
@@ -501,7 +497,12 @@ public class ModEvents {
         if (be == null) return;
         Level level = be.getLevel();
         if (level == null || level.isClientSide) return;
-        SleepTight.BED_DATA.sync(be);
+        BedData data = STPlatStuff.getBedDataFromThis(be);
+        if (data != null) {
+            BlockPos pos = be.getBlockPos();
+            ModNetworking.CHANNEL.sendToAllClientPlayersInRange(level, pos, 64,
+                    new ClientBoundSyncBedCapMessage(pos, data));
+        }
         be.setChanged();
     }
 
@@ -570,8 +571,8 @@ public class ModEvents {
         server.executeIfPossible(() -> {
             for (BlockEntity be : beds) {
                 if (be.isRemoved()) continue;
-                BedData data = SleepTight.BED_DATA.getOrCreate(be);
-                if (data.isInfested()) continue;
+                BedData data = STPlatStuff.getBedDataFromThis(be);
+                if (data == null || data.isInfested()) continue;
                 CompoundTag tag = new CompoundTag();
                 tag.putString("id", SleepTight.BEDBUG_ENTITY.getId().toString());
                 data.setBedBug(tag);

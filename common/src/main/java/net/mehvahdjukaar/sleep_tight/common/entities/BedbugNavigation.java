@@ -8,14 +8,12 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.PathFinder;
-import net.minecraft.world.level.pathfinder.PathType;
-import net.minecraft.world.level.pathfinder.PathfindingContext;
 import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.EnumSet;
-import java.util.Set;
 
 public class BedbugNavigation extends GroundPathNavigation {
 
@@ -31,13 +29,12 @@ public class BedbugNavigation extends GroundPathNavigation {
     }
 
 
-
     public static class BedbugNodeEvaluator extends WalkNodeEvaluator {
 
         @Override
         protected double getFloorLevel(BlockPos pos) {
             BlockPos blockPos = pos.below();
-            BlockGetter blockGetter = this.currentContext.level();
+            BlockGetter blockGetter = this.level;
 
             BlockState state = blockGetter.getBlockState(blockPos);
             if (state.is(SleepTight.BEDBUG_WALK_THROUGH)) return blockPos.getY();
@@ -47,46 +44,34 @@ public class BedbugNavigation extends GroundPathNavigation {
 
         // same as super, with bedbug-specific path type tweaks applied per cell
         @Override
-        public Set<PathType> getPathTypeWithinMobBB(PathfindingContext context, int x, int y, int z) {
-            EnumSet<PathType> enumSet = EnumSet.noneOf(PathType.class);
-
+        public BlockPathTypes getBlockPathTypes(BlockGetter level, int x, int y, int z,
+                                                EnumSet<BlockPathTypes> enumSet, BlockPathTypes type, BlockPos mobPos) {
             for (int i = 0; i < this.entityWidth; ++i) {
                 for (int j = 0; j < this.entityHeight; ++j) {
                     for (int k = 0; k < this.entityDepth; ++k) {
                         int l = i + x;
                         int m = j + y;
                         int n = k + z;
-                        PathType pathType = this.getPathType(context, l, m, n);
-                        pathType = modifyPathType(context, l, m, n, pathType);
-                        BlockPos blockPos = this.mob.blockPosition();
-                        boolean bl = this.canPassDoors();
-                        if (pathType == PathType.DOOR_WOOD_CLOSED && this.canOpenDoors() && bl) {
-                            pathType = PathType.WALKABLE_DOOR;
+                        BlockPathTypes pathType = this.getBlockPathType(level, l, m, n);
+                        pathType = this.evaluateBlockPathType(level, mobPos, pathType);
+                        pathType = modifyPathType(level, l, m, n, pathType);
+                        if (i == 0 && j == 0 && k == 0) {
+                            type = pathType;
                         }
-
-                        if (pathType == PathType.DOOR_OPEN && !bl) {
-                            pathType = PathType.BLOCKED;
-                        }
-
-                        if (pathType == PathType.RAIL && this.getPathType(context, blockPos.getX(), blockPos.getY(), blockPos.getZ()) != PathType.RAIL
-                                && this.getPathType(context, blockPos.getX(), blockPos.getY() - 1, blockPos.getZ()) != PathType.RAIL) {
-                            pathType = PathType.UNPASSABLE_RAIL;
-                        }
-
                         enumSet.add(pathType);
                     }
                 }
             }
 
-            return enumSet;
+            return type;
         }
 
-        private static PathType modifyPathType(PathfindingContext blockGetter, int x, int y, int z, PathType nodeType) {
-            if (nodeType == PathType.DOOR_OPEN || nodeType == PathType.DOOR_WOOD_CLOSED ||
-                    nodeType == PathType.WALKABLE_DOOR) return PathType.OPEN;
-            if (nodeType == PathType.BLOCKED && blockGetter.getBlockState(BlockPos.containing(x, y, z))
+        private static BlockPathTypes modifyPathType(BlockGetter blockGetter, int x, int y, int z, BlockPathTypes nodeType) {
+            if (nodeType == BlockPathTypes.DOOR_OPEN || nodeType == BlockPathTypes.DOOR_WOOD_CLOSED ||
+                    nodeType == BlockPathTypes.WALKABLE_DOOR) return BlockPathTypes.OPEN;
+            if (nodeType == BlockPathTypes.BLOCKED && blockGetter.getBlockState(BlockPos.containing(x, y, z))
                     .getBlock() instanceof BedBlock) {
-                return PathType.WALKABLE;
+                return BlockPathTypes.WALKABLE;
             }
             return nodeType;
         }

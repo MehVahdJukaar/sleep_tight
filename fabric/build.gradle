@@ -1,0 +1,94 @@
+architectury {
+    platformSetupLoomIde()
+    fabric()
+}
+
+loom {
+    accessWidenerPath = project(":common").loom.accessWidenerPath
+}
+
+configurations {
+    common
+    shadowCommon // Don't use shadow from the shadow plugin because we don't want IDEA to index this.
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentFabric.extendsFrom common
+}
+
+dependencies {
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    modApi "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+
+    common(project(path: ":common", configuration: "namedElements")) { transitive false }
+    shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
+
+    modImplementation "maven.modrinth:moonlight:${rootProject.moonlight_version}-fabric"
+
+    modImplementation("curse.maven:heartstone-573152:6173171")
+    modImplementation("curse.maven:supplementaries-412082:4375776")
+    modImplementation("curse.maven:handcrafted-538214:5118729")
+    modImplementation("curse.maven:resourceful-lib-570073:5659871")
+
+    modCompileOnly("curse.maven:yacl-667299:3987709")
+    modCompileOnly("curse.maven:modmenu-308702:3920481") {
+        exclude module: "fabric-api"
+    }
+    modCompileOnly("curse.maven:entity-model-features-844662:5717218")
+    modCompileOnly("curse.maven:entity-texture-features-fabric-568563:5000985")
+}
+
+
+processResources {
+    filesMatching("fabric.mod.json") {
+        expand rootProject.ext.replaceProperties + [project: project]
+    }
+}
+
+
+shadowJar {
+    exclude "architectury.common.json"
+
+    configurations = [project.configurations.shadowCommon]
+    archiveClassifier = "dev-shadow"
+
+    zip64 true
+}
+
+remapJar {
+    injectAccessWidener = true
+    input.set shadowJar.archiveFile
+    dependsOn shadowJar
+    archiveClassifier = "fabric"
+}
+
+jar {
+    archiveClassifier = "dev"
+}
+
+sourcesJar {
+    def commonSources = project(":common").sourcesJar
+    dependsOn commonSources
+    from commonSources.archiveFile.map { zipTree(it) }
+}
+
+components.java {
+    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
+        skip()
+    }
+}
+
+publishing {
+    publications {
+        mavenFabric(MavenPublication) {
+            artifactId = rootProject.mod_id + "-" + project.name
+            from components.java
+        }
+    }
+
+    repositories {
+        maven {
+            url = "https://www.cursemaven.com"
+            allowInsecureProtocol = true
+        }
+    }
+}

@@ -11,7 +11,7 @@ public class SpawnHelper {
 
 
     static void doSpawnMob(ServerLevel level, Mob mob, MobSpawnType spawnType) {
-        mob.finalizeSpawn(level, level.getCurrentDifficultyAt(mob.blockPosition()), spawnType, null);
+        mob.finalizeSpawn(level, level.getCurrentDifficultyAt(mob.blockPosition()), spawnType, null, null);
         level.addFreshEntityWithPassengers(mob);
     }
 
@@ -35,9 +35,9 @@ public class SpawnHelper {
 
             double f = centerPos.distanceToSqr(d, y, e);
 
-            if (!SpawnPlacements.isSpawnPositionOk(entityType, level, pos) ||
+            if (!NaturalSpawner.isSpawnPositionOk(SpawnPlacements.getPlacementType(entityType), level, pos, entityType) ||
                     !SpawnPlacements.checkSpawnRules(entityType, level, spawnType, pos, level.random) ||
-                    !level.noCollision(entityType.getSpawnAABB(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5))) {
+                    !level.noCollision(entityType.getAABB(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5))) {
                 return null;
             }
             Mob mob = NaturalSpawner.getMobForSpawn(level, entityType);

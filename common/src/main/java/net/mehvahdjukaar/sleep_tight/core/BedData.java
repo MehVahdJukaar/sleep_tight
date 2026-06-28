@@ -2,14 +2,9 @@ package net.mehvahdjukaar.sleep_tight.core;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,15 +19,6 @@ public class BedData {
                     .forGetter(d -> d.bedLevel.isEmpty() ? Optional.empty() : Optional.of(d.bedLevel)),
             CompoundTag.CODEC.optionalFieldOf("bed_bug").forGetter(d -> Optional.ofNullable(d.bedBug))
     ).apply(instance, BedData::new));
-
-    private static final StreamCodec<RegistryFriendlyByteBuf, Map<UUID, Byte>> BED_LEVEL_STREAM_CODEC =
-            ByteBufCodecs.map(i->new HashMap<>(),UUIDUtil.STREAM_CODEC,ByteBufCodecs.BYTE);
-
-    public static final StreamCodec<RegistryFriendlyByteBuf, BedData> STREAM_CODEC =
-            StreamCodec.composite(UUIDUtil.STREAM_CODEC, BedData::getId,
-                    BED_LEVEL_STREAM_CODEC, BedData::getBedLevels,
-                    ByteBufCodecs.BOOL, d -> d.bedBug != null,
-                    BedData::ofClient);
 
 
     protected UUID id;
@@ -50,8 +36,10 @@ public class BedData {
         return new BedData(UUID.randomUUID(), Optional.empty(), Optional.empty());
     }
 
-    private static BedData ofClient(UUID uuid,Map<UUID, Byte> levels, Boolean aBoolean) {
-        return new BedData(uuid, Optional.of(levels), aBoolean ? Optional.of(new CompoundTag()) : Optional.empty());
+    //called on the client when receiving a sync packet from the server
+    public void acceptFromServer(UUID id, boolean hasBedBug) {
+        this.id = id;
+        this.bedBug = hasBedBug ? new CompoundTag() : null;
     }
 
     public void incrementBedLevel(Player player) {

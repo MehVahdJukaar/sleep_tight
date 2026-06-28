@@ -94,7 +94,7 @@ public class WakeUpEncounterHelper {
 
         var list = CommonConfigs.ENCOUNTER_WHITELIST.get();
         if (!list.isEmpty()) {
-            return list.getRandom(level.random).map(WeightedEntry.Wrapper::data);
+            return list.getRandom(level.random).map(WeightedEntry.Wrapper::getData);
         }
         return WeightedRandomList.create(NaturalSpawner
                 .mobsAt(level, structureManager, chunkGenerator, category, pos, level.getBiome(pos))

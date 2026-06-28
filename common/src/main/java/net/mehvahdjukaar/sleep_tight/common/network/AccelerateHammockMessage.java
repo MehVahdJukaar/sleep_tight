@@ -1,23 +1,16 @@
 package net.mehvahdjukaar.sleep_tight.common.network;
 
+import net.mehvahdjukaar.moonlight.api.platform.network.ChannelHandler;
 import net.mehvahdjukaar.moonlight.api.platform.network.Message;
-import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
-import net.mehvahdjukaar.sleep_tight.SleepTight;
+import net.mehvahdjukaar.moonlight.api.platform.network.NetworkDir;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.level.Level;
 
 //bi directional
 public class AccelerateHammockMessage implements Message {
-
-    public static final TypeAndCodec<RegistryFriendlyByteBuf, AccelerateHammockMessage> TYPE = Message.makeType(
-            SleepTight.res("accelerate_hammock"),
-            AccelerateHammockMessage::new
-    );
 
     private final boolean leftPressed;
     private final BlockPos pos;
@@ -33,15 +26,14 @@ public class AccelerateHammockMessage implements Message {
     }
 
     @Override
-    public void write(RegistryFriendlyByteBuf buf) {
+    public void writeToBuffer(FriendlyByteBuf buf) {
         buf.writeBlockPos(pos);
         buf.writeBoolean(leftPressed);
     }
 
-
     @Override
-    public void handle(Context context) {
-        if (context.getDirection() == NetworkDir.CLIENT_BOUND) {
+    public void handle(ChannelHandler.Context context) {
+        if (context.getDirection() == NetworkDir.PLAY_TO_CLIENT) {
             Level level = Minecraft.getInstance().cameraEntity.level();
             if (level.getBlockEntity(pos) instanceof HammockTile tile) {
                 if (leftPressed) {
@@ -51,13 +43,8 @@ public class AccelerateHammockMessage implements Message {
                 }
             }
         } else {
-            var p = context.getPlayer();
-            NetworkHelper.sendToAllClientPlayersTrackingEntity(p, this);
+            var p = context.getSender();
+            ModNetworking.CHANNEL.sentToAllClientPlayersTrackingEntity(p, this);
         }
-    }
-
-    @Override
-    public Type<? extends CustomPacketPayload> type() {
-        return TYPE.type();
     }
 }

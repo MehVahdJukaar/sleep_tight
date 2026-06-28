@@ -1,8 +1,8 @@
 package net.mehvahdjukaar.sleep_tight.configs;
 
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigBuilder;
+import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigSpec;
 import net.mehvahdjukaar.moonlight.api.platform.configs.ConfigType;
-import net.mehvahdjukaar.moonlight.api.platform.configs.ModConfigHolder;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.random.SimpleWeightedRandomList;
@@ -135,10 +135,10 @@ public class CommonConfigs {
     }
 
 
-    public static final ModConfigHolder SPEC;
+    public static final ConfigSpec SPEC;
 
     static {
-        ConfigBuilder builder = ConfigBuilder.create(SleepTight.res(EASY_MODE ? "common_ez" : "common"), ConfigType.COMMON_SYNCED);
+        ConfigBuilder builder = ConfigBuilder.create(SleepTight.res(EASY_MODE ? "common_ez" : "common"), ConfigType.COMMON);
 
         builder.push("misc");
         RESPAWN_LAYING = builder.comment("Makes players respawn by laying on their bed")
@@ -220,7 +220,7 @@ public class CommonConfigs {
                 .define("effect_clearing_types", PotionClearing.ALL);
         WAKE_UP_EFFECTS = builder.comment("Effects to apply when player wakes up. You can add more entries, this is a list")
                 .defineObject("effects_on_wake_up", () -> List.of(
-                                new EffectData(SleepTight.INVIGORATED, 0, 0.075f, 2 * 60 * 20, 30 * 20)),
+                                new EffectData(SleepTight.INVIGORATED.get(), 0, 0.075f, 2 * 60 * 20, 30 * 20)),
                         EffectData.CODEC.listOf());
         builder.pop();
 
@@ -302,7 +302,8 @@ public class CommonConfigs {
 
         builder.pop();
 
-        SPEC = builder.build();
+        builder.setSynced();
+        SPEC = builder.buildAndRegister();
     }
 
     public static void init() {

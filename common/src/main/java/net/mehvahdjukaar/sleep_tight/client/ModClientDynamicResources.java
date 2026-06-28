@@ -8,28 +8,32 @@ import net.mehvahdjukaar.moonlight.api.resources.pack.*;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
+import org.apache.logging.log4j.Logger;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public class ModClientDynamicResources extends DynamicClientResourceProvider {
+public class ModClientDynamicResources extends DynClientResourcesGenerator {
 
     public ModClientDynamicResources() {
-        super(SleepTight.res("generated_pack"), PackGenerationStrategy.REGEN_ON_EVERY_RELOAD);
+        super(new DynamicTexturePack(SleepTight.res("generated_pack")));
     }
 
     @Override
-    protected Collection<String> gatherSupportedNamespaces() {
-        return List.of("minecraft");
+    public Logger getLogger() {
+        return SleepTight.LOGGER;
+    }
+
+    @Override
+    public boolean runsOnEveryReload() {
+        return true;
     }
 
     @Override
     public void regenerateDynamicAssets(Consumer<ResourceGenTask> executor) {
 
         executor.accept((manager, sink) -> {
-            ResourceLocation res = ResourceLocation.withDefaultNamespace("white_bed");
+            ResourceLocation res = new ResourceLocation("white_bed");
 
 
             var o = manager.getResource(ResType.BLOCKSTATES.getPath(res));
@@ -51,7 +55,7 @@ public class ModClientDynamicResources extends DynamicClientResourceProvider {
                         }""";
                 for (var c : DyeColor.values()) {
                     var json = JsonParser.parseString(str.replace("#", c.getName()));
-                    sink.addJson(ResourceLocation.withDefaultNamespace(
+                    sink.addJson(new ResourceLocation(
                             c.getName() + "_bed"), json, ResType.BLOCKSTATES);
                 }
             }
@@ -59,7 +63,7 @@ public class ModClientDynamicResources extends DynamicClientResourceProvider {
     }
 
     @Override
-    protected void addDynamicTranslations(AfterLanguageLoadEvent afterLanguageLoadEvent) {
+    public void addDynamicTranslations(AfterLanguageLoadEvent afterLanguageLoadEvent) {
 
     }
 }

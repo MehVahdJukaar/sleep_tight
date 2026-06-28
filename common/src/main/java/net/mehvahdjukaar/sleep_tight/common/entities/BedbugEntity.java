@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.common.entities;
 
 import net.mehvahdjukaar.moonlight.api.block.MimicBlock;
-import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
+import net.mehvahdjukaar.sleep_tight.common.network.ModNetworking;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundParticleMessage;
@@ -140,13 +140,13 @@ public class BedbugEntity extends PathfinderMob {
 
     @Override
     public LivingEntity getTarget() {
-        return this.getTargetFromBrain();
+        return this.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).orElse(null);
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        super.defineSynchedData(builder);
-        builder.define(DATA_FLAGS_ID, (byte) 0);
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(DATA_FLAGS_ID, (byte) 0);
     }
 
     public float getBurrowing(float partialTicks) {
@@ -324,7 +324,7 @@ public class BedbugEntity extends PathfinderMob {
             VoxelShape voxelShape2 = voxelShape.move(pos.getX(), pos.getY(), pos.getZ());
             if (Shapes.joinIsNotEmpty(voxelShape2, Shapes.create(this.getBoundingBox()), BooleanOp.AND)) {
 
-                NetworkHelper.sendToAllClientPlayersTrackingEntity(this, ClientBoundParticleMessage.bedbugDoor(pos));
+                ModNetworking.CHANNEL.sentToAllClientPlayersTrackingEntity(this, ClientBoundParticleMessage.bedbugDoor(pos));
                 this.makeStuckInBlock(state, new Vec3(0.5, 0.5, 0.5));
             }
         }
