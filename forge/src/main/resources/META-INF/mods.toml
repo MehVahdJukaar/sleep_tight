@@ -22,21 +22,21 @@ issueTrackerURL = "${mod_github}/issues"
 
 [[dependencies.${mod_id}]]
     modId = "forge"
-    type = "required"
+    mandatory = true
     versionRange = "${loader_version_range}"
     ordering = "NONE"
     side = "BOTH"
 
 [[dependencies.${mod_id}]]
     modId = "minecraft"
-    type = "required"
+    mandatory = true
     versionRange = "[${minecraft_version},${minecraft_max_version})"
     ordering = "NONE"
     side = "BOTH"
 
 [[dependencies.${mod_id}]]
     modId = "moonlight"
-    type = "required"
+    mandatory = true
     referralUrl = "https://www.curseforge.com/minecraft/mc-mods/selene"
     versionRange = "[${required_moonlight_version},)"
     ordering = "NONE"
