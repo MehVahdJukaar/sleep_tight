@@ -141,7 +141,8 @@ public class ModEvents {
                 }
                 var behavior = CommonConfigs.EXPLOSION_BEHAVIOR.get();
                 if (!behavior.canRespawn()) {
-                    if (!BedBlock.canSetSpawn(level) || !level.dimensionType().natural()) {
+                    if (behavior == CommonConfigs.ExplosionBehavior.ALLOWS_SLEEPING_NO_RESPAWN
+                            || !BedBlock.canSetSpawn(level) || !level.dimensionType().natural()) {
                         return false;
                     }
                 }
