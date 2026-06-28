@@ -174,6 +174,16 @@ public class PlayerSleepData {
         return insomnia;
     }
 
+    //copies all persistent state from another instance (used on respawn/clone with the forge capability)
+    public void copyFrom(PlayerSleepData other) {
+        this.homeBed = other.homeBed;
+        this.insomnia = other.insomnia;
+        this.lastWokenUpTimeStamp = other.lastWokenUpTimeStamp;
+        this.consecutiveNightsSlept = other.consecutiveNightsSlept;
+        this.nightsSleptInSameBed = other.nightsSleptInSameBed;
+        this.usingDoubleBed = other.usingDoubleBed;
+    }
+
     //called on the client when receiving a sync packet from the server
     public void acceptFromServer(@Nullable UUID homeBed, long dayDeadline, long gameDeadline, long lastKnownDayTime,
                                  long lastWokenUp, int consecutiveNights, int homeBedNights, boolean doubleBed) {

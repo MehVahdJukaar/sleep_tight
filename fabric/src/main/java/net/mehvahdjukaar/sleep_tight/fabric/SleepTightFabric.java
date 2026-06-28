@@ -1,6 +1,8 @@
-package net.mehvahdjukaar.sleep_tight.platform;
+package net.mehvahdjukaar.sleep_tight.fabric;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityCombatEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
@@ -8,9 +10,11 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerBlockEntityEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.mehvahdjukaar.moonlight.api.platform.PlatHelper;
+import net.mehvahdjukaar.sleep_tight.STPlatStuff;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.common.blocks.HammockBlock;
+import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.ModEvents;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
@@ -20,6 +24,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class SleepTightFabric implements ModInitializer {
+
+    public static AttachmentType<BedData> BED_DATA;
 
     @Override
     public void onInitialize() {
@@ -32,6 +38,11 @@ public class SleepTightFabric implements ModInitializer {
             SleepTightFabricClient.init();
         }
 
+        BED_DATA = AttachmentRegistry.<BedData>builder()
+                .initializer(BedData::initializeWithRandomId)
+                .persistent(BedData.CODEC)
+                .buildAndRegister(SleepTight.res("bed_data"));
+
         //yes not ideal at all. if done in after we might not have the block entity
         PlayerBlockBreakEvents.BEFORE.register((level, player, blockPos, blockState, blockEntity) -> {
             if (level instanceof ServerLevel sl)
@@ -41,17 +52,11 @@ public class SleepTightFabric implements ModInitializer {
         ServerBlockEntityEvents.BLOCK_ENTITY_LOAD.register((blockEntity, serverLevel) -> {
             //initialize attachments
             if (ModEvents.shouldHaveBedData(blockEntity)) {
-                //Thanks fabric
-                //https://github.com/FabricMC/fabric/issues/4718
                 //Thanks fabric. Without this it just deadlocks the game LMAO. GG
-                //both attachments and cap api seems failed systems to me, without synching and even issues like these, I should just use mixins next time
-
                 int ticTime = serverLevel.getServer().getTickCount() + 1;
                 DumbTaskScheduler.schedule(new TickTask(ticTime, () -> {
-                    //if(true)return;
-                    SleepTight.BED_DATA.getOrCreate(blockEntity);
+                    blockEntity.getAttachedOrCreate(BED_DATA);
                 }));
-                //blockEntity.getAttachedOrCreate(BED_DATA);
             }
         });
         UseBlockCallback.EVENT.register((player, level, interactionHand, blockHitResult) -> {
@@ -90,6 +95,15 @@ public class SleepTightFabric implements ModInitializer {
             return sleepingDirection;
         });
 
+        ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) -> {
+            //our player data lives in a field on Player (added via mixin) so it does not survive
+            //the respawn clone on its own. Copy it over and resync.
+            var oldData = STPlatStuff.getPlayerSleepData(oldPlayer);
+            var newData = STPlatStuff.getPlayerSleepData(newPlayer);
+            newData.copyFrom(oldData);
+            newData.syncToClient(newPlayer);
+        });
+
         ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
             ModEvents.onPlayerRespawned(newPlayer);
         });
@@ -98,8 +112,6 @@ public class SleepTightFabric implements ModInitializer {
             ModEvents.onEntityKilled(killedEntity, entity);
         });
 
-
     }
-
 
 }

@@ -1,4 +1,4 @@
-package net.mehvahdjukaar.sleep_tight.platform;
+package net.mehvahdjukaar.sleep_tight.fabric;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.mehvahdjukaar.sleep_tight.SleepTight;
@@ -38,7 +38,7 @@ public class DumbTaskScheduler {
     }
 
     // Tasks arriving from any thread
-    private static final ConcurrentLinkedQueue<TickTask> INBOUND = new java.util.concurrent.ConcurrentLinkedQueue<>();
+    private static final ConcurrentLinkedQueue<TickTask> INBOUND = new ConcurrentLinkedQueue<>();
     // Only the server thread touches this
     private static final PriorityQueue<TickTask> SCHEDULED =
             new PriorityQueue<>(Comparator.comparingInt(TickTask::getTick));

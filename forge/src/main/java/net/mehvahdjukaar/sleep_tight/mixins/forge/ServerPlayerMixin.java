@@ -13,7 +13,7 @@ public class ServerPlayerMixin {
 
 
     //Better here than event for compat since it makes vanilla logic run
-    @WrapOperation(method = "lambda$startSleepInBed$13", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/dimension/DimensionType;natural()Z"))
+    @WrapOperation(method = "startSleepInBed", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/dimension/DimensionType;natural()Z"))
     public boolean  sleep_tight$canSleepInDimension(DimensionType instance, Operation<Boolean> original) {
         boolean n = instance.natural();
         if (!n && !CommonConfigs.EXPLOSION_BEHAVIOR.get().canExplode()) {

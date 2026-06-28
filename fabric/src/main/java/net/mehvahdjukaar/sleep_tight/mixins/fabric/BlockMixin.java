@@ -1,6 +1,5 @@
 package net.mehvahdjukaar.sleep_tight.mixins.fabric;
 
-import net.mehvahdjukaar.sleep_tight.SleepTight;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
