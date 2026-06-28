@@ -13,11 +13,10 @@
   },
   "license": "${mod_license}",
   "icon": "icon.png",
-  "accessWidener": "sleep_tight.accesswidener",
   "environment": "*",
   "entrypoints": {
     "main": [
-      "net.mehvahdjukaar.sleep_tight.platform.SleepTightFabric"
+      "net.mehvahdjukaar.sleep_tight.fabric.SleepTightFabric"
     ],
     "modmenu": [
       "net.mehvahdjukaar.sleep_tight.integration.fabric.ModMenuCompat"

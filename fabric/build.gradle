@@ -22,12 +22,14 @@ dependencies {
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
 
+    // Moonlight is the only required runtime dependency (besides fabric-api)
     modImplementation "maven.modrinth:moonlight:${rootProject.moonlight_version}-fabric"
 
-    modImplementation("curse.maven:heartstone-573152:6173171")
-    modImplementation("curse.maven:supplementaries-412082:4375776")
-    modImplementation("curse.maven:handcrafted-538214:5118729")
-    modImplementation("curse.maven:resourceful-lib-570073:5659871")
+    // Optional compat/integration mods: compile-only, not loaded at runtime (guarded by isModLoaded checks)
+    modCompileOnly("curse.maven:heartstone-573152:6173171")
+    modCompileOnly("curse.maven:supplementaries-412082:4375776")
+    modCompileOnly("curse.maven:handcrafted-538214:5118729")
+    modCompileOnly("curse.maven:resourceful-lib-570073:5659871")
 
     modCompileOnly("curse.maven:yacl-667299:3987709")
     modCompileOnly("curse.maven:modmenu-308702:3920481") {
