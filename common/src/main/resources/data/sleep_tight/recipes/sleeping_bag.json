@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "11",
+    "##",
+    "##"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:echo_shard"
+    },
+    "1": {
+      "item": "minecraft:phantom_membrane"
+    }
+  },
+  "result": {
+    "item": "sleep_tight:night_bag"
+  }
+}

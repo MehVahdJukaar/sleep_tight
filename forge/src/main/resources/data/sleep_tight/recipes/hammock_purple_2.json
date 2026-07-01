@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "group": "hammock",
+  "ingredients": [
+    {"item": "sleep_tight:hammock_white"},
+    {"tag": "forge:dyes/purple"}
+  ],
+  "result": {
+    "item": "sleep_tight:hammock_purple"
+  }
+}
