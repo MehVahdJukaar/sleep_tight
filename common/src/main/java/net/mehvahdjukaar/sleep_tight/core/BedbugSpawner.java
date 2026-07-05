@@ -10,10 +10,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.CustomSpawner;
 import net.minecraft.world.level.GameRules;
-import net.minecraft.world.level.NaturalSpawner;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +29,18 @@ public class BedbugSpawner implements CustomSpawner {
      * Here, higher {@link PlayerSleepData#getConsecutiveNightsSlept()} lowers this threshold.
      */
     private static final int PHANTOM_REST_TICKS = 72000;
+
+    /** Per-extra-night ramp of the ambient roll. Gentler than one full day (24000) so presence builds slowly. */
+    private static final int AMBIENT_NIGHT_STEP = 6000;
+    /** Cap on the ambient roll's virtual "rested" ticks; {@code /PHANTOM_REST_TICKS} => max ~1/3 chance per check. */
+    private static final int AMBIENT_MAX_REST_TICKS = 24000;
+
+    /**
+     * Cooldown between ambient spawn cycles. PhantomSpawner uses {@code (60 + rnd(60)) * 20} (1-2 min);
+     * we stretch it ~5x so bedbugs stay an occasional nuisance rather than a constant one.
+     */
+    private static final int AMBIENT_INTERVAL_BASE_SECONDS = 300;
+    private static final int AMBIENT_INTERVAL_RANDOM_SECONDS = 300;
 
     private int nextTick;
 
@@ -51,7 +62,7 @@ public class BedbugSpawner implements CustomSpawner {
         if (this.nextTick > 0) {
             return 0;
         }
-        this.nextTick += (60 + random.nextInt(60)) * 20;
+        this.nextTick += (AMBIENT_INTERVAL_BASE_SECONDS + random.nextInt(AMBIENT_INTERVAL_RANDOM_SECONDS)) * 20;
 
         int spawned = 0;
         for (ServerPlayer player : level.players()) {
@@ -74,6 +85,14 @@ public class BedbugSpawner implements CustomSpawner {
 
     private boolean shouldSpawnFor(ServerPlayer player, RandomSource random) {
         PlayerSleepData data = STPlatStuff.getPlayerSleepData(player);
+
+        // Only players who have committed to a home bed attract ambient bedbugs: they must have slept enough
+        // consecutive nights in the same bed for it to count as their home bed (the home-bed leveling threshold).
+        int requiredHomeNights = CommonConfigs.HOME_BED_REWARD_REQUIRED_NIGHTS.get();
+        if (requiredHomeNights >= 0 && data.getNightsSleptInHomeBed() < requiredHomeNights) {
+            return false;
+        }
+
         int nights = data.getConsecutiveNightsSlept();
         int minNights = CommonConfigs.BEDBUG_AMBIENT_MIN_NIGHTS.get();
         if (nights < minNights) {
@@ -81,11 +100,12 @@ public class BedbugSpawner implements CustomSpawner {
         }
 
         // Mirror phantom roll: more consecutive nights => easier spawn (phantoms: longer awake => easier).
-        int restedTicks = Mth.clamp((nights - minNights + 1) * 24000, 1, PHANTOM_REST_TICKS);
+        // Ramp is deliberately gentle and capped well below 1 so it never becomes a guaranteed spawn each cycle.
+        int restedTicks = Mth.clamp((nights - minNights + 1) * AMBIENT_NIGHT_STEP, 1, AMBIENT_MAX_REST_TICKS);
         return random.nextInt(PHANTOM_REST_TICKS) >= PHANTOM_REST_TICKS - restedTicks;
     }
 
-static     boolean isValidSpawnTime(ServerLevel level, BlockPos pos) {
+    static boolean isValidSpawnTime(ServerLevel level, BlockPos pos) {
         if (!level.dimensionType().hasSkyLight()) {
             return true;
         }
@@ -162,15 +182,15 @@ static     boolean isValidSpawnTime(ServerLevel level, BlockPos pos) {
                 mutable.set(findGroundPos(level, mutable, center.getY()));
             }
             Vec3 reference = distanceFrom != null ? distanceFrom : Vec3.atCenterOf(mutable);
-            BedbugEntity bug = SpawnHelper. createValidMobToSpawn(reference, level, mutable,
-                    SleepTight.BEDBUG_ENTITY.get(), spawnType);
+            BedbugEntity bug = SpawnHelper.createValidMobToSpawn(reference, level, mutable,
+                    SleepTight.BEDBUG_ENTITY.get(), spawnType, ambient);
             if (bug != null) {
                 bug.setOnGround(true);
                 if (bug.getNavigation().createPath(mutable, 0) != null) {
                     if (postSpawn != null) {
                         postSpawn.accept(bug);
                     }
-                    SpawnHelper.   doSpawnMob(level, bug, spawnType);
+                    SpawnHelper.doSpawnMob(level, bug, spawnType);
                     return true;
                 }
             }

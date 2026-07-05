@@ -193,10 +193,10 @@ public class CommonConfigs {
                 .define("ambient_spawner", true);
         BEDBUG_AMBIENT_MIN_NIGHTS = builder.comment("Consecutive nights slept before ambient bedbugs can appear (phantoms use ~3 nights without sleep)")
                 .define("ambient_min_consecutive_nights", diff(3, 2), 1, 50);
-        BEDBUG_AMBIENT_MIN_RANGE = builder.comment("Min horizontal spawn distance from the player for ambient bedbugs")
-                .define("ambient_min_spawn_radius", 8, 1, 64);
-        BEDBUG_AMBIENT_MAX_RANGE = builder.comment("Max horizontal spawn distance from the player for ambient bedbugs")
-                .define("ambient_max_spawn_radius", 24, 1, 64);
+        BEDBUG_AMBIENT_MIN_RANGE = builder.comment("Min spawn distance from the player for ambient bedbugs. Note that natural spawn rules still forbid spawning within 24 blocks of any player, so values below that have no effect")
+                .define("ambient_min_spawn_radius", 24, 1, 64);
+        BEDBUG_AMBIENT_MAX_RANGE = builder.comment("Max spawn distance from the player for ambient bedbugs")
+                .define("ambient_max_spawn_radius", 48, 1, 64);
         builder.pop();
 
         builder.push("sleep_cooldown");
