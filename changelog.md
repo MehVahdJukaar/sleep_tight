@@ -1,10 +1,1 @@
-- bedbugs can be splatter
-- bedbugs can naturally spawn when player sleeps a lot
-- bedbugs can target a bed from mcuh farther away
-- bedbugs use the brain system and are much smarter now
-- more configs
-- made sleeping cooldown much more resiliant
-- bedbugs can pani panic in peaceful (and they wont despawn here)
-- and they can attack in survival when no bed is around
-- improved compat with other mod beds
-- many bug fixes
+- lowered bedbug spawning and restricted to home beds only. aso they can phase throuhg trapdoors

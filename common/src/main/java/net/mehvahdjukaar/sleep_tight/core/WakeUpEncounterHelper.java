@@ -44,7 +44,7 @@ public class WakeUpEncounterHelper {
             setRandomPosCyl(bedPos, mutable, level.random, min, max, height);
             var spawnData = getRandomEncounterData(level, struct, generator, category, mutable);
             if (spawnData.isEmpty()) continue;
-            var entity = SpawnHelper.createValidMobToSpawn(player.position(), level, mutable, spawnData.get(), MobSpawnType.NATURAL);
+            var entity = SpawnHelper.createValidMobToSpawn(player.position(), level, mutable, spawnData.get(), MobSpawnType.NATURAL, false);
             if (entity instanceof Mob mob) {
 
                 //config

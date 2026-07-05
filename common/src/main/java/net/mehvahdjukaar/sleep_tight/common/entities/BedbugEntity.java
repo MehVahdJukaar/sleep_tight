@@ -44,6 +44,7 @@ import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.TrapDoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -318,7 +319,7 @@ public class BedbugEntity extends PathfinderMob {
     }
 
     protected void onInsideBlock(BlockState state, BlockPos pos) {
-        if (state.getBlock() instanceof DoorBlock) {
+        if (state.getBlock() instanceof DoorBlock || state.getBlock() instanceof TrapDoorBlock) {
             //gets full shape
             VoxelShape voxelShape = state.getCollisionShape(this.level(), pos);
             VoxelShape voxelShape2 = voxelShape.move(pos.getX(), pos.getY(), pos.getZ());
@@ -368,7 +369,7 @@ public class BedbugEntity extends PathfinderMob {
 
     @Override
     public boolean isColliding(BlockPos pos, BlockState state) {
-        if (state.getBlock() instanceof DoorBlock) {
+        if (state.getBlock() instanceof DoorBlock || state.getBlock() instanceof TrapDoorBlock) {
             return false;
         }
         return super.isColliding(pos, state);
