@@ -1,1 +1,1 @@
-- fixed data files from the port
+- lowered bedbug spawning and restricted to home beds only. aso they can phase throuhg trapdoors

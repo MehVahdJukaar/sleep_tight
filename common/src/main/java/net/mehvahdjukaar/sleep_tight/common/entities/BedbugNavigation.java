@@ -68,7 +68,8 @@ public class BedbugNavigation extends GroundPathNavigation {
 
         private static BlockPathTypes modifyPathType(BlockGetter blockGetter, int x, int y, int z, BlockPathTypes nodeType) {
             if (nodeType == BlockPathTypes.DOOR_OPEN || nodeType == BlockPathTypes.DOOR_WOOD_CLOSED ||
-                    nodeType == BlockPathTypes.WALKABLE_DOOR) return BlockPathTypes.OPEN;
+                    nodeType == BlockPathTypes.WALKABLE_DOOR || nodeType == BlockPathTypes.TRAPDOOR)
+                return BlockPathTypes.OPEN;
             if (nodeType == BlockPathTypes.BLOCKED && blockGetter.getBlockState(BlockPos.containing(x, y, z))
                     .getBlock() instanceof BedBlock) {
                 return BlockPathTypes.WALKABLE;
