@@ -36,6 +36,7 @@ public class CommonConfigs {
     public static final Supplier<Double> INVIGORATED_XP;
 
 
+    public static final Supplier<Boolean> NIGHTMARES_ENABLED;
     public static final Supplier<Boolean> NIGHTMARES_BED;
     public static final Supplier<Boolean> NIGHTMARES_HAMMOCK;
     public static final Supplier<Boolean> NIGHTMARES_NIGHT_BAG;
@@ -45,6 +46,7 @@ public class CommonConfigs {
     public static final Supplier<Double> NIGHTMARE_SLEEP_TIME_MULTIPLIER;
     public static final Supplier<Integer> NIGHTMARE_INSOMNIA_DURATION;
 
+    public static final Supplier<Boolean> ENCOUNTERS_ENABLED;
     public static final Supplier<SimpleWeightedRandomList<EntityType<?>>> ENCOUNTER_WHITELIST;
     public static final Supplier<Integer> ENCOUNTER_RADIUS;
     public static final Supplier<Integer> ENCOUNTER_MIN_RADIUS;
@@ -65,18 +67,21 @@ public class CommonConfigs {
     public static final Supplier<PotionClearing> EFFECT_CLEARING_TYPE;
     public static final Supplier<List<EffectData>> WAKE_UP_EFFECTS;
 
+    public static final Supplier<Boolean> REQUIREMENTS_ENABLED;
     public static final Supplier<Boolean> REQUIREMENT_BED;
     public static final Supplier<Boolean> REQUIREMENT_HAMMOCK;
     public static final Supplier<Boolean> REQUIREMENT_NIGHT_BAG;
     public static final Supplier<Boolean> NEED_FULL_HUNGER;
     public static final Supplier<Integer> XP_COST;
 
+    public static final Supplier<Boolean> PENALTIES_ENABLED;
     public static final Supplier<Boolean> PENALTIES_BED;
     public static final Supplier<Boolean> PENALTIES_HAMMOCK;
     public static final Supplier<Boolean> PENALTIES_NIGHT_BAG;
     public static final Supplier<HungerMode> CONSUME_HUNGER_MODE;
     public static final Supplier<Double> CONSUMED_HUNGER;
 
+    public static final Supplier<Boolean> BEDBUGS_ENABLED;
     public static final Supplier<Double> BEDBUG_SPAWN_CHANCE;
     public static final Supplier<Integer> BEDBUG_SPAWN_MAX_RANGE;
     public static final Supplier<Integer> BEDBUG_SPAWN_MIN_RANGE;
@@ -158,7 +163,7 @@ public class CommonConfigs {
 
         SLEEP_IMMEDIATELY = builder.comment("Immediately attempt sleeping after laying down on a bed")
                 .define("sleep_immediately", false);
-        builder.push("heartstone_mod_integration");
+        builder.icon("heartstone:heartstone").push("heartstone_mod_integration");
         HEARTSTONE_MODE = builder.comment("Gives some benefit when sleeping next to somebody else. By default only works in conjunction with heartstone mod")
                 .define("enabled", HeartstoneMode.HEARTSTONE_PLAYER_OR_VILLAGER);
         HEARTSTONE_EFFECT = builder.comment("Effect to give to players when they wake up")
@@ -171,7 +176,9 @@ public class CommonConfigs {
 
 
 
-        builder.push("bedbugs");
+        builder.icon("bedbug_eggs").push("bedbugs");
+        builder.comment("Turns off bedbug spawning entirely. Bedbugs will still exist as a mob and can be spawned with eggs");
+        BEDBUGS_ENABLED = builder.mainFeature();
         BEDBUG_SPAWN_CHANCE = builder.comment("Base spawn chance every time you wake up, increases with difficulty")
                 .define("spawn_chance", 0.11, 0, 1);
         BEDBUG_SPAWN_MAX_RANGE = builder.comment("max radius at which they can spawn")
@@ -189,8 +196,9 @@ public class CommonConfigs {
                 .define("only_when_in_home_bed", false);
         MANSION_INFESTATION_CHANCE = builder.comment("Chance for each bed generated in a woodland mansion to start out infested with a bedbug. Set to 0 to disable")
                 .define("mansion_infestation_chance", 0.5, 0, 1);
-        BEDBUG_AMBIENT_SPAWNER = builder.comment("Enables phantom-style ambient bedbug spawning while awake (requires consistent recent sleep, opposite of phantoms)")
-                .define("ambient_spawner", true);
+        BEDBUG_AMBIENT_SPAWNER = builder.icon("bedbug_spawn_egg")
+                .comment("Enables phantom-style ambient bedbug spawning while awake (requires consistent recent sleep, opposite of phantoms)")
+                .feature("ambient_spawner", true);
         BEDBUG_AMBIENT_MIN_NIGHTS = builder.comment("Consecutive nights slept before ambient bedbugs can appear (phantoms use ~3 nights without sleep)")
                 .define("ambient_min_consecutive_nights", diff(3, 2), 1, 50);
         BEDBUG_AMBIENT_MIN_RANGE = builder.comment("Min spawn distance from the player for ambient bedbugs. Note that natural spawn rules still forbid spawning within 24 blocks of any player, so values below that have no effect")
@@ -199,7 +207,7 @@ public class CommonConfigs {
                 .define("ambient_max_spawn_radius", 48, 1, 64);
         builder.pop();
 
-        builder.push("sleep_cooldown");
+        builder.icon("minecraft:clock").push("sleep_cooldown");
         HAMMOCK_COOLDOWN = builder.comment("Time before you can sleep/rest again after you've slept in a hammock")
                 .define("hammock", 6000, 0, 1000000);
         NIGHT_BAG_COOLDOWN = builder.comment("Time before you can sleep/rest again after you've successfully slept in a bed")
@@ -209,7 +217,7 @@ public class CommonConfigs {
         builder.pop();
 
 
-        builder.push("sleep_benefits");
+        builder.icon("minecraft:golden_apple").push("sleep_benefits");
         BED_BENEFITS = builder.comment("Which type of beds will apply benefits on wake up")
                 .define("active_for", BedStatus.HOME_BED);
         HEALING = builder.comment("Healing applied on wake up")
@@ -224,20 +232,24 @@ public class CommonConfigs {
                         EffectData.CODEC.listOf());
         builder.pop();
 
-        builder.push("sleep_penalties");
-        PENALTIES_BED = builder.define("apply_to_beds", true);
-        PENALTIES_HAMMOCK = builder.define("apply_to_hammock", true);
-        PENALTIES_NIGHT_BAG = builder.define("apply_to_night_bags", true);
+        builder.icon("minecraft:rotten_flesh").push("sleep_penalties");
+        builder.comment("Applies a cost, like hunger loss, every time you sleep");
+        PENALTIES_ENABLED = builder.mainFeature();
+        PENALTIES_BED = builder.icon("minecraft:red_bed").feature("apply_to_beds", true);
+        PENALTIES_HAMMOCK = builder.icon("hammock_red").feature("apply_to_hammock", true);
+        PENALTIES_NIGHT_BAG = builder.icon("night_bag").feature("apply_to_night_bags", true);
         CONSUME_HUNGER_MODE = builder.comment("Method to calculate hunger loss. Can be based off time slept, difficulty or constant")
                 .define("consumed_hunger_mode", HungerMode.TIME_DIFFICULTY_BASED);
         CONSUMED_HUNGER = builder.comment("Base hunger decrement value. Depends on other config. Set to 0 to disable")
                 .define("base_value", diff(5, 0), 0d, 20);
         builder.pop();
 
-        builder.push("sleep_requirements");
-        REQUIREMENT_BED = builder.define("apply_to_beds", true);
-        REQUIREMENT_HAMMOCK = builder.define("apply_to_hammock", true);
-        REQUIREMENT_NIGHT_BAG = builder.define("apply_to_night_bags", true);
+        builder.icon("minecraft:experience_bottle").push("sleep_requirements");
+        builder.comment("Conditions that must be met before you are allowed to sleep");
+        REQUIREMENTS_ENABLED = builder.mainFeature();
+        REQUIREMENT_BED = builder.icon("minecraft:red_bed").feature("apply_to_beds", true);
+        REQUIREMENT_HAMMOCK = builder.icon("hammock_red").feature("apply_to_hammock", true);
+        REQUIREMENT_NIGHT_BAG = builder.icon("night_bag").feature("apply_to_night_bags", true);
 
         NEED_FULL_HUNGER = builder.comment("Requires player to have full hunger bar before being able to sleep")
                 .define("require_full_hunger", false);
@@ -246,7 +258,7 @@ public class CommonConfigs {
         builder.pop();
 
 
-        builder.push("home_bed");
+        builder.icon("minecraft:red_bed").push("home_bed");
 
         HOME_BED_REWARD_REQUIRED_NIGHTS = builder.comment("Amount of nights needed to make a home bed start increasing levels. Set to -1 to effectively disable home bed leveling")
                 .define("home_bed_benefit_required_nights", diff(6, 3), -1, 50);
@@ -258,10 +270,12 @@ public class CommonConfigs {
                 .define("only_respawn_in_home_bed", false);
         builder.pop();
 
-        builder.push("nightmares");
-        NIGHTMARES_BED = builder.define("apply_to_beds", true);
-        NIGHTMARES_HAMMOCK = builder.define("apply_to_hammock", false);
-        NIGHTMARES_NIGHT_BAG = builder.define("apply_to_night_bags", false);
+        builder.icon("minecraft:phantom_membrane").push("nightmares");
+        builder.comment("Sleeping too many nights in a row can end in a nightmare, waking you up early");
+        NIGHTMARES_ENABLED = builder.mainFeature();
+        NIGHTMARES_BED = builder.icon("minecraft:red_bed").feature("apply_to_beds", true);
+        NIGHTMARES_HAMMOCK = builder.icon("hammock_red").feature("apply_to_hammock", false);
+        NIGHTMARES_NIGHT_BAG = builder.icon("night_bag").feature("apply_to_night_bags", false);
 
         NIGHTMARES_CONSECUTIVE_NIGHTS = builder.comment("Amount of consecutive nights slept after which nightmares could start to happen")
                 .define("appear_after_consecutive_nights", diff(3, 4), 0, 100);
@@ -274,7 +288,9 @@ public class CommonConfigs {
                 .define("special_bed_nightmare_chance_mult", 1.2, 1, 5);
         builder.pop();
 
-        builder.push("wake_up_encounters");
+        builder.icon("minecraft:iron_sword").push("wake_up_encounters");
+        builder.comment("Sleeping in an exposed spot can wake you up to a mob that spawned next to you");
+        ENCOUNTERS_ENABLED = builder.mainFeature();
 
         ENCOUNTER_TRIES = builder.comment("The game will perform x attempts to spawn a mod around each player every time they sleep." +
                         "Increases likelihood of finding one. Note that actual value will also depend on local difficulty")
@@ -303,6 +319,7 @@ public class CommonConfigs {
         builder.pop();
 
         SPEC = builder.build();
+        SPEC.forceLoad();
     }
 
     public static void init() {

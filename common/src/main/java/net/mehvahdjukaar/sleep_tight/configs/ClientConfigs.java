@@ -49,7 +49,7 @@ public class ClientConfigs {
     static {
         ConfigBuilder builder = ConfigBuilder.create(SleepTight.MOD_ID, ConfigType.CLIENT);
 
-        builder.push("hammock");
+        builder.icon("hammock_red").push("hammock");
         HAMMOCK_ANIMATION = builder.comment("Completely turns off the animation")
                 .define("animation", true);
         HAMMOCK_ANIMATION_PARAM = builder.comment("Swing animation parameters")
@@ -64,14 +64,13 @@ public class ClientConfigs {
                 .define("hammock_fall",true);
         builder.pop();
 
-        builder.push("dream_essence");
+        builder.icon("dreamer_essence").push("dream_essence");
         PARTICLE_ALPHA = builder.comment("How subtle the effect will be essentially. Set to one for bring fancy particles")
                 .define("particle_alpha", 0.1, 0, 1);
         PARTICLE_LIFETIME = builder.comment("Affects the plume height. lower to make the plume shorter")
                 .define("particle_lifetime", 380, 1, 10000);
         PARTICLE_SPAWN_FREQUENCY = builder.comment("Makes particles spawn more often. Set to 0 to disable")
                 .define("particle_spawn_chance", 0.15, 0, 1);
-        TIME_FORMAT_24H = builder.define("24h_time_format", true);
         builder.pop();
 
 
@@ -82,6 +81,8 @@ public class ClientConfigs {
                 .define("crossair_insomnia_cooldown", true);
         SHOW_TIME = builder.comment("Displays current time when sleeping. WITH_CLOCK only shows it while a clock is in the inventory")
                 .define("show_time_when_sleeping", SleepTimeDisplay.ALWAYS);
+        TIME_FORMAT_24H = builder.comment("Shows the sleep time in 24h format instead of AM/PM")
+                .define("24h_time_format", true);
         VILLAGER_SLEEP = builder.comment("Makes villagers close their eyes when sleeping")
                         .define("sleeping_villagers_eyes", true);
         ZZZ_PARTICLES = builder.comment("Spawn particles when sleeping. Set to 0 to disable")
@@ -89,6 +90,7 @@ public class ClientConfigs {
         builder.pop();
 
         SPEC = builder.build();
+        SPEC.forceLoad();
     }
 
     public static void init() {

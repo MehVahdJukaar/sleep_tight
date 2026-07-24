@@ -10,23 +10,26 @@ fabric {
 val moonlight_version: String by extra
 val mc_version: String by extra
 val sbl_version: String by extra
+val codecui_version: String by extra
+val supplementaries_version: String by extra
 
 dependencies {
     modImplementation("net.mehvahdjukaar:moonlight-fabric:${moonlight_version}")
+    modRuntimeOnly("net.mehvahdjukaar:codecui-fabric:${codecui_version}")
 
-    modImplementation("curse.maven:supplementaries-412082:4375776")
+    modCompileOnly("net.mehvahdjukaar:supplementaries-fabric:${supplementaries_version}")
     modImplementation("curse.maven:heartstone-573152:7278328")
     modCompileOnly("curse.maven:handcrafted-538214:6330030")
     modCompileOnly("curse.maven:resourceful-lib-570073:5659871")
     modCompileOnly("net.tslat.smartbrainlib:SmartBrainLib-fabric-${mc_version}:${sbl_version}")
 
     modCompileOnly("curse.maven:yacl-667299:3987709")
-    modCompileOnly("com.terraformersmc:modmenu:4.0.6")
+    modCompileOnly("maven.modrinth:modmenu:11.0.4")
     modCompileOnly("curse.maven:entity-model-features-844662:5722728")
     modCompileOnly("curse.maven:entity-texture-features-fabric-568563:5000985")
     modCompileOnly("curse.maven:quark-243121:8146177")
     modCompileOnly("curse.maven:zeta-968868:7980010")
 
-  //   modRuntimeOnly("curse.maven:artsandcrafts-1034791:8041066")
-  //  modRuntimeOnly("curse.maven:jinxedlib-1203401:6727690")
+    //   modRuntimeOnly("curse.maven:artsandcrafts-1034791:8041066")
+    //  modRuntimeOnly("curse.maven:jinxedlib-1203401:6727690")
 }

@@ -76,6 +76,10 @@ subprojects {
         }
 
         maven { url = uri("https://jitpack.io") }
+        maven {
+            url = uri("https://api.modrinth.com/maven") // Modrinth, group is maven.modrinth
+            content { includeGroup("maven.modrinth") }
+        }
 
         maven { url = uri("https://maven.neoforged.net/releases") }
         maven { url = uri("https://maven.architectury.dev") }
@@ -88,7 +92,6 @@ subprojects {
         maven { url = uri("https://maven.tterrag.com/") } // Flywheel, EnderIO
         maven { url = uri("https://mvn.devos.one/releases/") } // Registrate, Porting Lib (releases)
         maven { url = uri("https://mvn.devos.one/snapshots/") } // Registrate, Porting Lib (snapshots)
-        maven { url = uri("https://maven.terraformersmc.com/") } // TerraformersMC mods
         maven { url = uri("https://maven.saps.dev/releases") } // FTB Mods
         maven { url = uri("https://dl.cloudsmith.io/public/tslat/sbl/maven/") }
         maven { url = uri("https://maven.theillusivec4.top/") } // Curios API

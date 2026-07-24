@@ -24,6 +24,7 @@ public class WakeUpEncounterHelper {
 
     public static boolean tryPerformEncounter(ServerPlayer player, ServerLevel level, BlockPos bedPos) {
 
+        if (!CommonConfigs.ENCOUNTERS_ENABLED.get()) return false;
         if (!level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) return false;
 
         BlockPos.MutableBlockPos mutable = bedPos.mutable();

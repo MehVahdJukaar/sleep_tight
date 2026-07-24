@@ -540,6 +540,7 @@ public class ModEvents {
     //infests a random subset of beds that a structure piece (woodland mansion) just placed.
     //works on any bed block entity (vanilla or modded) since it matches BlockTags.BEDS, not a specific block.
     public static void infestStructureBeds(WorldGenLevel level, ChunkPos chunkPos, BoundingBox pieceBox, RandomSource random) {
+        if (!CommonConfigs.BEDBUGS_ENABLED.get()) return;
         double chance = CommonConfigs.MANSION_INFESTATION_CHANCE.get();
         if (chance <= 0) return;
 
