@@ -24,6 +24,8 @@ import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.mehvahdjukaar.sleep_tight.integration.HandcraftedCompat;
+import net.mehvahdjukaar.sleep_tight.test.TestMob;
+import net.mehvahdjukaar.sleep_tight.test.TestStuff;
 import net.minecraft.Util;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
@@ -87,6 +89,7 @@ public class SleepTight {
         }
 
         ModCommands.init();
+        TestStuff.init();
         RegHelper.addAttributeRegistration(SleepTight::registerEntityAttributes);
         RegHelper.addSpawnPlacementsRegistration(SleepTight::registerSpawnPlacements);
         RegHelper.addItemsToTabsRegistration(SleepTight::registerItemsToTabs);
@@ -123,6 +126,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
         event.addAfter(CreativeModeTabs.FUNCTIONAL_BLOCKS, i -> i.is(ItemTags.BEDS), DREAMER_ESSENCE.get());
         event.add(CreativeModeTabs.TOOLS_AND_UTILITIES, NIGHT_BAG.get());
         event.add(CreativeModeTabs.SPAWN_EGGS, BEDBUG_SPAWN_EGG.get());
+        event.add(CreativeModeTabs.SPAWN_EGGS, TestStuff.TEST_MOB_SPAWN_EGG.get());
         event.addAfter(CreativeModeTabs.INGREDIENTS, i -> i.is(Items.SPIDER_EYE), BED_BUG_EGGS.get());
         event.addAfter(CreativeModeTabs.INGREDIENTS, i -> i.is(Items.PIGLIN_BANNER_PATTERN), MOON_PATTERN_ITEM.get());
         event.addAfter(CreativeModeTabs.COLORED_BLOCKS, i -> i.is(ItemTags.BEDS),
@@ -138,6 +142,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     private static void registerEntityAttributes(RegHelper.AttributeEvent event) {
         event.register(DREAMER_ESSENCE_ENTITY.get(), DreamerEssenceTargetEntity.makeAttributes());
         event.register(BEDBUG_ENTITY.get(), BedbugEntity.makeAttributes());
+        event.register(TestStuff.TEST_MOB.get(), TestMob.makeAttributes());
     }
 
     //attachments

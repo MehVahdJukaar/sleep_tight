@@ -1,1 +1,1 @@
-- lowered bedbug spawning and restricted to home beds only. aso they can phase throuhg trapdoors
+better configs
