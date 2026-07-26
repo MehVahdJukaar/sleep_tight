@@ -57,6 +57,8 @@
   "subtitles.sleep_tight.bedbug.death": "Bedbug dies",
   "subtitles.sleep_tight.bedbug.ambient": "Bedbug noises",
   "subtitle.sleep_tight.bedbug.hurt": "Bedbug hurts",
+  "entity.sleep_tight.test_mob": "Test Mob",
+  "item.sleep_tight.test_mob_spawn_egg": "Test Mob Spawn Egg",
   "advancements.adventure.hammock.title": "Inertia is a Property of Matter",
   "advancements.adventure.hammock.description": "Fall off a Hammock",
   "item.sleep_tight.moon_banner_pattern": "Banner Pattern",
