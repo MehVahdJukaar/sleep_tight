@@ -30,6 +30,10 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     // node keys are packed relative to this, so any real world coordinate fits
     private int originX, originY, originZ;
 
+    // search cost of the last run, for the in game comparison against vanilla A* (see PathDebug)
+    public int expansions;
+    public int generatedNeighbors;
+
     private static int[][] buildMoves() {
         int[][] moves = new int[26][];
         int i = 0;
@@ -51,6 +55,8 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
         this.originX = origin.getX();
         this.originY = origin.getY();
         this.originZ = origin.getZ();
+        this.expansions = 0;
+        this.generatedNeighbors = 0;
     }
 
     @Override
@@ -96,6 +102,8 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
             outputArray[count++] = neighbor;
         }
 
+        this.expansions++;
+        this.generatedNeighbors += count;
         return count;
     }
 

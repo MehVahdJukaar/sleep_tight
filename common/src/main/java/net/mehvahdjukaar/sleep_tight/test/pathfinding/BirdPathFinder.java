@@ -69,6 +69,7 @@ public class BirdPathFinder extends PathFinder {
         int visited = 0;
         Set<Target> reachedTargets = Sets.newHashSetWithExpectedSize(targets.size());
         int maxVisited = (int) (this.maxVisitedNodes * searchDepthMultiplier);
+        List<Node> closedNodes = BirdPathfindingConfig.collectDebugData ? Lists.newArrayList() : null;
 
         while (!this.openSet.isEmpty()) {
             if (++visited >= maxVisited) {
@@ -77,6 +78,9 @@ public class BirdPathFinder extends PathFinder {
 
             Node current = this.openSet.pop();
             current.closed = true;
+            if (closedNodes != null) {
+                closedNodes.add(current);
+            }
 
             for (Target target : targets) {
                 if (current.distanceManhattan(target) <= accuracy) {
@@ -121,7 +125,11 @@ public class BirdPathFinder extends PathFinder {
                 .map(target -> this.reconstructPath(target.getBestNode(), targetMap.get(target), false))
                 .min(Comparator.comparingDouble(Path::getDistToTarget).thenComparingInt(Path::getNodeCount));
         profiler.pop();
-        return best.orElse(null);
+        Path path = best.orElse(null);
+        if (path != null && closedNodes != null) {
+            path.setDebug(this.openSet.getHeap(), closedNodes.toArray(new Node[0]), targets);
+        }
+        return path;
     }
 
     private float getBestH(Node node, Set<Target> targets) {

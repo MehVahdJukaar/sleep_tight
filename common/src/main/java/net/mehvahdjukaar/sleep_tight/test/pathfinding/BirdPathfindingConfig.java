@@ -24,4 +24,9 @@ public class BirdPathfindingConfig {
     // A* heuristic weight. Vanilla uses 1.5; 2.0 halves search cost with no measurable
     // smoothness loss on the lattice
     public static float heuristicWeight = 2.0F;
+
+    // record the open and closed sets on the finished path. Off by default: it is only used to
+    // shade every node the search touched, which buries the path itself and is a lot of nodes to
+    // ship to the client. The path draws fine without it
+    public static boolean collectDebugData = false;
 }
