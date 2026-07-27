@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
 import java.util.List;
@@ -32,8 +33,8 @@ public class PathDebugRenderer {
 
     private final Map<Integer, Entry> paths = new HashMap<>();
 
-    public void addPath(int entityId, DebugPath path, float nodeHalfWidth) {
-        this.paths.put(entityId, new Entry(path, nodeHalfWidth, Util.getMillis()));
+    public void addPath(int entityId, DebugPath path, float nodeHalfWidth, MobDebugInfo mobInfo) {
+        this.paths.put(entityId, new Entry(path, nodeHalfWidth, mobInfo, Util.getMillis()));
     }
 
     public void clear() {
@@ -47,6 +48,7 @@ public class PathDebugRenderer {
         this.paths.values().removeIf(entry -> now - entry.creationTime > timeoutMillis);
         for (Entry entry : this.paths.values()) {
             renderPath(poseStack, bufferSource, entry.path, entry.nodeHalfWidth, showNodeLabels, camX, camY, camZ);
+            renderMobInfo(poseStack, bufferSource, entry.mobInfo, camX, camY, camZ);
         }
     }
 
@@ -131,6 +133,36 @@ public class PathDebugRenderer {
                 node.x() + 0.5, node.y() + yOffset, node.z() + 0.5, -1, textScale, true, true);
     }
 
+    /**
+     * The "what is it thinking" half: navigation/steering state, drawn at the move control's
+     * current wanted position since that is roughly where the mob itself is (the lookahead is
+     * short), rather than at a fixed offset from a node that may be far behind or ahead of it.
+     */
+    private static void renderMobInfo(PoseStack poseStack, MultiBufferSource bufferSource, MobDebugInfo info,
+                                      double camX, double camY, double camZ) {
+        Vec3 pos = info.wantedPos();
+        if (distanceToCamera((int) pos.x, (int) pos.y, (int) pos.z, camX, camY, camZ) > maxRenderDistance) return;
+
+        // magenta normally, flips to red when the navigation itself has given up
+        renderBox(poseStack, bufferSource, new AABB(pos.x - 0.1, pos.y - 0.1, pos.z - 0.1,
+                        pos.x + 0.1, pos.y + 0.1, pos.z + 0.1),
+                1, info.stuck() ? 0 : 0.2F, 1, camX, camY, camZ);
+
+        double progress = info.rulerLength() > 1.0E-4 ? info.rulerCursor() / info.rulerLength() * 100.0 : 0.0;
+        int textColor = info.stuck() ? 0xFFFF5555 : -1;
+
+        String status = (info.stuck() ? "STUCK " : "") + info.operation() + (info.pathDone() ? " done" : "");
+        DebugRenderHelper.renderFloatingText(poseStack, bufferSource, status,
+                pos.x, pos.y + 1.0, pos.z, textColor, textScale, true, true);
+        DebugRenderHelper.renderFloatingText(poseStack, bufferSource, String.format(Locale.ROOT,
+                        "%.1f/%.1f (%.0f%%) node %d/%d", info.rulerCursor(), info.rulerLength(), progress,
+                        info.nextNodeIndex(), info.nodeCount()),
+                pos.x, pos.y + 0.75, pos.z, -1, textScale, true, true);
+        DebugRenderHelper.renderFloatingText(poseStack, bufferSource,
+                String.format(Locale.ROOT, "v=%.2f", info.velocity().length()),
+                pos.x, pos.y + 0.5, pos.z, -1, textScale, true, true);
+    }
+
     private static boolean isTooFar(DebugNode node, double camX, double camY, double camZ) {
         return distanceToCamera(node.x(), node.y(), node.z(), camX, camY, camZ) > maxRenderDistance;
     }
@@ -140,6 +172,6 @@ public class PathDebugRenderer {
         return (float) (Math.abs(x - camX) + Math.abs(y - camY) + Math.abs(z - camZ));
     }
 
-    private record Entry(DebugPath path, float nodeHalfWidth, long creationTime) {
+    private record Entry(DebugPath path, float nodeHalfWidth, MobDebugInfo mobInfo, long creationTime) {
     }
 }

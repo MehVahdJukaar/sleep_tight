@@ -14,17 +14,20 @@ public class ClientBoundPathDebugMessage implements Message {
     private final int entityId;
     private final DebugPath path;
     private final float nodeHalfWidth;
+    private final MobDebugInfo mobInfo;
 
     public ClientBoundPathDebugMessage(FriendlyByteBuf buf) {
         this.entityId = buf.readVarInt();
         this.path = DebugPath.read(buf);
         this.nodeHalfWidth = buf.readFloat();
+        this.mobInfo = MobDebugInfo.read(buf);
     }
 
-    public ClientBoundPathDebugMessage(int entityId, DebugPath path, float nodeHalfWidth) {
+    public ClientBoundPathDebugMessage(int entityId, DebugPath path, float nodeHalfWidth, MobDebugInfo mobInfo) {
         this.entityId = entityId;
         this.path = path;
         this.nodeHalfWidth = nodeHalfWidth;
+        this.mobInfo = mobInfo;
     }
 
     @Override
@@ -32,11 +35,12 @@ public class ClientBoundPathDebugMessage implements Message {
         buf.writeVarInt(this.entityId);
         this.path.write(buf);
         buf.writeFloat(this.nodeHalfWidth);
+        this.mobInfo.write(buf);
     }
 
     @Override
     public void handle(Context context) {
-        PathDebugRenderer.INSTANCE.addPath(this.entityId, this.path, this.nodeHalfWidth);
+        PathDebugRenderer.INSTANCE.addPath(this.entityId, this.path, this.nodeHalfWidth, this.mobInfo);
     }
 
     @Override

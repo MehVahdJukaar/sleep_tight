@@ -1,9 +1,13 @@
 package net.mehvahdjukaar.sleep_tight.test;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
+import net.mehvahdjukaar.sleep_tight.test.controller.BirdFlightConfig;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 
 public class TestMobRenderer extends MobRenderer<BirdTestMob, TestMobModel> {
 
@@ -14,5 +18,23 @@ public class TestMobRenderer extends MobRenderer<BirdTestMob, TestMobModel> {
     @Override
     public ResourceLocation getTextureLocation(BirdTestMob entity) {
         return SleepTightClient.BEDBUG_TEXTURE;
+    }
+
+    /**
+     * Points the whole body along the flight instead of only the head. The move control already
+     * tracks pitch to the actual velocity, but vanilla feeds pitch to the head alone, so without
+     * this the flown slope is invisible and a mob climbing at 45 degrees looks identical to one
+     * flying level. Bank is derived here rather than synched because yaw is interpolated already.
+     */
+    @Override
+    protected void setupRotations(BirdTestMob entity, PoseStack poseStack, float bob, float yBodyRot,
+                                  float partialTick, float scale) {
+        super.setupRotations(entity, poseStack, bob, yBodyRot, partialTick, scale);
+        poseStack.mulPose(Axis.XP.rotationDegrees(-entity.getViewXRot(partialTick)));
+
+        float yawRate = Mth.degreesDifference(entity.yRotO, entity.getYRot());
+        float bank = Mth.clamp(yawRate * BirdFlightConfig.bankPerYawRate,
+                -BirdFlightConfig.maxBankAngle, BirdFlightConfig.maxBankAngle);
+        poseStack.mulPose(Axis.ZP.rotationDegrees(bank));
     }
 }
