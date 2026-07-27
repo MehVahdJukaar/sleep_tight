@@ -1,5 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.test.pathfinding;
 
+import it.unimi.dsi.fastutil.longs.Long2FloatMap;
+import it.unimi.dsi.fastutil.longs.Long2FloatOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
@@ -26,9 +28,24 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     // the parent's heading. 8 horizontal bins x dy in {-1,0,1} + 2 verticals = vanilla's 26
     private static final int[][] MOVES = buildMoves();
 
+    // a touching cell's share of the wall hug charge is its inverse distance: faces are 1 block
+    // away, edges 1.41, corners 1.73. A cell walled in on all 26 sides would total this weight
+    private static final float EDGE_WEIGHT = (float) (1 / Math.sqrt(2));
+    private static final float CORNER_WEIGHT = (float) (1 / Math.sqrt(3));
+    private static final float FULLY_ENCLOSED_WEIGHT = 6 + 12 * EDGE_WEIGHT + 8 * CORNER_WEIGHT;
+    private static final float NOT_MEASURED = -1.0F;
+
     private final Long2ObjectMap<BirdNode> latticeNodes = new Long2ObjectOpenHashMap<>();
+    // how walled in each cell is. Keyed per cell rather than per lattice state, because a cell is
+    // offered as a neighbor once per heading bin and once per parent, and each measurement is 26
+    // path type lookups. Same relative packing as latticeNodes, cleared alongside it
+    private final Long2FloatMap clearanceCosts = new Long2FloatOpenHashMap();
     // node keys are packed relative to this, so any real world coordinate fits
     private int originX, originY, originZ;
+
+    public BirdNodeEvaluator() {
+        this.clearanceCosts.defaultReturnValue(NOT_MEASURED);
+    }
 
     // search cost of the last run, for the in game comparison against vanilla A* (see PathDebug)
     public int expansions;
@@ -51,6 +68,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     public void prepare(PathNavigationRegion level, Mob mob) {
         super.prepare(level, mob);
         this.latticeNodes.clear();
+        this.clearanceCosts.clear();
         BlockPos origin = mob.blockPosition();
         this.originX = origin.getX();
         this.originY = origin.getY();
@@ -62,6 +80,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     @Override
     public void done() {
         this.latticeNodes.clear();
+        this.clearanceCosts.clear();
         super.done();
     }
 
@@ -108,12 +127,19 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     }
 
     /**
-     * Cost of the transition between two lattice states: turning plus purely vertical flight.
-     * These depend on the parent, so they can't live in the node's costMalus (the same state is
-     * reachable both by a diagonal climb and by a vertical hop from below).
+     * Everything charged for arriving at {@code to} beyond the step length: turning, purely
+     * vertical flight, and how walled in the destination is.
+     * <p>
+     * Turning and vertical cost depend on the parent, so they can't live in the node's costMalus
+     * (the same state is reachable both by a diagonal climb and by a vertical hop from below).
+     * Wall clearance is a plain property of the destination cell and would belong in costMalus,
+     * but vanilla's findAcceptedNode pattern <i>accumulates</i> into that field
+     * ({@code costMalus = max(costMalus, malus)} then {@code ++} for WALKABLE) on a cached node, so
+     * a clearance charge added there would grow every time the cell is re-offered. Charging it here
+     * is recomputed per relaxation and stays idempotent.
      */
     public float getEdgeCost(Node from, Node to) {
-        float cost = 0;
+        float cost = this.clearanceCost(to.x, to.y, to.z);
         if (from.x == to.x && from.z == to.z && from.y != to.y) {
             cost += to.y > from.y ? BirdPathfindingConfig.straightUpCost : BirdPathfindingConfig.straightDownCost;
         }
@@ -128,6 +154,40 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
         return cost;
     }
 
+    /**
+     * How walled in a cell is, as a fraction of {@link BirdPathfindingConfig#wallHugCost}. Sums the
+     * blocked cells touching it, each weighted by distance, so being cornered on several sides costs
+     * more than running alongside one flat surface. Memoized: neighbouring cells' shells overlap
+     * heavily and every lookup goes through vanilla's per-search path type cache, so the marginal
+     * cost is far below the nominal 26 queries per cell.
+     */
+    private float clearanceCost(int x, int y, int z) {
+        float wallHugCost = BirdPathfindingConfig.wallHugCost;
+        if (wallHugCost <= 0) {
+            return 0;
+        }
+        long key = this.packKey(x, y, z, 0);
+        float cached = this.clearanceCosts.get(key);
+        if (cached != NOT_MEASURED) {
+            return cached;
+        }
+        float blocked = 0;
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    int axes = Math.abs(dx) + Math.abs(dy) + Math.abs(dz);
+                    if (axes == 0 || this.isClear(x + dx, y + dy, z + dz)) {
+                        continue;
+                    }
+                    blocked += axes == 1 ? 1.0F : axes == 2 ? EDGE_WEIGHT : CORNER_WEIGHT;
+                }
+            }
+        }
+        float cost = wallHugCost * blocked / FULLY_ENCLOSED_WEIGHT;
+        this.clearanceCosts.put(key, cost);
+        return cost;
+    }
+
     @Nullable
     private BirdNode findAcceptedLatticeNode(int x, int y, int z, int heading) {
         PathType type = this.getCachedPathType(x, y, z);
@@ -137,6 +197,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
         }
         BirdNode node = this.getLatticeNode(x, y, z, heading);
         node.type = type;
+        node.clearanceCost = this.clearanceCost(x, y, z); // for the debug renderer only, see BirdNode
         node.costMalus = Math.max(node.costMalus, malus);
         if (type == PathType.WALKABLE) {
             node.costMalus++; // like vanilla: prefer open air over ground-level cells

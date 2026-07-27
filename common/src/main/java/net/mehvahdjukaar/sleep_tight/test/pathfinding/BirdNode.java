@@ -12,6 +12,13 @@ public class BirdNode extends Node {
     /** Horizontal heading bin, 0..7 counter-clockwise from +X in 45 degree steps. */
     public final int heading;
 
+    /**
+     * What this cell was charged for being walled in, recorded purely so the debug renderer can
+     * show it: the charge itself is applied through {@code getEdgeCost}, which never reads this.
+     * Deliberately outside equals/hashCode, it is not part of the state identity.
+     */
+    public float clearanceCost;
+
     public BirdNode(int x, int y, int z, int heading) {
         super(x, y, z);
         this.heading = heading;
