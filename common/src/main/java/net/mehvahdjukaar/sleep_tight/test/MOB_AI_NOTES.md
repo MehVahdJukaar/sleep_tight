@@ -436,3 +436,89 @@ Still true and still relevant from the original analysis:
   consequence of that one line.
 - **`canUpdatePath()`** must be true for a mob that is never `onGround()`. `FlyingPathNavigation`
   already handles this, so inheriting from it is correct.
+
+## 12. Known issue: the ruler cursor can deadlock (unresolved)
+
+In-game symptom, first caught 2026-07-28: a bird flying a straight, unobstructed path (no turning
+involved) went idle mid-path. `BirdMoveControl` was still nominally `MOVE_TO`, but the mob had
+stopped translating entirely, sitting short of the drawn target.
+
+### Why: a closed loop with no restoring force
+
+```
+PathRuler.advanceCursorTo(mobPos)  -->  cursor
+BirdPathNavigation.tick()          -->  carrot = ruler.pointAt(cursor + lookahead)
+BirdMoveControl.tick()             -->  thrust towards carrot
+mob moves                          -->  new mobPos, feeds back into advanceCursorTo
+```
+
+Every step of this is derived from the mob's *own current position*. There is no absolute,
+externally-anchored target anywhere in the loop (vanilla aims at the literal next node's fixed
+coordinates instead, which is why a vanilla mob that stalls for a tick still gets pulled at the
+same real point next tick). If the cursor ever stops advancing here, the carrot freezes with it,
+and nothing in the loop can restart it from the outside.
+
+The trap that turns a stall into a permanent one: `BirdMoveControl` still carries vanilla's arrival
+epsilon, meant for "wanted position = final destination":
+
+```java
+if (dx*dx + dy*dy + dz*dz < MIN_SPEED_SQR) {   // ~0.0005 blocks
+    this.coast();
+    return;
+}
+```
+
+Here "wanted position" is the carrot, which should always be ~`BirdFlightConfig.lookahead` blocks
+ahead. If the cursor stalls and momentum carries the mob up to that frozen point, thrust snaps to
+exactly zero with no taper, position stops changing, and the cursor never gets another chance to
+advance (it only moves via `mob position -> projection`). Self-reinforcing, not a one-off glitch.
+
+Leading theory for what stalls the cursor in the first place on a straight run specifically:
+`advanceCursorTo`'s 2-block `projectionWindow` skips legs shorter than `1.0E-9` outright
+(`legLengthSqr < 1.0E-9 -> continue`). If the lattice ever emits near-duplicate consecutive node
+positions and that cluster lands at the edge of the window, there may be nothing left inside the
+window to project onto. Not confirmed against real search output yet.
+
+### How it actually gets caught (or doesn't)
+
+Nothing in `BirdPathNavigation`/`PathRuler` detects this itself. It only ever gets cleaned up by
+whichever vanilla `PathNavigation` watchdog trips first, and the two behave very differently:
+
+- **100-tick distance check** (`doStuckDetection`, the literal `isStuck`/`stop()` path): compares
+  real displacement over the last 100 ticks against a (generous) threshold. Sets `isStuck = true`
+  before calling `stop()`, so it's visible after the fact.
+- **Per-node timeout** (`timeoutPath`, budget = `3 * distance/speed*20` for the current
+  `path.getNextNodePos()`): calls `resetStuckTimeout()` (`isStuck = false`) **then** `stop()`.
+  Fires without ever showing up as "stuck" - the flag is cleared the instant before the kill. This
+  one is keyed off the raw vanilla per-node accessor even though `nextNodeIndex` here is actually
+  driven by the ruler cursor, so its timing doesn't necessarily line up with cursor reality.
+
+Confirmed live once: the 100-tick distance check was the one that actually fired, later than a
+node-timeout guess would predict, consistent with the cursor having gone fully idle (not just
+slow) for a full 100-tick window.
+
+### Debug tooling to watch for it (`test/debug/`)
+
+`MobDebugInfo` / `PathDebugRenderer` now render, live, next to the mob:
+- `STEERING` vs `COASTING` - the actual `hasWanted() && !navigation.isDone()` condition
+  `BirdMoveControl.tick()` branches on (not the raw `operation` enum, which is permanently stuck on
+  `MOVE_TO` once set - see gotcha #2 above, confirmed intentional and vanilla-precedented, not a bug)
+- `timeout T/budget` and `stuckChk n/100` - the two watchdogs above, so a climb-to-trip is visible
+  before it happens instead of reasoned backwards from a dead path
+- `cursor +Xb / Yms (Z b/s)` - the ruler cursor's real progress rate since the last debug packet.
+  This is the direct tell for the deadlock: reads ~0 while still `STEERING` and before either
+  watchdog above has tripped, i.e. catches the cause, not just the eventual symptom
+
+### Candidate fixes, not yet implemented
+
+- Drop or drastically shrink `MIN_SPEED_SQR`'s role in `BirdMoveControl` - it is a leftover from the
+  "wanted position = destination" model; the class's own comment already says "acceptance spheres
+  are gone," but this check is the one acceptance-sphere-shaped thing still armed.
+- Give the cursor an independent floor on advancement, e.g. never let it fall behind
+  `expected speed * elapsed time`, so it keeps creeping forward even when geometric projection
+  stalls, forcing the loop back open from the inside.
+- Scale `projectionWindow` with current velocity instead of a fixed 2 blocks, so a rough tick can't
+  box the cursor in.
+- Give `BirdPathNavigation` its own stall detector off the cursor-rate metric above, instead of
+  relying on vanilla's two watchdogs, which were tuned for index-based node acceptance, not a
+  continuously-projected cursor.

@@ -36,23 +36,31 @@ public class PathDebugPackets {
 
         String operation = moveControl instanceof BirdMoveControl birdMoveControl
                 ? birdMoveControl.getOperationName() : "?";
+        boolean steering = moveControl.hasWanted() && !navigation.isDone();
         Vec3 wantedPos = moveControl.hasWanted()
                 ? new Vec3(moveControl.getWantedX(), moveControl.getWantedY(), moveControl.getWantedZ())
                 : mob.position();
 
         double rulerCursor = 0.0;
         double rulerLength = 0.0;
+        long timeoutTimer = 0L;
+        double timeoutLimit = 0.0;
+        int ticksSinceStuckCheck = 0;
         if (navigation instanceof BirdPathNavigation birdNavigation) {
             rulerCursor = birdNavigation.getRulerCursor();
             rulerLength = birdNavigation.getRulerLength();
+            timeoutTimer = birdNavigation.getTimeoutTimer();
+            timeoutLimit = birdNavigation.getTimeoutLimit();
+            ticksSinceStuckCheck = birdNavigation.getTicksSinceStuckCheck();
         }
 
         Path currentPath = navigation.getPath();
         int nextNodeIndex = currentPath != null ? currentPath.getNextNodeIndex() : 0;
         int nodeCount = currentPath != null ? currentPath.getNodeCount() : 0;
 
-        return new MobDebugInfo(navigation.isStuck(), navigation.isDone(), operation, wantedPos,
-                mob.getDeltaMovement(), rulerCursor, rulerLength, nextNodeIndex, nodeCount);
+        return new MobDebugInfo(navigation.isStuck(), navigation.isDone(), steering, operation, wantedPos,
+                mob.getDeltaMovement(), rulerCursor, rulerLength, nextNodeIndex, nodeCount,
+                timeoutTimer, timeoutLimit, ticksSinceStuckCheck);
     }
 
     private static void sendToAllPlayers(ServerLevel level, CustomPacketPayload message) {

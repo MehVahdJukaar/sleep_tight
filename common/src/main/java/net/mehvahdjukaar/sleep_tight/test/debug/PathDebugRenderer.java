@@ -2,6 +2,7 @@ package net.mehvahdjukaar.sleep_tight.test.debug;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdPathfindingConfig;
 import net.minecraft.Util;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -34,7 +35,13 @@ public class PathDebugRenderer {
     private final Map<Integer, Entry> paths = new HashMap<>();
 
     public void addPath(int entityId, DebugPath path, float nodeHalfWidth, MobDebugInfo mobInfo) {
-        this.paths.put(entityId, new Entry(path, nodeHalfWidth, mobInfo, Util.getMillis()));
+        // diffed against whatever was here before, so the render side can show real progress made
+        // per real second instead of just the absolute cursor position
+        Entry previous = this.paths.get(entityId);
+        long now = Util.getMillis();
+        double cursorDelta = previous != null ? mobInfo.rulerCursor() - previous.mobInfo().rulerCursor() : 0.0;
+        long deltaMillis = previous != null ? now - previous.creationTime() : 0L;
+        this.paths.put(entityId, new Entry(path, nodeHalfWidth, mobInfo, now, cursorDelta, deltaMillis));
     }
 
     public void clear() {
@@ -48,7 +55,7 @@ public class PathDebugRenderer {
         this.paths.values().removeIf(entry -> now - entry.creationTime > timeoutMillis);
         for (Entry entry : this.paths.values()) {
             renderPath(poseStack, bufferSource, entry.path, entry.nodeHalfWidth, showNodeLabels, camX, camY, camZ);
-            renderMobInfo(poseStack, bufferSource, entry.mobInfo, camX, camY, camZ);
+            renderMobInfo(poseStack, bufferSource, entry, camX, camY, camZ);
         }
     }
 
@@ -88,23 +95,84 @@ public class PathDebugRenderer {
         if (showLabels) {
             for (DebugNode node : nodes) {
                 if (isTooFar(node, camX, camY, camZ)) continue;
-                renderLabel(poseStack, bufferSource, String.valueOf(node.type()), node, 0.75);
-                renderLabel(poseStack, bufferSource, String.format(Locale.ROOT, "%.2f", node.costMalus()), node, 0.25);
+                renderLabel(poseStack, bufferSource, String.valueOf(node.type()), node, 0.75, -1);
+                renderLabel(poseStack, bufferSource, String.format(Locale.ROOT, "%.2f", node.costMalus()), node, 0.25, -1);
+                // what the cell paid for being boxed in. Skipped when it paid nothing, which is the
+                // normal case in open air and would otherwise put a "0.00" over every node
+                if (node.clearanceCost() > 0.005F) {
+                    renderLabel(poseStack, bufferSource,
+                            String.format(Locale.ROOT, "hug %.2f", node.clearanceCost()),
+                            node, 0.5, clearanceTextColor(node.clearanceCost()));
+                }
             }
+            renderClearanceSummary(poseStack, bufferSource, path, camX, camY, camZ);
         }
     }
 
-    /** Flat tiles at ground level, so the searched area reads as a heat map under the path itself. */
+    /**
+     * What the whole route paid for flying close to things, next to the knobs that produced it.
+     * This is the number to watch when retuning: near zero means the term is not biting at all,
+     * while a total that rivals the path's own length means the bird is detouring more than the
+     * smoother line is worth.
+     */
+    private static void renderClearanceSummary(PoseStack poseStack, MultiBufferSource bufferSource, DebugPath path,
+                                               double camX, double camY, double camZ) {
+        BlockPos target = path.target();
+        if (distanceToCamera(target.getX(), target.getY(), target.getZ(), camX, camY, camZ) > maxRenderDistance) {
+            return;
+        }
+        float total = 0;
+        int charged = 0;
+        for (DebugNode node : path.nodes()) {
+            total += node.clearanceCost();
+            if (node.clearanceCost() > 0.005F) {
+                charged++;
+            }
+        }
+        DebugRenderHelper.renderFloatingText(poseStack, bufferSource, String.format(Locale.ROOT,
+                        "hug total %.1f over %d/%d nodes (wallHugCost %.1f, h weight %.1f)",
+                        total, charged, path.nodes().size(),
+                        BirdPathfindingConfig.wallHugCost, BirdPathfindingConfig.heuristicWeight),
+                target.getX() + 0.5, target.getY() + 1.2, target.getZ() + 0.5, -1, textScale, true, true);
+    }
+
+    /**
+     * Wall hug charge as a traffic light against the configured maximum, so a glance says whether
+     * the bird is merely near geometry or genuinely boxed in.
+     */
+    private static int clearanceTextColor(float clearanceCost) {
+        float fraction = clearanceFraction(clearanceCost);
+        if (fraction > 0.5F) return 0xFFFF5555;
+        return fraction > 0.25F ? 0xFFFFAA55 : 0xFFFFFF55;
+    }
+
+    /**
+     * Charge as a share of what a fully boxed-in cell would pay. Reads the live config so the scale
+     * follows retuning; falls back to the raw value if clearance has been switched off since the
+     * path was recorded.
+     */
+    private static float clearanceFraction(float clearanceCost) {
+        float wallHugCost = BirdPathfindingConfig.wallHugCost;
+        return Mth.clamp(wallHugCost > 0 ? clearanceCost / wallHugCost : clearanceCost, 0, 1);
+    }
+
+    /**
+     * Flat tiles at ground level, so the searched area reads as a heat map under the path itself.
+     * The tile's own colour says which set it came from; how walled in the cell is drains the green
+     * and blue out of it, so the wall hug field shows up as red staining hugging the geometry. With
+     * clearance off every tile keeps its plain set colour.
+     */
     private static void renderNodeSet(PoseStack poseStack, MultiBufferSource bufferSource, List<DebugNode> nodes,
                                       float nodeHalfWidth, float red, float green, float blue,
                                       double camX, double camY, double camZ) {
         float halfWidth = nodeHalfWidth / 2;
         for (DebugNode node : nodes) {
             if (isTooFar(node, camX, camY, camZ)) continue;
+            float openness = 1 - clearanceFraction(node.clearanceCost());
             renderBox(poseStack, bufferSource, new AABB(
                             node.x() + 0.5F - halfWidth, node.y() + 0.01F, node.z() + 0.5F - halfWidth,
                             node.x() + 0.5F + halfWidth, node.y() + 0.1, node.z() + 0.5F + halfWidth),
-                    red, green, blue, camX, camY, camZ);
+                    red, green * openness, blue * openness, camX, camY, camZ);
         }
     }
 
@@ -128,9 +196,9 @@ public class PathDebugRenderer {
     }
 
     private static void renderLabel(PoseStack poseStack, MultiBufferSource bufferSource, String text,
-                                    DebugNode node, double yOffset) {
+                                    DebugNode node, double yOffset, int color) {
         DebugRenderHelper.renderFloatingText(poseStack, bufferSource, text,
-                node.x() + 0.5, node.y() + yOffset, node.z() + 0.5, -1, textScale, true, true);
+                node.x() + 0.5, node.y() + yOffset, node.z() + 0.5, color, textScale, true, true);
     }
 
     /**
@@ -138,8 +206,9 @@ public class PathDebugRenderer {
      * current wanted position since that is roughly where the mob itself is (the lookahead is
      * short), rather than at a fixed offset from a node that may be far behind or ahead of it.
      */
-    private static void renderMobInfo(PoseStack poseStack, MultiBufferSource bufferSource, MobDebugInfo info,
+    private static void renderMobInfo(PoseStack poseStack, MultiBufferSource bufferSource, Entry entry,
                                       double camX, double camY, double camZ) {
+        MobDebugInfo info = entry.mobInfo();
         Vec3 pos = info.wantedPos();
         if (distanceToCamera((int) pos.x, (int) pos.y, (int) pos.z, camX, camY, camZ) > maxRenderDistance) return;
 
@@ -151,7 +220,11 @@ public class PathDebugRenderer {
         double progress = info.rulerLength() > 1.0E-4 ? info.rulerCursor() / info.rulerLength() * 100.0 : 0.0;
         int textColor = info.stuck() ? 0xFFFF5555 : -1;
 
-        String status = (info.stuck() ? "STUCK " : "") + info.operation() + (info.pathDone() ? " done" : "");
+        // steering (hasWanted() && !isDone(), the exact condition BirdMoveControl branches on) is
+        // what is actually happening; raw operation is kept as a footnote since MoveControl never
+        // resets it back to WAIT here, same as vanilla's own SmoothSwimmingMoveControl
+        String status = (info.stuck() ? "STUCK " : "") + (info.steering() ? "STEERING" : "COASTING")
+                + (info.pathDone() ? " done" : "") + " (" + info.operation() + ")";
         DebugRenderHelper.renderFloatingText(poseStack, bufferSource, status,
                 pos.x, pos.y + 1.0, pos.z, textColor, textScale, true, true);
         DebugRenderHelper.renderFloatingText(poseStack, bufferSource, String.format(Locale.ROOT,
@@ -161,6 +234,28 @@ public class PathDebugRenderer {
         DebugRenderHelper.renderFloatingText(poseStack, bufferSource,
                 String.format(Locale.ROOT, "v=%.2f", info.velocity().length()),
                 pos.x, pos.y + 0.5, pos.z, -1, textScale, true, true);
+
+        // the two vanilla watchdogs that can null the path out without a goal ever asking for it.
+        // Watch these climb to catch a stall as it happens instead of reasoning back from a dead path
+        double budget = info.timeoutBudget();
+        double timeoutRatio = budget > 1.0E-4 ? info.timeoutTimer() / budget : 0.0;
+        int timeoutColor = timeoutRatio > 0.8 ? 0xFFFF5555 : timeoutRatio > 0.5 ? 0xFFFFFF55 : -1;
+        DebugRenderHelper.renderFloatingText(poseStack, bufferSource, String.format(Locale.ROOT,
+                        "timeout %d/%.0f (%.0f%%) stuckChk %d/100", info.timeoutTimer(), budget,
+                        timeoutRatio * 100.0, info.ticksSinceStuckCheck()),
+                pos.x, pos.y + 0.25, pos.z, timeoutColor, textScale, true, true);
+
+        // the ruler cursor's real-world progress rate. This is the one that catches a carrot-chase
+        // deadlock directly: if this reads ~0 while the mob is still "steering" and not yet flagged
+        // by either watchdog above, the cursor has stopped advancing even though nothing gave up yet
+        if (entry.deltaMillis() > 0) {
+            double blocksPerSecond = entry.cursorDelta() / (entry.deltaMillis() / 1000.0);
+            int rateColor = Math.abs(blocksPerSecond) < 0.05 && info.steering() ? 0xFFFF5555 : -1;
+            DebugRenderHelper.renderFloatingText(poseStack, bufferSource, String.format(Locale.ROOT,
+                            "cursor %+.2fb / %dms (%.2f b/s)", entry.cursorDelta(), entry.deltaMillis(),
+                            blocksPerSecond),
+                    pos.x, pos.y, pos.z, rateColor, textScale, true, true);
+        }
     }
 
     private static boolean isTooFar(DebugNode node, double camX, double camY, double camZ) {
@@ -172,6 +267,7 @@ public class PathDebugRenderer {
         return (float) (Math.abs(x - camX) + Math.abs(y - camY) + Math.abs(z - camZ));
     }
 
-    private record Entry(DebugPath path, float nodeHalfWidth, MobDebugInfo mobInfo, long creationTime) {
+    private record Entry(DebugPath path, float nodeHalfWidth, MobDebugInfo mobInfo, long creationTime,
+                         double cursorDelta, long deltaMillis) {
     }
 }

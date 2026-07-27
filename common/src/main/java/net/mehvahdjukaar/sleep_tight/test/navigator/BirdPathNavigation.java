@@ -94,6 +94,26 @@ public class BirdPathNavigation extends FlyingPathNavigation {
         return this.ruler != null ? this.ruler.length() : 0.0;
     }
 
+    /**
+     * Ticks the vanilla node-timeout watchdog has spent stalled on the current node, and the budget
+     * it gets before {@code timeoutPath()} kills the path. {@code doStuckDetection} still keys this
+     * off {@code path.getNextNodePos()}, the raw vanilla node, even though the ruler is what actually
+     * drives {@code nextNodeIndex} here - worth watching separately from {@link #isStuck()} since
+     * {@code timeoutPath()} clears the stuck flag right before it calls {@code stop()}.
+     */
+    public long getTimeoutTimer() {
+        return this.timeoutTimer;
+    }
+
+    public double getTimeoutLimit() {
+        return this.timeoutLimit;
+    }
+
+    /** Ticks since the last 100-tick distance-based stuck check, for watching that countdown too. */
+    public int getTicksSinceStuckCheck() {
+        return this.tick - this.lastStuckCheck;
+    }
+
     @Override
     public void stop() {
         super.stop();
