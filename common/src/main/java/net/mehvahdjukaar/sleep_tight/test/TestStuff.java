@@ -16,9 +16,9 @@ import java.util.function.Supplier;
  */
 public class TestStuff {
 
-    public static final RegSupplier<EntityType<TestMob>> TEST_MOB = RegHelper.registerEntityType(
+    public static final RegSupplier<EntityType<BirdTestMob>> TEST_MOB = RegHelper.registerEntityType(
             SleepTight.res("test_mob"),
-            EntityType.Builder.<TestMob>of(TestMob::new, MobCategory.CREATURE)
+            EntityType.Builder.<BirdTestMob>of(BirdTestMob::new, MobCategory.CREATURE)
                     .sized(0.75f, 0.75f)
                     .clientTrackingRange(8)
                     .updateInterval(3));

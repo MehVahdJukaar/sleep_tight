@@ -8,7 +8,7 @@ import net.minecraft.util.Mth;
  * Bedbug geometry (it bakes the bedbug layer) with a plain six legged walk cycle, so the test mob
  * doesn't drag in the bedbug's burrow/splatter state.
  */
-public class TestMobModel extends HierarchicalModel<TestMob> {
+public class TestMobModel extends HierarchicalModel<BirdTestMob> {
     private final ModelPart root;
     private final ModelPart head;
     private final ModelPart antenna;
@@ -31,7 +31,7 @@ public class TestMobModel extends HierarchicalModel<TestMob> {
     }
 
     @Override
-    public void setupAnim(TestMob entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    public void setupAnim(BirdTestMob entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         this.head.xRot = (27.5F + headPitch) * Mth.DEG_TO_RAD;
         this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;
         this.antenna.xRot = 0.4F + Mth.cos(ageInTicks * 1.5F) * 0.1F;

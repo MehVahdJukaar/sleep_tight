@@ -15,6 +15,7 @@ import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundNightmarePacket;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundParticleMessage;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.integration.HandcraftedCompat;
+import net.mehvahdjukaar.sleep_tight.test.BirdDebug;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
@@ -39,6 +40,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ThrownPotion;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.LingeringPotionItem;
 import net.minecraft.world.item.SplashPotionItem;
 import net.minecraft.world.level.ChunkPos;
@@ -161,6 +163,15 @@ public class ModEvents {
     public static InteractionResult onRightClickBlock(Player player, Level level, InteractionHand hand, BlockHitResult hitResult) {
         if (player.isSpectator()) return null;//is this check even needed?
         BlockPos pos = hitResult.getBlockPos();
+
+        //dev only pathfinding debug wand
+        if (player.getItemInHand(hand).is(Items.GHAST_TEAR)) {
+            if (level instanceof ServerLevel serverLevel) {
+                BirdDebug.onDebugToolUse(serverLevel, player, pos);
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
+
         var state = level.getBlockState(pos);
         Block b = state.getBlock();
 

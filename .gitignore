@@ -32,6 +32,7 @@ classes/
 .cursor/
 .junie/
 CLAUDE.md
+PATHFINDING_NOTES.md
 /build/tmp/jar/MANIFEST.MF
 /build/tmp/sourcesJar/MANIFEST.MF
 /build/reports/problems/problems-report.html

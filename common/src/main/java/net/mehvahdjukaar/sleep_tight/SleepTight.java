@@ -24,7 +24,7 @@ import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
 import net.mehvahdjukaar.sleep_tight.core.PlayerSleepData;
 import net.mehvahdjukaar.sleep_tight.integration.HandcraftedCompat;
-import net.mehvahdjukaar.sleep_tight.test.TestMob;
+import net.mehvahdjukaar.sleep_tight.test.BirdTestMob;
 import net.mehvahdjukaar.sleep_tight.test.TestStuff;
 import net.minecraft.Util;
 import net.minecraft.core.particles.SimpleParticleType;
@@ -142,7 +142,7 @@ Use a potion of harming on a bed to remove a bed bug - Pest control
     private static void registerEntityAttributes(RegHelper.AttributeEvent event) {
         event.register(DREAMER_ESSENCE_ENTITY.get(), DreamerEssenceTargetEntity.makeAttributes());
         event.register(BEDBUG_ENTITY.get(), BedbugEntity.makeAttributes());
-        event.register(TestStuff.TEST_MOB.get(), TestMob.makeAttributes());
+        event.register(TestStuff.TEST_MOB.get(), BirdTestMob.makeAttributes());
     }
 
     //attachments
