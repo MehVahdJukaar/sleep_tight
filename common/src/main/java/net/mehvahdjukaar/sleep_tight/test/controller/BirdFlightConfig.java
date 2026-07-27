@@ -38,14 +38,16 @@ public class BirdFlightConfig {
     // keep it modest; anything past this counts as "still far away, keep cruising"
     public static double brakeLookahead = 16.0;
 
-    // vertical thrust ramps linearly over this many blocks of altitude error instead of vanilla's
-    // full-throttle-either-way. Directly fixes the vertical hunting
-    public static float verticalApproachBand = 2.0F;
-
     // pitch is cosmetic (travel() ignores it for anything that is not elytra flying) but it is
     // what sells the dive/climb, so it tracks actual velocity rather than the waypoint
     public static float maxPitch = 60.0F;
     public static float maxPitchPerTick = 6.0F;
+
+    // entities have no roll field, so bank is applied to the model only, worked out client side from
+    // how fast the yaw is changing. Costs nothing and is the clearest read there is on what the
+    // steering is actually doing
+    public static float bankPerYawRate = 2.5F;
+    public static float maxBankAngle = 55.0F;
 
     // how far along the path ahead of the mob the steering target sits. This is the corner rounding
     // dial: the flown arc cuts inside a corner by roughly a fifth to a third of this, so raising it

@@ -72,8 +72,8 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal {
     @Override
     public void tick() {
         super.tick();
-        // keep resending so the highlighted next node tracks where the mob actually is
-        if (this.debugPath != null && !this.level().isClientSide && this.tickCount % 40 == 0) {
+        // keep resending so the highlighted next node and the "thinking" overlay track the mob live
+        if (this.debugPath != null && !this.level().isClientSide && this.tickCount % 5 == 0) {
             BirdDebug.broadcastPath(this, this.debugPath);
         }
     }

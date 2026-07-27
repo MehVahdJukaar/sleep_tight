@@ -40,6 +40,11 @@ public class BirdMoveControl extends MoveControl {
         super(mob);
     }
 
+    /** {@code operation}'s type is protected on the vanilla class, so name-only is what escapes. */
+    public String getOperationName() {
+        return this.operation.name();
+    }
+
     @Override
     public void tick() {
         // the navigation is the authority on whether we are still going somewhere: nothing ever
@@ -66,8 +71,7 @@ public class BirdMoveControl extends MoveControl {
         float yawBefore = this.mob.getYRot();
         float yawError = this.steerYaw(dx, dz);
         this.turnVelocityWithBody(Mth.degreesDifference(yawBefore, this.mob.getYRot()));
-        this.applyForwardThrust(cruise, yawError);
-        this.applyVerticalThrust(cruise, dy);
+        this.applyThrust(cruise, dx, dy, dz, yawError);
         this.matchPitchToVelocity();
     }
 
@@ -105,22 +109,37 @@ public class BirdMoveControl extends MoveControl {
                 velocity.x * cos - velocity.z * sin, velocity.y, velocity.x * sin + velocity.z * cos);
     }
 
-    private void applyForwardThrust(float cruise, float yawError) {
-        float thrust = cruise * turningSpeedFactor(Math.abs(yawError));
-        double speed = this.mob.getDeltaMovement().horizontalDistance();
-        thrust *= brakeFactor(this.remainingHorizontalDistance(), speed, HORIZONTAL_DRAG);
-        this.mob.setSpeed(thrust);
-    }
+    /**
+     * Splits one throttle between forward and climb by the slope of the line to the waypoint, so the
+     * mob flies at the angle the path was drawn at.
+     * <p>
+     * The two axes have to share a throttle rather than run their own controllers.
+     * {@code moveRelative} normalises {@code (xxa, yya, zza)} when it is longer than 1 and scales it
+     * by a flat constant, so feeding it the unit direction to the waypoint puts the thrust exactly
+     * along that line; with equal drag on both axes the velocity then settles along it too. Driving
+     * altitude from its own position error instead makes the mob fly whatever slope its vertical
+     * droop happens to balance at, which is never the planned one.
+     */
+    private void applyThrust(float cruise, double dx, double dy, double dz, float yawError) {
+        double horizontal = Math.sqrt(dx * dx + dz * dz);
+        double distance = Math.sqrt(horizontal * horizontal + dy * dy);
+        float forwardShare = distance < 1.0E-4 ? 0.0F : (float) (horizontal / distance);
+        float climbShare = distance < 1.0E-4 ? 0.0F : (float) (dy / distance);
 
-    private void applyVerticalThrust(float cruise, double dy) {
-        float thrust = (float) Mth.clamp(dy / BirdFlightConfig.verticalApproachBand, -1.0, 1.0) * cruise;
-        double vy = this.mob.getDeltaMovement().y;
-        // only brake what is already heading at the waypoint. Pulling out of a dive is
+        Remaining left = this.remainingAlongPath();
+        Vec3 velocity = this.mob.getDeltaMovement();
+
+        float forward = cruise * forwardShare * turningSpeedFactor(Math.abs(yawError));
+        forward *= brakeFactor(left.horizontal(), velocity.horizontalDistance(), HORIZONTAL_DRAG);
+        this.mob.setSpeed(forward);
+
+        float climb = cruise * climbShare;
+        // only brake what is already heading at the destination. Pulling out of a dive is
         // acceleration against the current velocity, not overshoot
-        if (vy * dy > 0.0) {
-            thrust *= brakeFactor(Math.abs(dy), Math.abs(vy), this.verticalDrag());
+        if (velocity.y * left.vertical() > 0.0) {
+            climb *= brakeFactor(Math.abs(left.vertical()), Math.abs(velocity.y), this.verticalDrag());
         }
-        this.mob.setYya(thrust);
+        this.mob.setYya(climb);
     }
 
     /**
@@ -143,24 +162,33 @@ public class BirdMoveControl extends MoveControl {
         return Mth.lerp(t, 1.0F, BirdFlightConfig.minTurnSpeedFactor);
     }
 
+    /** What is left to fly before the mob has to be stopped, split by axis. */
+    private record Remaining(double horizontal, double vertical) {}
+
     /**
-     * Ground distance left along the path, not to the next waypoint: intermediate waypoints are
-     * flown through, only the end of the path is an arrival. Stops summing past the lookahead.
+     * Measured along the path rather than to the next waypoint: intermediate waypoints are flown
+     * through, only the end of the path is an arrival. Both axes have to be measured the same way,
+     * or the one with the shorter horizon brakes against an error the other one ignores and the mob
+     * cannot hold a slope. Stops summing past the lookahead.
      */
-    private double remainingHorizontalDistance() {
+    private Remaining remainingAlongPath() {
         Path path = this.mob.getNavigation().getPath();
         if (path == null || path.isDone()) {
-            return Math.hypot(this.wantedX - this.mob.getX(), this.wantedZ - this.mob.getZ());
+            return new Remaining(
+                    Math.hypot(this.wantedX - this.mob.getX(), this.wantedZ - this.mob.getZ()),
+                    this.wantedY - this.mob.getY());
         }
         Vec3 from = this.mob.position();
-        double total = 0.0;
+        double horizontal = 0.0;
+        double endY = this.mob.getY();
         for (int i = path.getNextNodeIndex();
-             i < path.getNodeCount() && total < BirdFlightConfig.brakeLookahead; i++) {
+             i < path.getNodeCount() && horizontal < BirdFlightConfig.brakeLookahead; i++) {
             Vec3 to = path.getEntityPosAtNode(this.mob, i);
-            total += Math.hypot(to.x - from.x, to.z - from.z);
+            horizontal += Math.hypot(to.x - from.x, to.z - from.z);
+            endY = to.y;
             from = to;
         }
-        return total;
+        return new Remaining(horizontal, endY - this.mob.getY());
     }
 
     private double verticalDrag() {

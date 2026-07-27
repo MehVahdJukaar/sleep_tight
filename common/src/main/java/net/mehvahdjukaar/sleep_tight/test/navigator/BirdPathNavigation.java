@@ -84,6 +84,16 @@ public class BirdPathNavigation extends FlyingPathNavigation {
         return this.ruler;
     }
 
+    /** How far along the current path the mob's projected position sits. 0 if there is no ruler yet. */
+    public double getRulerCursor() {
+        return this.ruler != null ? this.ruler.cursor() : 0.0;
+    }
+
+    /** Total arc length of the current path. 0 if there is no ruler yet. */
+    public double getRulerLength() {
+        return this.ruler != null ? this.ruler.length() : 0.0;
+    }
+
     @Override
     public void stop() {
         super.stop();
