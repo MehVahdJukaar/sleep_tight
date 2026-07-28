@@ -20,6 +20,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public class BirdNodeEvaluator extends FlyNodeEvaluator {
 
+    /**
+     * How many discrete headings a cell can be entered with, and therefore how many search states
+     * exist per cell. The whole lattice is sized off this: the move table, the key packing, and the
+     * node budget the navigation has to ask for.
+     */
+    public static final int HEADING_BINS = 8;
+
     // heading bin to horizontal step, counter-clockwise from +X (bin = atan2(dz, dx) / 45 deg)
     private static final int[] BIN_DX = {1, 1, 0, -1, -1, -1, 0, 1};
     private static final int[] BIN_DZ = {0, 1, 1, 1, 0, -1, -1, -1};
@@ -39,12 +46,12 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     // how walled in each cell is. Keyed per cell rather than per lattice state, because a cell is
     // offered as a neighbor once per heading bin and once per parent, and each measurement is 26
     // path type lookups. Same relative packing as latticeNodes, cleared alongside it
-    private final Long2FloatMap clearanceCosts = new Long2FloatOpenHashMap();
+    private final Long2FloatMap enclosures = new Long2FloatOpenHashMap();
     // node keys are packed relative to this, so any real world coordinate fits
     private int originX, originY, originZ;
 
     public BirdNodeEvaluator() {
-        this.clearanceCosts.defaultReturnValue(NOT_MEASURED);
+        this.enclosures.defaultReturnValue(NOT_MEASURED);
     }
 
     // search cost of the last run, for the in game comparison against vanilla A* (see PathDebug)
@@ -54,7 +61,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     private static int[][] buildMoves() {
         int[][] moves = new int[26][];
         int i = 0;
-        for (int bin = 0; bin < 8; bin++) {
+        for (int bin = 0; bin < HEADING_BINS; bin++) {
             for (int dy = -1; dy <= 1; dy++) {
                 moves[i++] = new int[]{BIN_DX[bin], dy, BIN_DZ[bin], bin};
             }
@@ -68,7 +75,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     public void prepare(PathNavigationRegion level, Mob mob) {
         super.prepare(level, mob);
         this.latticeNodes.clear();
-        this.clearanceCosts.clear();
+        this.enclosures.clear();
         BlockPos origin = mob.blockPosition();
         this.originX = origin.getX();
         this.originY = origin.getY();
@@ -80,7 +87,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     @Override
     public void done() {
         this.latticeNodes.clear();
-        this.clearanceCosts.clear();
+        this.enclosures.clear();
         super.done();
     }
 
@@ -139,7 +146,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
      * is recomputed per relaxation and stays idempotent.
      */
     public float getEdgeCost(Node from, Node to) {
-        float cost = this.clearanceCost(to.x, to.y, to.z);
+        float cost = this.enclosure(to.x, to.y, to.z) * BirdPathfindingConfig.wallHugCost;
         if (from.x == to.x && from.z == to.z && from.y != to.y) {
             cost += to.y > from.y ? BirdPathfindingConfig.straightUpCost : BirdPathfindingConfig.straightDownCost;
         }
@@ -155,19 +162,23 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     }
 
     /**
-     * How walled in a cell is, as a fraction of {@link BirdPathfindingConfig#wallHugCost}. Sums the
-     * blocked cells touching it, each weighted by distance, so being cornered on several sides costs
-     * more than running alongside one flat surface. Memoized: neighbouring cells' shells overlap
-     * heavily and every lookup goes through vanilla's per-search path type cache, so the marginal
-     * cost is far below the nominal 26 queries per cell.
+     * How walled in a cell is, 0 in open air and 1 boxed in on all 26 sides. Sums the blocked cells
+     * touching it, each weighted by distance, so being cornered on several sides scores higher than
+     * running alongside one flat surface. Memoized: neighbouring cells' shells overlap heavily and
+     * every lookup goes through vanilla's per-search path type cache, so the marginal cost is far
+     * below the nominal 26 queries per cell.
+     * <p>
+     * Measured independently of {@code wallHugCost}, which only decides whether the search is
+     * <i>charged</i> for it. The throttle planner reads the raw number to work out how much room a
+     * corner has to be swung wide into, and that has to keep working with the search bias turned
+     * off. {@code measureClearance} is the switch that disables the measurement itself.
      */
-    private float clearanceCost(int x, int y, int z) {
-        float wallHugCost = BirdPathfindingConfig.wallHugCost;
-        if (wallHugCost <= 0) {
+    private float enclosure(int x, int y, int z) {
+        if (!BirdPathfindingConfig.measureClearance) {
             return 0;
         }
         long key = this.packKey(x, y, z, 0);
-        float cached = this.clearanceCosts.get(key);
+        float cached = this.enclosures.get(key);
         if (cached != NOT_MEASURED) {
             return cached;
         }
@@ -183,9 +194,9 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
                 }
             }
         }
-        float cost = wallHugCost * blocked / FULLY_ENCLOSED_WEIGHT;
-        this.clearanceCosts.put(key, cost);
-        return cost;
+        float measured = blocked / FULLY_ENCLOSED_WEIGHT;
+        this.enclosures.put(key, measured);
+        return measured;
     }
 
     @Nullable
@@ -197,7 +208,9 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
         }
         BirdNode node = this.getLatticeNode(x, y, z, heading);
         node.type = type;
-        node.clearanceCost = this.clearanceCost(x, y, z); // for the debug renderer only, see BirdNode
+        // rides on the node so the throttle planner and the renderer can read it off the finished
+        // path. The search itself charges for it in getEdgeCost, not from here
+        node.enclosure = this.enclosure(x, y, z);
         node.costMalus = Math.max(node.costMalus, malus);
         if (type == PathType.WALKABLE) {
             node.costMalus++; // like vanilla: prefer open air over ground-level cells
@@ -234,6 +247,8 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
         return this.mob.getPathfindingMalus(this.getCachedPathType(x, y, z)) >= 0.0F;
     }
 
+    // the 3 heading bits below are the one place HEADING_BINS is not read from the constant: raising
+    // it past 8 needs a wider field here (and one fewer bit of coordinate range)
     private long packKey(int x, int y, int z, int heading) {
         long key = 0;
         key |= ((long) (x - originX) & 0x1FFF);          // 13 signed bits, +-4096
@@ -243,14 +258,14 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
         return key;
     }
 
-    // how many 45 degree bins apart two headings are, 0..4
+    // how many 45 degree bins apart two headings are, 0..HEADING_BINS/2
     static int turnAmount(int headingA, int headingB) {
         int diff = Math.abs(headingA - headingB);
-        return diff > 4 ? 8 - diff : diff;
+        return diff > HEADING_BINS / 2 ? HEADING_BINS - diff : diff;
     }
 
     // mc yaw convention: 0 faces +Z (south), 90 faces -X (west)
     static int yawToBin(float yRot) {
-        return Math.floorMod(Math.round((yRot + 90.0F) / 45.0F), 8);
+        return Math.floorMod(Math.round((yRot + 90.0F) / (360.0F / HEADING_BINS)), HEADING_BINS);
     }
 }

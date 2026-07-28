@@ -13,15 +13,38 @@ public class BirdNode extends Node {
     public final int heading;
 
     /**
-     * What this cell was charged for being walled in, recorded purely so the debug renderer can
-     * show it: the charge itself is applied through {@code getEdgeCost}, which never reads this.
-     * Deliberately outside equals/hashCode, it is not part of the state identity.
+     * How walled in this cell is, 0 in open air and 1 boxed in on all 26 sides. The raw measurement,
+     * not the charge: the search turns it into a cost through {@code wallHugCost}, the throttle
+     * planner reads it as "how much room is there to swing wide here", and the debug renderer
+     * shades by it. Deliberately outside equals/hashCode, it is not part of the state identity.
      */
-    public float clearanceCost;
+    public float enclosure;
 
     public BirdNode(int x, int y, int z, int heading) {
         super(x, y, z);
         this.heading = heading;
+    }
+
+    /**
+     * Vanilla's {@code cloneAndMove} builds a plain Node, and {@code PathNavigation.trimPath} calls
+     * it to lift path nodes out of cauldrons. Without this override a single cauldron anywhere along
+     * the path silently strips the heading and the clearance off that node, and every layer
+     * downstream that reads them quietly falls back to defaults.
+     */
+    @Override
+    public Node cloneAndMove(int x, int y, int z) {
+        BirdNode moved = new BirdNode(x, y, z, this.heading);
+        moved.enclosure = this.enclosure;
+        moved.type = this.type;
+        moved.costMalus = this.costMalus;
+        moved.walkedDistance = this.walkedDistance;
+        moved.g = this.g;
+        moved.h = this.h;
+        moved.f = this.f;
+        moved.cameFrom = this.cameFrom;
+        moved.closed = this.closed;
+        moved.heapIdx = this.heapIdx;
+        return moved;
     }
 
     @Override

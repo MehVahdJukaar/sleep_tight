@@ -2,8 +2,11 @@ package net.mehvahdjukaar.sleep_tight.test.debug;
 
 import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.test.BirdTestMob;
+import net.mehvahdjukaar.sleep_tight.test.controller.BirdFlightConfig;
 import net.mehvahdjukaar.sleep_tight.test.controller.BirdMoveControl;
 import net.mehvahdjukaar.sleep_tight.test.navigator.BirdPathNavigation;
+import net.mehvahdjukaar.sleep_tight.test.throttle.FlightEnvelope;
+import net.mehvahdjukaar.sleep_tight.test.throttle.ThrottleProfile;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,13 +27,17 @@ public class PathDebugPackets {
 
     public static void sendPathFindingPacket(BirdTestMob mob, @Nullable Path path, float nodeHalfWidth) {
         if (path == null || !(mob.level() instanceof ServerLevel serverLevel)) return;
-        MobDebugInfo mobInfo = buildMobDebugInfo(mob);
+        ThrottleProfile throttle = mob.getNavigation() instanceof BirdPathNavigation birdNavigation
+                ? birdNavigation.getThrottleProfile() : null;
+        FlightEnvelope envelope = FlightEnvelope.forMob(mob);
+        MobDebugInfo mobInfo = buildMobDebugInfo(mob, throttle);
+        DebugPath debugPath = DebugPath.of(path, throttle, envelope.maxSpeed());
         sendToAllPlayers(serverLevel,
-                new ClientBoundPathDebugMessage(mob.getId(), DebugPath.of(path), nodeHalfWidth, mobInfo));
+                new ClientBoundPathDebugMessage(mob.getId(), debugPath, nodeHalfWidth, mobInfo));
     }
 
     /** Everything the renderer needs to show what the mob is doing right now, not just the plan. */
-    private static MobDebugInfo buildMobDebugInfo(BirdTestMob mob) {
+    private static MobDebugInfo buildMobDebugInfo(BirdTestMob mob, @Nullable ThrottleProfile throttle) {
         PathNavigation navigation = mob.getNavigation();
         MoveControl moveControl = mob.getMoveControl();
 
@@ -58,9 +65,16 @@ public class PathDebugPackets {
         int nextNodeIndex = currentPath != null ? currentPath.getNextNodeIndex() : 0;
         int nodeCount = currentPath != null ? currentPath.getNodeCount() : 0;
 
-        return new MobDebugInfo(navigation.isStuck(), navigation.isDone(), steering, operation, wantedPos,
-                mob.getDeltaMovement(), rulerCursor, rulerLength, nextNodeIndex, nodeCount,
-                timeoutTimer, timeoutLimit, ticksSinceStuckCheck);
+        // the limit under the mob and the tightest one it is about to run into. The second is the
+        // one that matters: drag is the only brake, so a corner has to be seen roughly a block out
+        double speedLimitNow = throttle != null ? throttle.speedLimitAt(rulerCursor) : -1.0;
+        double speedLimitAhead = throttle != null
+                ? throttle.speedLimitOver(rulerCursor, BirdFlightConfig.lookahead) : -1.0;
+
+        return new MobDebugInfo(navigation.isStuck(), navigation.isDone(), steering, operation,
+                mob.position(), wantedPos, mob.getDeltaMovement(), mob.getYRot(),
+                rulerCursor, rulerLength, nextNodeIndex, nodeCount,
+                timeoutTimer, timeoutLimit, ticksSinceStuckCheck, speedLimitNow, speedLimitAhead);
     }
 
     private static void sendToAllPlayers(ServerLevel level, CustomPacketPayload message) {

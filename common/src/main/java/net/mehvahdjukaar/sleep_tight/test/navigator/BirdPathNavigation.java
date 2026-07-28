@@ -4,7 +4,13 @@ import net.mehvahdjukaar.sleep_tight.test.controller.BirdFlightConfig;
 import net.mehvahdjukaar.sleep_tight.test.controller.BirdMoveControl;
 import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdNodeEvaluator;
 import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdPathFinder;
+import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdPathfindingConfig;
+import net.mehvahdjukaar.sleep_tight.test.throttle.FlightEnvelope;
+import net.mehvahdjukaar.sleep_tight.test.throttle.ThrottlePlanner;
+import net.mehvahdjukaar.sleep_tight.test.throttle.ThrottleProfile;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.Path;
@@ -28,16 +34,51 @@ public class BirdPathNavigation extends FlyingPathNavigation {
     private PathRuler ruler;
     @Nullable
     private Path ruledPath;
+    @Nullable
+    private ThrottleProfile throttle;
 
     public BirdPathNavigation(Mob mob, Level level) {
         super(mob, level);
     }
 
+    /**
+     * The {@code maxVisitedNodes} vanilla hands in is {@code floor(FOLLOW_RANGE * 16)}, sized for a
+     * search with one node per cell. This lattice has one per heading bin, so that budget would
+     * cover an eighth as much ground and hand back partial paths from searches that were nowhere
+     * near exhausted. Recomputed here from the two factors that actually determine it rather than
+     * scaled by a magic number.
+     */
     @Override
     protected PathFinder createPathFinder(int maxVisitedNodes) {
         this.nodeEvaluator = new BirdNodeEvaluator();
         this.nodeEvaluator.setCanPassDoors(true);
-        return new BirdPathFinder((BirdNodeEvaluator) this.nodeEvaluator, maxVisitedNodes);
+        return new BirdPathFinder((BirdNodeEvaluator) this.nodeEvaluator, latticeNodeBudget(this.mob));
+    }
+
+    /** {@code followRange * nodesPerBlockOfRange * statesPerCell}, at defaults 64 * 16 * 8 = 8192. */
+    private static int latticeNodeBudget(Mob mob) {
+        double followRange = mob.getAttributeValue(Attributes.FOLLOW_RANGE);
+        return Mth.floor(followRange * BirdPathfindingConfig.nodesPerBlockOfRange
+                * BirdNodeEvaluator.HEADING_BINS);
+    }
+
+    /**
+     * Profiling happens here rather than in {@code tick} because it needs the final geometry:
+     * {@code super.moveTo} runs {@code trimPath} first, which can move nodes around.
+     */
+    @Override
+    public boolean moveTo(@Nullable Path path, double speed) {
+        boolean accepted = super.moveTo(path, speed);
+        this.throttle = accepted && this.path != null
+                ? ThrottlePlanner.fromPath(this.path, this.mob, FlightEnvelope.forMob(this.mob))
+                : null;
+        return accepted;
+    }
+
+    /** How fast the mob is allowed to be along the current path. Null when there is nothing to fly. */
+    @Nullable
+    public ThrottleProfile getThrottleProfile() {
+        return this.throttle;
     }
 
     /**
@@ -50,8 +91,10 @@ public class BirdPathNavigation extends FlyingPathNavigation {
         super.tick();
         if (!this.isDone() && this.ruler != null) {
             Vec3 carrot = this.ruler.lookaheadPoint(BirdFlightConfig.lookahead);
-            this.mob.getMoveControl().setWantedPosition(
-                    carrot.x, this.getGroundY(carrot), carrot.z, this.speedModifier);
+            // deliberately not getGroundY: that snaps the y to the top of whatever is under the
+            // carrot's block, which is right for a walker and drags a flier down into the terrain
+            // any time it flies within a block of a surface. FlyingPathNavigation never overrode it
+            this.mob.getMoveControl().setWantedPosition(carrot.x, carrot.y, carrot.z, this.speedModifier);
         }
     }
 
@@ -119,5 +162,6 @@ public class BirdPathNavigation extends FlyingPathNavigation {
         super.stop();
         this.ruler = null;
         this.ruledPath = null;
+        this.throttle = null;
     }
 }

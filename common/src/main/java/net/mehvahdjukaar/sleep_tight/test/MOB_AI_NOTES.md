@@ -473,11 +473,46 @@ ahead. If the cursor stalls and momentum carries the mob up to that frozen point
 exactly zero with no taper, position stops changing, and the cursor never gets another chance to
 advance (it only moves via `mob position -> projection`). Self-reinforcing, not a one-off glitch.
 
-Leading theory for what stalls the cursor in the first place on a straight run specifically:
-`advanceCursorTo`'s 2-block `projectionWindow` skips legs shorter than `1.0E-9` outright
-(`legLengthSqr < 1.0E-9 -> continue`). If the lattice ever emits near-duplicate consecutive node
-positions and that cluster lands at the edge of the window, there may be nothing left inside the
-window to project onto. Not confirmed against real search output yet.
+### Root cause found, 2026-07-28: `getGroundY` (fixed)
+
+`BirdPathNavigation.tick` was passing the carrot through `this.getGroundY(carrot)`, inherited from
+`PathNavigation`:
+
+```java
+protected double getGroundY(Vec3 vec) {
+    BlockPos blockpos = BlockPos.containing(vec);
+    return this.level.getBlockState(blockpos.below()).isAir() ? vec.y : WalkNodeEvaluator.getFloorLevel(this.level, blockpos);
+}
+```
+
+Whenever the block under the carrot's block is not air, the commanded Y is silently replaced by the
+**top surface of the terrain in the carrot's column**. `FlyingPathNavigation` never overrode it;
+only `AmphibiousPathNavigation` and `WaterBoundPathNavigation` do, both returning `vec.y`. So vanilla
+fliers have the same quirk and get away with it because `FlyingMoveControl` is bang-bang and the
+mobs are small.
+
+That closes the loop exactly as described above. The mob is commanded to a point up to a block below
+the path, flies down to it, and its projection onto the *real* node positions can then never reach
+the end. `isDone()` stays false so the overlay keeps reading `STEERING`, the mob sits short of the
+drawn target, and once it is on top of the (wrong) point `MIN_SPEED_SQR` cuts thrust to exactly
+zero. It only bites at low altitude, which is why it was intermittent.
+
+Fixed by passing `carrot.y` straight through. The earlier leading theory, that the lattice emits
+near-duplicate consecutive nodes and `advanceCursorTo`'s `legLengthSqr < 1.0E-9` skip empties the
+projection window, looks wrong: the lattice emits one node per distinct cell, so consecutive
+`getEntityPosAtNode` results are never degenerate and that branch is dead code in practice.
+
+Three other paths to zero thrust while `STEERING` survive and should be kept in mind if it recurs:
+
+- `MIN_SPEED_SQR` at all, which is a leftover from "wanted position = destination" and has no
+  meaning for a carrot that should always be `lookahead` blocks ahead
+- `forwardShare = horizontal/distance` goes to zero when the carrot is directly above or below, so a
+  vertical lattice leg gets no forward thrust at all
+- `brakeFactor(left.horizontal(), ...)` goes to zero when `remainingAlongPath` sums a nearly vertical
+  stretch, since it only accumulates horizontal distance
+
+All three live in `BirdMoveControl` and all three disappear in the follower rewrite, which replaces
+the whole braking block with a `ThrottleProfile` lookup. See `FLIGHT_ARCHITECTURE.md`.
 
 ### How it actually gets caught (or doesn't)
 
@@ -509,16 +544,20 @@ slow) for a full 100-tick window.
   This is the direct tell for the deadlock: reads ~0 while still `STEERING` and before either
   watchdog above has tripped, i.e. catches the cause, not just the eventual symptom
 
-### Candidate fixes, not yet implemented
+### Candidate fixes, still worth doing
 
-- Drop or drastically shrink `MIN_SPEED_SQR`'s role in `BirdMoveControl` - it is a leftover from the
-  "wanted position = destination" model; the class's own comment already says "acceptance spheres
-  are gone," but this check is the one acceptance-sphere-shaped thing still armed.
+The `getGroundY` fix removes the known trigger, but the loop is still closed and still has no
+externally anchored target, so it can stall again for a different reason. These harden it:
+
+- Drop `MIN_SPEED_SQR` from `BirdMoveControl` - it is a leftover from the "wanted position =
+  destination" model; the class's own comment already says "acceptance spheres are gone," but this
+  check is the one acceptance-sphere-shaped thing still armed.
 - Give the cursor an independent floor on advancement, e.g. never let it fall behind
   `expected speed * elapsed time`, so it keeps creeping forward even when geometric projection
-  stalls, forcing the loop back open from the inside.
+  stalls, forcing the loop back open from the inside. With the throttle layer in place the expected
+  speed is no longer a guess: it is `ThrottleProfile.speedLimitAt(cursor)`.
 - Scale `projectionWindow` with current velocity instead of a fixed 2 blocks, so a rough tick can't
   box the cursor in.
 - Give `BirdPathNavigation` its own stall detector off the cursor-rate metric above, instead of
   relying on vanilla's two watchdogs, which were tuned for index-based node acceptance, not a
-  continuously-projected cursor.
+  continuously-projected cursor. `ThrottleProfile.expectedFlightTicks()` is the budget it should use.

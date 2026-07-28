@@ -59,4 +59,40 @@ public class BirdFlightConfig {
     // cover a tick of travel; kept short because a long window can snap the cursor across a hairpin
     // and skip the leg in between
     public static double projectionWindow = 2.0;
+
+    // ---- flight envelope ----
+    // What the bird can physically do, as opposed to how the controller drives it. Snapshotted into
+    // a FlightEnvelope once per path; see test/FLIGHT_ARCHITECTURE.md for who reads what.
+
+    // from LivingEntity.travel: airborne horizontal drag is a flat 0.91, an 11 tick time constant
+    public static double horizontalDrag = 0.91;
+
+    // LivingEntity.getFlyingSpeed, the velocity added per tick at full input while airborne. It is
+    // a flat constant in vanilla and the FLYING_SPEED attribute never reaches it, but it is
+    // protected, so a mob that wants real control authority can override it and raise this to match
+    public static double airAcceleration = 0.02;
+
+    // the drag the mob manages while deliberately slowing. Same as cruising drag until the
+    // controller grows a flare (spread wings, pitch up), which is the only way to brake harder than
+    // coasting. Lower means shorter stopping distances and a throttle profile that can be later
+    public static double brakingDrag = 0.91;
+
+    // normal flight as a share of top speed, and the floor the throttle planner will not take a
+    // corner below. A bird that decelerates to zero mid air looks broken, so corners cost speed but
+    // never all of it. Arrival is the one place allowed under the floor
+    public static double cruiseFraction = 0.8;
+    public static double minSpeedFraction = 0.15;
+    public static double arrivalSpeed = 0.0;
+
+    // how far the flown arc is allowed to bulge off the drawn line when rounding a corner. This is
+    // the dial that turns a turn angle into a speed limit: radius is speed/yawRate, and a corner of
+    // angle t passes radius * (1/cos(t/2) - 1) blocks inside the corner point. Shrinks with how
+    // walled in the cell is, since only the cells on the line were certified clear
+    public static double corridorMargin = 0.35;
+
+    // above this the bird is climbing steeply enough to be hovering rather than flying, which is
+    // slow and effortful. Legs steeper than this get scaled down towards hoverSpeedFactor, reaching
+    // it on a purely vertical move. Stops the lattice's vertical hops being flown like an elevator
+    public static double maxClimbAngle = 30.0;
+    public static double hoverSpeedFactor = 0.25;
 }

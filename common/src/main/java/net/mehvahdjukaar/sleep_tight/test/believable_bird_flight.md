@@ -7,6 +7,14 @@ looking* companion to `MOB_AI_NOTES.md` (which documents vanilla and what was al
 The question this answers: what stands between the current follower and flight that reads as a bird,
 with no artifacts like 180 degree turns when a node is narrowly missed.
 
+**Update 2026-07-28.** Parts of this have since been built as a separate layer, `throttle/`, which
+sits between the search and the follower and works out a speed limit for every point of a path. It
+absorbs the speed scheduling asked for in sections 3 and 4, the arrival ramp in section 6 and the
+per-node timeout complaint at the end of section 3, and it deletes rather than adds follower code.
+See `FLIGHT_ARCHITECTURE.md` and `throttle/THROTTLE_NOTES.md`. Sections 1, 2 and 5 (velocity
+steering, arc-length pure pursuit, banking) are still the outstanding follower work, and section 9's
+ordering still holds for them.
+
 ## 1. The dominant problem is sideslip, and it is quantifiable
 
 `MOB_AI_NOTES.md` section 10 got the braking analysis right but stopped one step short. The same drag

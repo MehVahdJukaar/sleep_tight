@@ -32,6 +32,19 @@ public class PathDebugRenderer {
     public static boolean showNodeLabels = true;
     public static float textScale = 0.02F;
 
+    // the throttle profile overlay: an arrow per node along the direction of travel, as long as the
+    // speed allowed there. Off makes the path read as pure geometry again
+    public static boolean showSpeedArrows = true;
+    // blocks of arrow per block-per-tick of speed. A bird at full throttle does about 0.2 b/t, so
+    // this puts its arrow at roughly a block and a half
+    public static double speedArrowScale = 7.0;
+    // arrows for what the mob is actually doing: where it is pointing versus where it is going.
+    // The gap between the two is the sideslip that makes a turning bird look like a crabbing drone
+    public static boolean showMobVectors = true;
+
+    private static final int FACING_COLOR = 0xFFFF55;
+    private static final int VELOCITY_COLOR = 0x55FFFF;
+
     private final Map<Integer, Entry> paths = new HashMap<>();
 
     public void addPath(int entityId, DebugPath path, float nodeHalfWidth, MobDebugInfo mobInfo) {
@@ -92,6 +105,10 @@ public class PathDebugRenderer {
         renderNodeSet(poseStack, bufferSource, path.closedSet(), nodeHalfWidth, 1, 0.8F, 0.8F, camX, camY, camZ);
         renderNodeSet(poseStack, bufferSource, path.openSet(), nodeHalfWidth, 0.8F, 1, 1, camX, camY, camZ);
 
+        if (showSpeedArrows) {
+            renderSpeedArrows(poseStack, bufferSource, path, camX, camY, camZ);
+        }
+
         if (showLabels) {
             for (DebugNode node : nodes) {
                 if (isTooFar(node, camX, camY, camZ)) continue;
@@ -106,7 +123,72 @@ public class PathDebugRenderer {
                 }
             }
             renderClearanceSummary(poseStack, bufferSource, path, camX, camY, camZ);
+            renderThrottleSummary(poseStack, bufferSource, path, camX, camY, camZ);
         }
+    }
+
+    /**
+     * The throttle profile, drawn as one arrow per node pointing the way the mob will be travelling
+     * there and as long as the speed it is allowed to be doing. A path that is all long green arrows
+     * is flyable flat out; arrows shrinking and reddening into a corner is the profile braking for
+     * it, which is the whole point of the throttle layer and is otherwise invisible.
+     * <p>
+     * Nothing is drawn for a path with no profile, which is what a plain vanilla path looks like.
+     */
+    private static void renderSpeedArrows(PoseStack poseStack, MultiBufferSource bufferSource, DebugPath path,
+                                          double camX, double camY, double camZ) {
+        List<DebugNode> nodes = path.nodes();
+        float maxSpeed = path.envelopeMaxSpeed();
+        for (int i = 0; i < nodes.size(); i++) {
+            DebugNode node = nodes.get(i);
+            if (!node.hasSpeedLimit() || isTooFar(node, camX, camY, camZ)) continue;
+
+            // the leg leaving this node, or the one arriving at it for the last node
+            DebugNode from = i < nodes.size() - 1 ? node : nodes.get(Math.max(0, i - 1));
+            DebugNode to = i < nodes.size() - 1 ? nodes.get(i + 1) : node;
+            Vec3 direction = new Vec3(to.x() - from.x(), to.y() - from.y(), to.z() - from.z());
+            if (direction.lengthSqr() < 1.0E-8) continue;
+
+            Vec3 base = new Vec3(node.x() + 0.5 - camX, node.y() + 0.5 - camY, node.z() + 0.5 - camZ);
+            double length = node.speedLimit() * speedArrowScale;
+            Vec3 tip = base.add(direction.normalize().scale(length));
+            float fraction = maxSpeed > 1.0E-5F ? Mth.clamp(node.speedLimit() / maxSpeed, 0, 1) : 1;
+            DebugRenderHelper.renderArrow(poseStack, bufferSource, base, tip,
+                    Math.min(0.2, length * 0.35), Mth.hsvToRgb(fraction * 0.33F, 0.9F, 1.0F));
+        }
+    }
+
+    /**
+     * What the throttle layer did to this path overall. The two numbers to watch: how many nodes are
+     * actually being held below top speed (zero means the profile is not biting and the corners are
+     * all flyable flat out) and how long the flight is expected to take, which is the budget a
+     * flier-appropriate path timeout should be using instead of vanilla's cruise-speed guess.
+     */
+    private static void renderThrottleSummary(PoseStack poseStack, MultiBufferSource bufferSource, DebugPath path,
+                                              double camX, double camY, double camZ) {
+        BlockPos target = path.target();
+        if (distanceToCamera(target.getX(), target.getY(), target.getZ(), camX, camY, camZ) > maxRenderDistance) {
+            return;
+        }
+        float slowest = Float.MAX_VALUE;
+        float fastest = 0;
+        int limited = 0;
+        for (DebugNode node : path.nodes()) {
+            if (!node.hasSpeedLimit()) continue;
+            slowest = Math.min(slowest, node.speedLimit());
+            fastest = Math.max(fastest, node.speedLimit());
+            if (node.speedLimit() < path.envelopeMaxSpeed() * 0.95F) {
+                limited++;
+            }
+        }
+        if (fastest <= 0) {
+            return;
+        }
+        DebugRenderHelper.renderFloatingText(poseStack, bufferSource, String.format(Locale.ROOT,
+                        "throttle %.3f-%.3f b/t of %.3f, %d/%d limited, eta %.0ft",
+                        slowest, fastest, path.envelopeMaxSpeed(), limited, path.nodes().size(),
+                        path.expectedFlightTicks()),
+                target.getX() + 0.5, target.getY() + 1.5, target.getZ() + 0.5, -1, textScale, true, true);
     }
 
     /**
@@ -212,6 +294,10 @@ public class PathDebugRenderer {
         Vec3 pos = info.wantedPos();
         if (distanceToCamera((int) pos.x, (int) pos.y, (int) pos.z, camX, camY, camZ) > maxRenderDistance) return;
 
+        if (showMobVectors) {
+            renderMobVectors(poseStack, bufferSource, info, camX, camY, camZ);
+        }
+
         // magenta normally, flips to red when the navigation itself has given up
         renderBox(poseStack, bufferSource, new AABB(pos.x - 0.1, pos.y - 0.1, pos.z - 0.1,
                         pos.x + 0.1, pos.y + 0.1, pos.z + 0.1),
@@ -231,9 +317,17 @@ public class PathDebugRenderer {
                         "%.1f/%.1f (%.0f%%) node %d/%d", info.rulerCursor(), info.rulerLength(), progress,
                         info.nextNodeIndex(), info.nodeCount()),
                 pos.x, pos.y + 0.75, pos.z, -1, textScale, true, true);
-        DebugRenderHelper.renderFloatingText(poseStack, bufferSource,
-                String.format(Locale.ROOT, "v=%.2f", info.velocity().length()),
-                pos.x, pos.y + 0.5, pos.z, -1, textScale, true, true);
+        // actual speed against what the throttle profile allows here and just ahead. Over the limit
+        // means the corner coming up is going to be cut wider than the planner budgeted for
+        String throttleText = info.speedLimitAhead() >= 0.0
+                ? String.format(Locale.ROOT, "v=%.3f limit %.3f (%.3f ahead) slip %.0fdeg",
+                info.velocity().length(), info.speedLimitNow(), info.speedLimitAhead(), info.sideslipDegrees())
+                : String.format(Locale.ROOT, "v=%.3f slip %.0fdeg",
+                info.velocity().length(), info.sideslipDegrees());
+        int throttleColor = info.speedLimitAhead() >= 0.0
+                && info.velocity().horizontalDistance() > info.speedLimitAhead() * 1.1 ? 0xFFFF5555 : -1;
+        DebugRenderHelper.renderFloatingText(poseStack, bufferSource, throttleText,
+                pos.x, pos.y + 0.5, pos.z, throttleColor, textScale, true, true);
 
         // the two vanilla watchdogs that can null the path out without a goal ever asking for it.
         // Watch these climb to catch a stall as it happens instead of reasoning back from a dead path
@@ -255,6 +349,26 @@ public class PathDebugRenderer {
                             "cursor %+.2fb / %dms (%.2f b/s)", entry.cursorDelta(), entry.deltaMillis(),
                             blocksPerSecond),
                     pos.x, pos.y, pos.z, rateColor, textScale, true, true);
+        }
+    }
+
+    /**
+     * Two arrows from the mob itself: yellow for where the body is pointing, cyan for where it is
+     * actually going, scaled the same way the path's speed arrows are so the two can be compared by
+     * eye. Thrust is only ever applied along the yellow one, so the angle between them is the
+     * sideslip, and a cyan arrow noticeably shorter than the nearest path arrow is the mob failing
+     * to keep up with its own profile.
+     */
+    private static void renderMobVectors(PoseStack poseStack, MultiBufferSource bufferSource, MobDebugInfo info,
+                                         double camX, double camY, double camZ) {
+        Vec3 origin = info.mobPos().subtract(camX, camY, camZ);
+        Vec3 velocity = info.velocity();
+        DebugRenderHelper.renderArrow(poseStack, bufferSource, origin,
+                origin.add(info.facing().scale(0.75)), 0.15, FACING_COLOR);
+        if (velocity.lengthSqr() > 1.0E-8) {
+            Vec3 tip = origin.add(velocity.scale(speedArrowScale));
+            DebugRenderHelper.renderArrow(poseStack, bufferSource, origin, tip,
+                    Math.min(0.2, velocity.length() * speedArrowScale * 0.35), VELOCITY_COLOR);
         }
     }
 

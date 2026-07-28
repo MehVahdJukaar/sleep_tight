@@ -1,6 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.test.debug;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -21,15 +22,19 @@ import net.minecraft.world.phys.Vec3;
  * forever - {@code steering} is what actually answers "is it doing something right now."
  */
 public record MobDebugInfo(boolean stuck, boolean pathDone, boolean steering, String operation,
-                           Vec3 wantedPos, Vec3 velocity, double rulerCursor, double rulerLength,
+                           Vec3 mobPos, Vec3 wantedPos, Vec3 velocity, float yRot,
+                           double rulerCursor, double rulerLength,
                            int nextNodeIndex, int nodeCount,
-                           long timeoutTimer, double timeoutLimit, int ticksSinceStuckCheck) {
+                           long timeoutTimer, double timeoutLimit, int ticksSinceStuckCheck,
+                           double speedLimitNow, double speedLimitAhead) {
 
     public static MobDebugInfo read(FriendlyByteBuf buf) {
         return new MobDebugInfo(buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readUtf(),
-                readVec3(buf), readVec3(buf), buf.readDouble(), buf.readDouble(),
+                readVec3(buf), readVec3(buf), readVec3(buf), buf.readFloat(),
+                buf.readDouble(), buf.readDouble(),
                 buf.readVarInt(), buf.readVarInt(),
-                buf.readVarLong(), buf.readDouble(), buf.readVarInt());
+                buf.readVarLong(), buf.readDouble(), buf.readVarInt(),
+                buf.readDouble(), buf.readDouble());
     }
 
     public void write(FriendlyByteBuf buf) {
@@ -37,8 +42,10 @@ public record MobDebugInfo(boolean stuck, boolean pathDone, boolean steering, St
         buf.writeBoolean(this.pathDone);
         buf.writeBoolean(this.steering);
         buf.writeUtf(this.operation);
+        writeVec3(buf, this.mobPos);
         writeVec3(buf, this.wantedPos);
         writeVec3(buf, this.velocity);
+        buf.writeFloat(this.yRot);
         buf.writeDouble(this.rulerCursor);
         buf.writeDouble(this.rulerLength);
         buf.writeVarInt(this.nextNodeIndex);
@@ -46,6 +53,27 @@ public record MobDebugInfo(boolean stuck, boolean pathDone, boolean steering, St
         buf.writeVarLong(this.timeoutTimer);
         buf.writeDouble(this.timeoutLimit);
         buf.writeVarInt(this.ticksSinceStuckCheck);
+        buf.writeDouble(this.speedLimitNow);
+        buf.writeDouble(this.speedLimitAhead);
+    }
+
+    /**
+     * How far the velocity vector has fallen behind where the body is pointing, in degrees. The
+     * number section 1 of {@code believable_bird_flight.md} is about: thrust only ever pushes along
+     * yaw and nothing damps velocity across the body, so in a sustained turn the mob ends up
+     * crabbing sideways. Anything much past 20 degrees is visible as a drone sliding through an arc.
+     */
+    public double sideslipDegrees() {
+        if (this.velocity.horizontalDistanceSqr() < 1.0E-8) {
+            return 0.0;
+        }
+        double travelYaw = Math.toDegrees(Mth.atan2(this.velocity.z, this.velocity.x)) - 90.0;
+        return Math.abs(Mth.degreesDifference(this.yRot, (float) travelYaw));
+    }
+
+    /** Which way the body is pointing, for drawing it against the direction of travel. */
+    public Vec3 facing() {
+        return Vec3.directionFromRotation(0.0F, this.yRot);
     }
 
     /** The budget {@code timeoutTimer} gets before {@code timeoutPath()} fires and kills the path. */
