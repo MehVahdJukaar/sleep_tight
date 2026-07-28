@@ -47,6 +47,11 @@ public class PathRuler {
         return this.cursor;
     }
 
+    /** Arc length still ahead of the cursor. Zero once the mob has projected past the last node. */
+    public double remaining() {
+        return this.length() - this.cursor;
+    }
+
     /**
      * Slides the cursor to the projection of {@code pos} onto the path, looking only at the stretch
      * between the cursor and {@code window} further along. Forward only is what keeps the cursor

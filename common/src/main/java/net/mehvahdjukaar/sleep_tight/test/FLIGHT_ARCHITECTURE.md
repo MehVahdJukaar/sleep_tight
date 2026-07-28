@@ -83,13 +83,15 @@ Done:
 - the search, including the state lattice, turn costs and the clearance field
 - the throttle layer (`ThrottlePlanner`, `ThrottleProfile`, `FlightEnvelope`)
 - the debug overlay for both, including per-node speed arrows and body-versus-velocity arrows
+- the follower: velocity steering (`turnVelocityWithBody`), arc-length pure pursuit (`PathRuler`),
+  speed straight off the profile, and an absorbing arrival. `believable_bird_flight.md` sections 1,
+  2 and 6 are done apart from the gait machine
 
 Not done, in the order they should happen:
 
-1. **Follower rewrite.** Half done: `BirdMoveControl` now takes its speed from the profile, which
-   deleted the per-tick node walk and the stopping-distance brake. What is left is the steering
-   half, which still chases a carrot rather than tracking arc length and has no absorbing arrival
-   state. See `believable_bird_flight.md` sections 1, 2 and 6.
+1. **Flight modes.** `believable_bird_flight.md` section 6: takeoff, cruise, flare, perch. Arrival
+   currently stops the path and leaves the mob hovering, because `setNoGravity(true)` is set in the
+   `BirdTestMob` constructor and never cleared. A bird that cannot land is not a bird.
 2. **Turn costs derived from the envelope** rather than hand-set. The existing values happen to land
    within about a factor of two of the physically correct ones, but that is luck, and it stops being
    true the moment the bird's agility changes.

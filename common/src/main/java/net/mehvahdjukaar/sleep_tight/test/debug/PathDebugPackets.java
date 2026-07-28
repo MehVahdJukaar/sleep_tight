@@ -65,11 +65,12 @@ public class PathDebugPackets {
         int nextNodeIndex = currentPath != null ? currentPath.getNextNodeIndex() : 0;
         int nodeCount = currentPath != null ? currentPath.getNodeCount() : 0;
 
-        // the limit under the mob and the tightest one it is about to run into. The second is the
-        // one that matters: drag is the only brake, so a corner has to be seen roughly a block out
+        // the limit under the mob and the tightest one it is about to run into. The first is what
+        // the follower actually flies to, since the planner already braked for the second; the
+        // second is here to show how far ahead of the ramp the corner that caused it sits
         double speedLimitNow = throttle != null ? throttle.speedLimitAt(rulerCursor) : -1.0;
         double speedLimitAhead = throttle != null
-                ? throttle.speedLimitOver(rulerCursor, BirdFlightConfig.lookahead) : -1.0;
+                ? throttle.speedLimitOver(rulerCursor, BirdFlightConfig.carrotDistance) : -1.0;
 
         return new MobDebugInfo(navigation.isStuck(), navigation.isDone(), steering, operation,
                 mob.position(), wantedPos, mob.getDeltaMovement(), mob.getYRot(),

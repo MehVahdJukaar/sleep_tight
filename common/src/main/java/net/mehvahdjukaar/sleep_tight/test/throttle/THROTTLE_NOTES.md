@@ -154,13 +154,21 @@ shorter than the nearby path arrows is the mob failing to keep up with its own p
 `BirdMoveControl` now takes its speed entirely from the profile:
 
 ```java
-window   = max(lookahead, envelope.stoppingDistance(currentSpeed))
-target   = min(maxSpeed * speedModifier, profile.speedLimitOver(cursor, window))
+target   = min(maxSpeed * speedModifier, profile.speedLimitAt(cursor))
 throttle = envelope.throttleToHold(target) + (target - currentSpeed) * speedGain
 ```
 
-The window is sized off the real stopping distance rather than a constant, because drag is the only
-brake and the faster the mob is going the further out a corner has to be seen.
+One point, no lookahead. That is the whole payoff of pass 2: the ramp *is* the lookahead, already
+computed, and reading the tightest limit over a window on top of it would brake for the same corner
+twice. Interpolating between nodes is exact rather than approximate here, since `maxEntrySpeed` is
+linear in distance and so is `speedLimitAt`.
+
+It was originally written as `speedLimitOver(cursor, max(lookahead, stoppingDistance(v)))`, which is
+worth recording as a trap. `stoppingDistance` is `11.1 * v` and the bird's top speed is 0.081 b/t, so
+the term never exceeded 0.9 and the 1.5 block `lookahead` floor won at every speed the mob could
+reach. With `arrivalSpeed` at 0 that cut thrust a fixed 1.5 blocks from the end, coasting covered
+0.63, and the mob halted 0.87 blocks short of every destination and hung there until the stuck
+detector killed the path. Paths shorter than 1.5 blocks were refused outright.
 
 That deleted `remainingAlongPath`, `brakeFactor`, `turningSpeedFactor` and the four config knobs
 behind them. Deliberately kept as a single source of slowdown: if the bird still cuts a corner, it is

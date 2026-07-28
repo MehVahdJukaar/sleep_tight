@@ -104,7 +104,7 @@ public class BirdPathNavigation extends FlyingPathNavigation {
     public void tick() {
         super.tick();
         if (!this.isDone() && this.ruler != null) {
-            Vec3 carrot = this.ruler.lookaheadPoint(BirdFlightConfig.lookahead);
+            Vec3 carrot = this.ruler.lookaheadPoint(BirdFlightConfig.carrotDistance);
             // deliberately not getGroundY: that snaps the y to the top of whatever is under the
             // carrot's block, which is right for a walker and drags a flier down into the terrain
             // any time it flies within a block of a surface. FlyingPathNavigation never overrode it
@@ -113,10 +113,13 @@ public class BirdPathNavigation extends FlyingPathNavigation {
     }
 
     /**
-     * No acceptance test at all: the cursor is wherever the mob projects onto the path, and the
-     * path's node index is dragged along behind it. Missing a node is no longer an event, so
-     * nothing can send the mob back around for one, and the cursor reaching the end of the ruler
-     * is what makes the path report itself done.
+     * No acceptance test along the path at all: the cursor is wherever the mob projects onto it, and
+     * the path's node index is dragged along behind. Missing a node is no longer an event, so
+     * nothing can send the mob back around for one.
+     * <p>
+     * The end is the exception, and needs a radius rather than a projection. Drag is the only brake,
+     * so the profile's arrival ramp approaches the last node asymptotically and the cursor never
+     * actually reaches it.
      * <p>
      * Vanilla's corner cutting (canCutCorner plus shouldTargetNextNodeInDirection) is deliberately
      * not carried over: it skips a node whenever the one after it is closer, which on a banked arc
@@ -127,9 +130,16 @@ public class BirdPathNavigation extends FlyingPathNavigation {
         Vec3 pos = this.getTempMobPos();
         PathRuler ruler = this.ruler();
         ruler.advanceCursorTo(pos, BirdFlightConfig.projectionWindow);
+        if (ruler.remaining() <= BirdFlightConfig.arrivalRadius) {
+            // dropping the path here is what makes arrival absorbing. Left running, the follower
+            // would keep steering at a final node it is already on top of, overshoot it, turn back
+            // and oscillate, which is the second class of 180 in believable_bird_flight.md section 6
+            this.stop();
+            return;
+        }
         this.path.setNextNodeIndex(ruler.nextNodeIndex());
         // acceptance spheres are gone, so this now only sizes the markers in the debug path renderer
-        this.maxDistanceToWaypoint = (float) BirdFlightConfig.lookahead;
+        this.maxDistanceToWaypoint = (float) BirdFlightConfig.carrotDistance;
         this.doStuckDetection(pos);
     }
 

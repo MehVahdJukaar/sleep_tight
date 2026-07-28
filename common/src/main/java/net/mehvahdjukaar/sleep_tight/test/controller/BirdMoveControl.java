@@ -19,19 +19,19 @@ import org.jetbrains.annotations.Nullable;
  * velocity decaying along the old heading; and hold whatever speed the {@link ThrottleProfile} says
  * is allowed here.
  * <p>
- * <b>Interim version.</b> It exists to get the throttle planner in front of a running game, so it is
- * deliberately the old carrot-chasing follower with only the speed half replaced. The rest of the
- * rewrite (velocity steering proper, arc-length pure pursuit, an absorbing arrival state) is
- * described in {@code believable_bird_flight.md} sections 1, 2 and 6 and is not here.
+ * Sections 1, 2 and 6 of {@code believable_bird_flight.md} are all in now: velocity steering here,
+ * arc-length pure pursuit in {@link net.mehvahdjukaar.sleep_tight.test.navigator.PathRuler}, and an
+ * absorbing arrival in {@code BirdPathNavigation.followThePath}. What is still missing is the gait
+ * machine from section 6 (takeoff, flare, perch) and banking from section 5.
  * <p>
- * What did get deleted, because the profile subsumes all of it: the per-tick walk over the remaining
+ * What got deleted, because the profile subsumes all of it: the per-tick walk over the remaining
  * path nodes, the stopping-distance brake computed from it, and the separate slow-down-in-turns
  * factor. If the bird still cuts a corner now, that is the planner's numbers being wrong rather than
  * a second slowdown fighting the first, which is the whole point of testing it this way.
  */
 public class BirdMoveControl extends MoveControl {
 
-    // the carrot sits a lookahead ahead, so this only ever catches a degenerate direction, never
+    // the carrot sits a carrotDistance ahead, so this only ever catches a degenerate direction, never
     // arrival. Not vanilla's MIN_SPEED_SQR, which is an acceptance sphere and has no meaning here
     private static final double MIN_DIRECTION_LENGTH = 1.0E-4;
 
@@ -124,27 +124,36 @@ public class BirdMoveControl extends MoveControl {
      */
     private double throttleFor(FlightEnvelope envelope) {
         double current = this.mob.getDeltaMovement().length();
-        double target = this.targetSpeed(envelope, current);
+        double target = this.targetSpeed(envelope);
         double throttle = envelope.throttleToHold(target) + (target - current) * BirdFlightConfig.speedGain;
         return Mth.clamp(throttle, 0.0, envelope.maxThrottle());
     }
 
     /**
-     * The tightest thing the profile says about the stretch we could still be travelling over while
-     * slowing down. Sized off the actual stopping distance rather than a fixed lookahead: drag is
-     * the only brake there is, so the faster we are going the further ahead a corner has to be seen.
+     * Straight off the profile at the cursor, with no lookahead of its own. The planner's backwards
+     * pass already rolled every downstream limit into a braking ramp, so the value here is by
+     * construction the fastest we can be and still make everything ahead of us. Reading the tightest
+     * limit over a window on top of that brakes for the same corner twice, once when the planner saw
+     * it and again on the approach, and the mob crawls into corners it could take at speed.
+     * <p>
+     * Interpolating between nodes is exact rather than approximate, which is what makes reading a
+     * single point safe: {@code maxEntrySpeed} is linear in distance and so is
+     * {@link ThrottleProfile#speedLimitAt}, so a braking ramp is a straight line either way.
+     * <p>
+     * Being over the limit needs no special case either. The correction term in
+     * {@link #throttleFor} goes negative, throttle clamps to zero, and coasting is the hardest this
+     * mob can brake.
      * <p>
      * With no profile this falls back to plain cruising, which means no arrival braking. That is
      * fine for the test rig and is exactly what should be visible as a difference.
      */
-    private double targetSpeed(FlightEnvelope envelope, double currentSpeed) {
+    private double targetSpeed(FlightEnvelope envelope) {
         double ceiling = envelope.maxSpeed() * this.speedModifier;
         ThrottleProfile profile = this.throttleProfile();
         if (profile == null || !(this.mob.getNavigation() instanceof BirdPathNavigation navigation)) {
             return ceiling;
         }
-        double window = Math.max(BirdFlightConfig.lookahead, envelope.stoppingDistance(currentSpeed));
-        return Math.min(ceiling, profile.speedLimitOver(navigation.getRulerCursor(), window));
+        return Math.min(ceiling, profile.speedLimitAt(navigation.getRulerCursor()));
     }
 
     @Nullable

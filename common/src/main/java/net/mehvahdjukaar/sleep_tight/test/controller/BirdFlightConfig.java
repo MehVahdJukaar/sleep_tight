@@ -38,16 +38,23 @@ public class BirdFlightConfig {
     public static float bankPerYawRate = 2.5F;
     public static float maxBankAngle = 55.0F;
 
-    // how far along the path ahead of the mob the steering target sits. This is the corner rounding
-    // dial: the flown arc cuts inside a corner by roughly a fifth to a third of this, so raising it
-    // buys smoothness and spends clearance. Lattice nodes are one block apart, and anything below
-    // that stops smoothing and just tracks the polyline
-    public static double lookahead = 1.5;
+    // how far along the path ahead of the mob the steering target sits. Steering only: it says
+    // nothing about speed, which comes from the throttle profile. This is the corner rounding dial:
+    // the flown arc cuts inside a corner by roughly a fifth to a third of this, so raising it buys
+    // smoothness and spends clearance. Lattice nodes are one block apart, and anything below that
+    // stops smoothing and just tracks the polyline
+    public static double carrotDistance = 1.5;
 
     // how far ahead of the cursor to look when projecting the mob back onto the path. Only has to
     // cover a tick of travel; kept short because a long window can snap the cursor across a hairpin
     // and skip the leg in between
     public static double projectionWindow = 2.0;
+
+    // how close to the end of the path counts as arrived. Needed because braking is geometric: the
+    // profile's arrival ramp closes the last of the distance asymptotically, so waiting for the
+    // cursor to actually reach the end means waiting forever. Small enough to look like arrival,
+    // large enough that the ramp gets there in a second or so rather than a minute
+    public static double arrivalRadius = 0.25;
 
     // ---- flight envelope ----
     // What the bird can physically do, as opposed to how the controller drives it. Snapshotted into

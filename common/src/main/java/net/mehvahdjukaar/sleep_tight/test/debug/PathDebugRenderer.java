@@ -285,7 +285,7 @@ public class PathDebugRenderer {
 
     /**
      * The "what is it thinking" half: navigation/steering state, drawn at the move control's
-     * current wanted position since that is roughly where the mob itself is (the lookahead is
+     * current wanted position since that is roughly where the mob itself is (the carrotDistance is
      * short), rather than at a fixed offset from a node that may be far behind or ahead of it.
      */
     private static void renderMobInfo(PoseStack poseStack, MultiBufferSource bufferSource, Entry entry,
@@ -305,7 +305,7 @@ public class PathDebugRenderer {
 
         double progress = info.rulerLength() > 1.0E-4 ? info.rulerCursor() / info.rulerLength() * 100.0 : 0.0;
         int textColor = info.stuck() ? 0xFFFF5555 : -1;
-
+        poseStack.translate(0,1.4,0);
         // steering (hasWanted() && !isDone(), the exact condition BirdMoveControl branches on) is
         // what is actually happening; raw operation is kept as a footnote since MoveControl never
         // resets it back to WAIT here, same as vanilla's own SmoothSwimmingMoveControl

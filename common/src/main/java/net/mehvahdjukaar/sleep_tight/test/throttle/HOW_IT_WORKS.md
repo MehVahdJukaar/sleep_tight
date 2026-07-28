@@ -142,8 +142,8 @@ things to ask it:
 
 | call | what it is for |
 |---|---|
-| `speedLimitAt(d)` | the limit at that arc length, interpolated so the ramps are continuous |
-| `speedLimitOver(d, window)` | the tightest limit in the next `window` blocks. **This is the one the follower should read**: shedding speed takes a block or more, so it has to see a corner coming rather than discover it |
+| `speedLimitAt(d)` | the limit at that arc length, interpolated so the ramps are continuous. **This is the one the follower reads.** Pass 2 already turned every downstream limit into a ramp leading here, so this single point is the fastest it can be and still make everything ahead. Interpolation is exact, not approximate: `maxEntrySpeed` is linear in distance, so a braking ramp is a straight line |
+| `speedLimitOver(d, window)` | the tightest limit in the next `window` blocks. Diagnostic only. Reading this instead of `speedLimitAt` brakes for the same corner twice, once where the planner put the ramp and again on the approach |
 | `expectedFlightTicks()` | how long this flight should take. The correct budget for a path timeout, unlike vanilla's cruise-speed guess, which fires spuriously as soon as the bird slows for a corner |
 | `limitAtNode(i)`, `arcAtNode(i)` | per node, for the debug renderer's speed arrows |
 
