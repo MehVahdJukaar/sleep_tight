@@ -154,7 +154,7 @@ public final class ThrottlePlanner {
      * Steep legs cost speed. Not a physical limit the way the corner rule is: nothing stops the mob
      * climbing fast, but a bird with no forward airspeed is hovering, which is slow and effortful,
      * and pretending otherwise is what makes vertical flight read as an elevator. Scales from full
-     * speed at {@code maxClimbAngle} down to {@code hoverSpeedFactor} on a purely vertical move, and
+     * speed at {@code maxClimbAngle} down to {@code hoverSpeedFraction} on a purely vertical move, and
      * does nothing at all below {@code maxClimbAngle}.
      */
     private static double climbLimit(Vec3[] points, int index, FlightEnvelope envelope) {
@@ -171,7 +171,7 @@ public final class ThrottlePlanner {
         double spanToVertical = Mth.HALF_PI - envelope.maxClimbAngle();
         double howFarPastTheLimit = spanToVertical < 1.0E-6
                 ? 1.0 : Mth.clamp((steepest - envelope.maxClimbAngle()) / spanToVertical, 0.0, 1.0);
-        return envelope.maxSpeed() * Mth.lerp(howFarPastTheLimit, 1.0, envelope.hoverSpeedFactor());
+        return envelope.maxSpeed() * Mth.lerp(howFarPastTheLimit, 1.0, envelope.hoverSpeedFraction());
     }
 
     private static double legPitch(Vec3 from, Vec3 to) {

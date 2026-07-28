@@ -84,7 +84,7 @@ the braking guarantee pass 2 established. Doing them the other way round would n
 Not a physical limit the way the corner rule is. Nothing stops the mob climbing fast; the point is
 that a bird with no forward airspeed is hovering, which is slow and effortful, and pretending
 otherwise is what makes vertical flight read as an elevator. Legs steeper than `maxClimbAngle` scale
-down towards `hoverSpeedFactor`, reaching it on a purely vertical move.
+down towards `hoverSpeedFraction`, reaching it on a purely vertical move.
 
 This is the throttle layer's half of the problem `believable_bird_flight.md` section 4 describes. The
 other half is a hard clamp in the follower (`|vy| <= tan(maxClimbAngle) * horizontalSpeed`), and the

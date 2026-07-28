@@ -64,7 +64,7 @@ This one line is the entire reason the layer exists. It converts "this corner is
 
 ### Is it steep?
 
-If the leg's pitch is steeper than `maxClimbAngle`, scale the speed down toward `hoverSpeedFactor`,
+If the leg's pitch is steeper than `maxClimbAngle`, scale the speed down toward `hoverSpeedFraction`,
 reaching it on a purely vertical hop. A climbing bird with no forward airspeed is hovering, and
 hovering is slow and effortful. Below `maxClimbAngle` this does nothing.
 

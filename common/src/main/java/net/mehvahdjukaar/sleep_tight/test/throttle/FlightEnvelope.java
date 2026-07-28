@@ -28,7 +28,7 @@ public record FlightEnvelope(
         double maxThrottle,
         double corridorMargin,
         double maxClimbAngle,
-        double hoverSpeedFactor
+        double hoverSpeedFraction
 ) {
 
     private static final int MAX_SIMULATED_TICKS = 512;
@@ -39,9 +39,9 @@ public record FlightEnvelope(
      * it scales the acceleration, and the top speed follows from that against drag.
      */
     public static FlightEnvelope forMob(Mob mob) {
-        double drag = BirdFlightConfig.horizontalDrag;
+        double drag = BirdFlightConfig.airDrag;
         double throttleCap = Mth.clamp(mob.getAttributeValue(Attributes.FLYING_SPEED), 0.0, 1.0);
-        double accel = BirdFlightConfig.airAcceleration * throttleCap;
+        double accel = BirdFlightConfig.maxThrustAccel * throttleCap;
         double maxSpeed = terminalSpeed(accel, drag);
         return new FlightEnvelope(
                 BirdFlightConfig.maxYawPerTick * Mth.DEG_TO_RAD,
@@ -55,7 +55,7 @@ public record FlightEnvelope(
                 throttleCap,
                 BirdFlightConfig.corridorMargin,
                 BirdFlightConfig.maxClimbAngle * Mth.DEG_TO_RAD,
-                BirdFlightConfig.hoverSpeedFactor);
+                BirdFlightConfig.hoverSpeedFraction);
     }
 
     /**
