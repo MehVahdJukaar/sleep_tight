@@ -22,21 +22,10 @@ public class BirdFlightConfig {
     // reads as weight rather than rails
     public static float velocitySteerFraction = 1.0F;
 
-    // slow down through hard turns, so the turn happens over less ground and the mob does not
-    // drift wide. Below turnSlowdownStart nothing happens, at turnSlowdownFull thrust is scaled
-    // by minTurnSpeedFactor. Never goes to zero: a bird that stops mid turn looks broken.
-    // Mostly redundant once velocitySteerFraction is up: the drift it compensates for is gone
-    public static float turnSlowdownStart = 10.0F;
-    public static float turnSlowdownFull = 60.0F;
-    public static float minTurnSpeedFactor = 0.35F;
-
-    // scales the "how fast can I still be going and make the turn/stop" limit. Above 1 the mob
-    // brakes later and overshoots a little, below 1 it creeps in
-    public static float brakeAggressiveness = 1.0F;
-
-    // how far ahead along the path the braking logic looks. Cheap linear walk over nodes, so
-    // keep it modest; anything past this counts as "still far away, keep cruising"
-    public static double brakeLookahead = 16.0;
+    // how hard the move control chases the speed the throttle profile asks for, on top of the
+    // feed-forward throttle that would settle there on its own. Units are throttle per block per
+    // tick of error. Too low and the mob lags the profile through corners, too high and it hunts
+    public static double speedGain = 4.0;
 
     // pitch is cosmetic (travel() ignores it for anything that is not elytra flying) but it is
     // what sells the dive/climb, so it tracks actual velocity rather than the waypoint

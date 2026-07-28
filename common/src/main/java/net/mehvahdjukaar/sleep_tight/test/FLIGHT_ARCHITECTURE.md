@@ -6,7 +6,7 @@ code it describes:
 | | package | its notes |
 |---|---|---|
 | what the world allows | `pathfinding/` | `pathfinding/PATHFINDING_NOTES.md` |
-| how fast that can be flown | `throttle/` | `throttle/THROTTLE_NOTES.md` |
+| how fast that can be flown | `throttle/` | `throttle/HOW_IT_WORKS.md` (what it does), `throttle/THROTTLE_NOTES.md` (why) |
 | making the mob do it | `navigator/`, `controller/` | `believable_bird_flight.md` (design), `MOB_AI_NOTES.md` (vanilla reference) |
 
 ## The split
@@ -86,11 +86,10 @@ Done:
 
 Not done, in the order they should happen:
 
-1. **Follower rewrite.** `BirdMoveControl` still does its own braking from a per-tick walk over the
-   remaining nodes (`remainingAlongPath`, `brakeFactor`). All of that is now the throttle layer's
-   job and should collapse into one `speedLimitOver` lookup. Along with it: velocity steering,
-   arc-length pure pursuit and an absorbing arrival state. See `believable_bird_flight.md` sections
-   1, 2 and 6.
+1. **Follower rewrite.** Half done: `BirdMoveControl` now takes its speed from the profile, which
+   deleted the per-tick node walk and the stopping-distance brake. What is left is the steering
+   half, which still chases a carrot rather than tracking arc length and has no absorbing arrival
+   state. See `believable_bird_flight.md` sections 1, 2 and 6.
 2. **Turn costs derived from the envelope** rather than hand-set. The existing values happen to land
    within about a factor of two of the physically correct ones, but that is luck, and it stops being
    true the moment the bird's agility changes.

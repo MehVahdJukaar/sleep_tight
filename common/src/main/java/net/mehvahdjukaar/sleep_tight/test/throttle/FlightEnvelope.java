@@ -25,6 +25,7 @@ public record FlightEnvelope(
         double drag,
         double brakingDrag,
         double accelPerTick,
+        double maxThrottle,
         double corridorMargin,
         double maxClimbAngle,
         double hoverSpeedFactor
@@ -51,6 +52,7 @@ public record FlightEnvelope(
                 drag,
                 BirdFlightConfig.brakingDrag,
                 accel,
+                throttleCap,
                 BirdFlightConfig.corridorMargin,
                 BirdFlightConfig.maxClimbAngle * Mth.DEG_TO_RAD,
                 BirdFlightConfig.hoverSpeedFactor);
@@ -74,17 +76,19 @@ public record FlightEnvelope(
 
     /**
      * The fastest we may be entering a stretch of {@code distance} blocks and still be down to
-     * {@code exitSpeed} by the end of it. The inverse of {@link #stoppingDistance}.
+     * {@code exitSpeed} by the end of it. The inverse of {@link #stoppingDistance}, and the whole of
+     * the planner's backwards pass. At vanilla's 0.91 this works out to 0.09 blocks per tick shed
+     * per block flown, which is slow enough that a corner has to be seen a block or more out.
      */
     public double maxEntrySpeed(double exitSpeed, double distance) {
         return exitSpeed + distance * (1.0 - this.brakingDrag);
     }
 
     /**
-     * The fastest we can be after covering {@code distance} from {@code entrySpeed} at full thrust.
-     * Simulated rather than solved: the closed form for accelerating against drag is ugly and this
-     * runs once per path leg, not per tick. Tick order matches {@code LivingEntity.travel}, which
-     * adds thrust, then moves, then applies drag.
+     * The fastest we can be after covering {@code distance} from {@code entrySpeed} at full thrust,
+     * and the whole of the planner's forwards pass. Simulated rather than solved: the closed form
+     * for accelerating against drag is ugly and this runs once per path leg, not per tick. Tick
+     * order matches {@code LivingEntity.travel}, which adds thrust, then moves, then applies drag.
      */
     public double speedAfterAccelerating(double entrySpeed, double distance) {
         if (this.accelPerTick <= 0.0) {
@@ -106,5 +110,17 @@ public record FlightEnvelope(
      */
     public double turnRadiusAt(double speed) {
         return this.maxYawRate <= 0.0 ? Double.MAX_VALUE : speed / this.maxYawRate;
+    }
+
+    /**
+     * The throttle that settles at this speed, i.e. what to feed {@code Mob.setSpeed} to hold it.
+     * Linear, because terminal speed is proportional to acceleration and acceleration is
+     * proportional to throttle: at {@link #maxThrottle} the mob settles at {@link #maxSpeed}.
+     * <p>
+     * This is the follower's feed-forward term. It gets there eventually on its own, an 11 tick time
+     * constant at vanilla drag, so a controller wanting to arrive sooner adds a correction on top.
+     */
+    public double throttleToHold(double speed) {
+        return this.maxSpeed <= 1.0E-9 ? 0.0 : this.maxThrottle * speed / this.maxSpeed;
     }
 }

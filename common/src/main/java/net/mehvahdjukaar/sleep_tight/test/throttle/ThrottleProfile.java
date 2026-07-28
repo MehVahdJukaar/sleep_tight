@@ -3,47 +3,39 @@ package net.mehvahdjukaar.sleep_tight.test.throttle;
 import net.minecraft.util.Mth;
 
 /**
- * A speed limit for every point along a path, as arc length rather than node index. Produced by
- * {@link ThrottlePlanner} once when the path is adopted, then only read.
+ * A speed limit for every point along a path, indexed by arc length rather than by node index
+ * because arc length is what the follower's cursor is. Produced by {@link ThrottlePlanner} once when
+ * the path is adopted, then only read.
  * <p>
- * This is the contract between the two planning layers and the follower: the path says where to
- * fly, this says how fast that is allowed to be, and the follower's only job is to stay under it.
- * Nothing here knows about the mob or the world.
+ * This is the contract between the planning layers and the follower: the path says where to fly,
+ * this says how fast that is allowed to be, and the follower's only job is to stay under it. Nothing
+ * here knows about the mob or the world.
+ * <p>
+ * See HOW_IT_WORKS.md next to this file for how the numbers are arrived at.
  */
 public final class ThrottleProfile {
 
+    // parallel arrays, one entry per path node: how far along, and how fast is allowed there
     private final double[] arc;
     private final double[] limit;
     private final double expectedTicks;
-    private final int constrainedNodes;
 
     ThrottleProfile(double[] arc, double[] limit) {
         this.arc = arc;
         this.limit = limit;
-        double ticks = 0.0;
-        int constrained = 0;
-        for (int i = 0; i < arc.length - 1; i++) {
-            double legLength = arc[i + 1] - arc[i];
-            double meanSpeed = 0.5 * (limit[i] + limit[i + 1]);
-            if (meanSpeed > 1.0E-6) {
-                ticks += legLength / meanSpeed;
-            }
-        }
-        for (double v : limit) {
-            if (v < ThrottlePlanner.UNCONSTRAINED_FRACTION * maxOf(limit)) {
-                constrained++;
-            }
-        }
-        this.expectedTicks = ticks;
-        this.constrainedNodes = constrained;
+        this.expectedTicks = sumFlightTime(arc, limit);
     }
 
-    private static double maxOf(double[] values) {
-        double max = 0.0;
-        for (double v : values) {
-            max = Math.max(max, v);
+    /** Each leg at the mean of its two end speeds. Good enough: the ramps between them are linear. */
+    private static double sumFlightTime(double[] arc, double[] limit) {
+        double ticks = 0.0;
+        for (int i = 0; i < arc.length - 1; i++) {
+            double meanSpeed = 0.5 * (limit[i] + limit[i + 1]);
+            if (meanSpeed > 1.0E-6) {
+                ticks += (arc[i + 1] - arc[i]) / meanSpeed;
+            }
         }
-        return max;
+        return ticks;
     }
 
     public int nodeCount() {
@@ -66,7 +58,7 @@ public final class ThrottleProfile {
     public double speedLimitAt(double distance) {
         int last = this.arc.length - 1;
         double clamped = Mth.clamp(distance, 0.0, this.arc[last]);
-        int i = this.segmentAt(clamped);
+        int i = this.nodeAtOrBefore(clamped);
         if (i >= last) {
             return this.limit[last];
         }
@@ -78,14 +70,17 @@ public final class ThrottleProfile {
     }
 
     /**
-     * The tightest limit anywhere in the next {@code window} blocks. The follower needs this rather
-     * than the limit under its feet: it can only shed speed by coasting, so it has to start slowing
-     * about a block before a corner rather than on top of it.
+     * The tightest limit anywhere in the next {@code window} blocks, and the one the follower should
+     * actually be reading. It cannot brake on command: drag is the only deceleration it has, so it
+     * has to see a corner a block or more out rather than discover it on arrival.
+     * <p>
+     * The profile is piecewise linear, so the minimum over a stretch is always at one of the two ends
+     * or at a node in between. No sampling needed.
      */
     public double speedLimitOver(double from, double window) {
-        double end = from + window;
-        double tightest = Math.min(this.speedLimitAt(from), this.speedLimitAt(end));
-        for (int i = this.segmentAt(Math.max(from, 0.0)); i < this.arc.length && this.arc[i] <= end; i++) {
+        double to = from + window;
+        double tightest = Math.min(this.speedLimitAt(from), this.speedLimitAt(to));
+        for (int i = this.nodeAtOrBefore(Math.max(from, 0.0)); i < this.arc.length && this.arc[i] <= to; i++) {
             if (this.arc[i] >= from) {
                 tightest = Math.min(tightest, this.limit[i]);
             }
@@ -102,12 +97,8 @@ public final class ThrottleProfile {
         return this.expectedTicks;
     }
 
-    /** How many nodes are held meaningfully below the envelope's top speed, for the debug overlay. */
-    public int constrainedNodes() {
-        return this.constrainedNodes;
-    }
-
-    private int segmentAt(double distance) {
+    /** Index of the last node at or before this arc length. Binary search, the arc array is sorted. */
+    private int nodeAtOrBefore(double distance) {
         int low = 0;
         int high = this.arc.length - 1;
         while (low < high) {

@@ -36,6 +36,8 @@ public class BirdPathNavigation extends FlyingPathNavigation {
     private Path ruledPath;
     @Nullable
     private ThrottleProfile throttle;
+    @Nullable
+    private FlightEnvelope envelope;
 
     public BirdPathNavigation(Mob mob, Level level) {
         super(mob, level);
@@ -69,9 +71,15 @@ public class BirdPathNavigation extends FlyingPathNavigation {
     @Override
     public boolean moveTo(@Nullable Path path, double speed) {
         boolean accepted = super.moveTo(path, speed);
-        this.throttle = accepted && this.path != null
-                ? ThrottlePlanner.fromPath(this.path, this.mob, FlightEnvelope.forMob(this.mob))
-                : null;
+        if (accepted && this.path != null) {
+            // snapshotted here so the path is flown against the numbers it was planned with, even
+            // if the config is poked mid-flight
+            this.envelope = FlightEnvelope.forMob(this.mob);
+            this.throttle = ThrottlePlanner.fromPath(this.path, this.mob, this.envelope);
+        } else {
+            this.envelope = null;
+            this.throttle = null;
+        }
         return accepted;
     }
 
@@ -79,6 +87,12 @@ public class BirdPathNavigation extends FlyingPathNavigation {
     @Nullable
     public ThrottleProfile getThrottleProfile() {
         return this.throttle;
+    }
+
+    /** The envelope the current path was planned against, for the move control to steer by. */
+    @Nullable
+    public FlightEnvelope getFlightEnvelope() {
+        return this.envelope;
     }
 
     /**
@@ -163,5 +177,6 @@ public class BirdPathNavigation extends FlyingPathNavigation {
         this.ruler = null;
         this.ruledPath = null;
         this.throttle = null;
+        this.envelope = null;
     }
 }

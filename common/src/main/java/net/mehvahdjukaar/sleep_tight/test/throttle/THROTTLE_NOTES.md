@@ -1,7 +1,12 @@
 # The throttle layer
 
 How fast the bird is allowed to be at every point of a path it has already been given. Written
-2026-07-28, when this package was added. Read `../FLIGHT_ARCHITECTURE.md` first for where this sits.
+2026-07-28, when this package was added.
+
+This file is the **reasoning**: why the layer exists, why the rules are shaped the way they are, and
+what was considered and rejected. If you just want to know what the code does, read
+**`HOW_IT_WORKS.md`** instead, which walks the four steps in order with a worked example.
+`../FLIGHT_ARCHITECTURE.md` is the map of all three layers.
 
 ## Why this exists at all
 
@@ -144,9 +149,22 @@ And on the mob itself, yellow for where the body is pointing, cyan for where it 
 The angle between them is the sideslip from `believable_bird_flight.md` section 1, and a cyan arrow
 shorter than the nearby path arrows is the mob failing to keep up with its own profile.
 
-## Not wired up yet
+## How much of the follower reads it
 
-`BirdMoveControl` does not read the profile. It still brakes from its own per-tick walk over the
-remaining nodes (`remainingAlongPath` plus `brakeFactor`), which is the thing this layer replaces.
-Until the follower rewrite lands, the profile is planned, shipped to the debug renderer and
-otherwise inert, so what is on screen is what *should* be happening rather than what is.
+`BirdMoveControl` now takes its speed entirely from the profile:
+
+```java
+window   = max(lookahead, envelope.stoppingDistance(currentSpeed))
+target   = min(maxSpeed * speedModifier, profile.speedLimitOver(cursor, window))
+throttle = envelope.throttleToHold(target) + (target - currentSpeed) * speedGain
+```
+
+The window is sized off the real stopping distance rather than a constant, because drag is the only
+brake and the faster the mob is going the further out a corner has to be seen.
+
+That deleted `remainingAlongPath`, `brakeFactor`, `turningSpeedFactor` and the four config knobs
+behind them. Deliberately kept as a single source of slowdown: if the bird still cuts a corner, it is
+the profile's numbers being wrong rather than two slowdown mechanisms fighting.
+
+Still the old follower otherwise: it chases a carrot rather than tracking arc length, and has no
+absorbing arrival state. See `believable_bird_flight.md` sections 1, 2 and 6.
