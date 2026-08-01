@@ -158,8 +158,9 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
                 continue;
             }
             int newHeading = moveBin < 0 ? heading : moveBin;
-            // going straight up off the ground is not a commitment to a direction any more than
-            // standing on it was, so a vertical hop stays free and a shaft can still be left any way
+            // a vertical hop off a perch stays free: it buys no airspeed to conserve, and the hover
+            // it does cost is already charged as straightUpCost. So a 1-wide shaft can be climbed
+            // and then left in any direction, rather than in whichever one the mob happened to face
             boolean stillFree = free && moveBin < 0;
 
             BirdNode neighbor = this.findAcceptedLatticeNode(

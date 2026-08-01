@@ -235,6 +235,7 @@ ground control cannot see because it rides on `customServerAiStep`.
 | 180 on a missed node | acceptance sphere ends up behind the mob | arc-length cursor, no acceptance test |
 | Orbiting a node forever | acceptance radius < turn radius | carrot instead of sphere; assert `L > r` |
 | Cutting across a hairpin, possibly through blocks | global nearest-point projection | windowed projection |
+| Cursor pinned at the apex of a reversal, then walking backwards as the mob flies home | outbound and return legs of a 180 are the same points in space, so first-strictly-better always picks the outbound one | ties in projection offset go to the candidate further along (`PathRuler.PROJECTION_TIE`) |
 | Stranded after a shove, creeping at arrival speed from far out | monotone cursor keeps progress the perpendicular foot gave it | cursor may lose ground, capped against distance flown; speed floored while far off the line |
 | Several nodes consumed in one tick, heading jumps | `waypointRadius` equals node spacing | arc-length carrot |
 | Flying backwards while turning | thrust applied along yaw when the error exceeds 90 deg | zero forward thrust past ~120 deg, or a pivot mode |

@@ -8,10 +8,19 @@ public class BirdNode extends Node {
     public final int heading;
 
     /**
-     * No heading to conserve, so the turn cap and the turn charge do not apply to moves leaving this
-     * state. Only ever true for a search started from a perched bird and for the purely vertical
-     * states directly above it: a bird on its feet can pivot before it goes, and one climbing
-     * straight up out of a shaft has not committed to a direction yet either.
+     * No heading to conserve, so the turn charge does not apply to moves leaving this state.
+     * <p>
+     * True for a search started from a perched bird, and that is the only case it is true <i>for
+     * free</i>. On the ground the body rotates and nothing translates, because the legs supply the
+     * reaction: changing heading really does cost zero displacement, so charging nothing is not a
+     * concession, it is the physics. In the air there is nothing to push against and every heading
+     * change is an arc, which is why the turn ladder exists at all and why it is never lifted for an
+     * airborne start.
+     * <p>
+     * It also survives the purely vertical moves straight off a perch, which is the one place the
+     * "feet down" reading does not hold - three blocks up a shaft nothing is touching anything. The
+     * justification there is different: a vertical move already pays {@code straightUpCost}, which is
+     * the price of having no airspeed. The heading is free because the hover is not.
      * <p>
      * Part of the state identity: it is in the node key, in equals and in hashCode, so a free state
      * can never be reused as the ordinary state for the same cell and heading. Without that, one

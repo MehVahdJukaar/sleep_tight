@@ -33,6 +33,25 @@ public class PathRuler {
      */
     private static final double MAX_ARC_PER_GROUND = 2.0;
 
+    /**
+     * How close two candidate projections have to be, in squared blocks, before the one further along
+     * the path wins rather than the one found first.
+     * <p>
+     * This is what makes a reversal followable. A 180 in a 1-wide corridor comes back along exactly
+     * the line it went out on, so the outbound and return legs are the same points in space and every
+     * projection onto one is also a projection onto the other. Taking the first strictly better
+     * candidate then pins the cursor to the outbound leg forever: it stops dead at the apex, and as
+     * the mob flies home it walks <i>backwards</i> down the leg it arrived on. {@code nextNodeIndex}
+     * never passes the apex, so the path never finishes and only a watchdog ends the flight.
+     * <p>
+     * This does not reopen what {@code window} closes. The window stops the cursor jumping to the
+     * return leg of a corridor it has not flown yet, and on a corridor of length L the two legs
+     * covering the same ground sit 2(L-s) apart in arc, so they are only ever both in the window
+     * within about a block of the apex. That is exactly where the turn belongs. Kept tiny so it only
+     * ever separates candidates that are geometrically the same point, never two real alternatives.
+     */
+    private static final double PROJECTION_TIE = 1.0E-6;
+
     private final Vec3[] points;
     // how walled in each node is, 0 open air through 1 fully boxed in. Same source the throttle
     // planner prices corners from, read here so the follower can size its aim by it
@@ -108,6 +127,8 @@ public class PathRuler {
      * is told to slow to arrival speed there, and creeps until a watchdog kills it. What keeps the
      * cursor honest instead is the step cap: neither direction may outrun the ground covered by more
      * than {@link #MAX_ARC_PER_GROUND}.
+     * <p>
+     * Ties in offset go to whichever candidate is <i>further along</i>, see {@link #PROJECTION_TIE}.
      */
     public void advanceCursorTo(Vec3 pos, double window) {
         double lowest = this.cursor - window;
@@ -128,9 +149,13 @@ public class PathRuler {
             }
             double along = Mth.clamp(pos.subtract(start).dot(leg) / legLengthSqr, 0.0, 1.0);
             double offsetSqr = start.add(leg.scale(along)).distanceToSqr(pos);
-            if (offsetSqr < closestOffsetSqr) {
-                closestOffsetSqr = offsetSqr;
-                closestDistance = this.distanceAt[i] + along * Math.sqrt(legLengthSqr);
+            double distance = this.distanceAt[i] + along * Math.sqrt(legLengthSqr);
+            if (offsetSqr < closestOffsetSqr - PROJECTION_TIE
+                    || (offsetSqr < closestOffsetSqr + PROJECTION_TIE && distance > closestDistance)) {
+                // the better offset stays the bar to beat, so accepting a tie on distance cannot
+                // ratchet the comparison open for a third, genuinely worse candidate
+                closestOffsetSqr = Math.min(closestOffsetSqr, offsetSqr);
+                closestDistance = distance;
             }
         }
 

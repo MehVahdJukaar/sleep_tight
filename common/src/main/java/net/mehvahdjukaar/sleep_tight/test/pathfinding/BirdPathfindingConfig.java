@@ -6,24 +6,35 @@ package net.mehvahdjukaar.sleep_tight.test.pathfinding;
  */
 public class BirdPathfindingConfig {
 
-    // turns sharper than this many 45 degree bins per step are not expanded at all.
-    // 2 (= 90 degrees) is the sweet spot: a 45 cap kills reachability in cluttered terrain.
+    // turns sharper than this many 45 degree bins per step are not expanded at all. 4 (= 180) means
+    // nothing is, which is the point: in flight the way ahead is a strong preference, not a rule.
+    // A hard cap made whole regions unreachable rather than expensive - a bird in a corridor
+    // narrower than its turn radius had no legal horizontal move at all, since the two purely
+    // vertical moves are the only ones exempt, so it climbed out of dead ends it could have flown
+    // back down. Pricing reversals instead lets the throttle layer answer them the way it answers
+    // every other corner: arrive slower. Lower this only to forbid a manoeuvre outright.
     // Does not apply to a state with no heading to conserve, which is the start of a search from a
     // perched bird and the vertical climb straight off it, see BirdNode#freeHeading
-    public static int maxTurnBins = 2;
+    public static int maxTurnBins = 4;
 
-    // heading changes between consecutive steps. Small corrections are near free so arcs
-    // stay smooth without zigzag wobble; sharp snaps are possible but discouraged
+    // heading changes between consecutive steps. Small corrections are near free so arcs stay smooth
+    // without zigzag wobble; sharp snaps are possible but discouraged. Hand-tuned rather than derived
+    // from the flight envelope (FLIGHT_ARCHITECTURE.md still lists that as owed), so read the ladder
+    // as an aesthetic ordering, not as seconds: a 90 barely troubles the throttle in open air yet is
+    // priced at 5, because a bird that snaps 90 degrees looks wrong whether or not it is expensive
     public static float turnCost45 = 0.5F;
     public static float turnCost90 = 5.0F;
-    public static float turnCost135 = 12.0F; // only reachable if maxTurnBins is raised to 3
-    public static float turnCost180 = 25.0F; // ditto at 4. Priced rather than left free, which is
-    // what a missing switch case would silently make the sharpest turn in the table
+    public static float turnCost135 = 12.0F;
+    // continues the same ladder. Worth about 3 blocks of straight flight in real time (decelerate to
+    // minSpeed, ~12 ticks of turning, accelerate back), so this is deliberately ~8x the physical
+    // cost: in open air the search should always prefer a wide banked reversal, which comes out as
+    // four 45s for 2.0, and only pay this where the geometry leaves nothing else
+    public static float turnCost180 = 25.0F;
 
     // purely vertical moves only; climbs and dives with horizontal motion are ordinary flight.
     // priced rather than forbidden so vertical shafts stay reachable as a last resort
-    public static float straightUpCost = 50.0F;
-    public static float straightDownCost = 2.0F;
+    public static float straightUpCost = 4.0F;
+    public static float straightDownCost = 3.0F;
 
     // how much a cell is charged for having blocks touching it, so the bird keeps some air around
     // itself instead of scraping along surfaces and clipping corners. Counts the 26 touching cells,
