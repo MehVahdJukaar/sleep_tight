@@ -143,7 +143,7 @@ public final class ThrottlePlanner {
         if (turnAngle < MIN_TURN_ANGLE) {
             return NO_LIMIT;
         }
-        double margin = leaving < arriving ? envelope.floorMargin() : envelope.ceilingMargin();
+        double margin = leaving < arriving ? envelope.corridorMarginBelow() : envelope.corridorMarginAbove();
         return envelope.maxSpeedForPitchChange(margin, overshootPerRadius(turnAngle));
     }
 

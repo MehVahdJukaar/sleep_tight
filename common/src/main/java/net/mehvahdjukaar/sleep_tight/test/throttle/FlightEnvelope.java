@@ -28,8 +28,8 @@ public record FlightEnvelope(
         double accelPerTick,
         double maxThrottle,
         double corridorMargin,
-        double ceilingMargin,
-        double floorMargin,
+        double corridorMarginAbove,
+        double corridorMarginBelow,
         double maxClimbAngle,
         double hoverSpeedFraction
 ) {
@@ -57,8 +57,8 @@ public record FlightEnvelope(
                 accel,
                 throttleCap,
                 BirdFlightConfig.corridorMargin,
-                BirdFlightConfig.ceilingMargin,
-                BirdFlightConfig.floorMargin,
+                BirdFlightConfig.corridorMarginAbove,
+                BirdFlightConfig.corridorMarginBelow,
                 BirdFlightConfig.maxClimbAngle * Mth.DEG_TO_RAD,
                 BirdFlightConfig.hoverSpeedFraction);
     }
@@ -140,16 +140,16 @@ public record FlightEnvelope(
 
     /**
      * Trims an offset from the drawn line to what the corridor around it can actually take: the flat
-     * {@link #corridorMargin} sideways, and the asymmetric {@link #ceilingMargin} /
-     * {@link #floorMargin} pair vertically, since the line runs along the mob's feet rather than
-     * through its middle. The horizontal part is scaled rather than clamped per axis, so trimming it
-     * never swings the direction round.
+     * {@link #corridorMargin} sideways, and the asymmetric {@link #corridorMarginAbove} /
+     * {@link #corridorMarginBelow} pair vertically, since the line runs along the mob's feet rather
+     * than through its middle. The horizontal part is scaled rather than clamped per axis, so
+     * trimming it never swings the direction round.
      */
     public Vec3 clampToCorridor(Vec3 offset) {
         double horizontal = offset.horizontalDistance();
         double scale = horizontal > this.corridorMargin ? this.corridorMargin / horizontal : 1.0;
         return new Vec3(offset.x * scale,
-                Mth.clamp(offset.y, -this.floorMargin, this.ceilingMargin),
+                Mth.clamp(offset.y, -this.corridorMarginBelow, this.corridorMarginAbove),
                 offset.z * scale);
     }
 

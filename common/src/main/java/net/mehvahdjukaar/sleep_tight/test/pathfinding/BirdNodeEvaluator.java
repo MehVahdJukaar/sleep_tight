@@ -251,7 +251,9 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
         // rides on the node so the throttle planner and the renderer can read it off the finished
         // path. The search itself charges for it in getEdgeCost, not from here
         node.enclosure = this.enclosure(x, y, z);
-        // the +1 is vanilla's air preference: given the choice, fly rather than skim the ground
+        // the +1 is vanilla's air preference: given the choice, fly rather than skim the ground.
+        // Half of the altitude bias, the other half being the wall hug charge on the same cells,
+        // which see for the arithmetic and for why the two are meant to stack
         node.costMalus = type == PathType.WALKABLE ? malus + 1.0F : malus;
         return node;
     }

@@ -42,7 +42,22 @@ public class BirdPathfindingConfig {
     // value is what a fully boxed-in cell would pay. Real cells pay a fraction of it: a flat
     // surface on one side lands near 0.3x, an inside corner roughly double that.
     // Only the charge: setting this to 0 removes the search bias but keeps the measurement, which
-    // the throttle planner needs to know how much room a corner has
+    // the throttle planner needs to know how much room a corner has.
+    //
+    // This deliberately stacks with vanilla's WALKABLE +1 air preference in BirdNodeEvaluator's
+    // findAcceptedLatticeNode, and the pair is what keeps birds off the deck. Flat ground under a
+    // cell blocks its whole bottom 3x3 shell, which is 1 face + 4 edges + 4 corners = 6.14 of the
+    // 19.10 a fully boxed cell would score, so 0.32 measured and 1.12 charged at the default. With
+    // the +1 on top that is 2.12 on a step whose length is 1.0: skimming the ground costs three
+    // times what cruising one cell higher does, and straightUpCost has paid for itself after two
+    // blocks of it. So a bird climbs off the floor at the first opportunity and stays up, and near
+    // a wall it will happily detour rather than run along the surface.
+    //
+    // That is the intended shape and not an accident of two knobs colliding: birds fly, they do not
+    // hover along the floor. Treat the two as one dial. Unstacking them (dropping the +1, or
+    // excluding the down-facing shell when the only blocked thing is the ground) is what to do if
+    // you ever want a mob that does hug terrain, and it will need retuning against straightUpCost
+    // and the turn ladder, since those were picked against this total
     public static float wallHugCost = 3.5F;
 
     // the measurement itself, 26 path type lookups per cell touched by the search. Turning it off

@@ -109,8 +109,8 @@ public class BirdFlightConfig {
     // over every step: the cell under the line is only really solid where there is a block in it,
     // and a scalar enclosure cannot say which side of a cell is blocked. Directional clearance is
     // what would let this be measured instead of guessed
-    public static double ceilingMargin = 0.25;
-    public static double floorMargin = 0.08;
+    public static double corridorMarginAbove = 0.25;
+    public static double corridorMarginBelow = 0.08;
 
     // above this the bird is climbing steeply enough to be hovering rather than flying, which is
     // slow and effortful. Legs steeper than this get scaled down towards hoverSpeedFraction, reaching
