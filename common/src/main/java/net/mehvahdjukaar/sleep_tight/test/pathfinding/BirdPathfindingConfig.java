@@ -7,7 +7,9 @@ package net.mehvahdjukaar.sleep_tight.test.pathfinding;
 public class BirdPathfindingConfig {
 
     // turns sharper than this many 45 degree bins per step are not expanded at all.
-    // 2 (= 90 degrees) is the sweet spot: a 45 cap kills reachability in cluttered terrain
+    // 2 (= 90 degrees) is the sweet spot: a 45 cap kills reachability in cluttered terrain.
+    // Does not apply to a state with no heading to conserve, which is the start of a search from a
+    // perched bird and the vertical climb straight off it, see BirdNode#freeHeading
     public static int maxTurnBins = 2;
 
     // heading changes between consecutive steps. Small corrections are near free so arcs
@@ -15,6 +17,8 @@ public class BirdPathfindingConfig {
     public static float turnCost45 = 0.5F;
     public static float turnCost90 = 5.0F;
     public static float turnCost135 = 12.0F; // only reachable if maxTurnBins is raised to 3
+    public static float turnCost180 = 25.0F; // ditto at 4. Priced rather than left free, which is
+    // what a missing switch case would silently make the sharpest turn in the table
 
     // purely vertical moves only; climbs and dives with horizontal motion are ordinary flight.
     // priced rather than forbidden so vertical shafts stay reachable as a last resort

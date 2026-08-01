@@ -8,6 +8,21 @@ public class BirdNode extends Node {
     public final int heading;
 
     /**
+     * No heading to conserve, so the turn cap and the turn charge do not apply to moves leaving this
+     * state. Only ever true for a search started from a perched bird and for the purely vertical
+     * states directly above it: a bird on its feet can pivot before it goes, and one climbing
+     * straight up out of a shaft has not committed to a direction yet either.
+     * <p>
+     * Part of the state identity: it is in the node key, in equals and in hashCode, so a free state
+     * can never be reused as the ordinary state for the same cell and heading. Without that, one
+     * relaxation reaching the start cell the normal way would inherit the freedom and the turn cap
+     * would quietly stop applying mid-path.
+     * <p>
+     * When it is set, {@link #heading} is meaningless and only there to keep the key well defined.
+     */
+    public final boolean freeHeading;
+
+    /**
      * How walled in this cell is, 0 in open air and 1 boxed in on all 26 sides. The raw measurement,
      * not the charge: the search turns it into a cost through {@code wallHugCost}, the throttle
      * planner reads it as "how much room is there to swing wide here", and the debug renderer
@@ -15,14 +30,15 @@ public class BirdNode extends Node {
      */
     public float enclosure;
 
-    public BirdNode(int x, int y, int z, int heading) {
+    public BirdNode(int x, int y, int z, int heading, boolean freeHeading) {
         super(x, y, z);
         this.heading = heading;
+        this.freeHeading = freeHeading;
     }
 
     @Override
     public Node cloneAndMove(int x, int y, int z) {
-        BirdNode moved = new BirdNode(x, y, z, this.heading);
+        BirdNode moved = new BirdNode(x, y, z, this.heading, this.freeHeading);
         moved.enclosure = this.enclosure;
         moved.type = this.type;
         moved.costMalus = this.costMalus;
@@ -38,11 +54,12 @@ public class BirdNode extends Node {
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof BirdNode node && super.equals(other) && this.heading == node.heading;
+        return other instanceof BirdNode node && super.equals(other)
+                && this.heading == node.heading && this.freeHeading == node.freeHeading;
     }
 
     @Override
     public int hashCode() {
-        return super.hashCode() * 31 + this.heading;
+        return (super.hashCode() * 31 + this.heading) * 31 + (this.freeHeading ? 1 : 0);
     }
 }

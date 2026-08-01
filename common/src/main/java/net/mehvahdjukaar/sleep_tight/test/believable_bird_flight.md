@@ -196,8 +196,37 @@ Real bird movement reads as distinct gaits. At minimum:
   oscillate. That is the second most likely 180 after the missed-node one.
 - **Perch** - `setNoGravity(false)`, zero velocity, hand off to ground navigation.
 
-`setNoGravity(true)` is currently set in the `BirdTestMob` constructor and again every move control
-tick, and never cleared. A bird that can never land is not a bird, and a dead or AI-disabled one floats.
+**Half of this is in as of 2026-08-01**, in `controller/BirdGroundControl`: takeoff and perch, plus
+the gravity ownership the two need. Cruise is the sections 1-4 controller as before. The flare is
+still missing, and is now the only gap in the list.
+
+The perch is a **state, not a measurement**. Nothing about velocity or `onGround` alone separates a
+bird gripping a branch from one hovering an inch over it, so it is a synched boolean the ground
+control sets and everything else reads. Two things hang off it:
+
+- the search plans a departure in **any** direction from a perched start, because a bird on its feet
+  carries no airspeed to conserve (`BirdNode.freeHeading`, and `PATHFINDING_NOTES.md` invariant 5).
+  Before that, the start heading was seeded from body yaw whatever the mob was doing, and a bird
+  parked facing the back of a dead end had no legal horizontal move at all - the two purely vertical
+  moves are the only ones exempt from the turn cap - so it climbed straight out of a corridor it
+  could have flown down.
+- **takeoff turns on the ground first.** The above is only honest if the mob really can leave that
+  way, and the flight follower cannot deliver it: it turns at a flying bird's rate, so a path leaving
+  behind the mob would be flown as a wide arc through whatever it was perched against. So the ground
+  control pivots the mob on the spot to the path's launch heading, and only then is flight allowed to
+  start: `BirdPathNavigation.tick` and `BirdMoveControl.tick` both stand down while
+  `isHoldingForLaunch()`. Turning on your feet is free and instant in path terms, and it is what feet
+  are for.
+
+That split is deliberate groundwork: the ground half is where a second, walking navigation goes when
+short distances stop being worth flying. The whole contract between the two halves is the
+`PerchingFlier` interface, so nothing above it has to change when that lands.
+
+`setNoGravity` used to be set in the `BirdTestMob` constructor and again every move control tick, and
+never cleared - a bird that can never land is not a bird, and a dead or AI-disabled one floats. It is
+now `BirdGroundControl`'s alone: on while airborne, off from the moment it commits to descending, and
+forced off by `BirdTestMob.tick` for a mob whose AI is not running at all, which is the case the
+ground control cannot see because it rides on `customServerAiStep`.
 
 ## 7. Artifact and edge case catalogue
 

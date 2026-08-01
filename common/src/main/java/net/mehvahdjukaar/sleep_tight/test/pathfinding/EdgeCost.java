@@ -27,12 +27,15 @@ public record EdgeCost(float distance, float malus, float clearance, float verti
             vertical = to.y > from.y ? BirdPathfindingConfig.straightUpCost : BirdPathfindingConfig.straightDownCost;
         }
 
+        // a state with no heading to conserve charges nothing to leave in any direction: its own
+        // heading is undefined, so the bin difference against it would be noise
         float turn = 0;
-        if (from instanceof BirdNode a && to instanceof BirdNode b) {
+        if (from instanceof BirdNode a && to instanceof BirdNode b && !a.freeHeading) {
             turn = switch (BirdNodeEvaluator.turnAmount(a.heading, b.heading)) {
                 case 1 -> BirdPathfindingConfig.turnCost45;
                 case 2 -> BirdPathfindingConfig.turnCost90;
                 case 3 -> BirdPathfindingConfig.turnCost135;
+                case 4 -> BirdPathfindingConfig.turnCost180;
                 default -> 0.0F;
             };
         }

@@ -30,6 +30,19 @@ code it describes:
 Each layer reads only the one above it. The arrows are one-way on purpose: the search does not know
 how fast the bird flies, and the follower does not re-derive geometry.
 
+## The one thing that is not in that stack
+
+`controller/BirdGroundControl` is not a fourth layer, it is the **other half** of the bottom one: the
+locomotion the bird does with its feet. It owns whether the bird is perched, gravity, and the turn on
+the spot that lines the mob up with a path before it takes off. The flying stack talks to it through
+`controller/PerchingFlier`, implemented by the mob, and through nothing else.
+
+It is worth its own box for two reasons. It is the only thing that reaches **up past** the follower
+into the search: a perched start plans its departure in any direction only because this is what makes
+that true on the mob (`PATHFINDING_NOTES.md` invariant 5). And it is where a second, walking
+navigation goes when short distances stop being worth flying, at which point the flying stack above
+is unaffected because `PerchingFlier` is the whole contract.
+
 ## Why it is split here and not somewhere else
 
 The dividing question is **turn radius**, and it is the thing that was missing before this split
@@ -103,9 +116,12 @@ Done:
 
 Not done, in the order they should happen:
 
-1. **Flight modes.** `believable_bird_flight.md` section 6: takeoff, cruise, flare, perch. Arrival
-   currently stops the path and leaves the mob hovering, because `setNoGravity(true)` is set in the
-   `BirdTestMob` constructor and never cleared. A bird that cannot land is not a bird.
+1. **The flare.** `believable_bird_flight.md` section 6 wanted four gaits: takeoff, cruise, flare,
+   perch. Takeoff and perch landed 2026-08-01 in `controller/BirdGroundControl`, which also took
+   ownership of `setNoGravity` from the mob constructor and the move control, so arrival now descends
+   and lands instead of leaving the bird hovering. What is still missing is the approach: nothing
+   levels out, bleeds horizontal speed and pitches up before the perch, so the descent is the profile
+   running out rather than a landing.
 2. **Turn costs derived from the envelope** rather than hand-set. The existing values happen to land
    within about a factor of two of the physically correct ones, but that is luck, and it stops being
    true the moment the bird's agility changes.

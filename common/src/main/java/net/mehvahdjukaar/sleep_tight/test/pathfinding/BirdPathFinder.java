@@ -92,7 +92,9 @@ public class BirdPathFinder extends PathFinder {
         profiler.markForCharting(MetricCategory.PATH_FINDING);
         Set<Target> targets = targetMap.keySet();
         from.g = 0.0F;
-        from.h = this.getBestH(from, targets);
+        // weighted like every other node's, rather than vanilla's unweighted start. Only the first
+        // pop is affected, but an f on a different scale to the rest of the heap is a trap
+        from.h = this.getBestH(from, targets) * BirdPathfindingConfig.heuristicWeight;
         from.f = from.h;
         this.openSet.clear();
         this.openSet.insert(from);
