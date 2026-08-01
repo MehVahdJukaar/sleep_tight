@@ -76,6 +76,12 @@ path, so a path is always flown against the numbers it was planned with.
   Any loop over path nodes down here is a smell; it means something that should have been planned
   once is being guessed at twenty times a second.
 
+  The one loop that is allowed is in `BirdPathNavigation.speedLimitFor`, and it is worth stating why.
+  It does not recompute the planner's answer; it re-applies the planner's own braking inequality with
+  a number only this layer can know, how much ground the mob is actually covering per block of route.
+  A mob rounding a corner off covers arc faster than ground and so sheds less speed than the profile
+  assumed. On a mob tracing the line the loop provably finds nothing and costs nothing.
+
 ## Current state
 
 Done:
@@ -86,6 +92,14 @@ Done:
 - the follower: velocity steering (`turnVelocityWithBody`), arc-length pure pursuit (`PathRuler`),
   speed straight off the profile, and an absorbing arrival. `believable_bird_flight.md` sections 1,
   2 and 6 are done apart from the gait machine
+- the follower's second pass, brought over from the `PathfindingTest` lab where three controls were
+  flown over the same routes and measured. Four things came back: the carrot is sized by the node's
+  enclosure and pulled in when the mob is off the line; the cursor may lose ground, capped against
+  distance actually flown, so a shoved mob gives its progress back instead of reading "almost
+  arrived" from a dozen blocks out; the commanded speed is corrected by real braking authority when
+  a corner is being cut, and floored while the mob is far off the line; and the throttle is a
+  deadbeat servo instead of a tuned gain. Measured on the lab's cluttered routes, that is a worst
+  corridor breach of 0.05 blocks against 0.27, and roughly half the excursion above the profile
 
 Not done, in the order they should happen:
 
@@ -99,9 +113,11 @@ Not done, in the order they should happen:
    minimum turn radius at 0.64 blocks and make shallow climbs inexpressible (the only climb angles
    available are 0, 35, 45 and 90 degrees, so a gentle climb comes out as a vertical zigzag). Both
    fix themselves with 2-3 block steps.
-4. **Flier-appropriate watchdogs.** Vanilla's per-node timeout budgets from cruise speed and so
-   fires spuriously once the bird starts slowing for corners. `ThrottleProfile.expectedFlightTicks()`
-   is the number it should be using.
+4. ~~**Flier-appropriate watchdogs.**~~ Done, in one line. Vanilla's node timeout recomputes
+   `timeoutLimit` on a node change but never zeroes `timeoutTimer`, so the clock runs from the start
+   of the path against a one-node budget and every mob is on a ~200 tick fuse. Vanilla hides it by
+   finishing short paths first and by repathing instantly when it does fire.
+   `BirdPathNavigation.restartNodeTimeout` supplies the missing reset.
 
 Decided against, with the reasoning in `throttle/THROTTLE_NOTES.md`: putting speed into the search
 state. It multiplies the state space by the number of speed bins, which costs search range rather

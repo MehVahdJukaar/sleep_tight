@@ -10,7 +10,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -30,7 +32,11 @@ public class PathDebugRenderer {
     public static long timeoutMillis = 60_000;
     public static float maxRenderDistance = 80;
     public static boolean showNodeLabels = true;
-    public static float textScale = 0.02F;
+    public static float textScale = 0.012F;
+    // node boxes are sized off the mob's own width, which at a lattice node spacing of one block
+    // leaves barely any air between them. Shrunk so the path reads as a line of markers rather than
+    // a solid tube, and so the labels sitting on them stay legible
+    public static float nodeBoxScale = 0.45F;
 
     // the throttle profile overlay: an arrow per node along the direction of travel, as long as the
     // speed allowed there. Off makes the path read as pure geometry again
@@ -41,9 +47,15 @@ public class PathDebugRenderer {
     // arrows for what the mob is actually doing: where it is pointing versus where it is going.
     // The gap between the two is the sideslip that makes a turning bird look like a crabbing drone
     public static boolean showMobVectors = true;
+    // breadcrumbs of where the mob has actually been, one per tick. The gap between this and the
+    // path's own line is everything the steering layer adds on top of the plan: corner cutting,
+    // overshoot, the wobble of rejoining the line after being pushed off it
+    public static boolean showTrail = true;
 
     private static final int FACING_COLOR = 0xFFFF55;
     private static final int VELOCITY_COLOR = 0x55FFFF;
+    // orange, so it stays apart from the path's green-to-red speed ramp
+    private static final float TRAIL_HUE = 0.08F;
 
     private final Map<Integer, Entry> paths = new HashMap<>();
 
@@ -54,7 +66,21 @@ public class PathDebugRenderer {
         long now = Util.getMillis();
         double cursorDelta = previous != null ? mobInfo.rulerCursor() - previous.mobInfo().rulerCursor() : 0.0;
         long deltaMillis = previous != null ? now - previous.creationTime() : 0L;
-        this.paths.put(entityId, new Entry(path, nodeHalfWidth, mobInfo, now, cursorDelta, deltaMillis));
+        this.paths.put(entityId, new Entry(path, nodeHalfWidth, mobInfo, now, cursorDelta, deltaMillis,
+                stitchTrail(previous, mobInfo)));
+    }
+
+    /**
+     * The packet only carries the samples taken since the last one, so the flown line is built up
+     * here. Nothing trims it: it lives exactly as long as the entry it hangs off, so a path still
+     * on screen always shows the whole flight that produced it. A mob that has been given a new
+     * path arrives with a new epoch, which is what says the history so far is over and can go.
+     */
+    private static List<Vec3> stitchTrail(@Nullable Entry previous, MobDebugInfo mobInfo) {
+        List<Vec3> trail = previous != null && previous.mobInfo().trailEpoch() == mobInfo.trailEpoch()
+                ? previous.trail() : new ArrayList<>();
+        trail.addAll(mobInfo.trailSamples());
+        return trail;
     }
 
     public void clear() {
@@ -68,6 +94,9 @@ public class PathDebugRenderer {
         this.paths.values().removeIf(entry -> now - entry.creationTime > timeoutMillis);
         for (Entry entry : this.paths.values()) {
             renderPath(poseStack, bufferSource, entry.path, entry.nodeHalfWidth, showNodeLabels, camX, camY, camZ);
+            if (showTrail) {
+                renderTrail(poseStack, bufferSource, entry.trail(), camX, camY, camZ);
+            }
             renderMobInfo(poseStack, bufferSource, entry, camX, camY, camZ);
         }
     }
@@ -87,6 +116,7 @@ public class PathDebugRenderer {
                     path.reached() ? 0 : 1, 1, 0, camX, camY, camZ);
         }
 
+        float halfWidth = nodeHalfWidth * nodeBoxScale;
         List<DebugNode> nodes = path.nodes();
         for (int i = 0; i < nodes.size(); i++) {
             DebugNode node = nodes.get(i);
@@ -95,15 +125,15 @@ public class PathDebugRenderer {
             float yOffset = 0.01F * i;
             boolean isNext = i == path.nextNodeIndex();
             renderBox(poseStack, bufferSource, new AABB(
-                            node.x() + 0.5F - nodeHalfWidth, node.y() + yOffset, node.z() + 0.5F - nodeHalfWidth,
-                            node.x() + 0.5F + nodeHalfWidth, node.y() + 0.25F + yOffset, node.z() + 0.5F + nodeHalfWidth),
+                            node.x() + 0.5F - halfWidth, node.y() + yOffset, node.z() + 0.5F - halfWidth,
+                            node.x() + 0.5F + halfWidth, node.y() + 0.12F + yOffset, node.z() + 0.5F + halfWidth),
                     isNext ? 1 : 0, 0, isNext ? 0 : 1, camX, camY, camZ);
         }
 
         // the pale tiles covering everything the search touched. Empty unless
         // BirdPathfindingConfig#collectDebugData is turned on, which is the knob for them
-        renderNodeSet(poseStack, bufferSource, path.closedSet(), nodeHalfWidth, 1, 0.8F, 0.8F, camX, camY, camZ);
-        renderNodeSet(poseStack, bufferSource, path.openSet(), nodeHalfWidth, 0.8F, 1, 1, camX, camY, camZ);
+        renderNodeSet(poseStack, bufferSource, path.closedSet(), halfWidth, 1, 0.8F, 0.8F, camX, camY, camZ);
+        renderNodeSet(poseStack, bufferSource, path.openSet(), halfWidth, 0.8F, 1, 1, camX, camY, camZ);
 
         if (showSpeedArrows) {
             renderSpeedArrows(poseStack, bufferSource, path, camX, camY, camZ);
@@ -122,7 +152,7 @@ public class PathDebugRenderer {
                             node, 0.5, clearanceTextColor(node.clearanceCost()));
                 }
             }
-            renderClearanceSummary(poseStack, bufferSource, path, camX, camY, camZ);
+            //renderClearanceSummary(poseStack, bufferSource, path, camX, camY, camZ);
             renderThrottleSummary(poseStack, bufferSource, path, camX, camY, camZ);
         }
     }
@@ -285,14 +315,14 @@ public class PathDebugRenderer {
 
     /**
      * The "what is it thinking" half: navigation/steering state, drawn at the move control's
-     * current wanted position since that is roughly where the mob itself is (the carrotDistance is
-     * short), rather than at a fixed offset from a node that may be far behind or ahead of it.
+     * current wanted position since that is roughly where the mob itself is (the carrot is a block
+     * or two out), rather than at a fixed offset from a node that may be far behind or ahead of it.
      */
     private static void renderMobInfo(PoseStack poseStack, MultiBufferSource bufferSource, Entry entry,
                                       double camX, double camY, double camZ) {
         MobDebugInfo info = entry.mobInfo();
         Vec3 pos = info.wantedPos();
-        if (distanceToCamera((int) pos.x, (int) pos.y, (int) pos.z, camX, camY, camZ) > maxRenderDistance) return;
+        if (distanceToCamera(pos.x, pos.y, pos.z, camX, camY, camZ) > maxRenderDistance) return;
 
         if (showMobVectors) {
             renderMobVectors(poseStack, bufferSource, info, camX, camY, camZ);
@@ -317,15 +347,17 @@ public class PathDebugRenderer {
                         "%.1f/%.1f (%.0f%%) node %d/%d", info.rulerCursor(), info.rulerLength(), progress,
                         info.nextNodeIndex(), info.nodeCount()),
                 pos.x, pos.y + 0.75, pos.z, -1, textScale, true, true);
-        // actual speed against what the throttle profile allows here and just ahead. Over the limit
-        // means the corner coming up is going to be cut wider than the planner budgeted for
-        String throttleText = info.speedLimitAhead() >= 0.0
-                ? String.format(Locale.ROOT, "v=%.3f limit %.3f (%.3f ahead) slip %.0fdeg",
-                info.velocity().length(), info.speedLimitNow(), info.speedLimitAhead(), info.sideslipDegrees())
-                : String.format(Locale.ROOT, "v=%.3f slip %.0fdeg",
-                info.velocity().length(), info.sideslipDegrees());
-        int throttleColor = info.speedLimitAhead() >= 0.0
-                && info.velocity().horizontalDistance() > info.speedLimitAhead() * 1.1 ? 0xFFFF5555 : -1;
+        // actual speed against what the profile allows underfoot and what the navigation actually
+        // commanded. Over the profile's limit means the corner coming up is going to be cut wider
+        // than the planner budgeted for; cmd below it is the braking or rejoin correction biting
+        String throttleText = info.speedLimitCommanded() >= 0.0
+                ? String.format(Locale.ROOT, "v=%.3f limit %.3f (cmd %.3f) off %.2f slip %.0fdeg",
+                info.velocity().length(), info.speedLimitNow(), info.speedLimitCommanded(),
+                info.offRoute(), info.sideslipDegrees())
+                : String.format(Locale.ROOT, "v=%.3f off %.2f slip %.0fdeg",
+                info.velocity().length(), info.offRoute(), info.sideslipDegrees());
+        int throttleColor = info.speedLimitNow() >= 0.0
+                && info.velocity().length() > info.speedLimitNow() * 1.1 ? 0xFFFF5555 : -1;
         DebugRenderHelper.renderFloatingText(poseStack, bufferSource, throttleText,
                 pos.x, pos.y + 0.5, pos.z, throttleColor, textScale, true, true);
 
@@ -372,16 +404,34 @@ public class PathDebugRenderer {
         }
     }
 
+    /**
+     * The line actually flown, one segment per tick, drawn dim to bright with age so the direction
+     * of travel and the most recent stretch read without a legend. Accumulated across packets, so
+     * this is the whole flight rather than a window of it.
+     */
+    private static void renderTrail(PoseStack poseStack, MultiBufferSource bufferSource, List<Vec3> trail,
+                                    double camX, double camY, double camZ) {
+        for (int i = 1; i < trail.size(); i++) {
+            Vec3 from = trail.get(i - 1);
+            Vec3 to = trail.get(i);
+            if (distanceToCamera(from.x, from.y, from.z, camX, camY, camZ) > maxRenderDistance) continue;
+            float freshness = (float) i / trail.size();
+            DebugRenderHelper.renderLine(poseStack, bufferSource,
+                    from.subtract(camX, camY, camZ), to.subtract(camX, camY, camZ),
+                    Mth.hsvToRgb(TRAIL_HUE, 0.9F, 0.35F + 0.65F * freshness));
+        }
+    }
+
     private static boolean isTooFar(DebugNode node, double camX, double camY, double camZ) {
         return distanceToCamera(node.x(), node.y(), node.z(), camX, camY, camZ) > maxRenderDistance;
     }
 
     // manhattan, like vanilla: it is only a culling heuristic, no need for a square root per node
-    private static float distanceToCamera(int x, int y, int z, double camX, double camY, double camZ) {
+    private static float distanceToCamera(double x, double y, double z, double camX, double camY, double camZ) {
         return (float) (Math.abs(x - camX) + Math.abs(y - camY) + Math.abs(z - camZ));
     }
 
     private record Entry(DebugPath path, float nodeHalfWidth, MobDebugInfo mobInfo, long creationTime,
-                         double cursorDelta, long deltaMillis) {
+                         double cursorDelta, long deltaMillis, List<Vec3> trail) {
     }
 }

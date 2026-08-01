@@ -89,6 +89,10 @@ public record FlightEnvelope(
      * and the whole of the planner's forwards pass. Simulated rather than solved: the closed form
      * for accelerating against drag is ugly and this runs once per path leg, not per tick. Tick
      * order matches {@code LivingEntity.travel}, which adds thrust, then moves, then applies drag.
+     * <p>
+     * Only the post-drag velocity is capped at {@link #maxSpeed}. Capping the thrust-added value too
+     * would make the loop settle at {@code drag * maxSpeed}, so a dead straight path would never be
+     * allowed within 9% of top speed and every node on it would come out acceleration limited.
      */
     public double speedAfterAccelerating(double entrySpeed, double distance) {
         if (this.accelPerTick <= 0.0) {
@@ -97,7 +101,7 @@ public record FlightEnvelope(
         double speed = entrySpeed;
         double covered = 0.0;
         for (int tick = 0; tick < MAX_SIMULATED_TICKS && covered < distance; tick++) {
-            double moving = Math.min(this.maxSpeed, speed + this.accelPerTick);
+            double moving = speed + this.accelPerTick;
             covered += moving;
             speed = Math.min(this.maxSpeed, this.drag * moving);
         }
@@ -113,14 +117,29 @@ public record FlightEnvelope(
     }
 
     /**
-     * The throttle that settles at this speed, i.e. what to feed {@code Mob.setSpeed} to hold it.
-     * Linear, because terminal speed is proportional to acceleration and acceleration is
-     * proportional to throttle: at {@link #maxThrottle} the mob settles at {@link #maxSpeed}.
+     * The thrust that lands exactly on {@code targetSpeed} after this tick's drag, given where the
+     * speed is now. {@code travel()} does {@code v' = drag * (v + a)}, so {@code a = target/drag - v}
+     * hits the target on the nose and, since {@code |v'| <= drag * (|v| + a)}, can never leave the
+     * mob above it.
      * <p>
-     * This is the follower's feed-forward term. It gets there eventually on its own, an 11 tick time
-     * constant at vanilla drag, so a controller wanting to arrive sooner adds a correction on top.
+     * This replaces the old feed-forward-plus-gain pair. It is the same controller with the gain
+     * pinned to the one value the physics actually implies rather than a tuned one: at the target it
+     * reduces to the throttle that holds it, and away from it asks for exactly the difference,
+     * clamped by what the wings can deliver. Nothing to tune and nothing to hunt.
      */
-    public double throttleToHold(double speed) {
-        return this.maxSpeed <= 1.0E-9 ? 0.0 : this.maxThrottle * speed / this.maxSpeed;
+    public double thrustToReach(double targetSpeed, double currentSpeed) {
+        if (this.drag <= 0.0) {
+            return this.accelPerTick;
+        }
+        return Mth.clamp(targetSpeed / this.drag - currentSpeed, 0.0, this.accelPerTick);
+    }
+
+    /**
+     * The throttle input that delivers this much thrust, i.e. what to feed {@code Mob.setSpeed} and
+     * {@code setYya}. Linear: {@code moveRelative} scales the input vector by a flat constant, and
+     * {@link #maxThrottle} buys {@link #accelPerTick}.
+     */
+    public double throttleForThrust(double thrust) {
+        return this.accelPerTick <= 1.0E-9 ? 0.0 : this.maxThrottle * thrust / this.accelPerTick;
     }
 }

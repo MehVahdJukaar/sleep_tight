@@ -145,10 +145,10 @@ public class BirdPathFinder extends PathFinder {
     private Path reconstructPath(Node end, BlockPos targetPos, boolean reachesTarget) {
         List<Node> nodes = Lists.newArrayList();
         Node node = end;
-        nodes.add(0, end);
+        nodes.addFirst(end);
         while (node.cameFrom != null) {
             node = node.cameFrom;
-            nodes.add(0, node);
+            nodes.addFirst(node);
         }
         return new Path(nodes, targetPos, reachesTarget);
     }

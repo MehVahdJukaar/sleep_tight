@@ -7,17 +7,33 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * Steering for the bird lattice paths, replacing vanilla's
+ * The bird's one and only steering, replacing vanilla's
  * {@link net.minecraft.world.entity.ai.control.FlyingMoveControl}, which snaps yaw up to 90 degrees
  * per tick and applies full thrust until it is within half a millimetre of the waypoint.
  * <p>
+ * Pure pursuit: it aims at a point some way further along the path and flies at it. Chasing a point
+ * ahead rounds off the corner between here and there, so the lattice's 45 degree blockiness comes out
+ * as a curve rather than a sequence of pivots. The usual objection to pure pursuit is that it has no
+ * idea how fast it should be going, so it arrives at corners too quickly and swings wide; that does
+ * not apply here, because speed is not this layer's decision at all. The {@link ThrottleProfile} has
+ * already worked out what every point of the path may be taken at and this only has to stay under it.
+ * <p>
  * Three jobs, and only three. Point the body at the carrot at a limited rate; bring the momentum
  * round with it, since {@code travel()} only ever pushes along yaw and would otherwise leave the
- * velocity decaying along the old heading; and hold whatever speed the {@link ThrottleProfile} says
- * is allowed here.
+ * velocity decaying along the old heading; and hold whatever speed it was told it may hold.
+ * <p>
+ * It holds no history at all: where it is aimed and how fast it may go are handed down fresh every
+ * tick by {@link BirdPathNavigation}, so a mob that gets shoved recovers from wherever it lands
+ * instead of being confused by it. The one policy it owns is {@link #lookahead}, how much of the
+ * drawn line it is willing to round off, because that is a steering decision and nothing else.
+ * <p>
+ * This shape was picked by flying three controls over the same routes in the {@code PathfindingTest}
+ * lab: against the fixed-carrot version it used to be, it holds the corridor to 0.05 blocks rather
+ * than 0.27 and halves the excursion above the profile. What the game forces on top of the lab's
+ * version is the yaw-only steering and the split throttle below, since {@code travel()} pushes along
+ * yaw and {@code yya} and never along pitch. That translation was measured as free.
  * <p>
  * Sections 1, 2 and 6 of {@code believable_bird_flight.md} are all in now: velocity steering here,
  * arc-length pure pursuit in {@link net.mehvahdjukaar.sleep_tight.test.navigator.PathRuler}, and an
@@ -31,7 +47,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class BirdMoveControl extends MoveControl {
 
-    // the carrot sits a carrotDistance ahead, so this only ever catches a degenerate direction, never
+    // the carrot always sits some way ahead, so this only ever catches a degenerate direction, never
     // arrival. Not vanilla's MIN_SPEED_SQR, which is an acceptance sphere and has no meaning here
     private static final double MIN_DIRECTION_LENGTH = 1.0E-4;
 
@@ -42,6 +58,27 @@ public class BirdMoveControl extends MoveControl {
     /** {@code operation}'s type is protected on the vanilla class, so name-only is what escapes. */
     public String getOperationName() {
         return this.operation.name();
+    }
+
+    /**
+     * How far ahead of the mob, in blocks along the path, this control wants its carrot. The
+     * navigation asks every tick and resolves the point itself, because turning a distance into a
+     * position is path geometry; what is decided here is the policy.
+     * <p>
+     * Two terms. The aim is interpolated on how walled in the path is here, so open air gets a long,
+     * smooth carrot and a tight cell gets a short, accurate one: rounding the drawn line off means
+     * leaving cells the search certified as clear, and enclosure is the measurement of how much room
+     * there is to leave them into. On top of that, being off the line pulls the carrot in, so a mob
+     * that has been shoved corrects rather than rejoining fifty blocks later.
+     *
+     * @param enclosure 0 in open air through 1 fully boxed in, at the mob's current point
+     * @param offRoute  how far the mob is from the line, in blocks
+     */
+    public double lookahead(double enclosure, double offRoute) {
+        double room = Mth.lerp(Mth.clamp(enclosure, 0.0, 1.0),
+                BirdFlightConfig.openAirLookahead, BirdFlightConfig.enclosedLookahead);
+        double pulledIn = room - offRoute * BirdFlightConfig.offRouteRecoveryGain;
+        return Mth.clamp(pulledIn, BirdFlightConfig.enclosedLookahead, BirdFlightConfig.openAirLookahead);
     }
 
     @Override
@@ -118,48 +155,32 @@ public class BirdMoveControl extends MoveControl {
     }
 
     /**
-     * Feed forward plus a proportional nudge. {@code throttleToHold} alone would get there on its
-     * own but takes an 11 tick time constant to do it, which is a full block of travel; the
-     * correction term is what makes the mob actually track a profile that is changing under it.
+     * A servo rather than a switch: {@link FlightEnvelope#thrustToReach} asks for exactly the thrust
+     * that lands on the commanded speed after this tick's drag, and by construction can never leave
+     * the mob above it. That is the whole controller, with no gain to tune - the old feed-forward
+     * plus proportional pair was the same thing with the gain guessed at, and it sat above the
+     * profile through most corners because a nudge takes the drag time constant to bite.
+     * <p>
+     * Being over the limit needs no special case: the thrust needed goes negative, clamps to zero,
+     * and coasting is the hardest this mob can brake.
      */
     private double throttleFor(FlightEnvelope envelope) {
-        double current = this.mob.getDeltaMovement().length();
-        double target = this.targetSpeed(envelope);
-        double throttle = envelope.throttleToHold(target) + (target - current) * BirdFlightConfig.speedGain;
-        return Mth.clamp(throttle, 0.0, envelope.maxThrottle());
+        double thrust = envelope.thrustToReach(this.targetSpeed(envelope), this.mob.getDeltaMovement().length());
+        return Mth.clamp(envelope.throttleForThrust(thrust), 0.0, envelope.maxThrottle());
     }
 
     /**
-     * Straight off the profile at the cursor, with no lookahead of its own. The planner's backwards
-     * pass already rolled every downstream limit into a braking ramp, so the value here is by
-     * construction the fastest we can be and still make everything ahead of us. Reading the tightest
-     * limit over a window on top of that brakes for the same corner twice, once when the planner saw
-     * it and again on the approach, and the mob crawls into corners it could take at speed.
+     * Whatever the navigation says is allowed here, under the mob's own ceiling. The navigation owns
+     * this rather than the control because it is the only layer that can see the profile, the cursor
+     * and how far off the line the mob has ended up, and all three go into the answer.
      * <p>
-     * Interpolating between nodes is exact rather than approximate, which is what makes reading a
-     * single point safe: {@code maxEntrySpeed} is linear in distance and so is
-     * {@link ThrottleProfile#speedLimitAt}, so a braking ramp is a straight line either way.
-     * <p>
-     * Being over the limit needs no special case either. The correction term in
-     * {@link #throttleFor} goes negative, throttle clamps to zero, and coasting is the hardest this
-     * mob can brake.
-     * <p>
-     * With no profile this falls back to plain cruising, which means no arrival braking. That is
-     * fine for the test rig and is exactly what should be visible as a difference.
+     * With no path in flight this falls back to plain cruising, which means no arrival braking. That
+     * is fine for the test rig and is exactly what should be visible as a difference.
      */
     private double targetSpeed(FlightEnvelope envelope) {
         double ceiling = envelope.maxSpeed() * this.speedModifier;
-        ThrottleProfile profile = this.throttleProfile();
-        if (profile == null || !(this.mob.getNavigation() instanceof BirdPathNavigation navigation)) {
-            return ceiling;
-        }
-        return Math.min(ceiling, profile.speedLimitAt(navigation.getRulerCursor()));
-    }
-
-    @Nullable
-    private ThrottleProfile throttleProfile() {
         return this.mob.getNavigation() instanceof BirdPathNavigation navigation
-                ? navigation.getThrottleProfile() : null;
+                ? Math.min(ceiling, navigation.getSpeedLimit()) : ceiling;
     }
 
     /** The one the current path was planned against, so plan and flight cannot drift apart. */

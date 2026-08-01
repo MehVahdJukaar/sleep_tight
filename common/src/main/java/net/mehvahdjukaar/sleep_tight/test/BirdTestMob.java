@@ -1,6 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.test;
 
 import net.mehvahdjukaar.sleep_tight.test.controller.BirdLookControl;
+import net.mehvahdjukaar.sleep_tight.test.debug.MobTrail;
 import net.mehvahdjukaar.sleep_tight.test.controller.BirdMoveControl;
 import net.mehvahdjukaar.sleep_tight.test.navigator.BirdPathNavigation;
 import net.minecraft.world.damagesource.DamageSource;
@@ -35,6 +36,8 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal {
     // server side only, kept around so the client side debug renderer entry can be refreshed
     @Nullable
     private Path debugPath;
+    // sampled every tick, sent with the path so the drawn plan can be compared against the flown line
+    private final MobTrail debugTrail = new MobTrail();
 
     public BirdTestMob(EntityType<? extends BirdTestMob> entityType, Level level) {
         super(entityType, level);
@@ -72,15 +75,28 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal {
     @Override
     public void tick() {
         super.tick();
+        if (this.debugPath == null || this.level().isClientSide) return;
+        // sampled at full tick rate even though the packet only goes out every fifth one: the
+        // whole point is to catch the wobble between waypoints, which resampling would smooth away.
+        // Stops with the flight, so the finished line stays on screen instead of being buried under
+        // the drift of a mob hovering at its destination
+        if (!this.getNavigation().isDone()) {
+            this.debugTrail.sample(this.position());
+        }
         // keep resending so the highlighted next node and the "thinking" overlay track the mob live
-        if (this.debugPath != null && !this.level().isClientSide && this.tickCount % 5 == 0) {
+        if (this.tickCount % 5 == 0) {
             BirdDebug.broadcastPath(this, this.debugPath);
         }
+    }
+
+    public MobTrail getDebugTrail() {
+        return this.debugTrail;
     }
 
     /** Draws the path and starts flying it. Passing null just clears whatever was being followed. */
     public void followPath(@Nullable Path path) {
         this.debugPath = path;
+        this.debugTrail.reset();
         // clear first: moveTo keeps the old path when the new one compares equal, and an already
         // finished one would make it bail out
         this.getNavigation().stop();

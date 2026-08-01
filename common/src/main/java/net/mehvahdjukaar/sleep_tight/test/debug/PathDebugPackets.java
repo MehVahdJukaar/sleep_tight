@@ -2,7 +2,6 @@ package net.mehvahdjukaar.sleep_tight.test.debug;
 
 import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.test.BirdTestMob;
-import net.mehvahdjukaar.sleep_tight.test.controller.BirdFlightConfig;
 import net.mehvahdjukaar.sleep_tight.test.controller.BirdMoveControl;
 import net.mehvahdjukaar.sleep_tight.test.navigator.BirdPathNavigation;
 import net.mehvahdjukaar.sleep_tight.test.throttle.FlightEnvelope;
@@ -30,14 +29,14 @@ public class PathDebugPackets {
         ThrottleProfile throttle = mob.getNavigation() instanceof BirdPathNavigation birdNavigation
                 ? birdNavigation.getThrottleProfile() : null;
         FlightEnvelope envelope = FlightEnvelope.forMob(mob);
-        MobDebugInfo mobInfo = buildMobDebugInfo(mob, throttle);
+        MobDebugInfo mobInfo = buildMobDebugInfo(mob);
         DebugPath debugPath = DebugPath.of(path, throttle, envelope.maxSpeed());
         sendToAllPlayers(serverLevel,
                 new ClientBoundPathDebugMessage(mob.getId(), debugPath, nodeHalfWidth, mobInfo));
     }
 
     /** Everything the renderer needs to show what the mob is doing right now, not just the plan. */
-    private static MobDebugInfo buildMobDebugInfo(BirdTestMob mob, @Nullable ThrottleProfile throttle) {
+    private static MobDebugInfo buildMobDebugInfo(BirdTestMob mob) {
         PathNavigation navigation = mob.getNavigation();
         MoveControl moveControl = mob.getMoveControl();
 
@@ -50,32 +49,40 @@ public class PathDebugPackets {
 
         double rulerCursor = 0.0;
         double rulerLength = 0.0;
+        double offRoute = 0.0;
         long timeoutTimer = 0L;
         double timeoutLimit = 0.0;
         int ticksSinceStuckCheck = 0;
+        // the profile's limit under the mob, and what the navigation actually commanded there. They
+        // differ when the mob is cutting a corner (less braking authority than the profile assumed)
+        // or has been shoved clear of the line, so the gap between them is the correction working
+        double speedLimitNow = -1.0;
+        double speedLimitCommanded = -1.0;
         if (navigation instanceof BirdPathNavigation birdNavigation) {
             rulerCursor = birdNavigation.getRulerCursor();
             rulerLength = birdNavigation.getRulerLength();
+            offRoute = birdNavigation.getOffRoute();
             timeoutTimer = birdNavigation.getTimeoutTimer();
             timeoutLimit = birdNavigation.getTimeoutLimit();
             ticksSinceStuckCheck = birdNavigation.getTicksSinceStuckCheck();
+            speedLimitNow = orUnknown(birdNavigation.getProfiledSpeedLimit());
+            speedLimitCommanded = orUnknown(birdNavigation.getSpeedLimit());
         }
 
         Path currentPath = navigation.getPath();
         int nextNodeIndex = currentPath != null ? currentPath.getNextNodeIndex() : 0;
         int nodeCount = currentPath != null ? currentPath.getNodeCount() : 0;
 
-        // the limit under the mob and the tightest one it is about to run into. The first is what
-        // the follower actually flies to, since the planner already braked for the second; the
-        // second is here to show how far ahead of the ramp the corner that caused it sits
-        double speedLimitNow = throttle != null ? throttle.speedLimitAt(rulerCursor) : -1.0;
-        double speedLimitAhead = throttle != null
-                ? throttle.speedLimitOver(rulerCursor, BirdFlightConfig.carrotDistance) : -1.0;
-
         return new MobDebugInfo(navigation.isStuck(), navigation.isDone(), steering, operation,
                 mob.position(), wantedPos, mob.getDeltaMovement(), mob.getYRot(),
-                rulerCursor, rulerLength, nextNodeIndex, nodeCount,
-                timeoutTimer, timeoutLimit, ticksSinceStuckCheck, speedLimitNow, speedLimitAhead);
+                rulerCursor, rulerLength, offRoute, nextNodeIndex, nodeCount,
+                timeoutTimer, timeoutLimit, ticksSinceStuckCheck, speedLimitNow, speedLimitCommanded,
+                mob.getDebugTrail().epoch(), mob.getDebugTrail().drainPending());
+    }
+
+    /** The navigation reports an unbounded limit when there is no profile; the renderer wants -1. */
+    private static double orUnknown(double speedLimit) {
+        return speedLimit == Double.MAX_VALUE ? -1.0 : speedLimit;
     }
 
     private static void sendToAllPlayers(ServerLevel level, CustomPacketPayload message) {

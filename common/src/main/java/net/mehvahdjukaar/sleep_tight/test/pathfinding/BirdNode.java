@@ -2,11 +2,6 @@ package net.mehvahdjukaar.sleep_tight.test.pathfinding;
 
 import net.minecraft.world.level.pathfinder.Node;
 
-/**
- * A pathfinding node whose identity includes the heading it was entered with, so momentum
- * survives the search: the same cell reached flying east and flying north are two different
- * states with different costs and different reachable neighbors.
- */
 public class BirdNode extends Node {
 
     /** Horizontal heading bin, 0..7 counter-clockwise from +X in 45 degree steps. */
@@ -25,12 +20,6 @@ public class BirdNode extends Node {
         this.heading = heading;
     }
 
-    /**
-     * Vanilla's {@code cloneAndMove} builds a plain Node, and {@code PathNavigation.trimPath} calls
-     * it to lift path nodes out of cauldrons. Without this override a single cauldron anywhere along
-     * the path silently strips the heading and the clearance off that node, and every layer
-     * downstream that reads them quietly falls back to defaults.
-     */
     @Override
     public Node cloneAndMove(int x, int y, int z) {
         BirdNode moved = new BirdNode(x, y, z, this.heading);

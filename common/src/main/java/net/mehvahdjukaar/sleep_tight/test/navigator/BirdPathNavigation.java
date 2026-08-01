@@ -30,6 +30,14 @@ import org.jetbrains.annotations.Nullable;
  */
 public class BirdPathNavigation extends FlyingPathNavigation {
 
+    /**
+     * How far off the line the mob has to be before the profile stops being applied at face value,
+     * and the distance by which the floor has fully ramped in. Comfortably outside anything normal
+     * flying reaches, rounding corners off peaks near a block, so this only fires on a real shove.
+     */
+    private static final double REJOIN_FROM = 2.0;
+    private static final double REJOIN_BY = 4.0;
+
     @Nullable
     private PathRuler ruler;
     @Nullable
@@ -38,6 +46,15 @@ public class BirdPathNavigation extends FlyingPathNavigation {
     private ThrottleProfile throttle;
     @Nullable
     private FlightEnvelope envelope;
+
+    // last node index handed to the path, so a change can restart vanilla's node timeout. Now that
+    // the cursor may lose ground this also fires on the way back, which is the right call per node
+    // but means the node timeout cannot catch a mob oscillating between two of them. The 100 tick
+    // distance-based stuck check is what covers that case
+    private int lastNodeIndex = -1;
+    // this tick's answers, worked out in followThePath and read by the move control right after
+    private double speedLimit = Double.MAX_VALUE;
+    private double profiledSpeedLimit = Double.MAX_VALUE;
 
     public BirdPathNavigation(Mob mob, Level level) {
         super(mob, level);
@@ -71,6 +88,7 @@ public class BirdPathNavigation extends FlyingPathNavigation {
     @Override
     public boolean moveTo(@Nullable Path path, double speed) {
         boolean accepted = super.moveTo(path, speed);
+        this.lastNodeIndex = -1;
         if (accepted && this.path != null) {
             // snapshotted here so the path is flown against the numbers it was planned with, even
             // if the config is poked mid-flight
@@ -99,17 +117,27 @@ public class BirdPathNavigation extends FlyingPathNavigation {
      * Vanilla aims the move control at the next node. Aim it at the ruler's lookahead point instead,
      * which is the whole reason the path gets flown as a curve rather than as a sequence of headings.
      * Navigation ticks before the move control, so this is what the steering ends up seeing.
+     * <p>
+     * How far ahead is the control's policy, not ours: it is the one that knows how much of the line
+     * it is willing to round off. Turning that distance into a point is route geometry, which is why
+     * the resolving happens here.
      */
     @Override
     public void tick() {
         super.tick();
         if (!this.isDone() && this.ruler != null) {
-            Vec3 carrot = this.ruler.lookaheadPoint(BirdFlightConfig.carrotDistance);
+            Vec3 carrot = this.ruler.lookaheadPoint(this.lookahead(this.ruler));
             // deliberately not getGroundY: that snaps the y to the top of whatever is under the
             // carrot's block, which is right for a walker and drags a flier down into the terrain
             // any time it flies within a block of a surface. FlyingPathNavigation never overrode it
             this.mob.getMoveControl().setWantedPosition(carrot.x, carrot.y, carrot.z, this.speedModifier);
         }
+    }
+
+    private double lookahead(PathRuler ruler) {
+        return this.mob.getMoveControl() instanceof BirdMoveControl bird
+                ? bird.lookahead(ruler.enclosureAt(ruler.cursor()), ruler.offRoute())
+                : BirdFlightConfig.openAirLookahead;
     }
 
     /**
@@ -130,6 +158,7 @@ public class BirdPathNavigation extends FlyingPathNavigation {
         Vec3 pos = this.getTempMobPos();
         PathRuler ruler = this.ruler();
         ruler.advanceCursorTo(pos, BirdFlightConfig.projectionWindow);
+        this.speedLimit = this.speedLimitFor(ruler);
         if (ruler.remaining() <= BirdFlightConfig.arrivalRadius) {
             // dropping the path here is what makes arrival absorbing. Left running, the follower
             // would keep steering at a final node it is already on top of, overshoot it, turn back
@@ -137,10 +166,110 @@ public class BirdPathNavigation extends FlyingPathNavigation {
             this.stop();
             return;
         }
-        this.path.setNextNodeIndex(ruler.nextNodeIndex());
+        int nextNode = ruler.nextNodeIndex();
+        if (nextNode != this.lastNodeIndex) {
+            this.lastNodeIndex = nextNode;
+            this.restartNodeTimeout();
+        }
+        this.path.setNextNodeIndex(nextNode);
         // acceptance spheres are gone, so this now only sizes the markers in the debug path renderer
-        this.maxDistanceToWaypoint = (float) BirdFlightConfig.carrotDistance;
+        this.maxDistanceToWaypoint = (float) BirdFlightConfig.openAirLookahead;
         this.doStuckDetection(pos);
+    }
+
+    /**
+     * The line vanilla forgets. Its node timeout is meant to ask "am I taking too long to reach the
+     * node I am heading for", and on a node change it does recompute {@code timeoutLimit} as that
+     * node's budget, but it never zeroes {@code timeoutTimer} to match. Only {@code timeoutPath()}
+     * firing does that. So the clock runs from the start of the path while the budget stays at one
+     * node's worth, and every mob is on a fixed fuse of roughly 200 ticks however well it is going.
+     * <p>
+     * Vanilla survives its own bug two ways: its paths are usually short enough to finish inside the
+     * fuse, and when they are not, {@code timeoutPath} stops the path having just zeroed the timer,
+     * the goal sees {@code isDone()} and repaths on the spot, and the recycle is invisible. Neither
+     * applies here. A lattice path is up to 64 blocks, this mob covers 11 in 200 ticks, and nothing
+     * repaths it, so the fuse burned down around the twelfth node and the flight simply ended.
+     */
+    private void restartNodeTimeout() {
+        this.timeoutTimer = 0L;
+    }
+
+    /**
+     * The speed cap for this tick: the limit underfoot, tightened by whatever the mob cannot brake
+     * down to in time and floored while it is nowhere near the line.
+     * <p>
+     * Underfoot alone is right for a mob tracing the line exactly. The planner's backwards pass
+     * guarantees {@code limit[i] <= limit[j] + (arc[j] - arc[i]) * (1 - drag)} for every later j, so
+     * a node's limit is by construction one that coasting can still satisfy every downstream node
+     * from. Reading a window ahead on top of that applies the same braking distance twice, which is
+     * what {@code speedLimitOver} does and why a follower using it crawls into corners.
+     * <p>
+     * A control that rounds corners off breaks that guarantee, and not in an obvious way. It covers
+     * <i>arc</i> faster than it covers ground: the cursor sweeps along the line while the mob takes
+     * the short way across the corner. Drag only bleeds speed per block actually flown, so over the
+     * same stretch of route the mob sheds less than the profile assumed and reaches the corner above
+     * its limit. So rather than guess a lookahead, apply the condition the braking pass itself is
+     * built on with the mob's real braking authority substituted in. At {@code groundPerArc} of one
+     * this reduces to exactly the limit underfoot, so a mob that follows the line pays nothing.
+     */
+    private double speedLimitFor(PathRuler ruler) {
+        ThrottleProfile profile = this.throttle;
+        FlightEnvelope flightEnvelope = this.envelope;
+        if (profile == null || flightEnvelope == null) {
+            this.profiledSpeedLimit = Double.MAX_VALUE;
+            return Double.MAX_VALUE;
+        }
+        double cursor = ruler.cursor();
+        this.profiledSpeedLimit = profile.speedLimitAt(cursor);
+        double bleedPerArc = ruler.groundPerArc() * (1.0 - flightEnvelope.brakingDrag());
+        double window = cursor + flightEnvelope.stoppingDistance(this.mob.getDeltaMovement().length());
+
+        double tightest = this.profiledSpeedLimit;
+        for (int i = ruler.nextNodeIndex(); i < profile.nodeCount() && profile.arcAtNode(i) <= window; i++) {
+            double ahead = profile.arcAtNode(i) - cursor;
+            tightest = Math.min(tightest, profile.limitAtNode(i) + ahead * bleedPerArc);
+        }
+        return Math.max(tightest, this.rejoinSpeed(flightEnvelope, ruler.offRoute()));
+    }
+
+    /**
+     * A floor on the speed while the mob is nowhere near the line, ramping in from {@link #REJOIN_FROM}
+     * to {@link #REJOIN_BY} blocks off it.
+     * <p>
+     * The profile describes speeds for a mob <i>on</i> the path, and every limit in it is about
+     * geometry the mob is only subject to while tracing it. A mob that has been knocked well clear
+     * has to fly back first, and that leg is not the profile's business. Without this it obeys
+     * whatever limit it happens to be level with, and level with is decided by the foot of a
+     * perpendicular that a sideways excursion slides a long way up the line: a shove near the end of
+     * a path leaves the mob reading arrival speed from a dozen blocks out, crawling home at a
+     * hundredth of a block per tick until a watchdog puts it down.
+     * <p>
+     * Ramped rather than switched, and starting outside the range normal flying reaches, so a mob
+     * that is merely rounding a corner off gets nothing from it and every profiled corner limit
+     * stands exactly as planned.
+     */
+    private double rejoinSpeed(FlightEnvelope flightEnvelope, double offRoute) {
+        double lost = Mth.clamp((offRoute - REJOIN_FROM) / (REJOIN_BY - REJOIN_FROM), 0.0, 1.0);
+        return lost * flightEnvelope.cruiseSpeed();
+    }
+
+    /** What the move control is allowed to fly at this tick. Unbounded when there is no profile. */
+    public double getSpeedLimit() {
+        return this.speedLimit;
+    }
+
+    /**
+     * The profile's limit exactly underfoot, which is what the mob should be judged against. Not
+     * always what the control was told to do, see {@link #speedLimitFor}, so measuring compliance
+     * against the value that was fed would be marking its own homework.
+     */
+    public double getProfiledSpeedLimit() {
+        return this.profiledSpeedLimit;
+    }
+
+    /** How far the mob is from the drawn line. 0 if there is no ruler yet. */
+    public double getOffRoute() {
+        return this.ruler != null ? this.ruler.offRoute() : 0.0;
     }
 
     private PathRuler ruler() {
@@ -188,5 +317,7 @@ public class BirdPathNavigation extends FlyingPathNavigation {
         this.ruledPath = null;
         this.throttle = null;
         this.envelope = null;
+        this.speedLimit = Double.MAX_VALUE;
+        this.profiledSpeedLimit = Double.MAX_VALUE;
     }
 }

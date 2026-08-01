@@ -80,25 +80,34 @@ enough to node i?") about a discrete node. Every failure of that controller clas
 **Replace it with arc-length pure pursuit.** At `moveTo` time, resample the path once into a polyline
 with cumulative arc lengths (O(n), cached on the path). Then per tick:
 
-1. Project the mob onto the polyline, searching **forward only** from the current cursor, within a
-   bounded window.
-2. Advance the cursor to that projection. Monotone by construction.
+1. Project the mob onto the polyline, searching within a bounded window either side of the current
+   cursor.
+2. Move the cursor to that projection, by no more than a small multiple of the ground actually
+   covered this tick.
 3. Place the carrot at `arclength(cursor) + L` and hand *that* to `setWantedPosition`.
 
-What falls out: missing a node stops being an event, the commanded heading is continuous, corners
-round off with radius ~`L` which is what a bird does, and a 180 becomes impossible because the cursor
-never moves backwards. `waypointRadius` and `passedWaypointRange` both disappear as concepts.
-`Path.advance()` is still called so `isDone()` and stuck detection keep working, just driven by the
-projection instead of by proximity.
+What falls out: missing a node stops being an event, the commanded heading is continuous, and corners
+round off with radius ~`L` which is what a bird does. `waypointRadius` and `passedWaypointRange` both
+disappear as concepts. `Path.advance()` is still called so `isDone()` and stuck detection keep
+working, just driven by the projection instead of by proximity.
 
 Two things to get right:
 
-- **Forward-only windowed projection is mandatory.** The lattice can emit hairpins (two 90 degree
-  turns to reverse). A global nearest-point search snaps the cursor onto the return leg and shortcuts
-  the hairpin, possibly through geometry. Bound the window to a few blocks of arc length ahead.
+- **The window is mandatory, the ratchet is not.** The lattice can emit hairpins (two 90 degree turns
+  to reverse), and a global nearest-point search snaps the cursor onto the return leg and shortcuts
+  it, possibly through geometry. A window of a couple of blocks fixes that on its own, and it does so
+  whichever way the mob is moving. Forcing the cursor to be monotone on top of that was tried and is
+  wrong: a mob shoved sideways off a diagonal watches its own perpendicular foot slide up the line,
+  which is real geometry, and a ratchet then refuses to give that progress back when it flies home.
+  It reads "almost arrived" from a dozen blocks out, is told to slow to arrival speed there, and
+  creeps until a watchdog kills it. The step cap in 2 is what keeps the cursor honest instead: it
+  cannot outrun distance actually flown by more than the ratio corner-cutting can legitimately
+  produce (~1.4 at the sharpest lattice corner).
 - **Pure pursuit corner-cuts by design**, by up to roughly `L`. That cut must fit inside the clearance
-  `BirdNodeEvaluator` guaranteed. Either keep `L` at or below the clearance margin, or shorten the
-  carrot when the straight line to it is blocked.
+  `BirdNodeEvaluator` guaranteed. Rather than one conservative `L` everywhere, scale it on the node's
+  measured enclosure: open air gets a long smooth carrot, a boxed-in cell a short accurate one, since
+  the search only certified the cells *on* the line as clear. Being off the line pulls it in further,
+  which is what turns a lazy rejoin into an actual correction.
 
 Optional: run the carrot along a Catmull-Rom spline through the nodes instead of the raw polyline.
 Marginal smoothness gain given pure pursuit already rounds corners, but it yields a curvature signal
@@ -194,9 +203,10 @@ tick, and never cleared. A bird that can never land is not a bird, and a dead or
 
 | Artifact | Cause | Prevented by |
 |---|---|---|
-| 180 on a missed node | acceptance sphere ends up behind the mob | monotone arc-length cursor |
+| 180 on a missed node | acceptance sphere ends up behind the mob | arc-length cursor, no acceptance test |
 | Orbiting a node forever | acceptance radius < turn radius | carrot instead of sphere; assert `L > r` |
-| Cutting across a hairpin, possibly through blocks | global nearest-point projection | forward-only windowed projection |
+| Cutting across a hairpin, possibly through blocks | global nearest-point projection | windowed projection |
+| Stranded after a shove, creeping at arrival speed from far out | monotone cursor keeps progress the perpendicular foot gave it | cursor may lose ground, capped against distance flown; speed floored while far off the line |
 | Several nodes consumed in one tick, heading jumps | `waypointRadius` equals node spacing | arc-length carrot |
 | Flying backwards while turning | thrust applied along yaw when the error exceeds 90 deg | zero forward thrust past ~120 deg, or a pivot mode |
 | Yaw wobble on a near-straight leg | no deadband on the yaw command | deadband, or the lookahead absorbing it |
@@ -206,7 +216,8 @@ tick, and never cleared. A bird that can never land is not a bird, and a dead or
 | Ping-pong on unreachable targets | `PathFinder` returns a best-partial path on budget exhaustion; mob arrives, replans, repeats | check `Path.canReach()`, randomized cooldown, fall back to a random reachable pos (`MoveToTargetSink` is the reference) |
 | False "stuck" while hovering or circling | `doStuckDetection` compares 100-tick displacement against `speed*100*0.25`, which a deliberately hovering or slowly circling bird fails | flier-specific stuck rule, or suspend it outside cruise mode |
 | Turn-heavy path abandoned mid-flight | per-node timeout budgets from cruise speed; follower slows in turns | budget conservatively or drop the timeout |
-| Corner cut into geometry | pure pursuit cuts by up to `L`; planner only guaranteed clearance on the polyline | `L` <= clearance margin, or raycast-shorten the carrot |
+| Corner cut into geometry | pure pursuit cuts by up to `L`; planner only guaranteed clearance on the polyline | scale `L` on the node's enclosure so `L` <= the room actually measured there |
+| Above the profile through a corner | the cut covers arc faster than ground, so drag sheds less than the planner assumed | scale braking authority by ground covered per block of route |
 
 ## 8. Limitations that cannot be engineered around
 

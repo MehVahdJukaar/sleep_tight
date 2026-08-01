@@ -98,8 +98,9 @@ properly and this rule stops mattering as much.
 since its cursor is a distance. Three things worth knowing:
 
 - `speedLimitAt(d)` interpolates between nodes, so the ramps are continuous
-- `speedLimitOver(d, window)` is the tightest limit in the next `window` blocks, and is the one the
-  follower should actually read: drag is the only brake, so it has to start slowing early
+- `limitAtNode(i)`/`arcAtNode(i)` are the raw node values, which is what the follower's braking
+  correction walks (see below); a tightest-over-a-window query used to live here and was deleted, it
+  brakes for the same corner twice
 - `expectedFlightTicks()` is a correct replacement for vanilla's per-node timeout, which budgets from
   cruise speed and therefore fires spuriously on any path where the bird is deliberately slowing
 
@@ -151,19 +152,38 @@ shorter than the nearby path arrows is the mob failing to keep up with its own p
 
 ## How much of the follower reads it
 
-`BirdMoveControl` now takes its speed entirely from the profile:
+`BirdMoveControl` takes its speed entirely from the profile, and reads it through the navigation,
+which is the only layer that can see the cursor and how far off the line the mob is:
 
 ```java
-target   = min(maxSpeed * speedModifier, profile.speedLimitAt(cursor))
-throttle = envelope.throttleToHold(target) + (target - currentSpeed) * speedGain
+// BirdPathNavigation.speedLimitFor
+bleedPerArc = ruler.groundPerArc() * (1 - brakingDrag)
+limit       = min over nodes i within stoppingDistance(v) of
+                  limitAtNode(i) + (arcAtNode(i) - cursor) * bleedPerArc,   floored at speedLimitAt(cursor)
+limit       = max(limit, rejoinSpeed(offRoute))
+// BirdMoveControl
+target      = min(maxSpeed * speedModifier, navigation.getSpeedLimit())
+throttle    = envelope.throttleForThrust(envelope.thrustToReach(target, currentSpeed))
 ```
 
-One point, no lookahead. That is the whole payoff of pass 2: the ramp *is* the lookahead, already
-computed, and reading the tightest limit over a window on top of it would brake for the same corner
-twice. Interpolating between nodes is exact rather than approximate here, since `maxEntrySpeed` is
-linear in distance and so is `speedLimitAt`.
+One point, no lookahead, is the whole payoff of pass 2: the ramp *is* the lookahead, already computed,
+and reading the tightest limit over a window on top of it brakes for the same corner twice.
+Interpolating between nodes is exact rather than approximate here, since `maxEntrySpeed` is linear in
+distance and so is `speedLimitAt`.
 
-It was originally written as `speedLimitOver(cursor, max(lookahead, stoppingDistance(v)))`, which is
+The `bleedPerArc` walk is not a second lookahead sneaking back in. Pass 2 guarantees
+`limit[i] <= limit[j] + (arc[j] - arc[i]) * (1 - drag)`, so at `groundPerArc = 1` the walk can never
+find anything tighter than the value underfoot and costs exactly nothing. It only bites when the mob
+is cutting a corner: then it covers arc faster than it covers ground, drag sheds per block *flown*,
+and the profile's own guarantee is the thing that stops holding. Same inequality, real braking
+authority substituted in.
+
+The throttle is a deadbeat servo rather than the old `throttleToHold(target) + error * speedGain`
+pair. `travel()` does `v' = drag * (v + a)`, so `a = target/drag - v` lands exactly on the target and
+can never overshoot it; the gain that guessing at `speedGain` was approximating is `1/drag`, and it
+was set low enough that the mob sat above the profile through most corners.
+
+The target was originally written as `speedLimitOver(cursor, max(lookahead, stoppingDistance(v)))`, which is
 worth recording as a trap. `stoppingDistance` is `11.1 * v` and the bird's top speed is 0.081 b/t, so
 the term never exceeded 0.9 and the 1.5 block `lookahead` floor won at every speed the mob could
 reach. With `arrivalSpeed` at 0 that cut thrust a fixed 1.5 blocks from the end, coasting covered
@@ -174,5 +194,5 @@ That deleted `remainingAlongPath`, `brakeFactor`, `turningSpeedFactor` and the f
 behind them. Deliberately kept as a single source of slowdown: if the bird still cuts a corner, it is
 the profile's numbers being wrong rather than two slowdown mechanisms fighting.
 
-Still the old follower otherwise: it chases a carrot rather than tracking arc length, and has no
-absorbing arrival state. See `believable_bird_flight.md` sections 1, 2 and 6.
+The follower is no longer the old one: it tracks arc length, sizes its carrot by how much room the
+path has here, and has an absorbing arrival. See `believable_bird_flight.md` sections 1, 2 and 6.

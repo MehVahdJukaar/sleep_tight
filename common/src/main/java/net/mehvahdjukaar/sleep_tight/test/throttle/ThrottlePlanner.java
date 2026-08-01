@@ -33,9 +33,6 @@ public final class ThrottlePlanner {
     private static final double MAX_TURN_ANGLE = Math.toRadians(175.0);
     private static final double MIN_HORIZONTAL_LEG_SQR = 1.0E-8;
 
-    private ThrottlePlanner() {
-    }
-
     /**
      * Convenience wrapper: pulls the two things the planner needs off a finished path. Positions
      * come from the path rather than the raw nodes so the profile is built against the same points
@@ -217,6 +214,7 @@ public final class ThrottlePlanner {
 
     /** To (-PI, PI], so a turn past the wrap point does not read as a near full circle. */
     private static double wrapRadians(double radians) {
+        //TODO:  replce with Mth.
         double wrapped = radians % (2.0 * Math.PI);
         if (wrapped >= Math.PI) {
             wrapped -= 2.0 * Math.PI;

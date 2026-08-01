@@ -22,11 +22,6 @@ public class BirdFlightConfig {
     // reads as weight rather than rails
     public static float velocitySteerFraction = 1.0F;
 
-    // how hard the move control chases the speed the throttle profile asks for, on top of the
-    // feed-forward throttle that would settle there on its own. Units are throttle per block per
-    // tick of error. Too low and the mob lags the profile through corners, too high and it hunts
-    public static double speedGain = 4.0;
-
     // pitch is cosmetic (travel() ignores it for anything that is not elytra flying) but it is
     // what sells the dive/climb, so it tracks actual velocity rather than the waypoint
     public static float maxPitch = 60.0F;
@@ -38,16 +33,30 @@ public class BirdFlightConfig {
     public static float bankPerYawRate = 2.5F;
     public static float maxBankAngle = 55.0F;
 
-    // how far along the path ahead of the mob the steering target sits. Steering only: it says
-    // nothing about speed, which comes from the throttle profile. This is the corner rounding dial:
-    // the flown arc cuts inside a corner by roughly a fifth to a third of this, so raising it buys
-    // smoothness and spends clearance. Lattice nodes are one block apart, and anything below that
-    // stops smoothing and just tracks the polyline
-    public static double carrotDistance = 1.5;
+    // how far along the path ahead of the mob the steering target sits when there is nothing anywhere
+    // near the line. Steering only: it says nothing about speed, which comes from the throttle
+    // profile. This is the corner rounding dial: the flown arc cuts inside a corner by roughly a
+    // fifth to a third of this, so 1.5 puts the cut near the planner's corridorMargin. Lattice nodes
+    // are one block apart, and anything below that stops smoothing and just tracks the polyline
+    public static double openAirLookahead = 1.5;
 
-    // how far ahead of the cursor to look when projecting the mob back onto the path. Only has to
-    // cover a tick of travel; kept short because a long window can snap the cursor across a hairpin
-    // and skip the leg in between
+    // the same, in a cell walled in on every side. The carrot is interpolated between the two on the
+    // node's measured enclosure, which is the whole point: the search only certified the cells on
+    // the line as clear, so rounding a corner off is only safe to the extent there is measured room
+    // to round it into. Floored well above zero because aiming at your own feet is not steering, it
+    // is a bird spinning on the spot
+    public static double enclosedLookahead = 0.6;
+
+    // how much the carrot is pulled in, in blocks, per block the mob is off the line. A shove leaves
+    // the bird flying parallel to the path rather than along it, and a carrot far ahead rejoins so
+    // gently it can take longer than the path itself. Pulling it in makes the rejoin an actual
+    // correction, at the cost of a sharper turn while it happens
+    public static double offRouteRecoveryGain = 1.0;
+
+    // how far either side of the cursor to look when projecting the mob back onto the path. Only has
+    // to cover a tick of travel; kept short because a long window can snap the cursor across a
+    // hairpin and skip the leg in between. Symmetric because the cursor is allowed to lose ground,
+    // see PathRuler.advanceCursorTo
     public static double projectionWindow = 2.0;
 
     // how close to the end of the path counts as arrived. Needed because braking is geometric: the

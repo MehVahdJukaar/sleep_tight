@@ -70,25 +70,6 @@ public final class ThrottleProfile {
     }
 
     /**
-     * The tightest limit anywhere in the next {@code window} blocks, and the one the follower should
-     * actually be reading. It cannot brake on command: drag is the only deceleration it has, so it
-     * has to see a corner a block or more out rather than discover it on arrival.
-     * <p>
-     * The profile is piecewise linear, so the minimum over a stretch is always at one of the two ends
-     * or at a node in between. No sampling needed.
-     */
-    public double speedLimitOver(double from, double window) {
-        double to = from + window;
-        double tightest = Math.min(this.speedLimitAt(from), this.speedLimitAt(to));
-        for (int i = this.nodeAtOrBefore(Math.max(from, 0.0)); i < this.arc.length && this.arc[i] <= to; i++) {
-            if (this.arc[i] >= from) {
-                tightest = Math.min(tightest, this.limit[i]);
-            }
-        }
-        return tightest;
-    }
-
-    /**
      * How long flying this path should take at the profiled speeds. Vanilla's per-node timeout
      * budgets from cruise speed and so fires spuriously once the mob starts slowing for corners;
      * this is the number that watchdog should be using instead.

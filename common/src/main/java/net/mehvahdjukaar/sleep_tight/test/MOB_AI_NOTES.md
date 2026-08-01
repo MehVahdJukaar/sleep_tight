@@ -468,8 +468,8 @@ if (dx*dx + dy*dy + dz*dz < MIN_SPEED_SQR) {   // ~0.0005 blocks
 }
 ```
 
-Here "wanted position" is the carrot, which should always be ~`BirdFlightConfig.lookahead` blocks
-ahead. If the cursor stalls and momentum carries the mob up to that frozen point, thrust snaps to
+Here "wanted position" is the carrot, which should always be roughly a lookahead ahead (today
+between `BirdFlightConfig.enclosedLookahead` and `openAirLookahead`). If the cursor stalls and momentum carries the mob up to that frozen point, thrust snaps to
 exactly zero with no taper, position stops changing, and the cursor never gets another chance to
 advance (it only moves via `mob position -> projection`). Self-reinforcing, not a one-off glitch.
 
@@ -502,17 +502,20 @@ near-duplicate consecutive nodes and `advanceCursorTo`'s `legLengthSqr < 1.0E-9`
 projection window, looks wrong: the lattice emits one node per distinct cell, so consecutive
 `getEntityPosAtNode` results are never degenerate and that branch is dead code in practice.
 
-Three other paths to zero thrust while `STEERING` survive and should be kept in mind if it recurs:
+Three other paths to zero thrust while `STEERING` existed alongside it, and all three are gone with
+the follower rewrite that replaced the braking block with a `ThrottleProfile` lookup. Recorded
+because they are the shapes to look for if this ever recurs:
 
-- `MIN_SPEED_SQR` at all, which is a leftover from "wanted position = destination" and has no
-  meaning for a carrot that should always be `lookahead` blocks ahead
-- `forwardShare = horizontal/distance` goes to zero when the carrot is directly above or below, so a
-  vertical lattice leg gets no forward thrust at all
-- `brakeFactor(left.horizontal(), ...)` goes to zero when `remainingAlongPath` sums a nearly vertical
-  stretch, since it only accumulates horizontal distance
+- `MIN_SPEED_SQR`, a leftover from "wanted position = destination" with no meaning for a carrot that
+  always sits some way ahead. Now `MIN_DIRECTION_LENGTH`, small enough to only catch a degenerate
+  direction
+- `forwardShare = horizontal/distance` going to zero when the carrot is directly above or below, so a
+  vertical lattice leg got no thrust at all. The throttle is now split between `zza` and `yya` by the
+  slope of the line, so a vertical leg puts all of it into the climb
+- `brakeFactor(left.horizontal(), ...)` going to zero when `remainingAlongPath` summed a nearly
+  vertical stretch, since it only accumulated horizontal distance. Deleted outright
 
-All three live in `BirdMoveControl` and all three disappear in the follower rewrite, which replaces
-the whole braking block with a `ThrottleProfile` lookup. See `FLIGHT_ARCHITECTURE.md`.
+See `FLIGHT_ARCHITECTURE.md`.
 
 ### How it actually gets caught (or doesn't)
 

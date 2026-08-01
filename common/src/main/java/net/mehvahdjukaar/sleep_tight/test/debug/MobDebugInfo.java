@@ -4,12 +4,16 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Live navigation/steering state, the bits of "what is the mob thinking right now" that
  * {@link DebugPath} does not carry because they change every tick and are not part of the
  * search result: whether the navigation considers itself stuck or done, where it is steering
  * towards, how far along the {@link net.mehvahdjukaar.sleep_tight.test.navigator.PathRuler} the
- * mob has gotten, and the two vanilla watchdog timers that can kill a path out from under it: the
+ * mob has gotten and how far off the line it is, and the two vanilla watchdog timers that can kill a
+ * path out from under it: the
  * 100-tick distance-based stuck check and the per-node timeout (three times the expected travel
  * time for the current node). The two are independent - the timeout clears {@code isStuck} right
  * before it stops the path, so it never shows up as "stuck" even though it gave up just the same.
@@ -23,18 +27,19 @@ import net.minecraft.world.phys.Vec3;
  */
 public record MobDebugInfo(boolean stuck, boolean pathDone, boolean steering, String operation,
                            Vec3 mobPos, Vec3 wantedPos, Vec3 velocity, float yRot,
-                           double rulerCursor, double rulerLength,
+                           double rulerCursor, double rulerLength, double offRoute,
                            int nextNodeIndex, int nodeCount,
                            long timeoutTimer, double timeoutLimit, int ticksSinceStuckCheck,
-                           double speedLimitNow, double speedLimitAhead) {
+                           double speedLimitNow, double speedLimitCommanded,
+                           int trailEpoch, List<Vec3> trailSamples) {
 
     public static MobDebugInfo read(FriendlyByteBuf buf) {
         return new MobDebugInfo(buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readUtf(),
                 readVec3(buf), readVec3(buf), readVec3(buf), buf.readFloat(),
-                buf.readDouble(), buf.readDouble(),
+                buf.readDouble(), buf.readDouble(), buf.readDouble(),
                 buf.readVarInt(), buf.readVarInt(),
                 buf.readVarLong(), buf.readDouble(), buf.readVarInt(),
-                buf.readDouble(), buf.readDouble());
+                buf.readDouble(), buf.readDouble(), buf.readVarInt(), readTrail(buf));
     }
 
     public void write(FriendlyByteBuf buf) {
@@ -48,13 +53,19 @@ public record MobDebugInfo(boolean stuck, boolean pathDone, boolean steering, St
         buf.writeFloat(this.yRot);
         buf.writeDouble(this.rulerCursor);
         buf.writeDouble(this.rulerLength);
+        buf.writeDouble(this.offRoute);
         buf.writeVarInt(this.nextNodeIndex);
         buf.writeVarInt(this.nodeCount);
         buf.writeVarLong(this.timeoutTimer);
         buf.writeDouble(this.timeoutLimit);
         buf.writeVarInt(this.ticksSinceStuckCheck);
         buf.writeDouble(this.speedLimitNow);
-        buf.writeDouble(this.speedLimitAhead);
+        buf.writeDouble(this.speedLimitCommanded);
+        buf.writeVarInt(this.trailEpoch);
+        buf.writeVarInt(this.trailSamples.size());
+        for (Vec3 point : this.trailSamples) {
+            writeVec3(buf, point);
+        }
     }
 
     /**
@@ -83,6 +94,15 @@ public record MobDebugInfo(boolean stuck, boolean pathDone, boolean steering, St
 
     private static Vec3 readVec3(FriendlyByteBuf buf) {
         return new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
+    }
+
+    private static List<Vec3> readTrail(FriendlyByteBuf buf) {
+        int size = buf.readVarInt();
+        List<Vec3> trail = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            trail.add(readVec3(buf));
+        }
+        return trail;
     }
 
     private static void writeVec3(FriendlyByteBuf buf, Vec3 vec) {
