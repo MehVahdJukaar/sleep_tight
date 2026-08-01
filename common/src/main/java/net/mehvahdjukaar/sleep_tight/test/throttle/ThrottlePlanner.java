@@ -1,6 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.test.throttle;
 
-import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdNode;
+import net.mehvahdjukaar.sleep_tight.test.pathfinding.FlightLine;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.pathfinder.Path;
@@ -34,20 +34,13 @@ public final class ThrottlePlanner {
     private static final double MIN_HORIZONTAL_LEG_SQR = 1.0E-8;
 
     /**
-     * Convenience wrapper: pulls the two things the planner needs off a finished path. Positions
-     * come from the path rather than the raw nodes so the profile is built against the same points
-     * the follower will be steering at. Heading is deliberately not read, see the class doc.
+     * Convenience wrapper: pulls the two things the planner needs off a finished path, through the
+     * same {@link FlightLine} the follower steers at, so the profile cannot be built against a
+     * different line to the one that gets flown. Heading is deliberately not read, see the class doc.
      */
     public static ThrottleProfile fromPath(Path path, Entity entity, FlightEnvelope envelope) {
-        int count = path.getNodeCount();
-        Vec3[] points = new Vec3[count];
-        float[] enclosure = new float[count];
-        for (int i = 0; i < count; i++) {
-            points[i] = path.getEntityPosAtNode(entity, i);
-            // a path that went through trimPath can contain plain vanilla nodes, so this is optional
-            enclosure[i] = path.getNode(i) instanceof BirdNode bird ? bird.enclosure : 0.0F;
-        }
-        return plan(points, enclosure, envelope);
+        FlightLine line = FlightLine.of(path, entity);
+        return plan(line.points(), line.enclosure(), envelope);
     }
 
     /**
@@ -131,20 +124,17 @@ public final class ThrottlePlanner {
      * through. {@link #climbLimit} does not catch it either, since that prices how steep a leg is
      * rather than how abruptly the steepness changes between two of them.
      * <p>
-     * Which margin applies depends on which way the arc bulges, and the two are nothing like each
-     * other. The path is drawn along the mob's feet, so a node the line peaks at is cut downward
-     * into whatever the bird was climbing over, with next to no room to do it in, while a trough is
-     * cut upward into the free part of the cell.
+     * Which way the arc bulges does not matter, only how far: {@link FlightLine} centres the line in
+     * the cells the search certified, so a peak cut downward and a trough cut upward have the same
+     * room. That was not true while the line ran along the mob's feet, where a peak had none at all.
      */
     private static double pitchCornerLimit(Vec3 before, Vec3 at, Vec3 after, FlightEnvelope envelope) {
-        double arriving = signedLegPitch(before, at);
-        double leaving = signedLegPitch(at, after);
-        double turnAngle = Math.abs(leaving - arriving);
+        double turnAngle = Math.abs(signedLegPitch(at, after) - signedLegPitch(before, at));
         if (turnAngle < MIN_TURN_ANGLE) {
             return NO_LIMIT;
         }
-        double margin = leaving < arriving ? envelope.corridorMarginBelow() : envelope.corridorMarginAbove();
-        return envelope.maxSpeedForPitchChange(margin, overshootPerRadius(turnAngle));
+        return envelope.maxSpeedForPitchChange(
+                envelope.verticalCorridorMargin(), overshootPerRadius(turnAngle));
     }
 
     /**

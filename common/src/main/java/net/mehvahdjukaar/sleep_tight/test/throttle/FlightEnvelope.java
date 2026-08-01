@@ -1,6 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.test.throttle;
 
 import net.mehvahdjukaar.sleep_tight.test.controller.BirdFlightConfig;
+import net.mehvahdjukaar.sleep_tight.test.pathfinding.FlightLine;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -28,8 +29,7 @@ public record FlightEnvelope(
         double accelPerTick,
         double maxThrottle,
         double corridorMargin,
-        double corridorMarginAbove,
-        double corridorMarginBelow,
+        double verticalCorridorMargin,
         double maxClimbAngle,
         double hoverSpeedFraction
 ) {
@@ -57,8 +57,9 @@ public record FlightEnvelope(
                 accel,
                 throttleCap,
                 BirdFlightConfig.corridorMargin,
-                BirdFlightConfig.corridorMarginAbove,
-                BirdFlightConfig.corridorMarginBelow,
+                // measured off the mob rather than configured, because it is not a preference: it is
+                // exactly the room left over once the mob is centred in the cells the search tested
+                FlightLine.verticalNodeOffset(mob),
                 BirdFlightConfig.maxClimbAngle * Mth.DEG_TO_RAD,
                 BirdFlightConfig.hoverSpeedFraction);
     }
@@ -140,16 +141,17 @@ public record FlightEnvelope(
 
     /**
      * Trims an offset from the drawn line to what the corridor around it can actually take: the flat
-     * {@link #corridorMargin} sideways, and the asymmetric {@link #corridorMarginAbove} /
-     * {@link #corridorMarginBelow} pair vertically, since the line runs along the mob's feet rather
-     * than through its middle. The horizontal part is scaled rather than clamped per axis, so
-     * trimming it never swings the direction round.
+     * {@link #corridorMargin} sideways and {@link #verticalCorridorMargin} up or down. The two are
+     * separate because the horizontal one is a tuned allowance that counts on neighbouring cells
+     * usually being free, while the vertical one is the measured room inside the cells the search
+     * actually certified. The horizontal part is scaled rather than clamped per axis, so trimming it
+     * never swings the direction round.
      */
     public Vec3 clampToCorridor(Vec3 offset) {
         double horizontal = offset.horizontalDistance();
         double scale = horizontal > this.corridorMargin ? this.corridorMargin / horizontal : 1.0;
         return new Vec3(offset.x * scale,
-                Mth.clamp(offset.y, -this.corridorMarginBelow, this.corridorMarginAbove),
+                Mth.clamp(offset.y, -this.verticalCorridorMargin, this.verticalCorridorMargin),
                 offset.z * scale);
     }
 

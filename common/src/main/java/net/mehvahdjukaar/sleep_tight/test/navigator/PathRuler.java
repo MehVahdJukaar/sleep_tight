@@ -1,6 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.test.navigator;
 
-import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdNode;
+import net.mehvahdjukaar.sleep_tight.test.pathfinding.FlightLine;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.pathfinder.Path;
@@ -19,8 +19,9 @@ import org.jetbrains.annotations.Nullable;
  * Besides the cursor it measures the two things the follower's policy is driven by: how far off the
  * line the mob is, and how much of the drawn line it is rounding off, see {@link #groundPerArc()}.
  * <p>
- * Pure geometry: it knows nothing about the mob beyond where it is. Node positions are read once,
- * since the search is finished by the time a path exists and the shape never changes afterwards.
+ * Pure geometry: it knows nothing about the mob beyond where it is. The line itself comes from
+ * {@link FlightLine}, which is also what the throttle planner measures, so the two cannot disagree
+ * about where it runs.
  */
 public class PathRuler {
 
@@ -70,17 +71,12 @@ public class PathRuler {
     private Vec3 lastPosition;
 
     public PathRuler(Path path, Entity entity) {
-        int count = path.getNodeCount();
-        this.points = new Vec3[count];
-        this.enclosure = new float[count];
-        this.distanceAt = new double[count];
-        for (int i = 0; i < count; i++) {
-            this.points[i] = path.getEntityPosAtNode(entity, i);
-            // a path that went through trimPath can contain plain vanilla nodes, so this is optional
-            this.enclosure[i] = path.getNode(i) instanceof BirdNode bird ? bird.enclosure : 0.0F;
-            if (i > 0) {
-                this.distanceAt[i] = this.distanceAt[i - 1] + this.points[i].distanceTo(this.points[i - 1]);
-            }
+        FlightLine line = FlightLine.of(path, entity);
+        this.points = line.points();
+        this.enclosure = line.enclosure();
+        this.distanceAt = new double[line.size()];
+        for (int i = 1; i < this.points.length; i++) {
+            this.distanceAt[i] = this.distanceAt[i - 1] + this.points[i].distanceTo(this.points[i - 1]);
         }
     }
 
