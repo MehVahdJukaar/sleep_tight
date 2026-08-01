@@ -146,17 +146,19 @@ public record FlightEnvelope(
      * The fastest a pitch change may be flown while bulging no more than {@code margin} off the
      * drawn line, given how far that shape of bend throws the arc per block of radius.
      * <p>
-     * The vertical twin of {@link #turnRadiusAt}, and deliberately not the same formula, because
-     * there is no turn rate in the vertical plane: {@code travel()} only ever changes vertical
-     * velocity through thrust, so the climb angle comes round at {@code accel / speed} rather than
-     * at a fixed rate, the radius is {@code speed^2 / accel}, and solving
-     * {@code radius * overshoot <= margin} for speed gives this.
+     * The same formula as the horizontal corner rule, and it did not used to be. While vertical
+     * velocity was left to thrust alone the climb angle came round at {@code accel/speed} instead of
+     * at a fixed rate, making the radius {@code speed^2/accel} and this a square root. Now that
+     * {@code BirdMoveControl.turnVelocityPitch} steers the velocity's pitch the way the yaw half
+     * steers its heading, both planes turn at {@link #maxYawRate} and a turn is priced the same way
+     * whichever one it happens in. The margins still differ - sideways is a tuned allowance, up and
+     * down is the measured room inside the certified cells - which is why this still takes one.
      */
     public double maxSpeedForPitchChange(double margin, double overshootPerRadius) {
-        if (this.accelPerTick <= 0.0 || overshootPerRadius <= 1.0E-9) {
+        if (overshootPerRadius <= 1.0E-9) {
             return Double.MAX_VALUE;
         }
-        return Math.sqrt(Math.max(0.0, margin) * this.accelPerTick / overshootPerRadius);
+        return this.maxYawRate * Math.max(0.0, margin) / overshootPerRadius;
     }
 
     /**

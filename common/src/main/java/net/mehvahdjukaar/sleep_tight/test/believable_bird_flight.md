@@ -139,7 +139,21 @@ with a fixed 15 deg/tick, tripled the radius to the predicted 0.77 - corners ove
 and the corner rule stayed silent throughout because its 90 degree limit (`0.221 b/t`) sits just
 above the new top speed (`0.202`). Mystery drift, exactly as called.
 
-The fix inverts which of the two is configured. `BirdFlightConfig.turnRadius` is now the knob and
+**And that was only the horizontal half.** Velocity steering (section 1) was only ever applied to the
+heading, so vertical velocity stayed at the mercy of thrust alone: the flight path bends at
+`accel/speed`, giving a vertical turn radius of `speed^2/accel`, which at terminal speed is
+`speed*drag/(1-drag)` - about **10x the speed in blocks**, whatever the throttle. 0.6 blocks at the
+old crawl, 2.0 at full thrust, against a pure pursuit arc that can never be wider than `lookahead/2`
+= 0.75. Past roughly `0.075 b/t` the bird simply cannot follow a pitch change.
+
+Observed exactly: on a path 2 blocks out and 5 down, the bird held level, flew off the end, found the
+carrot directly beneath it, took an arbitrary heading out of the collapsed horizontal component
+(`yawTowards` on numerical residue), flew a 180 degree circle, and only descended once the turn had
+bled the speed off. `turnVelocityPitch` steers the velocity's climb angle the same way the yaw half
+steers its heading, so both planes turn at `maxYawRate` and the vertical radius is `speed/omega` too.
+`maxSpeedForPitchChange` stopped being a square root at the same time.
+
+The horizontal fix inverts which of the two is configured. `BirdFlightConfig.turnRadius` is now the knob and
 `FlightEnvelope` derives `omega = maxSpeed / turnRadius`, so the radius is what stays put when speed
 moves. Falls out of it: the corner rule's limits become a fixed *fraction* of top speed
 (`margin / (r * overshoot)` has no speed in it), so the profile's shape no longer depends on how fast

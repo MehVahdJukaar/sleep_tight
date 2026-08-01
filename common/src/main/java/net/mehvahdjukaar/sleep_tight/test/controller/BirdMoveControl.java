@@ -21,8 +21,9 @@ import net.minecraft.world.phys.Vec3;
  * already worked out what every point of the path may be taken at and this only has to stay under it.
  * <p>
  * Three jobs, and only three. Point the body at the carrot at a limited rate; bring the momentum
- * round with it, since {@code travel()} only ever pushes along yaw and would otherwise leave the
- * velocity decaying along the old heading; and hold whatever speed it was told it may hold.
+ * round with it in both planes, since {@code travel()} only ever pushes along yaw and would
+ * otherwise leave the velocity decaying along the old heading and the old climb angle; and hold
+ * whatever speed it was told it may hold.
  * <p>
  * It holds no history at all: where it is aimed and how fast it may go are handed down fresh every
  * tick by {@link BirdPathNavigation}, so a mob that gets shoved recovers from wherever it lands
@@ -51,6 +52,12 @@ public class BirdMoveControl extends MoveControl {
     // the carrot always sits some way ahead, so this only ever catches a degenerate direction, never
     // arrival. Not vanilla's MIN_SPEED_SQR, which is an acceptance sphere and has no meaning here
     private static final double MIN_DIRECTION_LENGTH = 1.0E-4;
+
+    // below this much horizontal spread there is no heading in the carrot to steer to, only the
+    // numerical residue of one, and yawTowards would hand back an arbitrary angle. A bird that has
+    // ended up directly over its target should hold the heading it has and go down, not pick a
+    // direction out of the rounding error and fly a circle looking for one
+    private static final double MIN_HORIZONTAL_AIM_SQR = 1.0E-2;
 
     public BirdMoveControl(Mob mob) {
         super(mob);
@@ -112,8 +119,13 @@ public class BirdMoveControl extends MoveControl {
         // cannot come from two different snapshots of the config
         FlightEnvelope envelope = this.envelope();
         float yawBefore = this.mob.getYRot();
-        this.steerYaw(toCarrot.x, toCarrot.z, envelope);
+        // a carrot straight overhead or straight underfoot has no heading in it, so keep the one we
+        // have rather than steering to whatever the residue says
+        if (toCarrot.horizontalDistanceSqr() > MIN_HORIZONTAL_AIM_SQR) {
+            this.steerYaw(toCarrot.x, toCarrot.z, envelope);
+        }
         this.turnVelocityWithBody(Mth.degreesDifference(yawBefore, this.mob.getYRot()));
+        this.turnVelocityPitch(toCarrot, envelope);
         this.applyThrust(toCarrot, envelope);
         this.matchPitchToVelocity();
     }
@@ -163,6 +175,44 @@ public class BirdMoveControl extends MoveControl {
         Vec3 velocity = this.mob.getDeltaMovement();
         this.mob.setDeltaMovement(
                 velocity.x * cos - velocity.z * sin, velocity.y, velocity.x * sin + velocity.z * cos);
+    }
+
+    /**
+     * The vertical half of {@link #turnVelocityWithBody}, and the reason a fast bird flew straight
+     * through every dive.
+     * <p>
+     * Nothing in {@code travel()} ever rotates vertical velocity: it is only ever changed by thrust
+     * against drag, which bends the flight path at {@code accel/speed} and so gives a vertical turn
+     * radius of {@code speed^2/accel}. At terminal speed {@code accel} is {@code speed*(1-drag)/drag},
+     * so that radius is about ten times the speed in blocks however the throttle is set - 0.6 blocks
+     * at the old crawl, 2 at full thrust. Pure pursuit cannot ask for an arc wider than half its
+     * lookahead, so past about 0.075 blocks a tick the bird physically stops being able to follow a
+     * pitch change, holds level, flies off the end of the path and only then finds its way down.
+     * <p>
+     * Steering the velocity's pitch the way the yaw half steers its heading puts the vertical radius
+     * back at {@code speed/yawRate}, the same as the horizontal one, so a turn costs the same room
+     * whichever plane it happens in. The magnitude is untouched, so thrust and drag still own speed.
+     */
+    private void turnVelocityPitch(Vec3 toCarrot, FlightEnvelope envelope) {
+        Vec3 velocity = this.mob.getDeltaMovement();
+        double speed = velocity.length();
+        double heading = velocity.horizontalDistance();
+        if (speed < MIN_DIRECTION_LENGTH) {
+            return;
+        }
+        double current = Mth.atan2(velocity.y, heading);
+        double wanted = Mth.atan2(toCarrot.y, toCarrot.horizontalDistance());
+        double maxStep = envelope.maxYawRate() * BirdFlightConfig.velocitySteerFraction;
+        double pitch = current + Mth.clamp(wanted - current, -maxStep, maxStep);
+        double vertical = Math.sin(pitch) * speed;
+        if (heading < MIN_DIRECTION_LENGTH) {
+            // going straight up or down, so there is no horizontal direction to preserve. Leave the
+            // horizontal alone and let thrust rebuild it rather than inventing a heading here
+            this.mob.setDeltaMovement(velocity.x, vertical, velocity.z);
+            return;
+        }
+        double scale = Math.cos(pitch) * speed / heading;
+        this.mob.setDeltaMovement(velocity.x * scale, vertical, velocity.z * scale);
     }
 
     /**
