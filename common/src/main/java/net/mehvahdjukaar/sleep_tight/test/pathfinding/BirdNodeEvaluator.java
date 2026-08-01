@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.mehvahdjukaar.sleep_tight.test.controller.PerchingFlier;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.PathNavigationRegion;
 import net.minecraft.world.level.pathfinder.FlyNodeEvaluator;
@@ -52,7 +53,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     // path type lookups. Same relative packing as latticeNodes, cleared alongside it
     private final Long2FloatMap enclosures = new Long2FloatOpenHashMap();
     // node keys are packed relative to this, so any real world coordinate fits
-    private int originX, originY, originZ;
+    private Vec3i origin;
     // whether the mob had its feet down when the search began, see getStart
     private boolean startsPerched;
 
@@ -82,10 +83,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
         super.prepare(level, mob);
         this.latticeNodes.clear();
         this.enclosures.clear();
-        BlockPos origin = mob.blockPosition();
-        this.originX = origin.getX();
-        this.originY = origin.getY();
-        this.originZ = origin.getZ();
+        this.origin = mob.blockPosition();
         this.startsPerched = mob instanceof PerchingFlier flier && flier.isPerched();
         this.expansions = 0;
         this.generatedNeighbors = 0;
@@ -291,9 +289,9 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     // it past 8 needs a wider field here (and one fewer bit of coordinate range)
     private long packKey(int x, int y, int z, int heading, boolean freeHeading) {
         long key = 0;
-        key |= ((long) (x - originX) & 0x1FFF);          // 13 signed bits, +-4096
-        key |= ((long) (y - originY) & 0x3FF) << 13;     // 10 signed bits
-        key |= ((long) (z - originZ) & 0x1FFF) << 23;    // 13 signed bits
+        key |= ((long) (x - origin.getX()) & 0x1FFF);          // 13 signed bits, +-4096
+        key |= ((long) (y - origin.getY()) & 0x3FF) << 13;     // 10 signed bits
+        key |= ((long) (z - origin.getZ()) & 0x1FFF) << 23;    // 13 signed bits
         key |= ((long) heading & 0x7) << 36;
         key |= (freeHeading ? 1L : 0L) << 39;            // free states are their own layer
         return key;

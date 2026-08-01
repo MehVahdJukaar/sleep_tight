@@ -92,6 +92,7 @@ public final class ThrottlePlanner {
             double speed = envelope.maxSpeed();
             if (i > 0 && i < last) {
                 speed = Math.min(speed, cornerLimit(points[i - 1], points[i], points[i + 1], enclosure[i], envelope));
+                speed = Math.min(speed, pitchCornerLimit(points[i - 1], points[i], points[i + 1], envelope));
             }
             speed = Math.min(speed, climbLimit(points, i, envelope));
             // a bird that stops dead in mid air looks broken, so a corner costs speed but never all of it
@@ -121,6 +122,29 @@ public final class ThrottlePlanner {
         }
         double margin = envelope.corridorMargin() * (1.0 - Mth.clamp(enclosure, 0.0F, 1.0F));
         return envelope.maxYawRate() * margin / overshootPerRadius(turnAngle);
+    }
+
+    /**
+     * The corner rule again in the vertical plane, and the one {@link #cornerLimit} structurally
+     * cannot see: a shallow staircase is a sawtooth of {@code dy = 1, 0, 1, 0} steps flown on a
+     * single heading, so every node along it has a horizontal turn angle of zero and gets waved
+     * through. {@link #climbLimit} does not catch it either, since that prices how steep a leg is
+     * rather than how abruptly the steepness changes between two of them.
+     * <p>
+     * Which margin applies depends on which way the arc bulges, and the two are nothing like each
+     * other. The path is drawn along the mob's feet, so a node the line peaks at is cut downward
+     * into whatever the bird was climbing over, with next to no room to do it in, while a trough is
+     * cut upward into the free part of the cell.
+     */
+    private static double pitchCornerLimit(Vec3 before, Vec3 at, Vec3 after, FlightEnvelope envelope) {
+        double arriving = signedLegPitch(before, at);
+        double leaving = signedLegPitch(at, after);
+        double turnAngle = Math.abs(leaving - arriving);
+        if (turnAngle < MIN_TURN_ANGLE) {
+            return NO_LIMIT;
+        }
+        double margin = leaving < arriving ? envelope.floorMargin() : envelope.ceilingMargin();
+        return envelope.maxSpeedForPitchChange(margin, overshootPerRadius(turnAngle));
     }
 
     /**
@@ -172,8 +196,13 @@ public final class ThrottlePlanner {
     }
 
     private static double legPitch(Vec3 from, Vec3 to) {
+        return Math.abs(signedLegPitch(from, to));
+    }
+
+    /** Climb angle of a leg, positive climbing and negative diving. A vertical hop is +-90 degrees. */
+    private static double signedLegPitch(Vec3 from, Vec3 to) {
         Vec3 leg = to.subtract(from);
-        return Math.abs(Mth.atan2(leg.y, leg.horizontalDistance()));
+        return Mth.atan2(leg.y, leg.horizontalDistance());
     }
 
     // ---- pass 2: backwards, can it slow down in time ----

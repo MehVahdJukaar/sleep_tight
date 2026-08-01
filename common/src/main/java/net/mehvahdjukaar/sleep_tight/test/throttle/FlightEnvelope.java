@@ -4,6 +4,7 @@ import net.mehvahdjukaar.sleep_tight.test.controller.BirdFlightConfig;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Everything about what a bird can physically do, in one place. The search reads it to price turns,
@@ -27,6 +28,8 @@ public record FlightEnvelope(
         double accelPerTick,
         double maxThrottle,
         double corridorMargin,
+        double ceilingMargin,
+        double floorMargin,
         double maxClimbAngle,
         double hoverSpeedFraction
 ) {
@@ -54,6 +57,8 @@ public record FlightEnvelope(
                 accel,
                 throttleCap,
                 BirdFlightConfig.corridorMargin,
+                BirdFlightConfig.ceilingMargin,
+                BirdFlightConfig.floorMargin,
                 BirdFlightConfig.maxClimbAngle * Mth.DEG_TO_RAD,
                 BirdFlightConfig.hoverSpeedFraction);
     }
@@ -114,6 +119,38 @@ public record FlightEnvelope(
      */
     public double turnRadiusAt(double speed) {
         return this.maxYawRate <= 0.0 ? Double.MAX_VALUE : speed / this.maxYawRate;
+    }
+
+    /**
+     * The fastest a pitch change may be flown while bulging no more than {@code margin} off the
+     * drawn line, given how far that shape of bend throws the arc per block of radius.
+     * <p>
+     * The vertical twin of {@link #turnRadiusAt}, and deliberately not the same formula, because
+     * there is no turn rate in the vertical plane: {@code travel()} only ever changes vertical
+     * velocity through thrust, so the climb angle comes round at {@code accel / speed} rather than
+     * at a fixed rate, the radius is {@code speed^2 / accel}, and solving
+     * {@code radius * overshoot <= margin} for speed gives this.
+     */
+    public double maxSpeedForPitchChange(double margin, double overshootPerRadius) {
+        if (this.accelPerTick <= 0.0 || overshootPerRadius <= 1.0E-9) {
+            return Double.MAX_VALUE;
+        }
+        return Math.sqrt(Math.max(0.0, margin) * this.accelPerTick / overshootPerRadius);
+    }
+
+    /**
+     * Trims an offset from the drawn line to what the corridor around it can actually take: the flat
+     * {@link #corridorMargin} sideways, and the asymmetric {@link #ceilingMargin} /
+     * {@link #floorMargin} pair vertically, since the line runs along the mob's feet rather than
+     * through its middle. The horizontal part is scaled rather than clamped per axis, so trimming it
+     * never swings the direction round.
+     */
+    public Vec3 clampToCorridor(Vec3 offset) {
+        double horizontal = offset.horizontalDistance();
+        double scale = horizontal > this.corridorMargin ? this.corridorMargin / horizontal : 1.0;
+        return new Vec3(offset.x * scale,
+                Mth.clamp(offset.y, -this.floorMargin, this.ceilingMargin),
+                offset.z * scale);
     }
 
     /**

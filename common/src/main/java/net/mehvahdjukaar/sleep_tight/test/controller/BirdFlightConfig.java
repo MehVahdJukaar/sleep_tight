@@ -99,6 +99,19 @@ public class BirdFlightConfig {
     // walled in the cell is, since only the cells on the line were certified clear
     public static double corridorMargin = 0.35;
 
+    // the same, vertically, and split in two because the vertical corridor is not centred on the
+    // line the way the horizontal one is. Path.getEntityPosAtNode puts the mob at the BOTTOM of its
+    // node cell, so the drawn line runs along the bird's feet: the certified room is all above it
+    // (one cell minus the mob's height, 0.25 for the 0.75 tall test bird) and there is none at all
+    // below. A bird smoothing over a staircase cuts the peaks downward, straight into the steps,
+    // which is exactly the direction with no budget.
+    // The floor value is a small fiction rather than the true zero, which would have the bird crawl
+    // over every step: the cell under the line is only really solid where there is a block in it,
+    // and a scalar enclosure cannot say which side of a cell is blocked. Directional clearance is
+    // what would let this be measured instead of guessed
+    public static double ceilingMargin = 0.25;
+    public static double floorMargin = 0.08;
+
     // above this the bird is climbing steeply enough to be hovering rather than flying, which is
     // slow and effortful. Legs steeper than this get scaled down towards hoverSpeedFraction, reaching
     // it on a purely vertical move. Stops the lattice's vertical hops being flown like an elevator

@@ -44,6 +44,14 @@ public class BirdPathNavigation extends FlyingPathNavigation {
     /** Below this much horizontal spread the path leaves vertically and there is nothing to face. */
     private static final double MIN_LAUNCH_SPREAD = 1.0E-4;
 
+    /**
+     * How hard the lookahead is pulled in each time the cut it implies still does not fit the
+     * corridor, and how many times that is tried. Three trims take the open air 1.5 to 0.51, which is
+     * already under the enclosed floor, so this always ends on the floor rather than on the counter.
+     */
+    private static final double LOOKAHEAD_TRIM = 0.7;
+    private static final int MAX_LOOKAHEAD_TRIMS = 3;
+
     // vanilla keeps its PathFinder private, and createPathFinder runs from the super constructor,
     // so this deliberately has no initializer: one here would run afterwards and wipe it
     @Nullable
@@ -135,7 +143,7 @@ public class BirdPathNavigation extends FlyingPathNavigation {
             return;
         }
         PathRuler ruler = this.ruler();
-        Vec3 away = ruler.lookaheadPoint(this.lookahead(ruler)).subtract(this.getTempMobPos());
+        Vec3 away = this.carrotFor(ruler).subtract(this.getTempMobPos());
         float launchYaw = away.horizontalDistanceSqr() < MIN_LAUNCH_SPREAD
                 ? this.mob.getYRot() : BirdMoveControl.yawTowards(away.x, away.z);
         flier.requestLaunch(launchYaw);
@@ -165,7 +173,7 @@ public class BirdPathNavigation extends FlyingPathNavigation {
      * <p>
      * How far ahead is the control's policy, not ours: it is the one that knows how much of the line
      * it is willing to round off. Turning that distance into a point is route geometry, which is why
-     * the resolving happens here.
+     * the resolving happens here, and why the corridor check on top of it lives here too.
      */
     @Override
     public void tick() {
@@ -183,12 +191,48 @@ public class BirdPathNavigation extends FlyingPathNavigation {
         }
         super.tick();
         if (!this.isDone() && this.ruler != null) {
-            Vec3 carrot = this.ruler.lookaheadPoint(this.lookahead(this.ruler));
+            Vec3 carrot = this.carrotFor(this.ruler);
             // deliberately not getGroundY: that snaps the y to the top of whatever is under the
             // carrot's block, which is right for a walker and drags a flier down into the terrain
             // any time it flies within a block of a surface. FlyingPathNavigation never overrode it
             this.mob.getMoveControl().setWantedPosition(carrot.x, carrot.y, carrot.z, this.speedModifier);
         }
+    }
+
+    /**
+     * Where the follower should aim this tick, which is not simply a point {@code lookahead} blocks
+     * further along the line.
+     * <p>
+     * Pure pursuit flies the chord to its carrot, so wherever the line bends between here and there
+     * the mob cuts the bend, and the cut is a direction and not just a size: over a staircase it is
+     * downward, into the steps. And the room to cut into is nothing like the same on all sides,
+     * because the line is drawn along the bird's feet. So the bend is measured, the aim point is
+     * pushed back along it by as much as the corridor will take, and only if the leftover still does
+     * not fit is the lookahead pulled in until it does. Biasing is the useful half and shortening is
+     * the blunt one, which is why it is the fallback: a shorter carrot stops smoothing and goes back
+     * to tracking the polyline, corners and all.
+     * <p>
+     * This is the geometric version of what {@code enclosure} was doing by proxy. Measuring the cut
+     * that is about to happen beats inferring it from how walled in the cell is, which cannot say
+     * which side the walls are on and, normalised over 26 neighbours, barely moves for the one
+     * blocked face under a bird skimming a surface.
+     */
+    private Vec3 carrotFor(PathRuler ruler) {
+        double cursor = ruler.cursor();
+        double lookahead = this.lookahead(ruler);
+        FlightEnvelope corridor = this.envelope != null ? this.envelope : FlightEnvelope.forMob(this.mob);
+        Vec3 cut = ruler.chordDeviation(cursor, cursor + lookahead);
+        for (int trim = 0; trim < MAX_LOOKAHEAD_TRIMS && lookahead > BirdFlightConfig.enclosedLookahead
+                && !fitsCorridor(corridor, cut); trim++) {
+            lookahead = Math.max(BirdFlightConfig.enclosedLookahead, lookahead * LOOKAHEAD_TRIM);
+            cut = ruler.chordDeviation(cursor, cursor + lookahead);
+        }
+        // towards the bulge, since that is the side the chord falls short on
+        return ruler.lookaheadPoint(lookahead).add(corridor.clampToCorridor(cut));
+    }
+
+    private static boolean fitsCorridor(FlightEnvelope corridor, Vec3 cut) {
+        return corridor.clampToCorridor(cut).distanceToSqr(cut) < 1.0E-6;
     }
 
     private double lookahead(PathRuler ruler) {

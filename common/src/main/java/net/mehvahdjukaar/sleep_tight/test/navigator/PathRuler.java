@@ -184,6 +184,38 @@ public class PathRuler {
         return this.pointAt(this.cursor + lookahead);
     }
 
+    /**
+     * How far the drawn line departs from the straight chord between two arc lengths, as a vector
+     * from the chord to the line at the worst node in between. Zero on a stretch that is already
+     * straight.
+     * <p>
+     * The measurement a follower needs to stop cutting bends into terrain. Pure pursuit flies
+     * something close to this chord, so this <i>is</i> the cut it is about to make, with a direction
+     * rather than just a size: aim the carrot back along it and the two largely cancel. That
+     * direction is the whole point, because the room to cut into is not the same on all sides. Over
+     * a staircase the line peaks and this points up, which is the one way there is any.
+     */
+    public Vec3 chordDeviation(double from, double to) {
+        Vec3 start = this.pointAt(from);
+        Vec3 chord = this.pointAt(to).subtract(start);
+        double chordLengthSqr = chord.lengthSqr();
+        if (chordLengthSqr < 1.0E-9) {
+            return Vec3.ZERO;
+        }
+        Vec3 worst = Vec3.ZERO;
+        double worstSqr = 0.0;
+        for (int i = this.segmentAt(from) + 1; i < this.points.length && this.distanceAt[i] < to; i++) {
+            double along = Mth.clamp(this.points[i].subtract(start).dot(chord) / chordLengthSqr, 0.0, 1.0);
+            Vec3 offset = this.points[i].subtract(start.add(chord.scale(along)));
+            double offsetSqr = offset.lengthSqr();
+            if (offsetSqr > worstSqr) {
+                worstSqr = offsetSqr;
+                worst = offset;
+            }
+        }
+        return worst;
+    }
+
     public Vec3 pointAt(double distance) {
         int last = this.points.length - 1;
         double clamped = Mth.clamp(distance, 0.0, this.length());
