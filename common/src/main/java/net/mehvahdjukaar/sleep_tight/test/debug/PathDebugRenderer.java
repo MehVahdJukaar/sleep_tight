@@ -33,6 +33,7 @@ public class PathDebugRenderer {
 
     private static final int FACING_COLOR = 0xFFFF55;
     private static final int VELOCITY_COLOR = 0x55FFFF;
+    private static final int LAUNCH_COLOR = 0x55FF55;
     // orange, so it stays apart from the path's green-to-red speed ramp
     private static final float TRAIL_HUE = 0.08F;
     // the moves that were offered and not taken. Flat, small and faint on purpose: there are up to
@@ -447,13 +448,18 @@ public class PathDebugRenderer {
         double progress = info.rulerLength() > 1.0E-4 ? info.rulerCursor() / info.rulerLength() * 100.0 : 0.0;
         int textColor = info.stuck() ? 0xFFFF5555 : -1;
         poseStack.translate(0,1.4,0);
-        // steering (hasWanted() && !isDone(), the exact condition BirdMoveControl branches on) is
-        // what is actually happening; raw operation is kept as a footnote since MoveControl never
-        // resets it back to WAIT here, same as vanilla's own SmoothSwimmingMoveControl
+        // steering is the exact condition BirdMoveControl branches on, so it reads COASTING both
+        // when there is nothing to fly and when the ground layer is holding the mob for a launch
+        // turn; the gait is what tells those apart. Raw operation is kept as a footnote since
+        // MoveControl never resets it back to WAIT here, same as vanilla's SmoothSwimmingMoveControl
+        String gait = info.holdingForLaunch()
+                ? String.format(Locale.ROOT, "%s %+.0fdeg", info.gait(), info.launchYawError())
+                : info.gait();
         String status = (info.stuck() ? "STUCK " : "") + (info.steering() ? "STEERING" : "COASTING")
-                + (info.pathDone() ? " done" : "") + " (" + info.operation() + ")";
+                + (info.pathDone() ? " done" : "") + " " + gait + " (" + info.operation() + ")";
         DebugRenderHelper.renderFloatingText(poseStack, bufferSource, status,
-                pos.x, pos.y + 1.0, pos.z, textColor, textScale(), true, true);
+                pos.x, pos.y + 1.0, pos.z, info.holdingForLaunch() ? LAUNCH_COLOR | 0xFF000000 : textColor,
+                textScale(), true, true);
         DebugRenderHelper.renderFloatingText(poseStack, bufferSource, String.format(Locale.ROOT,
                         "%.1f/%.1f (%.0f%%) node %d/%d", info.rulerCursor(), info.rulerLength(), progress,
                         info.nextNodeIndex(), info.nodeCount()),
@@ -501,11 +507,20 @@ public class PathDebugRenderer {
      * eye. Thrust is only ever applied along the yellow one, so the angle between them is the
      * sideslip, and a cyan arrow noticeably shorter than the nearest path arrow is the mob failing
      * to keep up with its own profile.
+     * <p>
+     * A third, green, appears only while the ground layer is holding the mob for a launch turn: it
+     * is the heading the path leaves along, and it is drawn longer than the others so the yellow one
+     * can be watched swinging round to meet it. The two meeting is the moment flight is allowed to
+     * start, so if a bird will not take off, this is the pair to look at.
      */
     private static void renderMobVectors(PoseStack poseStack, MultiBufferSource bufferSource, MobDebugInfo info,
                                          double camX, double camY, double camZ) {
         Vec3 origin = info.mobPos().subtract(camX, camY, camZ);
         Vec3 velocity = info.velocity();
+        if (info.holdingForLaunch()) {
+            DebugRenderHelper.renderArrow(poseStack, bufferSource, origin,
+                    origin.add(info.launchFacing().scale(1.25)), 0.1, LAUNCH_COLOR);
+        }
         DebugRenderHelper.renderArrow(poseStack, bufferSource, origin,
                 origin.add(info.facing().scale(0.75)), 0.15, FACING_COLOR);
         if (velocity.lengthSqr() > 1.0E-8) {

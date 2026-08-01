@@ -37,8 +37,9 @@ import net.minecraft.world.phys.Vec3;
  * <p>
  * Sections 1, 2 and 6 of {@code believable_bird_flight.md} are all in now: velocity steering here,
  * arc-length pure pursuit in {@link net.mehvahdjukaar.sleep_tight.test.navigator.PathRuler}, and an
- * absorbing arrival in {@code BirdPathNavigation.followThePath}. What is still missing is the gait
- * machine from section 6 (takeoff, flare, perch) and banking from section 5.
+ * absorbing arrival in {@code BirdPathNavigation.followThePath}. Section 6's gait machine is half
+ * built: takeoff and perch live in {@link BirdGroundControl}, which also owns {@code noGravity} now,
+ * so this class no longer touches it. The flare is still missing, as is banking from section 5.
  * <p>
  * What got deleted, because the profile subsumes all of it: the per-tick walk over the remaining
  * path nodes, the stopping-distance brake computed from it, and the separate slow-down-in-turns
@@ -81,15 +82,24 @@ public class BirdMoveControl extends MoveControl {
         return Mth.clamp(pulledIn, BirdFlightConfig.enclosedLookahead, BirdFlightConfig.openAirLookahead);
     }
 
+    /**
+     * The yaw a mob has to hold to travel along a horizontal direction, in MC's convention where 0
+     * faces +Z. Shared with {@link BirdGroundControl}'s launch turn through the navigation, so the
+     * heading the bird turns to on the ground and the one it steers to in the air are the same
+     * number by construction.
+     */
+    public static float yawTowards(double dx, double dz) {
+        return (float) (Mth.atan2(dz, dx) * Mth.RAD_TO_DEG) - 90.0F;
+    }
+
     @Override
     public void tick() {
         // the navigation is the authority on whether we are still going somewhere: nothing ever
         // clears MoveControl.operation back to WAIT for us. Same approach as SmoothSwimmingMoveControl
-        if (!this.hasWanted() || this.mob.getNavigation().isDone()) {
+        if (!this.hasWanted() || this.mob.getNavigation().isDone() || this.isHeldOnGround()) {
             this.coast();
             return;
         }
-        this.mob.setNoGravity(true);
 
         Vec3 toCarrot = new Vec3(this.wantedX - this.mob.getX(),
                 this.wantedY - this.mob.getY(), this.wantedZ - this.mob.getZ());
@@ -105,6 +115,16 @@ public class BirdMoveControl extends MoveControl {
         this.matchPitchToVelocity();
     }
 
+    /**
+     * The ground layer is turning the mob on the spot to line up with the path it was just handed.
+     * Steering has to stay out of the way until it is done: thrusting mid-pivot is the bird sliding
+     * off its perch sideways, which is the thing turning on the ground was there to avoid.
+     */
+    private boolean isHeldOnGround() {
+        return this.mob.getNavigation() instanceof BirdPathNavigation navigation
+                && navigation.isHeldOnGround();
+    }
+
     /** Cut thrust and let drag do the rest. Leaves {@code speed} alone, stuck detection reads it. */
     private void coast() {
         this.mob.setXxa(0.0F);
@@ -114,7 +134,7 @@ public class BirdMoveControl extends MoveControl {
 
     /** Turns towards the carrot at a capped rate. */
     private void steerYaw(double dx, double dz) {
-        float wantedYaw = (float) (Mth.atan2(dz, dx) * (180.0 / Math.PI)) - 90.0F;
+        float wantedYaw = yawTowards(dx, dz);
         this.mob.setYRot(this.rotlerp(this.mob.getYRot(), wantedYaw, BirdFlightConfig.maxYawPerTick));
         // a bird's body points where it flies. Left alone, BodyRotationControl lags the turn by
         // several ticks and the model reads as sliding sideways through the arc

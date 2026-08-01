@@ -48,7 +48,7 @@ public class PathDebugPackets {
 
         String operation = moveControl instanceof BirdMoveControl birdMoveControl
                 ? birdMoveControl.getOperationName() : "?";
-        boolean steering = moveControl.hasWanted() && !navigation.isDone();
+        boolean steering = moveControl.hasWanted() && !navigation.isDone() && !mob.isHoldingForLaunch();
         Vec3 wantedPos = moveControl.hasWanted()
                 ? new Vec3(moveControl.getWantedX(), moveControl.getWantedY(), moveControl.getWantedZ())
                 : mob.position();
@@ -80,6 +80,7 @@ public class PathDebugPackets {
         int nodeCount = currentPath != null ? currentPath.getNodeCount() : 0;
 
         return new MobDebugInfo(navigation.isStuck(), navigation.isDone(), steering, operation,
+                mob.getGaitName(), mob.getLaunchYaw(),
                 mob.position(), wantedPos, mob.getDeltaMovement(), mob.getYRot(),
                 rulerCursor, rulerLength, offRoute, nextNodeIndex, nodeCount,
                 timeoutTimer, timeoutLimit, ticksSinceStuckCheck, speedLimitNow, speedLimitCommanded,

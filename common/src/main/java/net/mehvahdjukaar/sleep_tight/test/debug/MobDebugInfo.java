@@ -18,14 +18,18 @@ import java.util.List;
  * time for the current node). The two are independent - the timeout clears {@code isStuck} right
  * before it stops the path, so it never shows up as "stuck" even though it gave up just the same.
  * <p>
- * {@code steering} is {@code hasWanted() && !navigation.isDone()}, i.e. the exact condition
- * {@code BirdMoveControl.tick()} itself branches on. {@code operation} is the raw vanilla
+ * {@code steering} is the exact condition {@code BirdMoveControl.tick()} itself branches on, which
+ * includes the ground layer's launch hold: a bird turning on the spot to line up with a fresh path
+ * has a waypoint and an unfinished path and is still deliberately not flying. {@code gait} is the
+ * phase that hold comes from, and is the first thing to read when a mob will not leave the ground.
+ * {@code operation} is the raw vanilla
  * {@code MoveControl.Operation} name and is kept only for reference: neither {@code BirdMoveControl}
  * nor vanilla's own {@code SmoothSwimmingMoveControl} (which uses the same pattern) ever resets it
  * back to {@code WAIT}, so once a mob has been given a single waypoint it reads {@code MOVE_TO}
  * forever - {@code steering} is what actually answers "is it doing something right now."
  */
 public record MobDebugInfo(boolean stuck, boolean pathDone, boolean steering, String operation,
+                           String gait, float launchYaw,
                            Vec3 mobPos, Vec3 wantedPos, Vec3 velocity, float yRot,
                            double rulerCursor, double rulerLength, double offRoute,
                            int nextNodeIndex, int nodeCount,
@@ -35,6 +39,7 @@ public record MobDebugInfo(boolean stuck, boolean pathDone, boolean steering, St
 
     public static MobDebugInfo read(FriendlyByteBuf buf) {
         return new MobDebugInfo(buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readUtf(),
+                buf.readUtf(), buf.readFloat(),
                 readVec3(buf), readVec3(buf), readVec3(buf), buf.readFloat(),
                 buf.readDouble(), buf.readDouble(), buf.readDouble(),
                 buf.readVarInt(), buf.readVarInt(),
@@ -47,6 +52,8 @@ public record MobDebugInfo(boolean stuck, boolean pathDone, boolean steering, St
         buf.writeBoolean(this.pathDone);
         buf.writeBoolean(this.steering);
         buf.writeUtf(this.operation);
+        buf.writeUtf(this.gait);
+        buf.writeFloat(this.launchYaw);
         writeVec3(buf, this.mobPos);
         writeVec3(buf, this.wantedPos);
         writeVec3(buf, this.velocity);
@@ -85,6 +92,25 @@ public record MobDebugInfo(boolean stuck, boolean pathDone, boolean steering, St
     /** Which way the body is pointing, for drawing it against the direction of travel. */
     public Vec3 facing() {
         return Vec3.directionFromRotation(0.0F, this.yRot);
+    }
+
+    /** Where the ground layer is swinging the body round to before it lets go of the ground. */
+    public Vec3 launchFacing() {
+        return Vec3.directionFromRotation(0.0F, this.launchYaw);
+    }
+
+    /** How much of the launch turn is left, in degrees. Only meaningful while holding for one. */
+    public double launchYawError() {
+        return Mth.degreesDifference(this.yRot, this.launchYaw);
+    }
+
+    /**
+     * True while the ground layer is holding the mob on its feet to line it up with the path.
+     * Carried by {@code launchYaw} being a real angle rather than by matching the gait name, so the
+     * renderer never has to know what the ground layer calls its phases.
+     */
+    public boolean holdingForLaunch() {
+        return !Float.isNaN(this.launchYaw);
     }
 
     /** The budget {@code timeoutTimer} gets before {@code timeoutPath()} fires and kills the path. */

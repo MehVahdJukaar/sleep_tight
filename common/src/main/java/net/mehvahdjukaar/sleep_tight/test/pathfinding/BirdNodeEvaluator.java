@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.longs.Long2FloatMap;
 import it.unimi.dsi.fastutil.longs.Long2FloatOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import net.mehvahdjukaar.sleep_tight.test.controller.PerchingFlier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.PathNavigationRegion;
@@ -52,6 +53,8 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     private final Long2FloatMap enclosures = new Long2FloatOpenHashMap();
     // node keys are packed relative to this, so any real world coordinate fits
     private int originX, originY, originZ;
+    // whether the mob had its feet down when the search began, see getStart
+    private boolean startsPerched;
 
     public BirdNodeEvaluator() {
         this.enclosures.defaultReturnValue(NOT_MEASURED);
@@ -83,6 +86,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
         this.originX = origin.getX();
         this.originY = origin.getY();
         this.originZ = origin.getZ();
+        this.startsPerched = mob instanceof PerchingFlier flier && flier.isPerched();
         this.expansions = 0;
         this.generatedNeighbors = 0;
     }
@@ -94,13 +98,26 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
         super.done();
     }
 
+    /**
+     * Vanilla picks a safe start cell (water surface, bounding box candidates); we only swap the node
+     * for a lattice one carrying the heading the mob leaves along.
+     * <p>
+     * A bird in the air leaves along its body yaw, because that is where its airspeed points and
+     * momentum is the whole reason this lattice exists. A bird with its feet down has no airspeed at
+     * all, so it leaves whichever way the route wants and pays nothing for it: the start is marked
+     * {@link BirdNode#freeHeading}, which lifts both the turn cap and the turn charge on the first
+     * step. Making that true on the mob is the ground layer's job, see {@code BirdGroundControl}.
+     * <p>
+     * Seeding the heading from yaw regardless was a real bug: a perched bird facing away from the
+     * only way out of a dead end had no legal horizontal move at all, since the two purely vertical
+     * moves are the only ones exempt from the cap, and the search would climb straight out of a
+     * corridor it could have walked down.
+     */
     @Override
     public Node getStart() {
-        // vanilla picks a safe start cell (water surface, bounding box candidates); we only
-        // swap the node for a lattice one carrying the mob's current heading
         Node vanillaStart = super.getStart();
         BirdNode start = this.getLatticeNode(vanillaStart.x, vanillaStart.y, vanillaStart.z,
-                yawToBin(this.mob.getYRot()));
+                yawToBin(this.mob.getYRot()), this.startsPerched);
         start.type = vanillaStart.type;
         start.costMalus = vanillaStart.costMalus;
         return start;
@@ -133,16 +150,20 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     private int collectMoves(Node[] outputArray, Node node, boolean skipClosed) {
         int count = 0;
         int heading = node instanceof BirdNode bird ? bird.heading : yawToBin(this.mob.getYRot());
+        boolean free = node instanceof BirdNode bird && bird.freeHeading;
 
         for (int[] move : MOVES) {
             int moveBin = move[3];
-            if (moveBin >= 0 && turnAmount(heading, moveBin) > BirdPathfindingConfig.maxTurnBins) {
+            if (!free && moveBin >= 0 && turnAmount(heading, moveBin) > BirdPathfindingConfig.maxTurnBins) {
                 continue;
             }
             int newHeading = moveBin < 0 ? heading : moveBin;
+            // going straight up off the ground is not a commitment to a direction any more than
+            // standing on it was, so a vertical hop stays free and a shaft can still be left any way
+            boolean stillFree = free && moveBin < 0;
 
             BirdNode neighbor = this.findAcceptedLatticeNode(
-                    node.x + move[0], node.y + move[1], node.z + move[2], newHeading);
+                    node.x + move[0], node.y + move[1], node.z + move[2], newHeading, stillFree);
             if (neighbor == null || (skipClosed && neighbor.closed)) {
                 continue;
             }
@@ -188,7 +209,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
         if (!BirdPathfindingConfig.measureClearance) {
             return 0;
         }
-        long key = this.packKey(x, y, z, 0);
+        long key = this.packKey(x, y, z, 0, false);
         float cached = this.enclosures.get(key);
         if (cached != NOT_MEASURED) {
             return cached;
@@ -210,28 +231,35 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
         return measured;
     }
 
+    /**
+     * Assigned rather than accumulated, unlike vanilla's {@code findAcceptedNode}, which does
+     * {@code costMalus = max(costMalus, malus)} and then {@code ++} for WALKABLE on a node it keeps
+     * cached for the whole search. Both terms here are pure functions of the cell, so the max is a
+     * no-op and the increment is a bug: a cell is offered once per heading bin per parent, and every
+     * one of those re-offers used to add another point of malus. A ground level cell the search
+     * happened to brush past several times ended up several times more expensive than the identical
+     * cell next to it, which is order dependence rather than terrain.
+     */
     @Nullable
-    private BirdNode findAcceptedLatticeNode(int x, int y, int z, int heading) {
+    private BirdNode findAcceptedLatticeNode(int x, int y, int z, int heading, boolean freeHeading) {
         PathType type = this.getCachedPathType(x, y, z);
         float malus = this.mob.getPathfindingMalus(type);
         if (malus < 0.0F) {
             return null;
         }
-        BirdNode node = this.getLatticeNode(x, y, z, heading);
+        BirdNode node = this.getLatticeNode(x, y, z, heading, freeHeading);
         node.type = type;
         // rides on the node so the throttle planner and the renderer can read it off the finished
         // path. The search itself charges for it in getEdgeCost, not from here
         node.enclosure = this.enclosure(x, y, z);
-        node.costMalus = Math.max(node.costMalus, malus);
-        if (type == PathType.WALKABLE) {
-            node.costMalus++; // like vanilla: prefer open air over ground-level cells
-        }
+        // the +1 is vanilla's air preference: given the choice, fly rather than skim the ground
+        node.costMalus = type == PathType.WALKABLE ? malus + 1.0F : malus;
         return node;
     }
 
-    private BirdNode getLatticeNode(int x, int y, int z, int heading) {
-        return this.latticeNodes.computeIfAbsent(this.packKey(x, y, z, heading),
-                key -> new BirdNode(x, y, z, heading));
+    private BirdNode getLatticeNode(int x, int y, int z, int heading, boolean freeHeading) {
+        return this.latticeNodes.computeIfAbsent(this.packKey(x, y, z, heading, freeHeading),
+                key -> new BirdNode(x, y, z, heading, freeHeading));
     }
 
     /**
@@ -260,12 +288,13 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
 
     // the 3 heading bits below are the one place HEADING_BINS is not read from the constant: raising
     // it past 8 needs a wider field here (and one fewer bit of coordinate range)
-    private long packKey(int x, int y, int z, int heading) {
+    private long packKey(int x, int y, int z, int heading, boolean freeHeading) {
         long key = 0;
         key |= ((long) (x - originX) & 0x1FFF);          // 13 signed bits, +-4096
         key |= ((long) (y - originY) & 0x3FF) << 13;     // 10 signed bits
         key |= ((long) (z - originZ) & 0x1FFF) << 23;    // 13 signed bits
         key |= ((long) heading & 0x7) << 36;
+        key |= (freeHeading ? 1L : 0L) << 39;            // free states are their own layer
         return key;
     }
 

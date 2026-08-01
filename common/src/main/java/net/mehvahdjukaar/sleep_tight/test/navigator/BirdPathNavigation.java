@@ -2,6 +2,7 @@ package net.mehvahdjukaar.sleep_tight.test.navigator;
 
 import net.mehvahdjukaar.sleep_tight.test.controller.BirdFlightConfig;
 import net.mehvahdjukaar.sleep_tight.test.controller.BirdMoveControl;
+import net.mehvahdjukaar.sleep_tight.test.controller.PerchingFlier;
 import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdNodeEvaluator;
 import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdPathFinder;
 import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdPathfindingConfig;
@@ -39,6 +40,9 @@ public class BirdPathNavigation extends FlyingPathNavigation {
      */
     private static final double REJOIN_FROM = 2.0;
     private static final double REJOIN_BY = 4.0;
+
+    /** Below this much horizontal spread the path leaves vertically and there is nothing to face. */
+    private static final double MIN_LAUNCH_SPREAD = 1.0E-4;
 
     // vanilla keeps its PathFinder private, and createPathFinder runs from the super constructor,
     // so this deliberately has no initializer: one here would run afterwards and wipe it
@@ -107,11 +111,39 @@ public class BirdPathNavigation extends FlyingPathNavigation {
             // if the config is poked mid-flight
             this.envelope = FlightEnvelope.forMob(this.mob);
             this.throttle = ThrottlePlanner.fromPath(this.path, this.mob, this.envelope);
+            this.requestLaunch();
         } else {
             this.envelope = null;
             this.throttle = null;
         }
         return accepted;
+    }
+
+    /**
+     * Hands the ground layer the heading this path leaves along, so a perched bird can turn to face
+     * it before it flies. Asked for on every path and ignored unless the mob actually has its feet
+     * down, because whether it does is not this layer's business to decide.
+     * <p>
+     * The heading is taken from the follower's own first aiming point rather than from the first
+     * node, so the turn ends exactly where pure pursuit is about to start and there is no leftover
+     * correction on the first tick of flight. A path that leaves straight up has no heading to turn
+     * to, and asking for the current one lets the launch complete immediately rather than special
+     * casing it.
+     */
+    private void requestLaunch() {
+        if (!(this.mob instanceof PerchingFlier flier)) {
+            return;
+        }
+        PathRuler ruler = this.ruler();
+        Vec3 away = ruler.lookaheadPoint(this.lookahead(ruler)).subtract(this.getTempMobPos());
+        float launchYaw = away.horizontalDistanceSqr() < MIN_LAUNCH_SPREAD
+                ? this.mob.getYRot() : BirdMoveControl.yawTowards(away.x, away.z);
+        flier.requestLaunch(launchYaw);
+    }
+
+    /** True while the ground layer is still turning the mob to face the path it was just given. */
+    public boolean isHeldOnGround() {
+        return this.mob instanceof PerchingFlier flier && flier.isHoldingForLaunch();
     }
 
     /** How fast the mob is allowed to be along the current path. Null when there is nothing to fly. */
@@ -137,6 +169,12 @@ public class BirdPathNavigation extends FlyingPathNavigation {
      */
     @Override
     public void tick() {
+        // the mob is on its feet lining up with the path. Nothing about following it applies yet:
+        // not the cursor, not the carrot, and above all not the timeouts, which would otherwise
+        // spend the whole turn counting the mob as failing to reach its first node
+        if (this.isHeldOnGround()) {
+            return;
+        }
         super.tick();
         if (!this.isDone() && this.ruler != null) {
             Vec3 carrot = this.ruler.lookaheadPoint(this.lookahead(this.ruler));
@@ -326,6 +364,10 @@ public class BirdPathNavigation extends FlyingPathNavigation {
     @Override
     public void stop() {
         super.stop();
+        if (this.mob instanceof PerchingFlier flier) {
+            // there is no longer a path to line up with, so a launch part way through is off
+            flier.cancelLaunch();
+        }
         this.ruler = null;
         this.ruledPath = null;
         this.throttle = null;
