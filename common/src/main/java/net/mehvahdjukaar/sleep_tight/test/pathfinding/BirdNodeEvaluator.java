@@ -146,19 +146,9 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
      * is recomputed per relaxation and stays idempotent.
      */
     public float getEdgeCost(Node from, Node to) {
-        float cost = this.enclosure(to.x, to.y, to.z) * BirdPathfindingConfig.wallHugCost;
-        if (from.x == to.x && from.z == to.z && from.y != to.y) {
-            cost += to.y > from.y ? BirdPathfindingConfig.straightUpCost : BirdPathfindingConfig.straightDownCost;
-        }
-        if (from instanceof BirdNode a && to instanceof BirdNode b) {
-            cost += switch (turnAmount(a.heading, b.heading)) {
-                case 1 -> BirdPathfindingConfig.turnCost45;
-                case 2 -> BirdPathfindingConfig.turnCost90;
-                case 3 -> BirdPathfindingConfig.turnCost135;
-                default -> 0.0F;
-            };
-        }
-        return cost;
+        // the split lives in EdgeCost so the debug renderer can show the same terms the search
+        // weighed here, rather than a second copy of the formula that can quietly go stale
+        return EdgeCost.between(from, to).extras();
     }
 
     /**

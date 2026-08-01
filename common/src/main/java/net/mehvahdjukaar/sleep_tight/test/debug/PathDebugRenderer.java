@@ -3,6 +3,7 @@ package net.mehvahdjukaar.sleep_tight.test.debug;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdPathfindingConfig;
+import net.mehvahdjukaar.sleep_tight.test.pathfinding.EdgeCost;
 import net.minecraft.Util;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -32,7 +33,10 @@ public class PathDebugRenderer {
     public static long timeoutMillis = 60_000;
     public static float maxRenderDistance = 80;
     public static boolean showNodeLabels = true;
-    public static float textScale = 0.012F;
+    // every label in here goes through this one scale, so it is the knob for the whole overlay
+    // getting too busy. Small enough that a node's three labels and the two edges meeting at it
+    // stay apart, which is what crowds first
+    public static float textScale = 0.007F;
     // node boxes are sized off the mob's own width, which at a lattice node spacing of one block
     // leaves barely any air between them. Shrunk so the path reads as a line of markers rather than
     // a solid tube, and so the labels sitting on them stay legible
@@ -51,6 +55,9 @@ public class PathDebugRenderer {
     // path's own line is everything the steering layer adds on top of the plan: corner cutting,
     // overshoot, the wobble of rejoining the line after being pushed off it
     public static boolean showTrail = true;
+    // what each step cost the search, drawn on the step itself rather than on a node: the terms
+    // that decide a lattice path are all properties of the move, not of the cell it lands in
+    public static boolean showEdgeCosts = true;
 
     private static final int FACING_COLOR = 0xFFFF55;
     private static final int VELOCITY_COLOR = 0x55FFFF;
@@ -139,6 +146,11 @@ public class PathDebugRenderer {
             renderSpeedArrows(poseStack, bufferSource, path, camX, camY, camZ);
         }
 
+        if (showEdgeCosts) {
+            renderEdgeCosts(poseStack, bufferSource, path, camX, camY, camZ);
+            renderCostSummary(poseStack, bufferSource, path, camX, camY, camZ);
+        }
+
         if (showLabels) {
             for (DebugNode node : nodes) {
                 if (isTooFar(node, camX, camY, camZ)) continue;
@@ -186,6 +198,80 @@ public class PathDebugRenderer {
             DebugRenderHelper.renderArrow(poseStack, bufferSource, base, tip,
                     Math.min(0.2, length * 0.35), Mth.hsvToRgb(fraction * 0.33F, 0.9F, 1.0F));
         }
+    }
+
+    /**
+     * What each step of the path cost the search, written on the step itself: the total first, then
+     * only the terms that actually charged something. A run of bare totals is a path the geometry
+     * alone decided; a "turn 5.0" in the middle of one is the search having paid for a corner it
+     * could have avoided, which is the thing to look at before touching the turn knobs.
+     */
+    private static void renderEdgeCosts(PoseStack poseStack, MultiBufferSource bufferSource, DebugPath path,
+                                        double camX, double camY, double camZ) {
+        List<DebugNode> nodes = path.nodes();
+        for (int i = 0; i < nodes.size() - 1; i++) {
+            DebugNode node = nodes.get(i);
+            if (isTooFar(node, camX, camY, camZ)) continue;
+            DebugNode next = nodes.get(i + 1);
+            EdgeCost cost = node.edgeCost();
+            DebugRenderHelper.renderFloatingText(poseStack, bufferSource, edgeCostLabel(cost),
+                    (node.x() + next.x()) / 2.0 + 0.5, (node.y() + next.y()) / 2.0 + 0.5,
+                    (node.z() + next.z()) / 2.0 + 0.5, edgeCostColor(cost), textScale, true, true);
+        }
+    }
+
+    /**
+     * Written as the sum it is, {@code 7.0 = dist 1.4 + turn 5.0 + hug 0.6}, so there is no reading
+     * where the terms are charges on top of the total instead of what makes it up. A step that only
+     * paid for its own length is just the one number.
+     */
+    private static String edgeCostLabel(EdgeCost cost) {
+        if (cost.extras() <= 0.005F && cost.malus() <= 0.005F) {
+            return String.format(Locale.ROOT, "%.1f", cost.total());
+        }
+        StringBuilder label = new StringBuilder(String.format(Locale.ROOT, "%.1f = dist %.1f",
+                cost.total(), cost.distance()));
+        appendTerm(label, "turn", cost.turn());
+        appendTerm(label, "vert", cost.vertical());
+        appendTerm(label, "hug", cost.clearance());
+        appendTerm(label, "malus", cost.malus());
+        return label.toString();
+    }
+
+    private static void appendTerm(StringBuilder label, String name, float value) {
+        if (value > 0.005F) {
+            label.append(String.format(Locale.ROOT, " + %s %.1f", name, value));
+        }
+    }
+
+    /** How much of the step was the lattice's doing rather than plain distance. */
+    private static int edgeCostColor(EdgeCost cost) {
+        float share = cost.total() > 1.0E-4F ? cost.extras() / cost.total() : 0;
+        if (share > 0.6F) return 0xFFFF5555;
+        return share > 0.3F ? 0xFFFFAA55 : 0xFFAAFFAA;
+    }
+
+    /**
+     * The same split totalled over the whole route, which is what says whether a knob is worth
+     * moving: a turn total that dwarfs the distance means the search is buying smoothness at a
+     * price the flight cannot repay, and a total near the distance means the knobs are barely
+     * biting and the path is whatever the geometry gave it.
+     */
+    private static void renderCostSummary(PoseStack poseStack, MultiBufferSource bufferSource, DebugPath path,
+                                          double camX, double camY, double camZ) {
+        BlockPos target = path.target();
+        if (distanceToCamera(target.getX(), target.getY(), target.getZ(), camX, camY, camZ) > maxRenderDistance) {
+            return;
+        }
+        EdgeCost total = EdgeCost.NONE;
+        for (DebugNode node : path.nodes()) {
+            total = total.plus(node.edgeCost());
+        }
+        DebugRenderHelper.renderFloatingText(poseStack, bufferSource, String.format(Locale.ROOT,
+                        "cost %.1f = dist %.1f + turn %.1f + vert %.1f + hug %.1f + malus %.1f",
+                        total.total(), total.distance(), total.turn(), total.vertical(),
+                        total.clearance(), total.malus()),
+                target.getX() + 0.5, target.getY() + 1.8, target.getZ() + 0.5, -1, textScale, true, true);
     }
 
     /**

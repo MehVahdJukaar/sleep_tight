@@ -18,7 +18,7 @@ public class BirdPathfindingConfig {
 
     // purely vertical moves only; climbs and dives with horizontal motion are ordinary flight.
     // priced rather than forbidden so vertical shafts stay reachable as a last resort
-    public static float straightUpCost = 3.0F;
+    public static float straightUpCost = 50.0F;
     public static float straightDownCost = 2.0F;
 
     // how much a cell is charged for having blocks touching it, so the bird keeps some air around

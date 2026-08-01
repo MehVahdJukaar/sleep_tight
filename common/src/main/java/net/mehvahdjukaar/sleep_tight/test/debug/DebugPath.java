@@ -33,7 +33,8 @@ public record DebugPath(List<DebugNode> nodes, int nextNodeIndex, BlockPos targe
             // a stale profile would not and the renderer should degrade rather than throw
             float limit = throttle != null && i < throttle.nodeCount()
                     ? (float) throttle.limitAtNode(i) : DebugNode.UNKNOWN_SPEED;
-            nodes.add(DebugNode.of(path.getNode(i), limit));
+            Node next = i + 1 < path.getNodeCount() ? path.getNode(i + 1) : null;
+            nodes.add(DebugNode.of(path.getNode(i), limit, next));
         }
         // only present if the finder was asked to record it, see BirdPathfindingConfig#collectDebugData
         Path.DebugData searchData = path.debugData();
