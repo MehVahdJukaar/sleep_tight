@@ -59,4 +59,10 @@ public class BirdPathfindingConfig {
     // shade every node the search touched, which buries the path itself and is a lot of nodes to
     // ship to the client. The path draws fine without it
     public static boolean collectDebugData = false;
+
+    // record the moves offered at each node of the finished path, so the renderer can show what the
+    // search turned down. Cheap next to the search itself (26 checks per path node, against
+    // thousands of expansions) but it does add a few hundred cells to every debug packet, so this
+    // is the knob to pull if the debug channel starts costing anything
+    public static boolean collectConsideredMoves = true;
 }

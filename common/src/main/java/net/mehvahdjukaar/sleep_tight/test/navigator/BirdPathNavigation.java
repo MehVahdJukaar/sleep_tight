@@ -18,6 +18,8 @@ import net.minecraft.world.level.pathfinder.PathFinder;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Drop-in flying navigation using the bird lattice pathfinder. Hook it to a mob by
  * returning this from {@code Mob.createNavigation}, and pair it with {@link BirdMoveControl};
@@ -37,6 +39,11 @@ public class BirdPathNavigation extends FlyingPathNavigation {
      */
     private static final double REJOIN_FROM = 2.0;
     private static final double REJOIN_BY = 4.0;
+
+    // vanilla keeps its PathFinder private, and createPathFinder runs from the super constructor,
+    // so this deliberately has no initializer: one here would run afterwards and wipe it
+    @Nullable
+    private BirdPathFinder finder;
 
     @Nullable
     private PathRuler ruler;
@@ -71,7 +78,13 @@ public class BirdPathNavigation extends FlyingPathNavigation {
     protected PathFinder createPathFinder(int maxVisitedNodes) {
         this.nodeEvaluator = new BirdNodeEvaluator();
         this.nodeEvaluator.setCanPassDoors(true);
-        return new BirdPathFinder((BirdNodeEvaluator) this.nodeEvaluator, latticeNodeBudget(this.mob));
+        this.finder = new BirdPathFinder((BirdNodeEvaluator) this.nodeEvaluator, latticeNodeBudget(this.mob));
+        return this.finder;
+    }
+
+    /** What the search turned down at each node of the current path, for the debug renderer. */
+    public List<BirdPathFinder.ConsideredMove> getConsideredMoves() {
+        return this.finder != null ? this.finder.getConsideredMoves() : List.of();
     }
 
     /** {@code followRange * nodesPerBlockOfRange * statesPerCell}, at defaults 64 * 16 * 8 = 8192. */

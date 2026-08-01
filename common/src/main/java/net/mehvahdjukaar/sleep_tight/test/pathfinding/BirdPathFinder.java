@@ -14,6 +14,7 @@ import net.minecraft.world.level.pathfinder.PathFinder;
 import net.minecraft.world.level.pathfinder.Target;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ public class BirdPathFinder extends PathFinder {
     private final int maxVisitedNodes;
     private final BirdNodeEvaluator nodeEvaluator;
     private final BinaryHeap openSet = new BinaryHeap();
+    private List<ConsideredMove> consideredMoves = List.of();
 
     public BirdPathFinder(BirdNodeEvaluator nodeEvaluator, int maxVisitedNodes) {
         super(nodeEvaluator, maxVisitedNodes);
@@ -52,8 +54,36 @@ public class BirdPathFinder extends PathFinder {
         Map<Target, BlockPos> targetMap = targetPositions.stream().collect(Collectors.toMap(
                 pos -> this.nodeEvaluator.getTarget(pos.getX(), pos.getY(), pos.getZ()), Function.identity()));
         Path path = this.findLatticePath(region.getProfiler(), start, targetMap, maxRange, accuracy, searchDepthMultiplier);
+        // has to happen before done(), which drops the cell caches offeredMoves reads
+        this.consideredMoves = path != null && BirdPathfindingConfig.collectConsideredMoves
+                ? this.collectConsideredMoves(path) : List.of();
         this.nodeEvaluator.done();
         return path;
+    }
+
+    /**
+     * The moves offered at each node of the finished path, which is what the search chose between
+     * on its way through. Only the winner survives in the path itself, so without this the one
+     * question the drawn path cannot answer is why it went that way and not another.
+     */
+    private List<ConsideredMove> collectConsideredMoves(Path path) {
+        List<ConsideredMove> moves = new ArrayList<>();
+        for (int i = 0; i < path.getNodeCount(); i++) {
+            Node from = path.getNode(i);
+            for (Node to : this.nodeEvaluator.offeredMoves(from)) {
+                moves.add(new ConsideredMove(from, to));
+            }
+        }
+        return moves;
+    }
+
+    /** Empty unless {@link BirdPathfindingConfig#collectConsideredMoves} was on for the last search. */
+    public List<ConsideredMove> getConsideredMoves() {
+        return this.consideredMoves;
+    }
+
+    /** One step the search had available at a path node, taken or not. */
+    public record ConsideredMove(Node from, Node to) {
     }
 
     @Nullable

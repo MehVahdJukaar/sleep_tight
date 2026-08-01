@@ -40,6 +40,16 @@ public record DebugNode(int x, int y, int z, float costMalus, float clearanceCos
         return new DebugNode(node.x, node.y, node.z, node.costMalus, clearance, speedLimit, node.type, edgeCost);
     }
 
+    /**
+     * A move that was offered at a path node. The edge cost is what reaching this cell would have
+     * cost, i.e. the number the chosen step was compared against, so it is the price of arriving
+     * here rather than of leaving as it is on a path node.
+     */
+    public static DebugNode considered(Node from, Node to) {
+        return new DebugNode(to.x, to.y, to.z, to.costMalus, 0, UNKNOWN_SPEED, to.type,
+                EdgeCost.between(from, to));
+    }
+
     public static DebugNode read(FriendlyByteBuf buf) {
         return new DebugNode(buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
                 buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readEnum(PathType.class),

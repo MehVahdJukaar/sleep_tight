@@ -4,6 +4,7 @@ import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.test.BirdTestMob;
 import net.mehvahdjukaar.sleep_tight.test.controller.BirdMoveControl;
 import net.mehvahdjukaar.sleep_tight.test.navigator.BirdPathNavigation;
+import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdPathFinder.ConsideredMove;
 import net.mehvahdjukaar.sleep_tight.test.throttle.FlightEnvelope;
 import net.mehvahdjukaar.sleep_tight.test.throttle.ThrottleProfile;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -14,6 +15,8 @@ import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Our side of the debug channel, standing in for vanilla's DebugPackets (whose bodies are stripped
@@ -26,11 +29,14 @@ public class PathDebugPackets {
 
     public static void sendPathFindingPacket(BirdTestMob mob, @Nullable Path path, float nodeHalfWidth) {
         if (path == null || !(mob.level() instanceof ServerLevel serverLevel)) return;
-        ThrottleProfile throttle = mob.getNavigation() instanceof BirdPathNavigation birdNavigation
-                ? birdNavigation.getThrottleProfile() : null;
+        boolean bird = mob.getNavigation() instanceof BirdPathNavigation;
+        ThrottleProfile throttle = bird
+                ? ((BirdPathNavigation) mob.getNavigation()).getThrottleProfile() : null;
+        List<ConsideredMove> considered = bird
+                ? ((BirdPathNavigation) mob.getNavigation()).getConsideredMoves() : List.of();
         FlightEnvelope envelope = FlightEnvelope.forMob(mob);
         MobDebugInfo mobInfo = buildMobDebugInfo(mob);
-        DebugPath debugPath = DebugPath.of(path, throttle, envelope.maxSpeed());
+        DebugPath debugPath = DebugPath.of(path, throttle, envelope.maxSpeed(), considered);
         sendToAllPlayers(serverLevel,
                 new ClientBoundPathDebugMessage(mob.getId(), debugPath, nodeHalfWidth, mobInfo));
     }

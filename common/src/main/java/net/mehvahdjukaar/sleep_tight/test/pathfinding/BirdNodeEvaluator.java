@@ -12,6 +12,9 @@ import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.PathType;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * State-lattice evaluator for flying animals. Search states are (x, y, z, heading) instead of
  * plain cells: the heading is the direction of the last step, so the bird has momentum and the
@@ -107,6 +110,27 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
 
     @Override
     public int getNeighbors(Node[] outputArray, Node node) {
+        int count = this.collectMoves(outputArray, node, true);
+        this.expansions++;
+        this.generatedNeighbors += count;
+        return count;
+    }
+
+    /**
+     * Every move the lattice offers at a node, for the debug renderer to draw as the alternatives
+     * the search weighed against the one it took. Unlike {@link #getNeighbors} this keeps states
+     * that are already closed, since by the time a path exists most of what it turned down is, and
+     * it does not count towards the search cost figures.
+     * <p>
+     * Only valid between {@code prepare} and {@code done}: it reads the same cell caches the search
+     * does.
+     */
+    public List<Node> offeredMoves(Node node) {
+        Node[] buffer = new Node[MOVES.length];
+        return List.of(Arrays.copyOf(buffer, this.collectMoves(buffer, node, false)));
+    }
+
+    private int collectMoves(Node[] outputArray, Node node, boolean skipClosed) {
         int count = 0;
         int heading = node instanceof BirdNode bird ? bird.heading : yawToBin(this.mob.getYRot());
 
@@ -119,7 +143,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
 
             BirdNode neighbor = this.findAcceptedLatticeNode(
                     node.x + move[0], node.y + move[1], node.z + move[2], newHeading);
-            if (neighbor == null || neighbor.closed) {
+            if (neighbor == null || (skipClosed && neighbor.closed)) {
                 continue;
             }
             if (!this.hasClearance(node, move[0], move[1], move[2])) {
@@ -127,9 +151,6 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
             }
             outputArray[count++] = neighbor;
         }
-
-        this.expansions++;
-        this.generatedNeighbors += count;
         return count;
     }
 

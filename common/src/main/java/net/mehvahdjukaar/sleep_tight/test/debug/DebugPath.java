@@ -1,5 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.test.debug;
 
+import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdPathFinder.ConsideredMove;
 import net.mehvahdjukaar.sleep_tight.test.throttle.ThrottleProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
@@ -9,7 +10,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Wire form of a {@link Path} for the debug renderer, plus the {@link ThrottleProfile} planned for
@@ -23,10 +28,11 @@ import java.util.List;
  * dead weight in a release jar.
  */
 public record DebugPath(List<DebugNode> nodes, int nextNodeIndex, BlockPos target, boolean reached,
-                        List<DebugNode> openSet, List<DebugNode> closedSet,
+                        List<DebugNode> openSet, List<DebugNode> closedSet, List<DebugNode> considered,
                         float envelopeMaxSpeed, float expectedFlightTicks) {
 
-    public static DebugPath of(Path path, @Nullable ThrottleProfile throttle, double envelopeMaxSpeed) {
+    public static DebugPath of(Path path, @Nullable ThrottleProfile throttle, double envelopeMaxSpeed,
+                               List<ConsideredMove> consideredMoves) {
         List<DebugNode> nodes = new ArrayList<>(path.getNodeCount());
         for (int i = 0; i < path.getNodeCount(); i++) {
             // the profile is built from the path, so the indices line up, but a path replaced under
@@ -41,8 +47,30 @@ public record DebugPath(List<DebugNode> nodes, int nextNodeIndex, BlockPos targe
         return new DebugPath(nodes, path.getNextNodeIndex(), path.getTarget(), path.canReach(),
                 searchData == null ? List.of() : convert(searchData.openSet()),
                 searchData == null ? List.of() : convert(searchData.closedSet()),
+                convertConsidered(consideredMoves, nodes),
                 (float) envelopeMaxSpeed,
                 throttle == null ? 0.0F : (float) throttle.expectedFlightTicks());
+    }
+
+    /**
+     * Collapsed to one marker per cell, keeping the cheapest move that reaches it, and with the
+     * path's own cells dropped. The lattice offers the same cell under up to eight headings and
+     * consecutive path nodes share most of their neighbourhood, so drawing the moves as they come
+     * would stack a dozen squares in the same block and triple the size of the packet.
+     */
+    private static List<DebugNode> convertConsidered(List<ConsideredMove> moves, List<DebugNode> pathNodes) {
+        Set<BlockPos> onPath = pathNodes.stream().map(DebugNode::asBlockPos).collect(Collectors.toSet());
+        Map<BlockPos, DebugNode> cheapestPerCell = new HashMap<>();
+        for (ConsideredMove move : moves) {
+            BlockPos cell = new BlockPos(move.to().x, move.to().y, move.to().z);
+            if (onPath.contains(cell)) {
+                continue;
+            }
+            DebugNode node = DebugNode.considered(move.from(), move.to());
+            cheapestPerCell.merge(cell, node,
+                    (a, b) -> a.edgeCost().total() <= b.edgeCost().total() ? a : b);
+        }
+        return List.copyOf(cheapestPerCell.values());
     }
 
     private static List<DebugNode> convert(Node[] nodes) {
@@ -52,7 +80,7 @@ public record DebugPath(List<DebugNode> nodes, int nextNodeIndex, BlockPos targe
     public static DebugPath read(FriendlyByteBuf buf) {
         return new DebugPath(buf.readList(DebugNode::read), buf.readVarInt(), buf.readBlockPos(),
                 buf.readBoolean(), buf.readList(DebugNode::read), buf.readList(DebugNode::read),
-                buf.readFloat(), buf.readFloat());
+                buf.readList(DebugNode::read), buf.readFloat(), buf.readFloat());
     }
 
     public void write(FriendlyByteBuf buf) {
@@ -62,6 +90,7 @@ public record DebugPath(List<DebugNode> nodes, int nextNodeIndex, BlockPos targe
         buf.writeBoolean(this.reached);
         buf.writeCollection(this.openSet, (b, node) -> node.write(b));
         buf.writeCollection(this.closedSet, (b, node) -> node.write(b));
+        buf.writeCollection(this.considered, (b, node) -> node.write(b));
         buf.writeFloat(this.envelopeMaxSpeed);
         buf.writeFloat(this.expectedFlightTicks);
     }

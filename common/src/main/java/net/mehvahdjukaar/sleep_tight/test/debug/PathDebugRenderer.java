@@ -2,6 +2,7 @@ package net.mehvahdjukaar.sleep_tight.test.debug;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdPathfindingConfig;
 import net.mehvahdjukaar.sleep_tight.test.pathfinding.EdgeCost;
 import net.minecraft.Util;
@@ -14,67 +15,59 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * Our copy of vanilla's PathfindingRenderer, driven by {@link ClientBoundPathDebugMessage} instead
- * of the vanilla debug channel. Entries expire on their own, so the server has to keep resending a
- * path for it to stay on screen.
+ * of the vanilla debug channel.
+ * <p>
+ * Exactly one path is held, and it is only ever replaced, never dropped: killing the mob or having
+ * it give up leaves the last state of the flight on screen to be read at leisure, which is usually
+ * the moment you most want to look at it. Nothing here is keyed by entity either, so respawning the
+ * test mob picks up where the old one left off instead of drawing two overlapping overlays.
  */
 public class PathDebugRenderer {
 
     public static final PathDebugRenderer INSTANCE = new PathDebugRenderer();
 
-    // toggles vanilla keeps as compile time constants. Ours are plain fields so they can be
-    // flipped from the debugger or from code without a command
-    public static long timeoutMillis = 60_000;
-    public static float maxRenderDistance = 80;
-    public static boolean showNodeLabels = true;
-    // every label in here goes through this one scale, so it is the knob for the whole overlay
-    // getting too busy. Small enough that a node's three labels and the two edges meeting at it
-    // stay apart, which is what crowds first
-    public static float textScale = 0.007F;
-    // node boxes are sized off the mob's own width, which at a lattice node spacing of one block
-    // leaves barely any air between them. Shrunk so the path reads as a line of markers rather than
-    // a solid tube, and so the labels sitting on them stay legible
-    public static float nodeBoxScale = 0.45F;
-
-    // the throttle profile overlay: an arrow per node along the direction of travel, as long as the
-    // speed allowed there. Off makes the path read as pure geometry again
-    public static boolean showSpeedArrows = true;
-    // blocks of arrow per block-per-tick of speed. A bird at full throttle does about 0.2 b/t, so
-    // this puts its arrow at roughly a block and a half
-    public static double speedArrowScale = 7.0;
-    // arrows for what the mob is actually doing: where it is pointing versus where it is going.
-    // The gap between the two is the sideslip that makes a turning bird look like a crabbing drone
-    public static boolean showMobVectors = true;
-    // breadcrumbs of where the mob has actually been, one per tick. The gap between this and the
-    // path's own line is everything the steering layer adds on top of the plan: corner cutting,
-    // overshoot, the wobble of rejoining the line after being pushed off it
-    public static boolean showTrail = true;
-    // what each step cost the search, drawn on the step itself rather than on a node: the terms
-    // that decide a lattice path are all properties of the move, not of the cell it lands in
-    public static boolean showEdgeCosts = true;
-
     private static final int FACING_COLOR = 0xFFFF55;
     private static final int VELOCITY_COLOR = 0x55FFFF;
     // orange, so it stays apart from the path's green-to-red speed ramp
     private static final float TRAIL_HUE = 0.08F;
+    // the moves that were offered and not taken. Flat, small and faint on purpose: there are up to
+    // a couple of dozen per node, and they are context for the path rather than the subject
+    private static final float CONSIDERED_HALF_WIDTH = 0.15F;
+    private static final float CONSIDERED_ALPHA = 0.25F;
 
-    private final Map<Integer, Entry> paths = new HashMap<>();
+    private static float maxRenderDistance() {
+        return ClientConfigs.PATH_DEBUG_RENDER_DISTANCE.get().floatValue();
+    }
+
+    private static float textScale() {
+        return ClientConfigs.PATH_DEBUG_TEXT_SCALE.get().floatValue();
+    }
+
+    private static float nodeBoxScale() {
+        return ClientConfigs.PATH_DEBUG_NODE_BOX_SCALE.get().floatValue();
+    }
+
+    private static double speedArrowScale() {
+        return ClientConfigs.PATH_DEBUG_SPEED_ARROW_SCALE.get();
+    }
+
+    @Nullable
+    private Entry current;
 
     public void addPath(int entityId, DebugPath path, float nodeHalfWidth, MobDebugInfo mobInfo) {
         // diffed against whatever was here before, so the render side can show real progress made
         // per real second instead of just the absolute cursor position
-        Entry previous = this.paths.get(entityId);
+        Entry previous = this.current != null && this.current.entityId() == entityId ? this.current : null;
         long now = Util.getMillis();
         double cursorDelta = previous != null ? mobInfo.rulerCursor() - previous.mobInfo().rulerCursor() : 0.0;
         long deltaMillis = previous != null ? now - previous.creationTime() : 0L;
-        this.paths.put(entityId, new Entry(path, nodeHalfWidth, mobInfo, now, cursorDelta, deltaMillis,
-                stitchTrail(previous, mobInfo)));
+        this.current = new Entry(entityId, path, nodeHalfWidth, mobInfo, now, cursorDelta, deltaMillis,
+                stitchTrail(previous, mobInfo));
     }
 
     /**
@@ -91,21 +84,21 @@ public class PathDebugRenderer {
     }
 
     public void clear() {
-        this.paths.clear();
+        this.current = null;
     }
 
     public void render(PoseStack poseStack, MultiBufferSource bufferSource, double camX, double camY, double camZ) {
-        if (this.paths.isEmpty()) return;
+        // the entry is kept while the overlay is off, so turning it back on shows the flight in
+        // progress rather than nothing until the next path
+        Entry entry = this.current;
+        if (entry == null || !ClientConfigs.PATH_DEBUG.get()) return;
 
-        long now = Util.getMillis();
-        this.paths.values().removeIf(entry -> now - entry.creationTime > timeoutMillis);
-        for (Entry entry : this.paths.values()) {
-            renderPath(poseStack, bufferSource, entry.path, entry.nodeHalfWidth, showNodeLabels, camX, camY, camZ);
-            if (showTrail) {
-                renderTrail(poseStack, bufferSource, entry.trail(), camX, camY, camZ);
-            }
-            renderMobInfo(poseStack, bufferSource, entry, camX, camY, camZ);
+        renderPath(poseStack, bufferSource, entry.path, entry.nodeHalfWidth,
+                ClientConfigs.PATH_DEBUG_NODE_LABELS.get(), camX, camY, camZ);
+        if (ClientConfigs.PATH_DEBUG_TRAIL.get()) {
+            renderTrail(poseStack, bufferSource, entry.trail(), camX, camY, camZ);
         }
+        renderMobInfo(poseStack, bufferSource, entry, camX, camY, camZ);
     }
 
     public static void renderPath(PoseStack poseStack, MultiBufferSource bufferSource, DebugPath path,
@@ -115,7 +108,7 @@ public class PathDebugRenderer {
 
         BlockPos target = path.target();
         // vanilla hides the whole path when the target is out of range; each piece culls on its own here
-        if (distanceToCamera(target.getX(), target.getY(), target.getZ(), camX, camY, camZ) <= maxRenderDistance) {
+        if (distanceToCamera(target.getX(), target.getY(), target.getZ(), camX, camY, camZ) <= maxRenderDistance()) {
             // green when the search actually got there, yellow when this is only a closest approach
             renderBox(poseStack, bufferSource, new AABB(
                             target.getX() + 0.25, target.getY() + 0.25, target.getZ() + 0.25,
@@ -123,7 +116,7 @@ public class PathDebugRenderer {
                     path.reached() ? 0 : 1, 1, 0, camX, camY, camZ);
         }
 
-        float halfWidth = nodeHalfWidth * nodeBoxScale;
+        float halfWidth = nodeHalfWidth * nodeBoxScale();
         List<DebugNode> nodes = path.nodes();
         for (int i = 0; i < nodes.size(); i++) {
             DebugNode node = nodes.get(i);
@@ -139,14 +132,20 @@ public class PathDebugRenderer {
 
         // the pale tiles covering everything the search touched. Empty unless
         // BirdPathfindingConfig#collectDebugData is turned on, which is the knob for them
-        renderNodeSet(poseStack, bufferSource, path.closedSet(), halfWidth, 1, 0.8F, 0.8F, camX, camY, camZ);
-        renderNodeSet(poseStack, bufferSource, path.openSet(), halfWidth, 0.8F, 1, 1, camX, camY, camZ);
+        if (ClientConfigs.PATH_DEBUG_SEARCHED_CELLS.get()) {
+            renderNodeSet(poseStack, bufferSource, path.closedSet(), halfWidth, 1, 0.8F, 0.8F, camX, camY, camZ);
+            renderNodeSet(poseStack, bufferSource, path.openSet(), halfWidth, 0.8F, 1, 1, camX, camY, camZ);
+        }
 
-        if (showSpeedArrows) {
+        if (ClientConfigs.PATH_DEBUG_CONSIDERED_NODES.get()) {
+            renderConsideredNodes(poseStack, bufferSource, path, camX, camY, camZ);
+        }
+
+        if (ClientConfigs.PATH_DEBUG_SPEED_ARROWS.get()) {
             renderSpeedArrows(poseStack, bufferSource, path, camX, camY, camZ);
         }
 
-        if (showEdgeCosts) {
+        if (ClientConfigs.PATH_DEBUG_EDGE_COSTS.get()) {
             renderEdgeCosts(poseStack, bufferSource, path, camX, camY, camZ);
             renderCostSummary(poseStack, bufferSource, path, camX, camY, camZ);
         }
@@ -192,11 +191,35 @@ public class PathDebugRenderer {
             if (direction.lengthSqr() < 1.0E-8) continue;
 
             Vec3 base = new Vec3(node.x() + 0.5 - camX, node.y() + 0.5 - camY, node.z() + 0.5 - camZ);
-            double length = node.speedLimit() * speedArrowScale;
+            double length = node.speedLimit() * speedArrowScale();
             Vec3 tip = base.add(direction.normalize().scale(length));
             float fraction = maxSpeed > 1.0E-5F ? Mth.clamp(node.speedLimit() / maxSpeed, 0, 1) : 1;
             DebugRenderHelper.renderArrow(poseStack, bufferSource, base, tip,
                     Math.min(0.2, length * 0.35), Mth.hsvToRgb(fraction * 0.33F, 0.9F, 1.0F));
+        }
+    }
+
+    /**
+     * The moves that were on offer at each node of the path and were not taken, one faint square
+     * per cell. This is the search's own field of view: the path shows the winner, these show what
+     * it beat, and a corner that looks arbitrary usually turns out to have had its straight-on
+     * alternative missing here entirely (no clearance) rather than merely priced out.
+     * <p>
+     * Colored by what the move would have cost, on the same scale the edge labels use, so a cheap
+     * green square next to the line is worth a second look at the knobs.
+     */
+    private static void renderConsideredNodes(PoseStack poseStack, MultiBufferSource bufferSource, DebugPath path,
+                                              double camX, double camY, double camZ) {
+        for (DebugNode node : path.considered()) {
+            if (isTooFar(node, camX, camY, camZ)) continue;
+            int color = edgeCostColor(node.edgeCost());
+            DebugRenderHelper.renderFilledBox(poseStack, bufferSource, new AABB(
+                            node.x() + 0.5F - CONSIDERED_HALF_WIDTH - camX, node.y() + 0.5 - camY,
+                            node.z() + 0.5F - CONSIDERED_HALF_WIDTH - camZ,
+                            node.x() + 0.5F + CONSIDERED_HALF_WIDTH - camX, node.y() + 0.52 - camY,
+                            node.z() + 0.5F + CONSIDERED_HALF_WIDTH - camZ),
+                    (color >> 16 & 255) / 255.0F, (color >> 8 & 255) / 255.0F, (color & 255) / 255.0F,
+                    CONSIDERED_ALPHA);
         }
     }
 
@@ -216,7 +239,7 @@ public class PathDebugRenderer {
             EdgeCost cost = node.edgeCost();
             DebugRenderHelper.renderFloatingText(poseStack, bufferSource, edgeCostLabel(cost),
                     (node.x() + next.x()) / 2.0 + 0.5, (node.y() + next.y()) / 2.0 + 0.5,
-                    (node.z() + next.z()) / 2.0 + 0.5, edgeCostColor(cost), textScale, true, true);
+                    (node.z() + next.z()) / 2.0 + 0.5, edgeCostColor(cost), textScale(), true, true);
         }
     }
 
@@ -260,7 +283,7 @@ public class PathDebugRenderer {
     private static void renderCostSummary(PoseStack poseStack, MultiBufferSource bufferSource, DebugPath path,
                                           double camX, double camY, double camZ) {
         BlockPos target = path.target();
-        if (distanceToCamera(target.getX(), target.getY(), target.getZ(), camX, camY, camZ) > maxRenderDistance) {
+        if (distanceToCamera(target.getX(), target.getY(), target.getZ(), camX, camY, camZ) > maxRenderDistance()) {
             return;
         }
         EdgeCost total = EdgeCost.NONE;
@@ -271,7 +294,7 @@ public class PathDebugRenderer {
                         "cost %.1f = dist %.1f + turn %.1f + vert %.1f + hug %.1f + malus %.1f",
                         total.total(), total.distance(), total.turn(), total.vertical(),
                         total.clearance(), total.malus()),
-                target.getX() + 0.5, target.getY() + 1.8, target.getZ() + 0.5, -1, textScale, true, true);
+                target.getX() + 0.5, target.getY() + 1.8, target.getZ() + 0.5, -1, textScale(), true, true);
     }
 
     /**
@@ -283,7 +306,7 @@ public class PathDebugRenderer {
     private static void renderThrottleSummary(PoseStack poseStack, MultiBufferSource bufferSource, DebugPath path,
                                               double camX, double camY, double camZ) {
         BlockPos target = path.target();
-        if (distanceToCamera(target.getX(), target.getY(), target.getZ(), camX, camY, camZ) > maxRenderDistance) {
+        if (distanceToCamera(target.getX(), target.getY(), target.getZ(), camX, camY, camZ) > maxRenderDistance()) {
             return;
         }
         float slowest = Float.MAX_VALUE;
@@ -304,7 +327,7 @@ public class PathDebugRenderer {
                         "throttle %.3f-%.3f b/t of %.3f, %d/%d limited, eta %.0ft",
                         slowest, fastest, path.envelopeMaxSpeed(), limited, path.nodes().size(),
                         path.expectedFlightTicks()),
-                target.getX() + 0.5, target.getY() + 1.5, target.getZ() + 0.5, -1, textScale, true, true);
+                target.getX() + 0.5, target.getY() + 1.5, target.getZ() + 0.5, -1, textScale(), true, true);
     }
 
     /**
@@ -316,7 +339,7 @@ public class PathDebugRenderer {
     private static void renderClearanceSummary(PoseStack poseStack, MultiBufferSource bufferSource, DebugPath path,
                                                double camX, double camY, double camZ) {
         BlockPos target = path.target();
-        if (distanceToCamera(target.getX(), target.getY(), target.getZ(), camX, camY, camZ) > maxRenderDistance) {
+        if (distanceToCamera(target.getX(), target.getY(), target.getZ(), camX, camY, camZ) > maxRenderDistance()) {
             return;
         }
         float total = 0;
@@ -331,7 +354,7 @@ public class PathDebugRenderer {
                         "hug total %.1f over %d/%d nodes (wallHugCost %.1f, h weight %.1f)",
                         total, charged, path.nodes().size(),
                         BirdPathfindingConfig.wallHugCost, BirdPathfindingConfig.heuristicWeight),
-                target.getX() + 0.5, target.getY() + 1.2, target.getZ() + 0.5, -1, textScale, true, true);
+                target.getX() + 0.5, target.getY() + 1.2, target.getZ() + 0.5, -1, textScale(), true, true);
     }
 
     /**
@@ -396,7 +419,7 @@ public class PathDebugRenderer {
     private static void renderLabel(PoseStack poseStack, MultiBufferSource bufferSource, String text,
                                     DebugNode node, double yOffset, int color) {
         DebugRenderHelper.renderFloatingText(poseStack, bufferSource, text,
-                node.x() + 0.5, node.y() + yOffset, node.z() + 0.5, color, textScale, true, true);
+                node.x() + 0.5, node.y() + yOffset, node.z() + 0.5, color, textScale(), true, true);
     }
 
     /**
@@ -408,11 +431,13 @@ public class PathDebugRenderer {
                                       double camX, double camY, double camZ) {
         MobDebugInfo info = entry.mobInfo();
         Vec3 pos = info.wantedPos();
-        if (distanceToCamera(pos.x, pos.y, pos.z, camX, camY, camZ) > maxRenderDistance) return;
+        if (distanceToCamera(pos.x, pos.y, pos.z, camX, camY, camZ) > maxRenderDistance()) return;
 
-        if (showMobVectors) {
+        if (ClientConfigs.PATH_DEBUG_MOB_VECTORS.get()) {
             renderMobVectors(poseStack, bufferSource, info, camX, camY, camZ);
         }
+
+        if (!ClientConfigs.PATH_DEBUG_MOB_STATUS.get()) return;
 
         // magenta normally, flips to red when the navigation itself has given up
         renderBox(poseStack, bufferSource, new AABB(pos.x - 0.1, pos.y - 0.1, pos.z - 0.1,
@@ -428,11 +453,11 @@ public class PathDebugRenderer {
         String status = (info.stuck() ? "STUCK " : "") + (info.steering() ? "STEERING" : "COASTING")
                 + (info.pathDone() ? " done" : "") + " (" + info.operation() + ")";
         DebugRenderHelper.renderFloatingText(poseStack, bufferSource, status,
-                pos.x, pos.y + 1.0, pos.z, textColor, textScale, true, true);
+                pos.x, pos.y + 1.0, pos.z, textColor, textScale(), true, true);
         DebugRenderHelper.renderFloatingText(poseStack, bufferSource, String.format(Locale.ROOT,
                         "%.1f/%.1f (%.0f%%) node %d/%d", info.rulerCursor(), info.rulerLength(), progress,
                         info.nextNodeIndex(), info.nodeCount()),
-                pos.x, pos.y + 0.75, pos.z, -1, textScale, true, true);
+                pos.x, pos.y + 0.75, pos.z, -1, textScale(), true, true);
         // actual speed against what the profile allows underfoot and what the navigation actually
         // commanded. Over the profile's limit means the corner coming up is going to be cut wider
         // than the planner budgeted for; cmd below it is the braking or rejoin correction biting
@@ -445,7 +470,7 @@ public class PathDebugRenderer {
         int throttleColor = info.speedLimitNow() >= 0.0
                 && info.velocity().length() > info.speedLimitNow() * 1.1 ? 0xFFFF5555 : -1;
         DebugRenderHelper.renderFloatingText(poseStack, bufferSource, throttleText,
-                pos.x, pos.y + 0.5, pos.z, throttleColor, textScale, true, true);
+                pos.x, pos.y + 0.5, pos.z, throttleColor, textScale(), true, true);
 
         // the two vanilla watchdogs that can null the path out without a goal ever asking for it.
         // Watch these climb to catch a stall as it happens instead of reasoning back from a dead path
@@ -455,7 +480,7 @@ public class PathDebugRenderer {
         DebugRenderHelper.renderFloatingText(poseStack, bufferSource, String.format(Locale.ROOT,
                         "timeout %d/%.0f (%.0f%%) stuckChk %d/100", info.timeoutTimer(), budget,
                         timeoutRatio * 100.0, info.ticksSinceStuckCheck()),
-                pos.x, pos.y + 0.25, pos.z, timeoutColor, textScale, true, true);
+                pos.x, pos.y + 0.25, pos.z, timeoutColor, textScale(), true, true);
 
         // the ruler cursor's real-world progress rate. This is the one that catches a carrot-chase
         // deadlock directly: if this reads ~0 while the mob is still "steering" and not yet flagged
@@ -466,7 +491,7 @@ public class PathDebugRenderer {
             DebugRenderHelper.renderFloatingText(poseStack, bufferSource, String.format(Locale.ROOT,
                             "cursor %+.2fb / %dms (%.2f b/s)", entry.cursorDelta(), entry.deltaMillis(),
                             blocksPerSecond),
-                    pos.x, pos.y, pos.z, rateColor, textScale, true, true);
+                    pos.x, pos.y, pos.z, rateColor, textScale(), true, true);
         }
     }
 
@@ -484,9 +509,9 @@ public class PathDebugRenderer {
         DebugRenderHelper.renderArrow(poseStack, bufferSource, origin,
                 origin.add(info.facing().scale(0.75)), 0.15, FACING_COLOR);
         if (velocity.lengthSqr() > 1.0E-8) {
-            Vec3 tip = origin.add(velocity.scale(speedArrowScale));
+            Vec3 tip = origin.add(velocity.scale(speedArrowScale()));
             DebugRenderHelper.renderArrow(poseStack, bufferSource, origin, tip,
-                    Math.min(0.2, velocity.length() * speedArrowScale * 0.35), VELOCITY_COLOR);
+                    Math.min(0.2, velocity.length() * speedArrowScale() * 0.35), VELOCITY_COLOR);
         }
     }
 
@@ -500,7 +525,7 @@ public class PathDebugRenderer {
         for (int i = 1; i < trail.size(); i++) {
             Vec3 from = trail.get(i - 1);
             Vec3 to = trail.get(i);
-            if (distanceToCamera(from.x, from.y, from.z, camX, camY, camZ) > maxRenderDistance) continue;
+            if (distanceToCamera(from.x, from.y, from.z, camX, camY, camZ) > maxRenderDistance()) continue;
             float freshness = (float) i / trail.size();
             DebugRenderHelper.renderLine(poseStack, bufferSource,
                     from.subtract(camX, camY, camZ), to.subtract(camX, camY, camZ),
@@ -509,7 +534,7 @@ public class PathDebugRenderer {
     }
 
     private static boolean isTooFar(DebugNode node, double camX, double camY, double camZ) {
-        return distanceToCamera(node.x(), node.y(), node.z(), camX, camY, camZ) > maxRenderDistance;
+        return distanceToCamera(node.x(), node.y(), node.z(), camX, camY, camZ) > maxRenderDistance();
     }
 
     // manhattan, like vanilla: it is only a culling heuristic, no need for a square root per node
@@ -517,7 +542,9 @@ public class PathDebugRenderer {
         return (float) (Math.abs(x - camX) + Math.abs(y - camY) + Math.abs(z - camZ));
     }
 
-    private record Entry(DebugPath path, float nodeHalfWidth, MobDebugInfo mobInfo, long creationTime,
-                         double cursorDelta, long deltaMillis, List<Vec3> trail) {
+    // the entity id is only kept to tell a refresh of the same flight from a different mob taking
+    // over, which is what decides whether the flown trail carries on or starts again
+    private record Entry(int entityId, DebugPath path, float nodeHalfWidth, MobDebugInfo mobInfo,
+                         long creationTime, double cursorDelta, long deltaMillis, List<Vec3> trail) {
     }
 }
