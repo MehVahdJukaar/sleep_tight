@@ -134,10 +134,16 @@ per block. Compatible on paper. Once velocity tracks heading (section 1) the rea
 `r = v/omega`: **0.23 blocks at follow speed, 0.77 blocks at full throttle.** So `maxTurnBins` is not
 currently the limiting factor - the sideslip is.
 
-Worth building anyway: expose `maxYawPerTick` as the single source, derive `r = cruiseSpeed/omega`
-from it, and assert the lattice's turn cap is no tighter than `r`. When the mob's speed is raised
-later (a fleeing bird at full throttle is 3.3x the test speed, `r = 0.77`) the mismatch is caught
-instead of showing up as mystery drift.
+**Built, and the prediction below was right.** Raising `FLYING_SPEED` to 1.0 tripled the speed and,
+with a fixed 15 deg/tick, tripled the radius to the predicted 0.77 - corners overshot everywhere,
+and the corner rule stayed silent throughout because its 90 degree limit (`0.221 b/t`) sits just
+above the new top speed (`0.202`). Mystery drift, exactly as called.
+
+The fix inverts which of the two is configured. `BirdFlightConfig.turnRadius` is now the knob and
+`FlightEnvelope` derives `omega = maxSpeed / turnRadius`, so the radius is what stays put when speed
+moves. Falls out of it: the corner rule's limits become a fixed *fraction* of top speed
+(`margin / (r * overshoot)` has no speed in it), so the profile's shape no longer depends on how fast
+the bird is, and `maxTurnBins` can be checked against `turnRadius` once instead of per speed.
 
 Related mismatch: **speed is not part of the search state.** The lattice is `(x,y,z,heading)`, so it
 prices a turn but assumes constant speed, and the follower then slows in turns. Vanilla's per-node

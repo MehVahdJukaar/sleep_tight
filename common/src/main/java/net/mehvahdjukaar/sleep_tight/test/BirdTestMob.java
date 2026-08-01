@@ -34,10 +34,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public class BirdTestMob extends PathfinderMob implements FlyingAnimal, PerchingFlier {
 
-    // a thrust fraction once multiplied by FLYING_SPEED, not a speed. 0.7 * 0.4 = 0.28 of full
-    // throttle: deliberately a crawl, the point is to watch the path being flown
-    private static final double FOLLOW_SPEED = 0.7;
-
     // synched rather than derived, because there is no measurement that distinguishes a bird
     // gripping a branch from one hovering an inch above it. BirdGroundControl decides it server side
     // and this mirrors the answer out to the client for the model to pose off
@@ -172,7 +168,7 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
         // finished one would make it bail out
         this.getNavigation().stop();
         if (path != null) {
-            this.getNavigation().moveTo(path, FOLLOW_SPEED);
+            this.getNavigation().moveTo(path, 0.7);
         }
     }
 
@@ -180,7 +176,7 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 10.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.25)
-                .add(Attributes.FLYING_SPEED, 0.4)
+                .add(Attributes.FLYING_SPEED, 1)
                 // doubles as the pathfinder's range cap and node budget (16 nodes per block of
                 // follow range), so it needs to be generous enough to path across a test arena
                 .add(Attributes.FOLLOW_RANGE, 64.0);

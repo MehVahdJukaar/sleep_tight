@@ -108,10 +108,13 @@ public class BirdMoveControl extends MoveControl {
             return;
         }
 
+        // one envelope for the whole tick, so the rate the body turns at and the speed it is held to
+        // cannot come from two different snapshots of the config
+        FlightEnvelope envelope = this.envelope();
         float yawBefore = this.mob.getYRot();
-        this.steerYaw(toCarrot.x, toCarrot.z);
+        this.steerYaw(toCarrot.x, toCarrot.z, envelope);
         this.turnVelocityWithBody(Mth.degreesDifference(yawBefore, this.mob.getYRot()));
-        this.applyThrust(toCarrot);
+        this.applyThrust(toCarrot, envelope);
         this.matchPitchToVelocity();
     }
 
@@ -132,10 +135,15 @@ public class BirdMoveControl extends MoveControl {
         this.mob.setZza(0.0F);
     }
 
-    /** Turns towards the carrot at a capped rate. */
-    private void steerYaw(double dx, double dz) {
+    /**
+     * Turns towards the carrot at the envelope's rate. Off the envelope rather than the config
+     * because the planner priced this path's corners against that exact number, and a follower
+     * turning at some other rate is the planner drawing corners it cannot fly.
+     */
+    private void steerYaw(double dx, double dz, FlightEnvelope envelope) {
         float wantedYaw = yawTowards(dx, dz);
-        this.mob.setYRot(this.rotlerp(this.mob.getYRot(), wantedYaw, BirdFlightConfig.maxYawPerTick));
+        float maxTurn = (float) (envelope.maxYawRate() * Mth.RAD_TO_DEG);
+        this.mob.setYRot(this.rotlerp(this.mob.getYRot(), wantedYaw, maxTurn));
         // a bird's body points where it flies. Left alone, BodyRotationControl lags the turn by
         // several ticks and the model reads as sliding sideways through the arc
         this.mob.yBodyRot = this.mob.getYRot();
@@ -166,8 +174,7 @@ public class BirdMoveControl extends MoveControl {
      * by a flat constant. Feeding it the unit direction to the carrot puts the thrust exactly along
      * that line, and with equal drag on both axes the velocity settles along it too.
      */
-    private void applyThrust(Vec3 toCarrot) {
-        FlightEnvelope envelope = this.envelope();
+    private void applyThrust(Vec3 toCarrot, FlightEnvelope envelope) {
         double throttle = this.throttleFor(envelope);
         Vec3 direction = toCarrot.normalize();
         this.mob.setSpeed((float) (throttle * direction.horizontalDistance()));

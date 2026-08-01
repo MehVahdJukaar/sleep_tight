@@ -47,7 +47,7 @@ public record FlightEnvelope(
         double accel = BirdFlightConfig.maxThrustAccel * throttleCap;
         double maxSpeed = terminalSpeed(accel, drag);
         return new FlightEnvelope(
-                BirdFlightConfig.maxYawPerTick * Mth.DEG_TO_RAD,
+                yawRateFor(maxSpeed),
                 maxSpeed,
                 maxSpeed * BirdFlightConfig.cruiseFraction,
                 maxSpeed * BirdFlightConfig.minSpeedFraction,
@@ -62,6 +62,26 @@ public record FlightEnvelope(
                 FlightLine.verticalNodeOffset(mob),
                 BirdFlightConfig.maxClimbAngle * Mth.DEG_TO_RAD,
                 BirdFlightConfig.hoverSpeedFraction);
+    }
+
+    /**
+     * The yaw rate that traces {@link BirdFlightConfig#turnRadius} at top speed, which is the only
+     * place a turn rate is allowed to come from. Deriving it rather than configuring it is what
+     * keeps the corners the planner draws flyable at any speed: radius is {@code speed / yawRate},
+     * so pinning the rate and moving the speed widens every arc, and a bird given a faster attribute
+     * quietly stops fitting through the lattice it is being handed.
+     * <p>
+     * Held constant for the whole path rather than recomputed per tick, so the planner's corner rule
+     * and the follower's steering are the same number by construction. A consequence worth knowing:
+     * below top speed the bird turns tighter than the configured radius, which is the right way
+     * round - slow birds should be nimble.
+     */
+    private static double yawRateFor(double maxSpeed) {
+        double ceiling = BirdFlightConfig.maxYawPerTickCeiling * Mth.DEG_TO_RAD;
+        if (BirdFlightConfig.turnRadius <= 1.0E-6) {
+            return ceiling;
+        }
+        return Math.min(ceiling, maxSpeed / BirdFlightConfig.turnRadius);
     }
 
     /**

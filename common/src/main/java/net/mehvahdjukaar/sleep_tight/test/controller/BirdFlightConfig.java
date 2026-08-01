@@ -9,11 +9,19 @@ import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdPathfindingConfig;
  */
 public class BirdFlightConfig {
 
-    // yaw is the whole ballgame. Vanilla move controls snap up to 90 degrees in a single tick,
-    // which throws away the turn budget the lattice paid for. At cruise the mob covers a block in
-    // roughly 5 ticks, and a lattice step turns at most 90 degrees, so ~15 deg/tick keeps the
-    // flown arc close to the planned one
-    public static float maxYawPerTick = 15.0F;
+    // yaw is the whole ballgame. Vanilla move controls snap up to 90 degrees in a single tick, which
+    // throws away the turn budget the lattice paid for. What is configured is the radius of the arc
+    // rather than the rate, because the radius is the part that has to stay put when speed changes:
+    // radius is speed over rate, so a fixed deg/tick silently widens every corner the moment the
+    // bird flies faster, and the arcs stop fitting the lattice that drew them. Half a block is the
+    // tie to that lattice - nodes sit a block apart and a step turns up to 90 degrees, so an arc
+    // this size rounds a corner without leaving the cells the search certified. FlightEnvelope turns
+    // it into a yaw rate; nothing else may hold an opinion about how fast the bird turns
+    public static double turnRadius = 0.5;
+
+    // no arc tighter than this, whatever the numbers say, so a degenerate radius cannot ask for a
+    // pivot on the spot. Vanilla's FlyingMoveControl snaps at exactly this rate and looks like it
+    public static double maxYawPerTickCeiling = 90.0;
 
     // how much of the body's turn the momentum comes round with. travel() only ever pushes along
     // yaw and leaves the old velocity to decay at 0.91 a tick, so at 0 the velocity settles tens of
@@ -29,15 +37,19 @@ public class BirdFlightConfig {
 
     // entities have no roll field, so bank is applied to the model only, worked out client side from
     // how fast the yaw is changing. Costs nothing and is the clearest read there is on what the
-    // steering is actually doing
-    public static float bankPerYawRate = 2.5F;
+    // steering is actually doing. Expressed as the angle at a full-rate turn and scaled by how much
+    // of that rate is actually being used, rather than as degrees of bank per degree of yaw: the
+    // yaw rate now moves with speed, and a fixed ratio would peg a fast bird at full bank forever
     public static float maxBankAngle = 55.0F;
 
     // how far along the path ahead of the mob the steering target sits when there is nothing anywhere
     // near the line. Steering only: it says nothing about speed, which comes from the throttle
     // profile. This is the corner rounding dial: the flown arc cuts inside a corner by roughly a
     // fifth to a third of this, so 1.5 puts the cut near the planner's corridorMargin. Lattice nodes
-    // are one block apart, and anything below that stops smoothing and just tracks the polyline
+    // are one block apart, and anything below that stops smoothing and just tracks the polyline.
+    // Stays a distance rather than becoming a number of ticks because what pure pursuit actually
+    // needs is room to turn in, about three times turnRadius, and that ratio no longer moves with
+    // speed now the radius is the thing being held fixed
     public static double openAirLookahead = 1.5;
 
     // the same, in a cell walled in on every side. The carrot is interpolated between the two on the

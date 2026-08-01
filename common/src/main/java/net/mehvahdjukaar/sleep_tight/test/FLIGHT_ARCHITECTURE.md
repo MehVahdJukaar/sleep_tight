@@ -77,6 +77,13 @@ nothing linking them, which is exactly how the planner ended up free to draw cor
 could not fly and nobody noticed. It is immutable and snapshotted from the live config once per
 path, so a path is always flown against the numbers it was planned with.
 
+The yaw rate is **derived, not configured**: `BirdFlightConfig.turnRadius` is the knob and the
+envelope computes `omega = maxSpeed / turnRadius`. Radius is the quantity that has to stay fixed when
+speed changes, so configuring the rate instead means every corner silently widens the moment the mob
+gets a faster `FLYING_SPEED` - which is precisely what happened the first time one did. Nothing
+outside `FlightEnvelope` may hold an opinion about how fast the bird turns; the follower's
+`steerYaw`, the planner's corner rule and the renderer's bank all read it from there.
+
 ## What each layer must never do
 
 - **`pathfinding/`** must not reason about speed, time or momentum. It prices turns (`turnCost45/90/135`)
