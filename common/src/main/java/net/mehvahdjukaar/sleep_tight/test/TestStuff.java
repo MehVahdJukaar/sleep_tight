@@ -18,8 +18,8 @@ public class TestStuff {
 
     public static final RegSupplier<EntityType<BirdTestMob>> TEST_MOB = RegHelper.registerEntityType(
             SleepTight.res("test_mob"),
-            EntityType.Builder.<BirdTestMob>of(BirdTestMob::new, MobCategory.CREATURE)
-                    .sized(0.75f, 0.75f)
+            EntityType.Builder.of(BirdTestMob::new, MobCategory.CREATURE)
+                    .sized(0.5f, 0.5f)
                     .clientTrackingRange(8)
                     .updateInterval(3));
 
