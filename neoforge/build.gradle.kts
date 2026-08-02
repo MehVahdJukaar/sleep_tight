@@ -7,9 +7,9 @@ neoforge {
     accessWidener(project(":common"))
 }
 
-val moonlight_version: String by extra
-val mc_version: String by extra
-val sbl_version: String by extra
+val moonlight_version = extra["moonlight_version"] as String
+val mc_version = extra["mc_version"] as String
+val sbl_version = extra["sbl_version"] as String
 
 dependencies {
     modImplementation("net.mehvahdjukaar:moonlight-neoforge:${moonlight_version}")

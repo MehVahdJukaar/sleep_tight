@@ -6,11 +6,11 @@ common {
     accessWidener()
 }
 
-val moonlight_version: String by extra
-val mc_version: String by extra
-val sbl_version: String by extra
-val supplementaries_version: String by extra
-val heartstone_version: String by extra
+val moonlight_version = extra["moonlight_version"] as String
+val mc_version = extra["mc_version"] as String
+val sbl_version = extra["sbl_version"] as String
+val supplementaries_version = extra["supplementaries_version"] as String
+val heartstone_version = extra["heartstone_version"] as String
 
 dependencies {
     //@jar skips moonlight's module metadata: its jar variants are tagged neoforge-only, so in this module gradle

@@ -7,11 +7,11 @@ fabric {
     accessWidener(project(":common"))
 }
 
-val moonlight_version: String by extra
-val mc_version: String by extra
-val sbl_version: String by extra
-val codecui_version: String by extra
-val supplementaries_version: String by extra
+val moonlight_version = extra["moonlight_version"] as String
+val mc_version = extra["mc_version"] as String
+val sbl_version = extra["sbl_version"] as String
+val codecui_version = extra["codecui_version"] as String
+val supplementaries_version = extra["supplementaries_version"] as String
 
 dependencies {
     modImplementation("net.mehvahdjukaar:moonlight-fabric:${moonlight_version}")

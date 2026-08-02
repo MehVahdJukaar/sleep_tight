@@ -105,6 +105,20 @@ public class BirdFlightConfig {
     public static double minSpeedFraction = 0.15;
     public static double arrivalSpeed = 0.0;
 
+    // how much of the thrust may go into gaining speed each tick, as opposed to holding the speed
+    // already there. The only reason a wind-up is possible at all: thrust and top speed are the same
+    // number (terminal speed is accel*drag/(1-drag)), so turning the thrust down does not make the
+    // bird accelerate more gently, it just lowers where it settles and gets there in the same 17
+    // ticks. The time constant belongs to drag alone. Nor can the thrust be capped, since at top
+    // speed full thrust is exactly what holds it - so the limit goes on how fast the *commanded*
+    // speed may rise and the servo does the rest.
+    //
+    // A fraction rather than a flat blocks-per-tick-squared so the wind-up lasts the same time at any
+    // FLYING_SPEED: both the gain and the speed it is climbing to scale together, leaving a ramp of
+    // cruiseFraction / (this * (1-drag)/drag) ticks whatever the attribute says. At 1 it stops biting
+    // entirely, since thrust from a standstill only delivers drag times accel anyway
+    public static double maxSpeedGainFraction = 0.25;
+
     // how far the flown arc is allowed to bulge off the drawn line when rounding a corner. This is
     // the dial that turns a turn angle into a speed limit: radius is speed/yawRate, and a corner of
     // angle t passes radius * (1/cos(t/2) - 1) blocks inside the corner point. Shrinks with how

@@ -27,6 +27,7 @@ public record FlightEnvelope(
         double drag,
         double brakingDrag,
         double accelPerTick,
+        double speedGainPerTick,
         double maxThrottle,
         double corridorMargin,
         double verticalCorridorMargin,
@@ -55,6 +56,7 @@ public record FlightEnvelope(
                 drag,
                 BirdFlightConfig.brakingDrag,
                 accel,
+                accel * BirdFlightConfig.maxSpeedGainFraction,
                 throttleCap,
                 BirdFlightConfig.corridorMargin,
                 // measured off the mob rather than configured, because it is not a preference: it is
@@ -111,14 +113,32 @@ public record FlightEnvelope(
     }
 
     /**
-     * The fastest we can be after covering {@code distance} from {@code entrySpeed} at full thrust,
-     * and the whole of the planner's forwards pass. Simulated rather than solved: the closed form
-     * for accelerating against drag is ugly and this runs once per path leg, not per tick. Tick
-     * order matches {@code LivingEntity.travel}, which adds thrust, then moves, then applies drag.
+     * The fastest we may ask for next tick, holding the wind-up to
+     * {@link BirdFlightConfig#maxSpeedGainFraction}. Thrust cannot be the thing that is limited here:
+     * at top speed full thrust is exactly what holds it, so a capped thrust would simply never reach
+     * top speed. Limiting the commanded speed instead leaves {@link #thrustToReach} to work out the
+     * throttle, and since it lands on the commanded speed exactly, the gain comes out as the literal
+     * blocks per tick per tick the bird picks up.
+     */
+    public double rampedSpeed(double targetSpeed, double currentSpeed) {
+        return this.speedGainPerTick <= 0.0
+                ? targetSpeed : Math.min(targetSpeed, currentSpeed + this.speedGainPerTick);
+    }
+
+    /**
+     * The fastest we can be after covering {@code distance} from {@code entrySpeed}, and the whole of
+     * the planner's forwards pass. Simulated rather than solved: the closed form for accelerating
+     * against drag is ugly and this runs once per path leg, not per tick. Tick order matches
+     * {@code LivingEntity.travel}, which adds thrust, then moves, then applies drag.
      * <p>
      * Only the post-drag velocity is capped at {@link #maxSpeed}. Capping the thrust-added value too
      * would make the loop settle at {@code drag * maxSpeed}, so a dead straight path would never be
      * allowed within 9% of top speed and every node on it would come out acceleration limited.
+     * <p>
+     * Ground covered is the pre-drag velocity, which is what {@code travel()} actually moves by and
+     * what the follower's servo produces for a commanded speed. Under the ramp that is
+     * {@code (speed + gain) / drag}; at top speed the two agree exactly, since {@code speed + accel}
+     * and {@code maxSpeed / drag} are the same number there by the definition of terminal speed.
      */
     public double speedAfterAccelerating(double entrySpeed, double distance) {
         if (this.accelPerTick <= 0.0) {
@@ -127,9 +147,9 @@ public record FlightEnvelope(
         double speed = entrySpeed;
         double covered = 0.0;
         for (int tick = 0; tick < MAX_SIMULATED_TICKS && covered < distance; tick++) {
-            double moving = speed + this.accelPerTick;
-            covered += moving;
-            speed = Math.min(this.maxSpeed, this.drag * moving);
+            double next = this.rampedSpeed(Math.min(this.maxSpeed, this.drag * (speed + this.accelPerTick)), speed);
+            covered += next / this.drag;
+            speed = next;
         }
         return speed;
     }

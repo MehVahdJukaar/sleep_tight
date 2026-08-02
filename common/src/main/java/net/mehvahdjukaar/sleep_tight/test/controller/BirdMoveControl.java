@@ -242,7 +242,8 @@ public class BirdMoveControl extends MoveControl {
      * and coasting is the hardest this mob can brake.
      */
     private double throttleFor(FlightEnvelope envelope) {
-        double thrust = envelope.thrustToReach(this.targetSpeed(envelope), this.mob.getDeltaMovement().length());
+        double currentSpeed = this.mob.getDeltaMovement().length();
+        double thrust = envelope.thrustToReach(this.targetSpeed(envelope, currentSpeed), currentSpeed);
         return Mth.clamp(envelope.throttleForThrust(thrust), 0.0, envelope.maxThrottle());
     }
 
@@ -253,11 +254,18 @@ public class BirdMoveControl extends MoveControl {
      * <p>
      * With no path in flight this falls back to plain cruising, which means no arrival braking. That
      * is fine for the test rig and is exactly what should be visible as a difference.
+     * <p>
+     * Whatever comes out is then held to the envelope's wind-up rate. Rate limiting the command is
+     * the only place a gentle takeoff can live, since thrust and top speed are the same number, and
+     * it is stateless because the limit is measured against the speed actually being carried rather
+     * than against last tick's command. Only the way up is limited: a target below current speed
+     * passes through untouched, so braking and arrival are exactly as they were.
      */
-    private double targetSpeed(FlightEnvelope envelope) {
+    private double targetSpeed(FlightEnvelope envelope, double currentSpeed) {
         double ceiling = envelope.maxSpeed() * this.speedModifier;
-        return this.mob.getNavigation() instanceof BirdPathNavigation navigation
+        double allowed = this.mob.getNavigation() instanceof BirdPathNavigation navigation
                 ? Math.min(ceiling, navigation.getSpeedLimit()) : ceiling;
+        return envelope.rampedSpeed(allowed, currentSpeed);
     }
 
     /** The one the current path was planned against, so plan and flight cannot drift apart. */
