@@ -25,12 +25,11 @@ import net.minecraft.world.phys.Vec3;
  * otherwise leave the velocity decaying along the old heading and the old climb angle; and hold
  * whatever speed it was told it may hold.
  * <p>
- * It holds almost no history: where it is aimed and how fast it may go are handed down fresh every
+ * It holds no history at all: where it is aimed and how fast it may go are handed down fresh every
  * tick by {@link BirdFlightNavigation}, so a mob that gets shoved recovers from wherever it lands
- * instead of being confused by it. The one exception is {@link #thrust}, how hard the wings are
- * already working, and it is self correcting rather than remembered. The one policy it owns is
- * {@link #lookahead}, how much of the drawn line it is willing to round off, because that is a
- * steering decision and nothing else.
+ * instead of being confused by it. {@link #wingThrust} is this tick's answer kept where the entity
+ * can read it, not state. The one policy it owns is {@link #lookahead}, how much of the drawn line
+ * it is willing to round off, because that is a steering decision and nothing else.
  * <p>
  * This shape was picked by flying three controls over the same routes in the {@code PathfindingTest}
  * lab: against the fixed-carrot version it used to be, it holds the corridor to 0.05 blocks rather
@@ -41,9 +40,9 @@ import net.minecraft.world.phys.Vec3;
  * Sections 1, 2 and 6 of {@code believable_bird_flight.md} are all in now: velocity steering here,
  * arc-length pure pursuit in {@link net.mehvahdjukaar.sleep_tight.test.navigator.PathRuler}, and an
  * absorbing arrival in {@code BirdFlightNavigation.followThePath}. Section 6's mode machine is half
- * built: takeoff, perch and walking live in {@link BirdGroundControl}, which also owns
- * {@code noGravity} and the body's pitch now, so this class no longer touches either. The flare is
- * still missing, as is banking from section 5.
+ * built: takeoff, perch, walking and the flare all live in {@link BirdGroundControl}, which also
+ * owns {@code noGravity} and the body's pitch now, so this class no longer touches any of it.
+ * Banking from section 5 is still missing.
  * <p>
  * What got deleted, because the profile subsumes all of it: the per-tick walk over the remaining
  * path nodes, the stopping-distance brake computed from it, and the separate slow-down-in-turns
@@ -62,10 +61,10 @@ public class BirdFlightControl extends MoveControl {
     // direction out of the rounding error and fly a circle looking for one
     private static final double MIN_HORIZONTAL_AIM_SQR = 1.0E-2;
 
-    // how hard the wings are already working, so they can build up to a demand rather than meeting it
-    // in one tick. Self correcting: it decays to whatever is being asked for, so a perched or shoved
-    // mob does not carry a stale one
-    private double thrust;
+    // what the wings put out on the last tick, in blocks per tick squared. Kept only so the entity
+    // can read it back out: it is what the model flaps off, and a flying bird and a fluttering one
+    // have to hand over the same quantity for that to work
+    private double wingThrust;
 
     public BirdFlightControl(Mob mob) {
         super(mob);
@@ -147,8 +146,14 @@ public class BirdFlightControl extends MoveControl {
                 && navigation.isHeldOnGround();
     }
 
+    /** What the wings are putting out this tick, in blocks per tick squared. */
+    public double wingThrust() {
+        return this.wingThrust;
+    }
+
     /** Cut thrust and let drag do the rest. Leaves {@code speed} alone, stuck detection reads it. */
     private void coast() {
+        this.wingThrust = 0.0;
         this.mob.setXxa(0.0F);
         this.mob.setYya(0.0F);
         this.mob.setZza(0.0F);
@@ -247,11 +252,15 @@ public class BirdFlightControl extends MoveControl {
      * <p>
      * Being over the limit needs no special case: the thrust needed goes negative, clamps to zero,
      * and coasting is the hardest this mob can brake.
+     * <p>
+     * What the servo is allowed to ask for is speed dependent, which is where takeoff gets its
+     * punch - see {@link FlightEnvelope#thrustCapAt}. The answer is kept on the way past because it
+     * is also what the wings are doing.
      */
     private double throttleFor(FlightEnvelope envelope) {
-        double wanted = envelope.thrustToReach(this.targetSpeed(envelope), this.mob.getDeltaMovement().length());
-        this.thrust = envelope.spooledThrust(wanted, this.thrust);
-        return Mth.clamp(envelope.throttleForThrust(this.thrust), 0.0, envelope.maxThrottle());
+        double speed = this.mob.getDeltaMovement().length();
+        this.wingThrust = envelope.thrustToReach(this.targetSpeed(envelope), speed);
+        return Mth.clamp(envelope.throttleForThrust(this.wingThrust), 0.0, envelope.maxThrottle());
     }
 
     /**

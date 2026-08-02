@@ -218,9 +218,15 @@ Real bird movement reads as distinct gaits. At minimum:
   oscillate. That is the second most likely 180 after the missed-node one.
 - **Perch** - `setNoGravity(false)`, zero velocity, hand off to ground navigation.
 
-**Half of this is in as of 2026-08-01**, in `controller/BirdGroundControl`: takeoff and perch, plus
-the gravity ownership the two need, and walking joined them 2026-08-02. Cruise is the sections 1-4
-controller as before. The flare is still missing, and is now the only gap in the list.
+**All of this is in as of 2026-08-02**, in `controller/BirdGroundControl`: takeoff and perch landed
+2026-08-01 with the gravity ownership the two need, walking joined them, and the flare arrived with
+the `FLUTTERING` mode. Cruise is the sections 1-4 controller as before.
+
+The flare came out cheaper than this section expected. Rather than a fifth gait with its own speed
+demands on the profile, the mode a bird is in when its feet are off and it has no path to fly does
+the job: it pitches along its travel scaled by horizontal speed, so a bird whose momentum has bled
+away on the approach is level and beating by construction, with nothing to enter and nothing to
+absorb. The same mode covers hops, gap strides and ledges - see `WALK_GAP_BUG.md`.
 
 Feet down is a **state, not a measurement**. Nothing about velocity or `onGround` alone separates a
 bird gripping a branch from one hovering an inch over it, so it is a synched boolean the gait

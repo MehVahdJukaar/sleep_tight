@@ -27,7 +27,7 @@ public record FlightEnvelope(
         double drag,
         double brakingDrag,
         double accelPerTick,
-        double thrustSpoolRate,
+        double peakThrust,
         double maxThrottle,
         double corridorMargin,
         double verticalCorridorMargin,
@@ -56,7 +56,7 @@ public record FlightEnvelope(
                 drag,
                 BirdFlightConfig.brakingDrag,
                 accel,
-                spoolRateFor(BirdFlightConfig.thrustSpoolTicks),
+                accel * Math.max(1.0, BirdFlightConfig.peakThrustFactor),
                 throttleCap,
                 BirdFlightConfig.corridorMargin,
                 // measured off the mob rather than configured, because it is not a preference: it is
@@ -113,27 +113,40 @@ public record FlightEnvelope(
     }
 
     /**
-     * How much of the gap to the wanted thrust the wings close in one tick, from a time constant in
-     * ticks. Standard first-order discretisation, so {@code thrustSpoolTicks} is readable as the time
-     * to close 63% of the gap and settling is about three times it.
+     * The hardest the wings can push, before the mob's own throttle cap. This is what
+     * {@code LivingEntity.getFlyingSpeed} has to hand back for a burst to actually arrive: vanilla
+     * hardcodes it to {@link BirdFlightConfig#maxThrustAccel}, which is the *sustained* figure, and
+     * thrust that cannot exceed the sustained figure is not a burst.
      */
-    private static double spoolRateFor(double spoolTicks) {
-        return spoolTicks <= 0.0 ? 1.0 : 1.0 - Math.exp(-1.0 / spoolTicks);
+    public static double wingPeakThrust() {
+        return BirdFlightConfig.maxThrustAccel * Math.max(1.0, BirdFlightConfig.peakThrustFactor);
     }
 
     /**
-     * Wings spooling up, and the only reason the bird does not leap to cruise in half a second. See
-     * {@link BirdFlightConfig#thrustSpoolTicks} for why the lag belongs on the thrust rather than on
-     * the speed.
+     * The most thrust the wings will put out at this speed: {@link #peakThrust} from a standstill,
+     * decaying to {@link #accelPerTick} at top speed.
      * <p>
-     * Asymmetric on purpose: building thrust is gradual, dropping it is not, since folding wings takes
-     * no time worth modelling. That also keeps {@link #thrustToReach}'s guarantee intact - the mob can
-     * never end up above the commanded speed - which a symmetric lag would break by leaving the bird
-     * still thrusting into a corner it was told to slow for.
+     * This is the takeoff burst, and the reason it is a ramp rather than a flat higher number is
+     * that top speed is *defined* by the sustained figure - terminal speed is where thrust and drag
+     * balance, so a cap still above sustained up there would simply move where the bird settles and
+     * every planner number derived from top speed with it. Ending the ramp exactly on sustained
+     * leaves all of them where they were, and gives away nothing: a bird already at speed has no use
+     * for a burst, and one starting from nothing has nothing but.
      */
-    public double spooledThrust(double wantedThrust, double currentThrust) {
-        return wantedThrust <= currentThrust
-                ? wantedThrust : currentThrust + (wantedThrust - currentThrust) * this.thrustSpoolRate;
+    public double thrustCapAt(double speed) {
+        double towardsTop = this.maxSpeed <= 0.0 ? 1.0 : Mth.clamp(speed / this.maxSpeed, 0.0, 1.0);
+        return Mth.lerp(towardsTop, this.peakThrust, this.accelPerTick);
+    }
+
+    /**
+     * How hard the wings are working, 0 through 1, as a share of what they can put out flat out.
+     * Static and off the live config rather than off a snapshot, because the only thing that reads
+     * it is the model: a bird bursting off a perch is at 1 and beating fast, one holding cruise is
+     * well under it, one coasting into a perch is at 0. Nothing physical depends on the answer.
+     */
+    public static double wingEffortFor(double thrust) {
+        double peak = wingPeakThrust();
+        return peak <= 1.0E-9 ? 0.0 : Mth.clamp(thrust / peak, 0.0, 1.0);
     }
 
     /**
@@ -146,9 +159,10 @@ public record FlightEnvelope(
      * would make the loop settle at {@code drag * maxSpeed}, so a dead straight path would never be
      * allowed within 9% of top speed and every node on it would come out acceleration limited.
      * <p>
-     * The spool lag is deliberately not modelled here. It would need the wings' live state, which
-     * this layer does not have and should not want, and leaving it out only makes the profile
-     * optimistic - which it already is by design, since being under a limit is always safe.
+     * The takeoff burst is deliberately not modelled here: this walks at {@link #accelPerTick}
+     * throughout, so a leg the bird enters slowly is priced as if it had no burst to spend. That
+     * makes the profile pessimistic about acceleration, which is the safe direction - the follower
+     * simply reaches the allowed speed sooner than planned and then holds it.
      */
     public double speedAfterAccelerating(double entrySpeed, double distance) {
         if (this.accelPerTick <= 0.0) {
@@ -216,21 +230,24 @@ public record FlightEnvelope(
      * This replaces the old feed-forward-plus-gain pair. It is the same controller with the gain
      * pinned to the one value the physics actually implies rather than a tuned one: at the target it
      * reduces to the throttle that holds it, and away from it asks for exactly the difference,
-     * clamped by what the wings can deliver. Nothing to tune and nothing to hunt.
+     * clamped by what the wings can deliver <i>at this speed</i>, see {@link #thrustCapAt}. Nothing
+     * to tune and nothing to hunt.
      */
     public double thrustToReach(double targetSpeed, double currentSpeed) {
         if (this.drag <= 0.0) {
             return this.accelPerTick;
         }
-        return Mth.clamp(targetSpeed / this.drag - currentSpeed, 0.0, this.accelPerTick);
+        return Mth.clamp(targetSpeed / this.drag - currentSpeed, 0.0, this.thrustCapAt(currentSpeed));
     }
 
     /**
      * The throttle input that delivers this much thrust, i.e. what to feed {@code Mob.setSpeed} and
      * {@code setYya}. Linear: {@code moveRelative} scales the input vector by a flat constant, and
-     * {@link #maxThrottle} buys {@link #accelPerTick}.
+     * {@link #maxThrottle} buys {@link #peakThrust} rather than {@link #accelPerTick}, because
+     * anything over full throttle is silently normalised away by {@code moveRelative} and a burst
+     * has to fit under the ceiling to survive.
      */
     public double throttleForThrust(double thrust) {
-        return this.accelPerTick <= 1.0E-9 ? 0.0 : this.maxThrottle * thrust / this.accelPerTick;
+        return this.peakThrust <= 1.0E-9 ? 0.0 : this.maxThrottle * thrust / this.peakThrust;
     }
 }

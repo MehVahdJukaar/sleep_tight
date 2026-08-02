@@ -26,6 +26,27 @@ public class BirdGroundConfig {
     // to compare against if landing starts misbehaving
     public static boolean perchOnArrival = true;
 
+    // ---- fluttering ----
+    // Feet off with no path to fly: a hop, a stride over a gap, a ledge, or the last drop onto a
+    // perch. Same numbers for all of them on purpose, since to the bird they are the same thing.
+
+    // how hard the wings work while fluttering, as a fraction of what they can put out flat out
+    // (BirdFlightConfig.peakThrustFactor). Flat rather than servoed: there is no path being flown
+    // here, and a bird holding itself up is doing one job at one rate.
+    //
+    // It is emitted as real upward thrust rather than faked as reduced gravity, which is the whole
+    // reason the wings need no special case in this mode: thrust is thrust, whether it comes from
+    // this or from the flight control, and the model flaps off the one number either way. Keep it
+    // below gravity's 0.08 in absolute terms or the bird hovers instead of settling - at the default
+    // peak of 0.08 that means comfortably under 1
+    public static float flutterWingEffort = 0.6F;
+
+    // the horizontal speed, in blocks per tick, at which a flutter points its body fully along its
+    // travel. Below it the pitch is scaled down towards level, which is what separates a hop (real
+    // horizontal speed, so it arcs) from a bird dropping straight down with the block pulled out
+    // from under it (none, so it stays level and flaps). Roughly a walking pace
+    public static double flutterPitchSpeedRef = 0.12;
+
     // ---- walking ----
     // When a hop is short enough that flying it is silly. Both gates are checked before either search
     // runs, so a long trip never pays for a ground query it was always going to lose.

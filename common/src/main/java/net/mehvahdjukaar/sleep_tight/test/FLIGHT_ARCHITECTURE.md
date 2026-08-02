@@ -59,7 +59,9 @@ Worth knowing when watching the two side by side: they look equally fast, and th
 not the physics. `BirdTestMob.FLIGHT_SPEED_MODIFIER` flies debug paths at 0.7 so the shape of the
 lattice can be seen, while walks go out at `walkSpeedModifier`, which is 1. Underneath, a flier's
 acceleration is a hardcoded `0.02` in `LivingEntity.getFlyingSpeed` for anything not ridden by a
-player (`FLYING_SPEED` is only a throttle fraction on top of it), and a walker's is its
+player - `BirdTestMob` overrides that with `FlightEnvelope.wingPeakThrust` so a takeoff burst can
+fit under full throttle, but the *sustained* figure it flies at is still `maxThrustAccel`, and
+`FLYING_SPEED` is only a throttle fraction on top of it - and a walker's is its
 MOVEMENT_SPEED applied twice, once as `zza` and once as the `moveRelative` scaler. Those land close
 together by coincidence, and the 0.7 closes what is left of the gap.
 
@@ -158,22 +160,14 @@ Done:
 
 Not done, in the order they should happen:
 
-1. **The flare.** `believable_bird_flight.md` section 6 wanted four gaits: takeoff, cruise, flare,
-   perch. Takeoff and perch landed 2026-08-01 in `controller/BirdGroundControl`, which also took
-   ownership of `setNoGravity` from the mob constructor and the move control, so arrival now descends
-   and lands instead of leaving the bird hovering. What is still missing is the approach: nothing
-   levels out, bleeds horizontal speed and pitches up before the perch, so the descent is the profile
-   running out rather than a landing. The hook is already there and holds the placeholder: the
-   descending gait asks for a level body rather than for the slope it is actually falling at, and a
-   flare is that target becoming a pitch-up plus a speed the profile has to respect.
-2. **Turn costs derived from the envelope** rather than hand-set. The existing values happen to land
+1. **Turn costs derived from the envelope** rather than hand-set. The existing values happen to land
    within about a factor of two of the physically correct ones, but that is luck, and it stops being
    true the moment the bird's agility changes.
-3. **Longer move primitives** in `BirdNodeEvaluator`. One-block steps with a 90 degree cap pin the
+2. **Longer move primitives** in `BirdNodeEvaluator`. One-block steps with a 90 degree cap pin the
    minimum turn radius at 0.64 blocks and make shallow climbs inexpressible (the only climb angles
    available are 0, 35, 45 and 90 degrees, so a gentle climb comes out as a vertical zigzag). Both
    fix themselves with 2-3 block steps.
-4. ~~**Flier-appropriate watchdogs.**~~ Done, in one line. Vanilla's node timeout recomputes
+3. ~~**Flier-appropriate watchdogs.**~~ Done, in one line. Vanilla's node timeout recomputes
    `timeoutLimit` on a node change but never zeroes `timeoutTimer`, so the clock runs from the start
    of the path against a one-node budget and every mob is on a ~200 tick fuse. Vanilla hides it by
    finishing short paths first and by repathing instantly when it does fire.

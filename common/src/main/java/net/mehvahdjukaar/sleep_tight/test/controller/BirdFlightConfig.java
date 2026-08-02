@@ -100,10 +100,15 @@ public class BirdFlightConfig {
     // which is a 50 tick constant and would make every number derived from this one wrong on a climb
     public static double airDrag = 0.91;
 
-    // LivingEntity.getFlyingSpeed: velocity added per tick at FULL throttle while airborne. Real
-    // acceleration is this times the throttle, which the FLYING_SPEED attribute caps. Vanilla
-    // hardcodes 0.02 and getFlyingSpeed is protected, so raising this only describes reality for a
-    // mob that overrides it. BirdTestMob does not, so leave it alone
+    // SUSTAINED velocity added per tick at full effort while airborne, averaged over a wingbeat.
+    // Everything downstream that has an opinion about how fast the bird can go reads this one:
+    // terminal speed, and through it the yaw rate, the turn radius and every corner the planner
+    // prices. A single beat delivers far more than this for one tick (see maxBeatRate) but the
+    // average is held here, so making the flight bursty moved no planner number at all.
+    //
+    // Vanilla hardcodes LivingEntity.getFlyingSpeed to 0.02, which is why this used to be 0.02 and
+    // was documented as untouchable. BirdTestMob now overrides it with FlightEnvelope.peakThrust,
+    // so this is a real knob again
     public static double maxThrustAccel = 0.02;
 
     // NOT a brake pedal: a multiplier, so deceleration is proportional to current speed rather than
@@ -119,22 +124,30 @@ public class BirdFlightConfig {
     public static double minSpeedFraction = 0.15;
     public static double arrivalSpeed = 0.0;
 
-    // how long the wings take to build thrust, as a first-order time constant in ticks. The bird
-    // accelerated instantly because thrust stepped from nothing to full in a single tick, which is
-    // the one unphysical thing in the chain: v' = drag*(v+a) is already the correct answer for a body
-    // under constant thrust against linear drag, and the exponential it produces is what a real one
-    // does. Only the step input was wrong.
+    // ---- burst thrust ----
+    // How much harder the wings can push from a standstill than they can sustain, as a multiple of
+    // maxThrustAccel. The one knob behind both a bird leaving a perch and a bird holding itself up
+    // after a jump, because those are the same thing: wings flat out with no airspeed to help.
     //
-    // Lagging the thrust rather than capping it, and rather than rate limiting the commanded speed,
-    // for two reasons. Thrust cannot be capped at all: at top speed full thrust is exactly what holds
-    // it, so any cap simply moves where the bird settles. And a rate limit on speed is a straight
-    // line into a corner at cruise, whereas lagging the input leaves two exponentials in series, so
-    // acceleration starts at zero, peaks about a time constant in, and tapers into cruise. That S is
-    // the shape that reads as weight.
+    // What it replaced was a first-order lag on the thrust (thrustSpoolTicks, 8) whose job was to
+    // stop the bird leaping to cruise. It did that far too well: two exponentials in series, the
+    // lag's 8 ticks and drag's own 11, took about 57 ticks to settle, so every takeoff was a slow
+    // drift out of the perch. Allowing a burst instead is the honest version of the same idea, and
+    // it does not remove the ramp - thrust is still bounded, so top speed still takes a second or so
+    // to reach, it just starts with a shove rather than a nudge.
     //
-    // Eight ticks is roughly two wingbeats for a bird this size. Settling takes about 3*(this + 11)
-    // ticks all in, the 11 being drag's own constant, so 0 leaves the old behaviour untouched
-    public static double thrustSpoolTicks = 8.0;
+    // FlightEnvelope.thrustCapAt fades it out linearly with speed, ending exactly on the sustained
+    // figure at top speed, so no number the planner derives from top speed moves at all. Needs
+    // BirdTestMob to override getFlyingSpeed, since vanilla pins that to the sustained figure
+    public static double peakThrustFactor = 4.0;
+
+    // ---- wing animation ----
+    // Wingbeats per tick at no effort and at full effort. Purely how the model reads: the flap rate
+    // is interpolated between them on FlightEnvelope.effortFor(thrust), so the wings beat fast on a
+    // burst off a perch and slowly on a glide into one. Nothing flows back the other way - thrust is
+    // what the bird emits and the wings are a readout of it, not a driver
+    public static double minFlapRate = 0.06;
+    public static double maxFlapRate = 0.25;
 
     // how far the flown arc is allowed to bulge off the drawn line when rounding a corner. This is
     // the dial that turns a turn angle into a speed limit: radius is speed/yawRate, and a corner of

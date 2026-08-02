@@ -1,63 +1,61 @@
-# Known issue: walk mode can't cross a 1-block gap (unresolved)
+# Fixed: walk mode couldn't cross a 1-block gap
 
-Symptom: the test bird, walking a ground path, cannot clear a 1-block gap that a vanilla
-`PathfinderMob` (e.g. a polar bear) crosses without trouble. Not a jump-strength or hitbox problem -
+Symptom was: the test bird, walking a ground path, could not clear a 1-block gap that a vanilla
+`PathfinderMob` (e.g. a polar bear) crosses without trouble. Never a jump-strength or hitbox problem -
 `BirdTestMob` sets no `JUMP_STRENGTH`/step-height overrides, and ground locomotion is unmodified
-vanilla `GroundPathNavigation` + vanilla `MoveControl` (see `navigator/BirdWalkNavigation.java`,
-`controller/BirdTestMob.java:67,88`). The custom `BirdNodeEvaluator` is flight-only and never wired
-into the ground navigator.
+vanilla `GroundPathNavigation` + vanilla `MoveControl`.
 
-## Root cause: `BirdGroundControl.tickWalking()`
+## Root cause
 
-`controller/BirdGroundControl.java:181-189`:
+`tickWalking()` read a single false `onGround()` as "walked off an edge" and flipped the mode to
+`AIRBORNE` the same tick. Striding over a 1-block hole makes `onGround()` false for the tick or two
+the feet are over it - completely normal, a polar bear does it every time - but the flip was not
+free. `installLocomotionForMode()` reacted by calling `navigation.stop()` on the ground navigation
+and swapping the pair over to the flight one mid-stride, and `tickAirborne()` then set
+`noGravity(true)`. The bird was pulled out of ground physics entirely and left hovering over the hole
+with no flight path to follow, so it never landed on the far side and the walk was abandoned.
+
+Three modes did this: `PERCHED`, `WALKING` and `LAUNCHING` all watched `onGround()` and all escalated
+straight to full flight.
+
+## The fix: `DESCENDING` became `FLUTTERING`
+
+The bug was never really about debounce tolerance. It was that there was no state for *feet off the
+ground but not flying*, so losing ground contact for any reason had nowhere to go except the flight
+stack.
+
+`DESCENDING` was already most of that state - gravity on, waiting for `onGround` - so it was widened
+rather than a sixth mode added. `FLUTTERING` is now every way a bird can be airborne without a path
+to fly: a hop, a stride over a gap, a ledge, the block underfoot going away, and the last drop onto a
+perch at the end of a flight. It puts out real upward thrust against gravity, so it parachutes rather
+than plummets; it pitches along its travel scaled by horizontal speed, so a hop arcs but a straight
+drop stays level; and critically it **declines to have an opinion about which locomotion pair is
+installed**.
+
+That abstention is the actual fix. `installLocomotionForMode()` reads a three-valued
+`Locomotion.WALK/FLY/KEEP` rather than a boolean, so a walk excursion over a gap never swaps pairs,
+never stops the navigation, and vanilla's ground pair carries the bird across on its own momentum
+exactly the way it carries a polar bear across. On landing the walk is handed straight back:
 
 ```java
-private void tickWalking() {
-    this.mob.setNoGravity(false);
-    if (!this.mob.onGround()) {
-        // walked off an edge, or got shoved. Back to the flight pair, which can catch it
-        this.mode = Mode.AIRBORNE;
-    } else if (this.mob.getNavigation().isDone()) {
-        this.mode = Mode.PERCHED;
-    }
-}
+this.mode = this.mob.getNavigation().isDone() ? Mode.PERCHED : Mode.WALKING;
 ```
 
-Striding over a 1-block gap means `onGround()` reads false for the tick(s) the bird's feet are over
-the hole - completely normal, a polar bear does the same thing every time it crosses one. Here that
-single false reading is read as "walked off an edge" and the mode flips to `AIRBORNE` immediately,
-same tick.
+That single line covers all three entries, because the ground pair is the only one ever installed
+with an unfinished path while fluttering - a drop out of a flight always has `isDone()` true, since
+that is the condition that started it.
 
-That flip is not free: `BirdTestMob.installLocomotionForMode()` (`BirdTestMob.java:179-187`) reacts
-to the mode change by calling `this.navigation.stop()` on the ground navigation and swapping the
-navigation/move-control pair over to the flight ones, mid-stride. `tickAirborne()`
-(`BirdGroundControl.java:147-152`) then sets `noGravity(true)`. So instead of the bird's existing
-horizontal momentum carrying it across the gap under ordinary gravity - which is all a vanilla mob
-ever does - it gets pulled out of ground physics entirely and left hovering over the hole with no
-flight path to follow. It never lands on the far side; the walk is simply abandoned.
+The swept-AABB depth probe suggested as candidate fix #2 turned out not to be needed anywhere.
 
-Vanilla `PathfinderMob`s have no such watcher on `onGround()`. A momentary loss of ground contact
-while striding over a gap is a non-event for them; `LivingEntity.travel`/`Entity.move` just keep
-resolving gravity and momentum as normal and the mob's own speed carries it across.
+Net effect on the state machine: it stayed five modes wide and *lost* transitions. `AIRBORNE` is now
+reachable only deliberately - a flight path being requested, or a launch turn completing - instead of
+from three separate implicit escalations.
 
-## Candidate fixes
+## The flap-instead-of-jump idea landed with it
 
-1. **Debounce**: tolerate a few ticks of `!onGround()` before committing to `AIRBORNE` from
-   `WALKING`. Simple, but the right tolerance is an arbitrary constant that will misbehave at
-   different walk speeds / gap widths.
-2. **Depth probe instead of raw `onGround()`**: reuse the existing `groundWithinReach()` pattern
-   (`BirdGroundControl.java:250-253`, already used by `tickDescending()`) to only bail to `AIRBORNE`
-   when there is genuinely nothing below within reach, not just because this tick's collision flag
-   happens to be false. Preferred - matches an existing pattern in the same class rather than adding
-   a new tunable.
-
-Not yet implemented.
-
-## Idea, not a fix: flap instead of jump
-
-Separate from the bug above - once ground mode can cross a gap at all, a vanilla-style leg jump
-reads wrong for a bird anyway. It would be more believable for the bird to flap up and over a gap
-(or a ledge) instead of hopping it like a quadruped: a short, low hop into a brief `AIRBORNE`
-hand-off, wingbeats carrying it the rest of the way, rather than legs alone. Worth keeping in mind
-once the state-machine fix above lands, since the fix changes exactly the transition this would
-hook into.
+The old note here said a vanilla-style leg jump reads wrong for a bird, and that flapping over a gap
+would be more believable once the state machine could cross one at all. It came for free: any loss of
+ground contact enters `FLUTTERING`, which is wings-out and thrusting, so a bird crossing a gap or
+hopping a ledge beats its way over rather than hopping it like a quadruped. Nothing needed
+special-casing - the wing spread keys off the same synched grounded flag the mode already mirrors
+out, and the thrust is the same quantity the flight control emits.

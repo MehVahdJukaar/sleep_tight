@@ -1,5 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.test.controller;
 
+import net.mehvahdjukaar.sleep_tight.test.throttle.FlightEnvelope;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.AABB;
@@ -8,7 +9,7 @@ import net.minecraft.world.phys.Vec3;
 /**
  * Which mode the bird is in, and everything that follows from the answer. Section 6 of
  * {@code believable_bird_flight.md} asked for takeoff, cruise, flare and perch; this owns all of
- * them except cruise, which is the flight stack's business, and the flare, which is still missing.
+ * them except cruise, which is the flight stack's business.
  * <p>
  * Three jobs. It owns whether the bird's feet are <b>down</b>, which is a state and not a
  * measurement: a bird gripping a branch is grounded, one hovering an inch above it is not, and no
@@ -33,16 +34,26 @@ import net.minecraft.world.phys.Vec3;
 public class BirdGroundControl {
 
     public enum Mode {
-        /** In the air, flying or hovering. Gravity off, the flight layer is in charge. */
+        /** In the air flying a path. Gravity off, the flight layer is in charge. */
         AIRBORNE,
-        /** Arrived over something landable, gravity back on, dropping the last bit onto it. */
-        DESCENDING,
+        /**
+         * Feet off but not flying: gravity on and damped, wings working, waiting to land. Every way
+         * a bird can be off the ground without a path to fly is this one state - a hop, a stride
+         * over a gap, the block under it going away, and the drop onto a perch at the end of a
+         * flight. See {@link #tickFluttering()} for why they are worth nothing apart.
+         */
+        FLUTTERING,
         /** Feet down, standing. */
         PERCHED,
         /** Feet down, walking a ground path. The flight layers are not installed at all. */
         WALKING,
         /** Feet down, turning on the spot to line up with the path. Flight is held off. */
         LAUNCHING
+    }
+
+    /** Which locomotion pair a mode wants installed. {@code KEEP} is an abstention, not a default. */
+    public enum Locomotion {
+        WALK, FLY, KEEP
     }
 
     private final Mob mob;
@@ -55,6 +66,10 @@ public class BirdGroundControl {
     // NaN when nothing outside is asking for a pitch, which is the normal case
     private float pitchOverride = Float.NaN;
 
+    // what the wings are putting out, in blocks per tick squared. Only ever non zero while
+    // fluttering; the flight control owns it in the air
+    private double wingThrust;
+
     public BirdGroundControl(Mob mob) {
         this.mob = mob;
     }
@@ -66,6 +81,36 @@ public class BirdGroundControl {
 
     public boolean isWalking() {
         return this.mode == Mode.WALKING;
+    }
+
+    /** Feet off with no path to fly. The wings are working; nothing is steering. */
+    public boolean isFluttering() {
+        return this.mode == Mode.FLUTTERING;
+    }
+
+    /** Feet off with a path to fly, which is the one mode where the flight control owns the wings. */
+    public boolean isAirborne() {
+        return this.mode == Mode.AIRBORNE;
+    }
+
+    /** What the wings are putting out this tick, in blocks per tick squared. Zero unless fluttering. */
+    public double wingThrust() {
+        return this.wingThrust;
+    }
+
+    /**
+     * Which pair of navigation and move control this mode needs. Fluttering abstains, and that
+     * abstention is the whole of the one block gap fix: a stride over a hole loses ground contact
+     * for a tick or two, and swapping the locomotion pair over that would stop the walk mid-step.
+     * Leaving whatever is installed alone lets vanilla's ground pair carry the bird across exactly
+     * the way it carries a polar bear across.
+     */
+    public Locomotion locomotion() {
+        return switch (this.mode) {
+            case WALKING -> Locomotion.WALK;
+            case FLUTTERING -> Locomotion.KEEP;
+            default -> Locomotion.FLY;
+        };
     }
 
     public boolean isHoldingForLaunch() {
@@ -121,10 +166,16 @@ public class BirdGroundControl {
         }
     }
 
-    /** A flight has been requested, so whatever walk was happening is over. */
-    public void endWalk() {
+    /**
+     * A flight has been requested. A walk is over, and a flutter becomes the real thing: a bird
+     * already in the air and handed a path has nothing left to wait for. Grounded modes are left
+     * alone so {@link #requestLaunch} still gets its turn on the spot.
+     */
+    public void onFlightRequested() {
         if (this.mode == Mode.WALKING) {
             this.mode = Mode.PERCHED;
+        } else if (this.mode == Mode.FLUTTERING) {
+            this.mode = Mode.AIRBORNE;
         }
     }
 
@@ -134,9 +185,10 @@ public class BirdGroundControl {
      * hold off the same tick's steering.
      */
     public void tick() {
+        this.wingThrust = 0.0;
         switch (this.mode) {
             case AIRBORNE -> this.tickAirborne();
-            case DESCENDING -> this.tickDescending();
+            case FLUTTERING -> this.tickFluttering();
             case PERCHED -> this.tickPerched();
             case WALKING -> this.tickWalking();
             case LAUNCHING -> this.tickLaunching();
@@ -147,29 +199,41 @@ public class BirdGroundControl {
     private void tickAirborne() {
         this.mob.setNoGravity(true);
         if (BirdGroundConfig.perchOnArrival && this.mob.getNavigation().isDone() && this.groundWithinReach()) {
-            this.mode = Mode.DESCENDING;
+            this.mode = Mode.FLUTTERING;
         }
     }
 
     /**
-     * The only phase that is a transient rather than a state. It exists because the test for feet
-     * being down is {@code onGround}, and nothing can put them down while gravity is off, so
-     * something has to commit to falling before the answer is knowable.
+     * Feet off, wings out, gravity back on. It exists because the test for feet being down is
+     * {@code onGround} and nothing can put them down while gravity is off, so something has to
+     * commit to falling before the answer is knowable - and because a bird that has lost the ground
+     * is not thereby flying. Everything that used to flip straight to {@link Mode#AIRBORNE} on a
+     * false {@code onGround} arrives here instead, which is what stops a stride over a gap, a hop,
+     * or the block underfoot going away from cancelling whatever the bird was doing.
+     * <p>
+     * The wings put out real upward thrust against gravity rather than gravity being quietly turned
+     * down, which is what makes this the same thing the flight control is doing and not a special
+     * case beside it. Under gravity it buys the parachute: a bird knocked off a ledge beats its way
+     * down and lands rather than dropping like a brick, and nothing ever has to decide that a fall
+     * has become a flight.
      */
-    private void tickDescending() {
+    private void tickFluttering() {
         this.mob.setNoGravity(false);
-        if (!this.mob.getNavigation().isDone() || !this.groundWithinReach()) {
-            this.mode = Mode.AIRBORNE;
-        } else if (this.mob.onGround()) {
-            this.mode = Mode.PERCHED;
+        if (this.mob.onGround()) {
+            // pick the walk back up where it left off. Only the ground pair is ever installed with
+            // an unfinished path while this mode lasts, so this cannot read a flight path as a walk
+            this.mode = this.mob.getNavigation().isDone() ? Mode.PERCHED : Mode.WALKING;
+            return;
         }
+        this.wingThrust = FlightEnvelope.wingPeakThrust() * BirdGroundConfig.flutterWingEffort;
+        this.mob.setDeltaMovement(this.mob.getDeltaMovement().add(0.0, this.wingThrust, 0.0));
     }
 
     private void tickPerched() {
         this.mob.setNoGravity(false);
         if (!this.mob.onGround()) {
             // shoved, or whatever it was standing on is gone
-            this.mode = Mode.AIRBORNE;
+            this.mode = Mode.FLUTTERING;
         }
     }
 
@@ -181,8 +245,9 @@ public class BirdGroundControl {
     private void tickWalking() {
         this.mob.setNoGravity(false);
         if (!this.mob.onGround()) {
-            // walked off an edge, or got shoved. Back to the flight pair, which can catch it
-            this.mode = Mode.AIRBORNE;
+            // mid stride over a gap, off a ledge, or a jump. Not a decision: the flutter keeps this
+            // same locomotion pair installed and hands the walk straight back on landing
+            this.mode = Mode.FLUTTERING;
         } else if (this.mob.getNavigation().isDone()) {
             this.mode = Mode.PERCHED;
         }
@@ -222,23 +287,35 @@ public class BirdGroundControl {
     }
 
     /**
-     * Level for anything with its feet down or about to have them, and the flown slope otherwise.
+     * Level for anything with its feet down, and the flown slope otherwise.
      * <p>
      * Pitch tracks where the mob is actually going rather than where it is aimed, so a bird still
-     * drifting out of the last leg does not point somewhere it is not moving. Descending is level on
-     * purpose and is where the flare goes when it lands: pointing the body along a gravity-driven
-     * drop reads as falling, which is precisely what a landing should not look like.
+     * drifting out of the last leg does not point somewhere it is not moving.
+     * <p>
+     * Fluttering takes the same slope scaled by how fast it is actually going anywhere, which is
+     * what tells a hop apart from a drop. A jump has real horizontal speed, so the arc comes out
+     * nose up then nose down and reads as a short flight; a bird standing still with the block
+     * pulled out from under it has none, so the slope is scaled away to nothing and it stays level
+     * and beats its wings instead of pointing at the floor. That is also the flare, which used to be
+     * bought by keeping the whole descent rigidly level.
      */
     private float wantedPitch() {
-        if (this.mode != Mode.AIRBORNE) {
-            return 0.0F;
+        if (this.mode == Mode.AIRBORNE) {
+            return Float.isNaN(this.pitchOverride) ? this.velocitySlope(1.0F)
+                    : Mth.clamp(this.pitchOverride, -BirdFlightConfig.maxPitch, BirdFlightConfig.maxPitch);
         }
-        if (!Float.isNaN(this.pitchOverride)) {
-            return Mth.clamp(this.pitchOverride, -BirdFlightConfig.maxPitch, BirdFlightConfig.maxPitch);
+        if (this.mode == Mode.FLUTTERING) {
+            double going = this.mob.getDeltaMovement().horizontalDistance();
+            return this.velocitySlope((float) Math.min(1.0, going / BirdGroundConfig.flutterPitchSpeedRef));
         }
+        return 0.0F;
+    }
+
+    /** The angle the momentum is travelling at, weighted and clipped to what the body may hold. */
+    private float velocitySlope(float weight) {
         Vec3 velocity = this.mob.getDeltaMovement();
         float slope = (float) -(Mth.atan2(velocity.y, velocity.horizontalDistance()) * Mth.RAD_TO_DEG);
-        return Mth.clamp(slope, -BirdFlightConfig.maxPitch, BirdFlightConfig.maxPitch);
+        return Mth.clamp(slope * weight, -BirdFlightConfig.maxPitch, BirdFlightConfig.maxPitch);
     }
 
     /**

@@ -13,7 +13,7 @@ import net.minecraft.util.Mth;
 public class TestMobRenderer extends MobRenderer<BirdTestMob, TestMobModel> {
 
     public TestMobRenderer(EntityRendererProvider.Context context) {
-        super(context, new TestMobModel(context.bakeLayer(SleepTightClient.BEDBUG)), 0.375f);
+        super(context, new TestMobModel(context.bakeLayer(TestClientStuff.TEST_BIRD)), 0.375f);
     }
 
     @Override
@@ -38,6 +38,12 @@ public class TestMobRenderer extends MobRenderer<BirdTestMob, TestMobModel> {
         float bodyPitch = entity.getBodyPitch(partialTick);
         this.model.bodyPitch = bodyPitch;
         poseStack.mulPose(Axis.XP.rotationDegrees(-bodyPitch));
+
+        // the wings ride the same handover as the pitch. Not routed through getBob the way vanilla's
+        // parrot and chicken do it: that smuggles the flap in through the ageInTicks slot, and the
+        // antenna wobble is already using it
+        this.model.flapPhase = entity.getFlapPhase(partialTick);
+        this.model.wingSpread = entity.getWingSpread(partialTick);
 
         // as a fraction of the rate the bird can turn at rather than a flat degrees-per-degree, so a
         // full-rate corner banks fully at any speed. FLYING_SPEED is syncable, so the client can

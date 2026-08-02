@@ -1,7 +1,8 @@
 package net.mehvahdjukaar.sleep_tight.test;
 
-import net.mehvahdjukaar.sleep_tight.test.controller.BirdGroundConfig;
+import net.mehvahdjukaar.sleep_tight.test.controller.BirdFlightConfig;
 import net.mehvahdjukaar.sleep_tight.test.controller.BirdGroundControl;
+import net.mehvahdjukaar.sleep_tight.test.throttle.FlightEnvelope;
 import net.mehvahdjukaar.sleep_tight.test.controller.WalkOrFly;
 import net.mehvahdjukaar.sleep_tight.test.controller.PerchingFlier;
 import net.mehvahdjukaar.sleep_tight.test.debug.MobTrail;
@@ -58,9 +59,21 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
     private static final EntityDataAccessor<Float> BODY_PITCH =
             SynchedEntityData.defineId(BirdTestMob.class, EntityDataSerializers.FLOAT);
 
+    // what the wings are putting out, in blocks per tick squared. Whichever layer is in charge sets
+    // it - the flight control while flying a path, the ground control while fluttering - and the
+    // model is a readout of it and nothing else. Synched rather than derived because neither of
+    // those layers exists client side, and it is the only wing input the renderer needs: the flap
+    // rate follows from it, and the phase is integrated locally from that on both sides
+    private static final EntityDataAccessor<Float> WING_THRUST =
+            SynchedEntityData.defineId(BirdTestMob.class, EntityDataSerializers.FLOAT);
+
     /** How hard the debug tool flies its paths, as a fraction of the envelope. */
     private static final double FLIGHT_SPEED_MODIFIER = 0.7;
     private static final double WALK_SPEED_MODIFIER = 0.7;
+
+    // how fast the wings open and close, in fractions of the way per tick. Fast enough that a hop
+    // is spent with them out rather than still opening, slow enough not to snap
+    private static final float WING_SPREAD_PER_TICK = 0.25F;
 
     private final BirdGroundControl groundControl = new BirdGroundControl(this);
     private final BirdFlightControl flightControl;
@@ -71,6 +84,15 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
     // client side copies of the synched pitch, so the renderer has something to interpolate between
     private float bodyPitch;
     private float bodyPitchO;
+
+    // where the wings are in their stroke, 0 through 1, and how far out they are held, 0 folded to
+    // 1 spread. Both integrated locally rather than synched: they run off WING_THRUST and the
+    // grounded flag, which both sides have, and sending a phase that changes every tick would be
+    // paying network for something either side can work out
+    private float flapPhase;
+    private float flapPhaseO;
+    private float wingSpread;
+    private float wingSpreadO;
 
     // server side only, kept around so the client side debug renderer entry can be refreshed
     @Nullable
@@ -95,6 +117,19 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
         super.defineSynchedData(builder);
         builder.define(GROUNDED, false);
         builder.define(BODY_PITCH, 0.0F);
+        builder.define(WING_THRUST, 0.0F);
+    }
+
+    /**
+     * Vanilla pins this to a flat 0.02, which is the thrust a bird can <i>sustain</i>. Handing back
+     * the peak instead is what lets a takeoff burst actually arrive: everything downstream of the
+     * throttle is a fraction of this number, and {@code moveRelative} normalises anything over full
+     * throttle away, so a burst that does not fit under the ceiling is silently not a burst.
+     * Sustained flight is unaffected - it simply flies at a lower throttle for the same thrust.
+     */
+    @Override
+    protected float getFlyingSpeed() {
+        return (float) FlightEnvelope.wingPeakThrust();
     }
 
     /**
@@ -142,6 +177,40 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
     }
 
     /**
+     * Where the wings are in their stroke, in whole strokes. Not wrapped back into 0..1 for the
+     * caller: the phase wraps once a beat and lerping across that wrap would run the stroke
+     * backwards for a frame, so the wrap is undone here instead.
+     */
+    public float getFlapPhase(float partialTick) {
+        float to = this.flapPhase < this.flapPhaseO ? this.flapPhase + 1.0F : this.flapPhase;
+        return Mth.lerp(partialTick, this.flapPhaseO, to);
+    }
+
+    /** How far the wings are held out, 0 folded against the body to 1 fully spread. */
+    public float getWingSpread(float partialTick) {
+        return Mth.lerp(partialTick, this.wingSpreadO, this.wingSpread);
+    }
+
+    /**
+     * Runs on both sides off synched inputs, so the client never has to be told where the wings
+     * are. Two independent channels: the stroke rate follows thrust, which is what makes a bird
+     * bursting off a perch beat hard and one gliding into a perch barely beat at all; and the
+     * spread follows whether the feet are down, so a walking bird has them folded flat whatever
+     * else is going on.
+     */
+    private void tickWings() {
+        this.flapPhaseO = this.flapPhase;
+        this.wingSpreadO = this.wingSpread;
+
+        double effort = FlightEnvelope.wingEffortFor(this.entityData.get(WING_THRUST));
+        double rate = Mth.lerp(effort, BirdFlightConfig.minFlapRate, BirdFlightConfig.maxFlapRate);
+        this.flapPhase = (float) ((this.flapPhase + rate) % 1.0);
+
+        float wanted = this.isGrounded() ? 0.0F : 1.0F;
+        this.wingSpread = Mth.approach(this.wingSpread, wanted, WING_SPREAD_PER_TICK);
+    }
+
+    /**
      * Points the body somewhere other than along its flight until cleared. Airborne only: a landing
      * always straightens the bird out, whatever is set here.
      */
@@ -168,6 +237,12 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
         // a level pitch costs nothing
         this.entityData.set(GROUNDED, this.groundControl.isGrounded());
         this.entityData.set(BODY_PITCH, this.groundControl.bodyPitch());
+        // whichever layer was in charge this tick owns the wings, and the mode is what says which.
+        // The flight control runs after this, so what it reports is last tick's - a tick of lag on a
+        // flap rate is not something anyone can see, and it saves the entity having to know when the
+        // move control has run. Every grounded mode reports zero, which is what folds the wings
+        this.entityData.set(WING_THRUST, (float) (this.groundControl.isAirborne()
+                ? this.flightControl.wingThrust() : this.groundControl.wingThrust()));
     }
 
     /**
@@ -175,10 +250,16 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
      * ever live and the other is never ticked. The outgoing navigation is stopped rather than left
      * holding a path, since nothing will be advancing it and a stale one would be picked straight
      * back up on the way home.
+     * <p>
+     * A mode may also decline to have an opinion, which fluttering does, and that abstention is
+     * what lets a bird stride over a one block gap: it loses ground contact for a tick or two, and
+     * swapping the pair over during that would stop the walk it is halfway through.
      */
     private void installLocomotionForMode() {
-        boolean walking = this.groundControl.isWalking();
-        if (walking == (this.navigation == this.groundNavigation)) {
+        BirdGroundControl.Locomotion wanted = this.groundControl.locomotion();
+        boolean walking = wanted == BirdGroundControl.Locomotion.WALK;
+        if (wanted == BirdGroundControl.Locomotion.KEEP
+                || walking == (this.navigation == this.groundNavigation)) {
             return;
         }
         this.navigation.stop();
@@ -205,6 +286,7 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
     @Override
     public void tick() {
         this.bodyPitchO = this.bodyPitch;
+        this.tickWings();
         super.tick();
         this.bodyPitch = this.entityData.get(BODY_PITCH);
         if (this.level().isClientSide) return;
@@ -289,7 +371,7 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
         this.beginDebugPath(path);
         // a flight request ends any walk, and the swap has to happen before the path is handed over
         // or it would go to a navigation that is about to be uninstalled
-        this.groundControl.endWalk();
+        this.groundControl.onFlightRequested();
         this.installLocomotionForMode();
         // clear first: moveTo keeps the old path when the new one compares equal, and an already
         // finished one would make it bail out

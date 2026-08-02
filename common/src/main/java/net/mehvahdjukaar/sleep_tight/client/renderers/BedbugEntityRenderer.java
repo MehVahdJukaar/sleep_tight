@@ -57,6 +57,11 @@ public class BedbugEntityRenderer<T extends BedbugEntity> extends MobRenderer<T,
     }
 
     public static LayerDefinition createLayer() {
+        return LayerDefinition.create(createMesh(), 64, 32);
+    }
+
+    /** Separate from {@link #createLayer()} so the test bird can bake this body with wings on it. */
+    public static MeshDefinition createMesh() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition main = mesh.getRoot();
         float h = 24 - 5.5f;
@@ -93,6 +98,6 @@ public class BedbugEntityRenderer<T extends BedbugEntity> extends MobRenderer<T,
         main.addOrReplaceChild("left_middle_leg", leftLeg, PartPose.offset(w, h, z3));
         main.addOrReplaceChild("right_front_leg", rightLeg, PartPose.offset(-w, h, z4));
         main.addOrReplaceChild("left_front_leg", leftLeg, PartPose.offset(w, h, z4));
-        return LayerDefinition.create(mesh, 64, 32);
+        return mesh;
     }
 }
