@@ -22,7 +22,7 @@ code it describes:
         |                --> a ThrottleProfile: a speed limit for every point along that path
         v
    navigator/            knows the MOB'S LIVE STATE
-   BirdFlightNavigation    where along the path it actually is, whether it is falling behind
+   BirdFlightNavigation  where along the path it actually is, whether it is falling behind
    controller/           --> yaw, pitch and thrust, tick by tick
    BirdFlightControl
 ```
@@ -51,9 +51,19 @@ control does. So no throttle profile is ever applied to a walk and no walk ever 
 `controller/WalkOrFly` picks between them per destination: only from a standstill, only inside
 `walkMaxDistance` and `walkMaxRise`, and only when the ground path's estimated time beats the
 flight's. Both estimates are in ticks. The flight side is charged `takeoffCostTicks` for the pivot,
-the spool and the descent, which is the term that actually decides short hops, and the walk side is
-multiplied by `walkCostPenalty`, because a MOVEMENT_SPEED of 0.25 is genuinely faster than this bird
-cruises and without a thumb on the scale it would walk every short hop going.
+the spool and the descent, and the walk side is multiplied by `walkCostPenalty`, which defaults to 1
+because the honest numbers already favour flying.
+
+Those numbers are worth writing down, because two vanilla details make them nothing like the
+attributes they come from. On the ground, `Mob.setSpeed` writes the attribute into **both** `zza` and
+`speed`, and `travel` scales that input by `getFrictionInfluencedSpeed`, which is the same number
+again at 0.6 friction, so the acceleration is the attribute *squared*. In the air, `getFlyingSpeed`
+is a hardcoded `0.02` for anything not ridden by a player, and `FLYING_SPEED` is only the throttle
+fraction on top of it. And what a travel time needs is ground covered per tick, `a / (1 - drag)`, not
+the velocity the mob settles at, because `move()` runs before drag. That gives 0.138 blocks a tick on
+foot at MOVEMENT_SPEED 0.25 against 0.178 cruising, so flying is only about a third quicker and the
+takeoff charge is what decides most short hops. Override `getFlyingSpeed` on the mob and that gap
+opens up.
 
 Both navigations route every "go there" overload to `PerchingFlier.travelTo` on the mob, which is
 where the choice is made, so a goal that only knows `getNavigation().moveTo(...)` gets it without
