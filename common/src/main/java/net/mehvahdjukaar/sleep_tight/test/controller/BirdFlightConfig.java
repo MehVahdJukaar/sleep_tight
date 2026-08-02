@@ -141,7 +141,7 @@ public class BirdFlightConfig {
     // angle t passes radius * (1/cos(t/2) - 1) blocks inside the corner point. That use of it shrinks
     // with how walled in the cell is, since only the cells on the line were certified clear.
     //
-    // It is also the ceiling on how far BirdPathNavigation.carrotFor may bias the aim point, and
+    // It is also the ceiling on how far BirdFlightNavigation.carrotFor may bias the aim point, and
     // there it is flat rather than scaled by enclosure, which is what makes it the open air rounding
     // dial: a walled in cell is already down to enclosedLookahead and never asks for a cut this big,
     // so raising it widens the curves that have room and leaves the tight ones alone. Pair it with

@@ -405,8 +405,8 @@ The steering layer now lives next to the pathfinder, in `pathfinding/`:
 
 | Class | Replaces | Why |
 |---|---|---|
-| `BirdMoveControl` | `FlyingMoveControl` | rate-limited yaw, turn-scaled thrust, braking on both axes |
-| `BirdPathNavigation.followThePath` | vanilla `followThePath` | wider acceptance radius, accept passed waypoints, no corner cutting |
+| `BirdFlightControl` | `FlyingMoveControl` | rate-limited yaw, turn-scaled thrust, braking on both axes |
+| `BirdFlightNavigation.followThePath` | vanilla `followThePath` | wider acceptance radius, accept passed waypoints, no corner cutting |
 | `BirdFlightConfig` | - | the knobs, same public-static-mutable style as `BirdPathfindingConfig` |
 
 The braking rule is worth restating because it needs no magic constants. At distance `s` with drag
@@ -428,7 +428,7 @@ Three gotchas that this ran into, all of them tick-order or vanilla-default prob
    consuming it. A control that does not consume it must gate on `mob.getNavigation().isDone()`
    instead, which is what `SmoothSwimmingMoveControl` does.
 3. **`BodyRotationControl` lags the turn** by several ticks if left alone, so the model reads as
-   sliding sideways through an arc. `BirdMoveControl` pins `yBodyRot` to `yRot`.
+   sliding sideways through an arc. `BirdFlightControl` pins `yBodyRot` to `yRot`.
 
 Still true and still relevant from the original analysis:
 
@@ -442,15 +442,15 @@ Still true and still relevant from the original analysis:
 ## 12. Known issue: the ruler cursor can deadlock (unresolved)
 
 In-game symptom, first caught 2026-07-28: a bird flying a straight, unobstructed path (no turning
-involved) went idle mid-path. `BirdMoveControl` was still nominally `MOVE_TO`, but the mob had
+involved) went idle mid-path. `BirdFlightControl` was still nominally `MOVE_TO`, but the mob had
 stopped translating entirely, sitting short of the drawn target.
 
 ### Why: a closed loop with no restoring force
 
 ```
 PathRuler.advanceCursorTo(mobPos)  -->  cursor
-BirdPathNavigation.tick()          -->  carrot = ruler.pointAt(cursor + lookahead)
-BirdMoveControl.tick()             -->  thrust towards carrot
+BirdFlightNavigation.tick()          -->  carrot = ruler.pointAt(cursor + lookahead)
+BirdFlightControl.tick()             -->  thrust towards carrot
 mob moves                          -->  new mobPos, feeds back into advanceCursorTo
 ```
 
@@ -460,7 +460,7 @@ coordinates instead, which is why a vanilla mob that stalls for a tick still get
 same real point next tick). If the cursor ever stops advancing here, the carrot freezes with it,
 and nothing in the loop can restart it from the outside.
 
-The trap that turns a stall into a permanent one: `BirdMoveControl` still carries vanilla's arrival
+The trap that turns a stall into a permanent one: `BirdFlightControl` still carries vanilla's arrival
 epsilon, meant for "wanted position = final destination":
 
 ```java
@@ -477,7 +477,7 @@ advance (it only moves via `mob position -> projection`). Self-reinforcing, not 
 
 ### Root cause found, 2026-07-28: `getGroundY` (fixed)
 
-`BirdPathNavigation.tick` was passing the carrot through `this.getGroundY(carrot)`, inherited from
+`BirdFlightNavigation.tick` was passing the carrot through `this.getGroundY(carrot)`, inherited from
 `PathNavigation`:
 
 ```java
@@ -521,7 +521,7 @@ See `FLIGHT_ARCHITECTURE.md`.
 
 ### How it actually gets caught (or doesn't)
 
-Nothing in `BirdPathNavigation`/`PathRuler` detects this itself. It only ever gets cleaned up by
+Nothing in `BirdFlightNavigation`/`PathRuler` detects this itself. It only ever gets cleaned up by
 whichever vanilla `PathNavigation` watchdog trips first, and the two behave very differently:
 
 - **100-tick distance check** (`doStuckDetection`, the literal `isStuck`/`stop()` path): compares
@@ -541,7 +541,7 @@ slow) for a full 100-tick window.
 
 `MobDebugInfo` / `PathDebugRenderer` now render, live, next to the mob:
 - `STEERING` vs `COASTING` - the actual `hasWanted() && !navigation.isDone()` condition
-  `BirdMoveControl.tick()` branches on (not the raw `operation` enum, which is permanently stuck on
+  `BirdFlightControl.tick()` branches on (not the raw `operation` enum, which is permanently stuck on
   `MOVE_TO` once set - see gotcha #2 above, confirmed intentional and vanilla-precedented, not a bug)
 - `timeout T/budget` and `stuckChk n/100` - the two watchdogs above, so a climb-to-trip is visible
   before it happens instead of reasoned backwards from a dead path
@@ -554,7 +554,7 @@ slow) for a full 100-tick window.
 The `getGroundY` fix removes the known trigger, but the loop is still closed and still has no
 externally anchored target, so it can stall again for a different reason. These harden it:
 
-- Drop `MIN_SPEED_SQR` from `BirdMoveControl` - it is a leftover from the "wanted position =
+- Drop `MIN_SPEED_SQR` from `BirdFlightControl` - it is a leftover from the "wanted position =
   destination" model; the class's own comment already says "acceptance spheres are gone," but this
   check is the one acceptance-sphere-shaped thing still armed.
 - Give the cursor an independent floor on advancement, e.g. never let it fall behind
@@ -563,6 +563,6 @@ externally anchored target, so it can stall again for a different reason. These 
   speed is no longer a guess: it is `ThrottleProfile.speedLimitAt(cursor)`.
 - Scale `projectionWindow` with current velocity instead of a fixed 2 blocks, so a rough tick can't
   box the cursor in.
-- Give `BirdPathNavigation` its own stall detector off the cursor-rate metric above, instead of
+- Give `BirdFlightNavigation` its own stall detector off the cursor-rate metric above, instead of
   relying on vanilla's two watchdogs, which were tuned for index-based node acceptance, not a
   continuously-projected cursor. `ThrottleProfile.expectedFlightTicks()` is the budget it should use.

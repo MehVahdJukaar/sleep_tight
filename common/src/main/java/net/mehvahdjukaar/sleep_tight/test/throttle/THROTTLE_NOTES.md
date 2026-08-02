@@ -152,16 +152,16 @@ shorter than the nearby path arrows is the mob failing to keep up with its own p
 
 ## How much of the follower reads it
 
-`BirdMoveControl` takes its speed entirely from the profile, and reads it through the navigation,
+`BirdFlightControl` takes its speed entirely from the profile, and reads it through the navigation,
 which is the only layer that can see the cursor and how far off the line the mob is:
 
 ```java
-// BirdPathNavigation.speedLimitFor
+// BirdFlightNavigation.speedLimitFor
 bleedPerArc = ruler.groundPerArc() * (1 - brakingDrag)
 limit       = min over nodes i within stoppingDistance(v) of
                   limitAtNode(i) + (arcAtNode(i) - cursor) * bleedPerArc,   floored at speedLimitAt(cursor)
 limit       = max(limit, rejoinSpeed(offRoute))
-// BirdMoveControl
+// BirdFlightControl
 target      = min(maxSpeed * speedModifier, navigation.getSpeedLimit())
 throttle    = envelope.throttleForThrust(envelope.thrustToReach(target, currentSpeed))
 ```

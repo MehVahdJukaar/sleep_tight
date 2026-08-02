@@ -236,7 +236,7 @@ control sets and everything else reads. Three things hang off it:
   way, and the flight follower cannot deliver it: it turns at a flying bird's rate, so a path leaving
   behind the mob would be flown as a wide arc through whatever it was perched against. So the ground
   control pivots the mob on the spot to the path's launch heading, and only then is flight allowed to
-  start: `BirdPathNavigation.tick` and `BirdMoveControl.tick` both stand down while
+  start: `BirdFlightNavigation.tick` and `BirdFlightControl.tick` both stand down while
   `isHoldingForLaunch()`. Turning on your feet is free and instant in path terms, and it is what feet
   are for.
 

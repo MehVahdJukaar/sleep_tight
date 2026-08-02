@@ -18,12 +18,12 @@ import java.util.List;
  * time for the current node). The two are independent - the timeout clears {@code isStuck} right
  * before it stops the path, so it never shows up as "stuck" even though it gave up just the same.
  * <p>
- * {@code steering} is the exact condition {@code BirdMoveControl.tick()} itself branches on, which
+ * {@code steering} is the exact condition {@code BirdFlightControl.tick()} itself branches on, which
  * includes the ground layer's launch hold: a bird turning on the spot to line up with a fresh path
  * has a waypoint and an unfinished path and is still deliberately not flying. {@code mode} is the
  * phase that hold comes from, and is the first thing to read when a mob will not leave the ground.
  * {@code operation} is the raw vanilla
- * {@code MoveControl.Operation} name and is kept only for reference: neither {@code BirdMoveControl}
+ * {@code MoveControl.Operation} name and is kept only for reference: neither {@code BirdFlightControl}
  * nor vanilla's own {@code SmoothSwimmingMoveControl} (which uses the same pattern) ever resets it
  * back to {@code WAIT}, so once a mob has been given a single waypoint it reads {@code MOVE_TO}
  * forever - {@code steering} is what actually answers "is it doing something right now."

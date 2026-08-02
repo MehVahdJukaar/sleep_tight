@@ -40,7 +40,7 @@ import net.minecraft.world.phys.Vec3;
  * <p>
  * Sections 1, 2 and 6 of {@code believable_bird_flight.md} are all in now: velocity steering here,
  * arc-length pure pursuit in {@link net.mehvahdjukaar.sleep_tight.test.navigator.PathRuler}, and an
- * absorbing arrival in {@code BirdPathNavigation.followThePath}. Section 6's mode machine is half
+ * absorbing arrival in {@code BirdFlightNavigation.followThePath}. Section 6's mode machine is half
  * built: takeoff, perch and walking live in {@link BirdGroundControl}, which also owns
  * {@code noGravity} and the body's pitch now, so this class no longer touches either. The flare is
  * still missing, as is banking from section 5.

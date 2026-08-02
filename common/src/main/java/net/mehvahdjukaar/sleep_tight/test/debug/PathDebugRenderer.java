@@ -450,7 +450,7 @@ public class PathDebugRenderer {
         double progress = info.rulerLength() > 1.0E-4 ? info.rulerCursor() / info.rulerLength() * 100.0 : 0.0;
         int textColor = info.stuck() ? 0xFFFF5555 : -1;
         poseStack.translate(0,1.4,0);
-        // steering is the exact condition BirdMoveControl branches on, so it reads COASTING both
+        // steering is the exact condition BirdFlightControl branches on, so it reads COASTING both
         // when there is nothing to fly and when the ground layer is holding the mob for a launch
         // turn; the mode is what tells those apart. Raw operation is kept as a footnote since
         // MoveControl never resets it back to WAIT here, same as vanilla's SmoothSwimmingMoveControl

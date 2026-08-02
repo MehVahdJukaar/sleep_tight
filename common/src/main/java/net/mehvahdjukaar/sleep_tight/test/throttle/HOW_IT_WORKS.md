@@ -144,7 +144,7 @@ things to ask it:
 |---|---|
 | `speedLimitAt(d)` | the limit at that arc length, interpolated so the ramps are continuous. **This is the one the follower reads.** Pass 2 already turned every downstream limit into a ramp leading here, so this single point is the fastest it can be and still make everything ahead. Interpolation is exact, not approximate: `maxEntrySpeed` is linear in distance, so a braking ramp is a straight line |
 | `expectedFlightTicks()` | how long this flight should take. The correct budget for a path timeout, unlike vanilla's cruise-speed guess, which fires spuriously as soon as the bird slows for a corner |
-| `limitAtNode(i)`, `arcAtNode(i)` | per node, for the debug renderer's speed arrows and for `BirdPathNavigation`'s braking correction, which re-derives pass 2's inequality with the follower's real braking authority in place of the profile's assumed one |
+| `limitAtNode(i)`, `arcAtNode(i)` | per node, for the debug renderer's speed arrows and for `BirdFlightNavigation`'s braking correction, which re-derives pass 2's inequality with the follower's real braking authority in place of the profile's assumed one |
 
 There used to be a `speedLimitOver(d, window)` here, the tightest limit in the next `window` blocks.
 It is gone: reading it instead of `speedLimitAt` brakes for the same corner twice, once where the

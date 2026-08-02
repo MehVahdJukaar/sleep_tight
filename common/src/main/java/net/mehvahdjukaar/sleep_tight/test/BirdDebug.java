@@ -158,7 +158,7 @@ public class BirdDebug {
 
     /**
      * Plain vanilla flying navigation, built fresh per query so it never carries state between
-     * runs. Mirrors BirdPathNavigation exactly apart from the evaluator and finder, so the two
+     * runs. Mirrors BirdFlightNavigation exactly apart from the evaluator and finder, so the two
      * searches see the same range, node budget and door rules.
      */
     private static class BaselineNavigation extends FlyingPathNavigation {

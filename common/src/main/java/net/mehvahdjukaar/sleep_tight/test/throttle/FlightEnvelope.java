@@ -39,7 +39,7 @@ public record FlightEnvelope(
 
     /**
      * Reads the mob's attributes and the live config. FLYING_SPEED is treated as a throttle
-     * fraction rather than a speed, matching what {@code BirdMoveControl} currently does with it:
+     * fraction rather than a speed, matching what {@code BirdFlightControl} currently does with it:
      * it scales the acceleration, and the top speed follows from that against drag.
      */
     public static FlightEnvelope forMob(Mob mob) {
@@ -179,7 +179,7 @@ public record FlightEnvelope(
      * The same formula as the horizontal corner rule, and it did not used to be. While vertical
      * velocity was left to thrust alone the climb angle came round at {@code accel/speed} instead of
      * at a fixed rate, making the radius {@code speed^2/accel} and this a square root. Now that
-     * {@code BirdMoveControl.turnVelocityPitch} steers the velocity's pitch the way the yaw half
+     * {@code BirdFlightControl.turnVelocityPitch} steers the velocity's pitch the way the yaw half
      * steers its heading, both planes turn at {@link #maxYawRate} and a turn is priced the same way
      * whichever one it happens in. The margins still differ - sideways is a tuned allowance, up and
      * down is the measured room inside the certified cells - which is why this still takes one.

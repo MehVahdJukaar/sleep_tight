@@ -22,9 +22,9 @@ code it describes:
         |                --> a ThrottleProfile: a speed limit for every point along that path
         v
    navigator/            knows the MOB'S LIVE STATE
-   BirdPathNavigation    where along the path it actually is, whether it is falling behind
+   BirdFlightNavigation    where along the path it actually is, whether it is falling behind
    controller/           --> yaw, pitch and thrust, tick by tick
-   BirdMoveControl
+   BirdFlightControl
 ```
 
 Each layer reads only the one above it. The arrows are one-way on purpose: the search does not know
@@ -123,7 +123,7 @@ outside `FlightEnvelope` may hold an opinion about how fast the bird turns; the 
   Any loop over path nodes down here is a smell; it means something that should have been planned
   once is being guessed at twenty times a second.
 
-  The one loop that is allowed is in `BirdPathNavigation.speedLimitFor`, and it is worth stating why.
+  The one loop that is allowed is in `BirdFlightNavigation.speedLimitFor`, and it is worth stating why.
   It does not recompute the planner's answer; it re-applies the planner's own braking inequality with
   a number only this layer can know, how much ground the mob is actually covering per block of route.
   A mob rounding a corner off covers arc faster than ground and so sheds less speed than the profile
@@ -169,7 +169,7 @@ Not done, in the order they should happen:
    `timeoutLimit` on a node change but never zeroes `timeoutTimer`, so the clock runs from the start
    of the path against a one-node budget and every mob is on a ~200 tick fuse. Vanilla hides it by
    finishing short paths first and by repathing instantly when it does fire.
-   `BirdPathNavigation.restartNodeTimeout` supplies the missing reset.
+   `BirdFlightNavigation.restartNodeTimeout` supplies the missing reset.
 
 Decided against, with the reasoning in `throttle/THROTTLE_NOTES.md`: putting speed into the search
 state. It multiplies the state space by the number of speed bins, which costs search range rather
