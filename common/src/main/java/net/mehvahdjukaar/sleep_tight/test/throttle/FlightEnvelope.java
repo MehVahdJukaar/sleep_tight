@@ -27,7 +27,7 @@ public record FlightEnvelope(
         double drag,
         double brakingDrag,
         double accelPerTick,
-        double speedGainPerTick,
+        double thrustSpoolRate,
         double maxThrottle,
         double corridorMargin,
         double verticalCorridorMargin,
@@ -56,7 +56,7 @@ public record FlightEnvelope(
                 drag,
                 BirdFlightConfig.brakingDrag,
                 accel,
-                accel * BirdFlightConfig.maxSpeedGainFraction,
+                spoolRateFor(BirdFlightConfig.thrustSpoolTicks),
                 throttleCap,
                 BirdFlightConfig.corridorMargin,
                 // measured off the mob rather than configured, because it is not a preference: it is
@@ -113,32 +113,42 @@ public record FlightEnvelope(
     }
 
     /**
-     * The fastest we may ask for next tick, holding the wind-up to
-     * {@link BirdFlightConfig#maxSpeedGainFraction}. Thrust cannot be the thing that is limited here:
-     * at top speed full thrust is exactly what holds it, so a capped thrust would simply never reach
-     * top speed. Limiting the commanded speed instead leaves {@link #thrustToReach} to work out the
-     * throttle, and since it lands on the commanded speed exactly, the gain comes out as the literal
-     * blocks per tick per tick the bird picks up.
+     * How much of the gap to the wanted thrust the wings close in one tick, from a time constant in
+     * ticks. Standard first-order discretisation, so {@code thrustSpoolTicks} is readable as the time
+     * to close 63% of the gap and settling is about three times it.
      */
-    public double rampedSpeed(double targetSpeed, double currentSpeed) {
-        return this.speedGainPerTick <= 0.0
-                ? targetSpeed : Math.min(targetSpeed, currentSpeed + this.speedGainPerTick);
+    private static double spoolRateFor(double spoolTicks) {
+        return spoolTicks <= 0.0 ? 1.0 : 1.0 - Math.exp(-1.0 / spoolTicks);
     }
 
     /**
-     * The fastest we can be after covering {@code distance} from {@code entrySpeed}, and the whole of
-     * the planner's forwards pass. Simulated rather than solved: the closed form for accelerating
-     * against drag is ugly and this runs once per path leg, not per tick. Tick order matches
-     * {@code LivingEntity.travel}, which adds thrust, then moves, then applies drag.
+     * Wings spooling up, and the only reason the bird does not leap to cruise in half a second. See
+     * {@link BirdFlightConfig#thrustSpoolTicks} for why the lag belongs on the thrust rather than on
+     * the speed.
+     * <p>
+     * Asymmetric on purpose: building thrust is gradual, dropping it is not, since folding wings takes
+     * no time worth modelling. That also keeps {@link #thrustToReach}'s guarantee intact - the mob can
+     * never end up above the commanded speed - which a symmetric lag would break by leaving the bird
+     * still thrusting into a corner it was told to slow for.
+     */
+    public double spooledThrust(double wantedThrust, double currentThrust) {
+        return wantedThrust <= currentThrust
+                ? wantedThrust : currentThrust + (wantedThrust - currentThrust) * this.thrustSpoolRate;
+    }
+
+    /**
+     * The fastest we can be after covering {@code distance} from {@code entrySpeed} at full thrust,
+     * and the whole of the planner's forwards pass. Simulated rather than solved: the closed form
+     * for accelerating against drag is ugly and this runs once per path leg, not per tick. Tick
+     * order matches {@code LivingEntity.travel}, which adds thrust, then moves, then applies drag.
      * <p>
      * Only the post-drag velocity is capped at {@link #maxSpeed}. Capping the thrust-added value too
      * would make the loop settle at {@code drag * maxSpeed}, so a dead straight path would never be
      * allowed within 9% of top speed and every node on it would come out acceleration limited.
      * <p>
-     * Ground covered is the pre-drag velocity, which is what {@code travel()} actually moves by and
-     * what the follower's servo produces for a commanded speed. Under the ramp that is
-     * {@code (speed + gain) / drag}; at top speed the two agree exactly, since {@code speed + accel}
-     * and {@code maxSpeed / drag} are the same number there by the definition of terminal speed.
+     * The spool lag is deliberately not modelled here. It would need the wings' live state, which
+     * this layer does not have and should not want, and leaving it out only makes the profile
+     * optimistic - which it already is by design, since being under a limit is always safe.
      */
     public double speedAfterAccelerating(double entrySpeed, double distance) {
         if (this.accelPerTick <= 0.0) {
@@ -147,9 +157,9 @@ public record FlightEnvelope(
         double speed = entrySpeed;
         double covered = 0.0;
         for (int tick = 0; tick < MAX_SIMULATED_TICKS && covered < distance; tick++) {
-            double next = this.rampedSpeed(Math.min(this.maxSpeed, this.drag * (speed + this.accelPerTick)), speed);
-            covered += next / this.drag;
-            speed = next;
+            double moving = speed + this.accelPerTick;
+            covered += moving;
+            speed = Math.min(this.maxSpeed, this.drag * moving);
         }
         return speed;
     }

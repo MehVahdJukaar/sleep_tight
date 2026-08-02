@@ -25,10 +25,12 @@ import net.minecraft.world.phys.Vec3;
  * otherwise leave the velocity decaying along the old heading and the old climb angle; and hold
  * whatever speed it was told it may hold.
  * <p>
- * It holds no history at all: where it is aimed and how fast it may go are handed down fresh every
+ * It holds almost no history: where it is aimed and how fast it may go are handed down fresh every
  * tick by {@link BirdPathNavigation}, so a mob that gets shoved recovers from wherever it lands
- * instead of being confused by it. The one policy it owns is {@link #lookahead}, how much of the
- * drawn line it is willing to round off, because that is a steering decision and nothing else.
+ * instead of being confused by it. The one exception is {@link #thrust}, how hard the wings are
+ * already working, and it is self correcting rather than remembered. The one policy it owns is
+ * {@link #lookahead}, how much of the drawn line it is willing to round off, because that is a
+ * steering decision and nothing else.
  * <p>
  * This shape was picked by flying three controls over the same routes in the {@code PathfindingTest}
  * lab: against the fixed-carrot version it used to be, it holds the corridor to 0.05 blocks rather
@@ -58,6 +60,11 @@ public class BirdMoveControl extends MoveControl {
     // ended up directly over its target should hold the heading it has and go down, not pick a
     // direction out of the rounding error and fly a circle looking for one
     private static final double MIN_HORIZONTAL_AIM_SQR = 1.0E-2;
+
+    // how hard the wings are already working, so they can build up to a demand rather than meeting it
+    // in one tick. Self correcting: it decays to whatever is being asked for, so a perched or shoved
+    // mob does not carry a stale one
+    private double thrust;
 
     public BirdMoveControl(Mob mob) {
         super(mob);
@@ -242,9 +249,9 @@ public class BirdMoveControl extends MoveControl {
      * and coasting is the hardest this mob can brake.
      */
     private double throttleFor(FlightEnvelope envelope) {
-        double currentSpeed = this.mob.getDeltaMovement().length();
-        double thrust = envelope.thrustToReach(this.targetSpeed(envelope, currentSpeed), currentSpeed);
-        return Mth.clamp(envelope.throttleForThrust(thrust), 0.0, envelope.maxThrottle());
+        double wanted = envelope.thrustToReach(this.targetSpeed(envelope), this.mob.getDeltaMovement().length());
+        this.thrust = envelope.spooledThrust(wanted, this.thrust);
+        return Mth.clamp(envelope.throttleForThrust(this.thrust), 0.0, envelope.maxThrottle());
     }
 
     /**
@@ -254,18 +261,11 @@ public class BirdMoveControl extends MoveControl {
      * <p>
      * With no path in flight this falls back to plain cruising, which means no arrival braking. That
      * is fine for the test rig and is exactly what should be visible as a difference.
-     * <p>
-     * Whatever comes out is then held to the envelope's wind-up rate. Rate limiting the command is
-     * the only place a gentle takeoff can live, since thrust and top speed are the same number, and
-     * it is stateless because the limit is measured against the speed actually being carried rather
-     * than against last tick's command. Only the way up is limited: a target below current speed
-     * passes through untouched, so braking and arrival are exactly as they were.
      */
-    private double targetSpeed(FlightEnvelope envelope, double currentSpeed) {
+    private double targetSpeed(FlightEnvelope envelope) {
         double ceiling = envelope.maxSpeed() * this.speedModifier;
-        double allowed = this.mob.getNavigation() instanceof BirdPathNavigation navigation
+        return this.mob.getNavigation() instanceof BirdPathNavigation navigation
                 ? Math.min(ceiling, navigation.getSpeedLimit()) : ceiling;
-        return envelope.rampedSpeed(allowed, currentSpeed);
     }
 
     /** The one the current path was planned against, so plan and flight cannot drift apart. */

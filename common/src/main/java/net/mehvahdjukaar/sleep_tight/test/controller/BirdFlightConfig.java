@@ -105,19 +105,22 @@ public class BirdFlightConfig {
     public static double minSpeedFraction = 0.15;
     public static double arrivalSpeed = 0.0;
 
-    // how much of the thrust may go into gaining speed each tick, as opposed to holding the speed
-    // already there. The only reason a wind-up is possible at all: thrust and top speed are the same
-    // number (terminal speed is accel*drag/(1-drag)), so turning the thrust down does not make the
-    // bird accelerate more gently, it just lowers where it settles and gets there in the same 17
-    // ticks. The time constant belongs to drag alone. Nor can the thrust be capped, since at top
-    // speed full thrust is exactly what holds it - so the limit goes on how fast the *commanded*
-    // speed may rise and the servo does the rest.
+    // how long the wings take to build thrust, as a first-order time constant in ticks. The bird
+    // accelerated instantly because thrust stepped from nothing to full in a single tick, which is
+    // the one unphysical thing in the chain: v' = drag*(v+a) is already the correct answer for a body
+    // under constant thrust against linear drag, and the exponential it produces is what a real one
+    // does. Only the step input was wrong.
     //
-    // A fraction rather than a flat blocks-per-tick-squared so the wind-up lasts the same time at any
-    // FLYING_SPEED: both the gain and the speed it is climbing to scale together, leaving a ramp of
-    // cruiseFraction / (this * (1-drag)/drag) ticks whatever the attribute says. At 1 it stops biting
-    // entirely, since thrust from a standstill only delivers drag times accel anyway
-    public static double maxSpeedGainFraction = 0.25;
+    // Lagging the thrust rather than capping it, and rather than rate limiting the commanded speed,
+    // for two reasons. Thrust cannot be capped at all: at top speed full thrust is exactly what holds
+    // it, so any cap simply moves where the bird settles. And a rate limit on speed is a straight
+    // line into a corner at cruise, whereas lagging the input leaves two exponentials in series, so
+    // acceleration starts at zero, peaks about a time constant in, and tapers into cruise. That S is
+    // the shape that reads as weight.
+    //
+    // Eight ticks is roughly two wingbeats for a bird this size. Settling takes about 3*(this + 11)
+    // ticks all in, the 11 being drag's own constant, so 0 leaves the old behaviour untouched
+    public static double thrustSpoolTicks = 8.0;
 
     // how far the flown arc is allowed to bulge off the drawn line when rounding a corner. This is
     // the dial that turns a turn angle into a speed limit: radius is speed/yawRate, and a corner of
