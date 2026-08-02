@@ -55,7 +55,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     // node keys are packed relative to this, so any real world coordinate fits
     private Vec3i origin;
     // whether the mob had its feet down when the search began, see getStart
-    private boolean startsPerched;
+    private boolean startsGrounded;
 
     public BirdNodeEvaluator() {
         this.enclosures.defaultReturnValue(NOT_MEASURED);
@@ -84,7 +84,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
         this.latticeNodes.clear();
         this.enclosures.clear();
         this.origin = mob.blockPosition();
-        this.startsPerched = mob instanceof PerchingFlier flier && flier.isPerched();
+        this.startsGrounded = mob instanceof PerchingFlier flier && flier.isGrounded();
         this.expansions = 0;
         this.generatedNeighbors = 0;
     }
@@ -104,7 +104,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
      * momentum is the whole reason this lattice exists. A bird with its feet down has no airspeed at
      * all, so it leaves whichever way the route wants and pays nothing for it: the start is marked
      * {@link BirdNode#freeHeading}, which lifts both the turn cap and the turn charge on the first
-     * step. Making that true on the mob is the ground layer's job, see {@code BirdGroundControl}.
+     * step. Making that true on the mob is the ground layer's job, see {@code BirdGaitControl}.
      * <p>
      * Seeding the heading from yaw regardless was a real bug: a perched bird facing away from the
      * only way out of a dead end had no legal horizontal move at all, since the two purely vertical
@@ -115,7 +115,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     public Node getStart() {
         Node vanillaStart = super.getStart();
         BirdNode start = this.getLatticeNode(vanillaStart.x, vanillaStart.y, vanillaStart.z,
-                yawToBin(this.mob.getYRot()), this.startsPerched);
+                yawToBin(this.mob.getYRot()), this.startsGrounded);
         start.type = vanillaStart.type;
         start.costMalus = vanillaStart.costMalus;
         return start;

@@ -193,8 +193,10 @@ Ranked by believability per line of code:
 3. **Continuous curvature.** Pure pursuit gives this. A jerk limit (rate-limit the change in yaw
    rate, not just yaw) makes the bird ease into and out of turns instead of snapping to full rate.
 4. **Head stabilization.** Birds hold their head level and locked while the body rotates underneath.
-   `BirdLookControl` already frees pitch for the move control; the complement is keeping *head* pitch
-   near level and letting head yaw track a target independently of the violently moving body.
+   **In as of 2026-08-02**: body pitch is its own synched field rather than a second use of `xRot`,
+   the renderer rotates the body by it, and `TestMobModel` adds it straight back onto the head, which
+   cancels it exactly. So the head holds level through a dive and still tracks whatever a look goal
+   picked, on the vanilla `LookControl` that `xRot` now belongs to again.
 5. **Never fully stop in cruise.** A bird decelerating to zero mid-air looks broken.
    `minTurnSpeedFactor` acknowledges this; it should be a floor on the whole controller, not just on
    turns.
@@ -216,15 +218,15 @@ Real bird movement reads as distinct gaits. At minimum:
   oscillate. That is the second most likely 180 after the missed-node one.
 - **Perch** - `setNoGravity(false)`, zero velocity, hand off to ground navigation.
 
-**Half of this is in as of 2026-08-01**, in `controller/BirdGroundControl`: takeoff and perch, plus
-the gravity ownership the two need. Cruise is the sections 1-4 controller as before. The flare is
-still missing, and is now the only gap in the list.
+**Half of this is in as of 2026-08-01**, in `controller/BirdGaitControl`: takeoff and perch, plus
+the gravity ownership the two need, and walking joined them 2026-08-02. Cruise is the sections 1-4
+controller as before. The flare is still missing, and is now the only gap in the list.
 
-The perch is a **state, not a measurement**. Nothing about velocity or `onGround` alone separates a
-bird gripping a branch from one hovering an inch over it, so it is a synched boolean the ground
-control sets and everything else reads. Two things hang off it:
+Feet down is a **state, not a measurement**. Nothing about velocity or `onGround` alone separates a
+bird gripping a branch from one hovering an inch over it, so it is a synched boolean the gait
+control sets and everything else reads. Three things hang off it:
 
-- the search plans a departure in **any** direction from a perched start, because a bird on its feet
+- the search plans a departure in **any** direction from a grounded start, because a bird on its feet
   carries no airspeed to conserve (`BirdNode.freeHeading`, and `PATHFINDING_NOTES.md` invariant 5).
   Before that, the start heading was seeded from body yaw whatever the mob was doing, and a bird
   parked facing the back of a dead end had no legal horizontal move at all - the two purely vertical
@@ -238,15 +240,31 @@ control sets and everything else reads. Two things hang off it:
   `isHoldingForLaunch()`. Turning on your feet is free and instant in path terms, and it is what feet
   are for.
 
-That split is deliberate groundwork: the ground half is where a second, walking navigation goes when
-short distances stop being worth flying. The whole contract between the two halves is the
-`PerchingFlier` interface, so nothing above it has to change when that lands.
+- **short hops are walked, not flown.** A destination is only considered for walking from a
+  standstill, within `walkMaxDistance` horizontally and `walkMaxRise` vertically, and only if a real
+  ground path comes out cheaper in ticks than flying one. Cheaper counts the launch pivot, the spool
+  and the descent against the flight, since that overhead is what makes a four-block flight look
+  silly, and it multiplies the walk by `walkCostPenalty`, since this bird's MOVEMENT_SPEED is
+  actually quicker than its cruise. `controller/GaitChoice` is that decision and nothing else.
+
+Walking is a **swap, not a blend**: the mob carries the lattice flier and a plain vanilla
+`GroundPathNavigation` + `MoveControl`, and installs exactly one pair at a time, in
+`customServerAiStep` so a swap never lands between a navigation and the move control it was feeding.
+The flight stack did not have to change to accommodate it, because `PerchingFlier` was the whole
+contract between the halves and walking is just another way of having your feet down.
+
+Body pitch belongs to the gait too, as a target per gait approached at `maxPitchPerTick` rather than
+a value anything writes outright: the flown slope while airborne, level otherwise, and an override
+for anything that wants to pose the bird mid-flight. Landing always wins over the override. It used
+to be written onto `xRot` by the move control, which meant it shared a field with where the mob was
+looking and was only updated on ticks with a path to fly, so a bird that landed mid dive stayed nose
+down until it next took off.
 
 `setNoGravity` used to be set in the `BirdTestMob` constructor and again every move control tick, and
 never cleared - a bird that can never land is not a bird, and a dead or AI-disabled one floats. It is
-now `BirdGroundControl`'s alone: on while airborne, off from the moment it commits to descending, and
+now `BirdGaitControl`'s alone: on while airborne, off from the moment it commits to descending, and
 forced off by `BirdTestMob.tick` for a mob whose AI is not running at all, which is the case the
-ground control cannot see because it rides on `customServerAiStep`.
+gait control cannot see because it rides on `customServerAiStep`.
 
 ## 7. Artifact and edge case catalogue
 

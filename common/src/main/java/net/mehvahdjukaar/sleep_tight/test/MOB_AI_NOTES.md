@@ -406,7 +406,6 @@ The steering layer now lives next to the pathfinder, in `pathfinding/`:
 | Class | Replaces | Why |
 |---|---|---|
 | `BirdMoveControl` | `FlyingMoveControl` | rate-limited yaw, turn-scaled thrust, braking on both axes |
-| `BirdLookControl` | `LookControl` | stops pitch from being zeroed after the move control writes it |
 | `BirdPathNavigation.followThePath` | vanilla `followThePath` | wider acceptance radius, accept passed waypoints, no corner cutting |
 | `BirdFlightConfig` | - | the knobs, same public-static-mutable style as `BirdPathfindingConfig` |
 
@@ -421,7 +420,10 @@ waypoint: intermediate waypoints are flown through, only the end of the path is 
 Three gotchas that this ran into, all of them tick-order or vanilla-default problems:
 
 1. **`LookControl` ticks after `MoveControl`** and `resetXRotOnTick()` defaults to true, so any pitch
-   the move control writes is silently zeroed the same tick. Hence `BirdLookControl`.
+   the move control writes is silently zeroed the same tick. This used to be worked around with a
+   `BirdLookControl` that surrendered pitch entirely, at the cost of a bird that could never look up
+   or down. Body pitch is now its own synched field owned by `BirdGaitControl`, so `xRot` goes back
+   to being the look direction and nothing has to fight over it.
 2. **Nothing clears `MoveControl.operation` back to `WAIT`** except the base implementation
    consuming it. A control that does not consume it must gate on `mob.getNavigation().isDone()`
    instead, which is what `SmoothSwimmingMoveControl` does.

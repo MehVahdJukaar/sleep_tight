@@ -41,8 +41,9 @@ import net.minecraft.world.phys.Vec3;
  * Sections 1, 2 and 6 of {@code believable_bird_flight.md} are all in now: velocity steering here,
  * arc-length pure pursuit in {@link net.mehvahdjukaar.sleep_tight.test.navigator.PathRuler}, and an
  * absorbing arrival in {@code BirdPathNavigation.followThePath}. Section 6's gait machine is half
- * built: takeoff and perch live in {@link BirdGroundControl}, which also owns {@code noGravity} now,
- * so this class no longer touches it. The flare is still missing, as is banking from section 5.
+ * built: takeoff, perch and walking live in {@link BirdGaitControl}, which also owns
+ * {@code noGravity} and the body's pitch now, so this class no longer touches either. The flare is
+ * still missing, as is banking from section 5.
  * <p>
  * What got deleted, because the profile subsumes all of it: the per-tick walk over the remaining
  * path nodes, the stopping-distance brake computed from it, and the separate slow-down-in-turns
@@ -98,7 +99,7 @@ public class BirdMoveControl extends MoveControl {
 
     /**
      * The yaw a mob has to hold to travel along a horizontal direction, in MC's convention where 0
-     * faces +Z. Shared with {@link BirdGroundControl}'s launch turn through the navigation, so the
+     * faces +Z. Shared with {@link BirdGaitControl}'s launch turn through the navigation, so the
      * heading the bird turns to on the ground and the one it steers to in the air are the same
      * number by construction.
      */
@@ -134,7 +135,6 @@ public class BirdMoveControl extends MoveControl {
         this.turnVelocityWithBody(Mth.degreesDifference(yawBefore, this.mob.getYRot()));
         this.turnVelocityPitch(toCarrot, envelope);
         this.applyThrust(toCarrot, envelope);
-        this.matchPitchToVelocity();
     }
 
     /**
@@ -277,17 +277,5 @@ public class BirdMoveControl extends MoveControl {
             }
         }
         return FlightEnvelope.forMob(this.mob);
-    }
-
-    /**
-     * Pitch tracks where the mob is actually going rather than where the carrot is, so a mob that is
-     * still drifting from the last leg does not point somewhere it is not moving. Purely visual: for
-     * anything that is not elytra flying, travel() derives motion from yaw and yya only.
-     */
-    private void matchPitchToVelocity() {
-        Vec3 velocity = this.mob.getDeltaMovement();
-        float wantedPitch = (float) -(Mth.atan2(velocity.y, velocity.horizontalDistance()) * (180.0 / Math.PI));
-        wantedPitch = Mth.clamp(wantedPitch, -BirdFlightConfig.maxPitch, BirdFlightConfig.maxPitch);
-        this.mob.setXRot(this.rotlerp(this.mob.getXRot(), wantedPitch, BirdFlightConfig.maxPitchPerTick));
     }
 }

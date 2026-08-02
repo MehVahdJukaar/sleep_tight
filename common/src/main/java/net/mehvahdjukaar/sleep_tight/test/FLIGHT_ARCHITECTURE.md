@@ -32,16 +32,28 @@ how fast the bird flies, and the follower does not re-derive geometry.
 
 ## The one thing that is not in that stack
 
-`controller/BirdGroundControl` is not a fourth layer, it is the **other half** of the bottom one: the
-locomotion the bird does with its feet. It owns whether the bird is perched, gravity, and the turn on
-the spot that lines the mob up with a path before it takes off. The flying stack talks to it through
-`controller/PerchingFlier`, implemented by the mob, and through nothing else.
+`controller/BirdGaitControl` is not a fourth layer, it is the **other half** of the bottom one: the
+locomotion the bird does with its feet. It owns whether the bird's feet are down, gravity, the turn on
+the spot that lines the mob up with a path before it takes off, the walk, and the body's pitch. The
+flying stack talks to it through `controller/PerchingFlier`, implemented by the mob, and through
+nothing else.
 
 It is worth its own box for two reasons. It is the only thing that reaches **up past** the follower
-into the search: a perched start plans its departure in any direction only because this is what makes
-that true on the mob (`PATHFINDING_NOTES.md` invariant 5). And it is where a second, walking
-navigation goes when short distances stop being worth flying, at which point the flying stack above
-is unaffected because `PerchingFlier` is the whole contract.
+into the search: a grounded start plans its departure in any direction only because this is what makes
+that true on the mob (`PATHFINDING_NOTES.md` invariant 5). And it is where the walking navigation
+lives, which arrived 2026-08-02 and did not need the flying stack above to change at all, because
+`PerchingFlier` is the whole contract.
+
+Walking is a **swap, not a blend**. `BirdTestMob` carries two complete locomotion pairs, the lattice
+flier and plain vanilla `GroundPathNavigation` + `MoveControl`, and installs exactly one at a time in
+`customServerAiStep`, which is the one slot after the navigation has ticked and before the move
+control does. So no throttle profile is ever applied to a walk and no walk ever reaches the follower.
+`controller/GaitChoice` picks between them per destination: only from a standstill, only inside
+`walkMaxDistance` and `walkMaxRise`, and only when the ground path's estimated time beats the
+flight's. Both estimates are in ticks. The flight side is charged `takeoffCostTicks` for the pivot,
+the spool and the descent, which is the term that actually decides short hops, and the walk side is
+multiplied by `walkCostPenalty`, because a MOVEMENT_SPEED of 0.25 is genuinely faster than this bird
+cruises and without a thumb on the scale it would walk every short hop going.
 
 ## Why it is split here and not somewhere else
 
@@ -124,11 +136,13 @@ Done:
 Not done, in the order they should happen:
 
 1. **The flare.** `believable_bird_flight.md` section 6 wanted four gaits: takeoff, cruise, flare,
-   perch. Takeoff and perch landed 2026-08-01 in `controller/BirdGroundControl`, which also took
+   perch. Takeoff and perch landed 2026-08-01 in `controller/BirdGaitControl`, which also took
    ownership of `setNoGravity` from the mob constructor and the move control, so arrival now descends
    and lands instead of leaving the bird hovering. What is still missing is the approach: nothing
    levels out, bleeds horizontal speed and pitches up before the perch, so the descent is the profile
-   running out rather than a landing.
+   running out rather than a landing. The hook is already there and holds the placeholder: the
+   descending gait asks for a level body rather than for the slope it is actually falling at, and a
+   flare is that target becoming a pitch-up plus a speed the profile has to respect.
 2. **Turn costs derived from the envelope** rather than hand-set. The existing values happen to land
    within about a factor of two of the physically correct ones, but that is luck, and it stops being
    true the moment the bird's agility changes.

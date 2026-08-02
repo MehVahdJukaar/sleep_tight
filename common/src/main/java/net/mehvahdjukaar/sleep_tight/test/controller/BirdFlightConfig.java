@@ -46,12 +46,12 @@ public class BirdFlightConfig {
     // how far along the path ahead of the mob the steering target sits when there is nothing anywhere
     // near the line. Steering only: it says nothing about speed, which comes from the throttle
     // profile. This is the corner rounding dial: the flown arc cuts inside a corner by roughly a
-    // fifth to a third of this, so 1.5 puts the cut near the planner's corridorMargin. Lattice nodes
+    // fifth to a third of this, so 1.8 puts the cut at the planner's corridorMargin. Lattice nodes
     // are one block apart, and anything below that stops smoothing and just tracks the polyline.
     // Stays a distance rather than becoming a number of ticks because what pure pursuit actually
     // needs is room to turn in, about three times turnRadius, and that ratio no longer moves with
     // speed now the radius is the thing being held fixed
-    public static double openAirLookahead = 1.5;
+    public static double openAirLookahead = 1.8;
 
     // the same, in a cell walled in on every side. The carrot is interpolated between the two on the
     // node's measured enclosure, which is the whole point: the search only certified the cells on
@@ -138,9 +138,15 @@ public class BirdFlightConfig {
 
     // how far the flown arc is allowed to bulge off the drawn line when rounding a corner. This is
     // the dial that turns a turn angle into a speed limit: radius is speed/yawRate, and a corner of
-    // angle t passes radius * (1/cos(t/2) - 1) blocks inside the corner point. Shrinks with how
-    // walled in the cell is, since only the cells on the line were certified clear
-    public static double corridorMargin = 0.35;
+    // angle t passes radius * (1/cos(t/2) - 1) blocks inside the corner point. That use of it shrinks
+    // with how walled in the cell is, since only the cells on the line were certified clear.
+    //
+    // It is also the ceiling on how far BirdPathNavigation.carrotFor may bias the aim point, and
+    // there it is flat rather than scaled by enclosure, which is what makes it the open air rounding
+    // dial: a walled in cell is already down to enclosedLookahead and never asks for a cut this big,
+    // so raising it widens the curves that have room and leaves the tight ones alone. Pair it with
+    // openAirLookahead, since a cut that does not fit here just gets the lookahead trimmed back
+    public static double corridorMargin = 0.45;
 
     // there is no knob for the vertical equivalent on purpose: FlightEnvelope measures it off the mob
     // as FlightLine.verticalNodeOffset, half a cell minus half the mob's height, 0.125 for the 0.75

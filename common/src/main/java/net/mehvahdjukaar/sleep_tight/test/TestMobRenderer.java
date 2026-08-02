@@ -22,16 +22,22 @@ public class TestMobRenderer extends MobRenderer<BirdTestMob, TestMobModel> {
     }
 
     /**
-     * Points the whole body along the flight instead of only the head. The move control already
-     * tracks pitch to the actual velocity, but vanilla feeds pitch to the head alone, so without
-     * this the flown slope is invisible and a mob climbing at 45 degrees looks identical to one
-     * flying level. Bank is derived here rather than synched because yaw is interpolated already.
+     * Points the whole body along the flight instead of only the head. Vanilla feeds pitch to the
+     * head alone, so without this the flown slope is invisible and a mob climbing at 45 degrees
+     * looks identical to one flying level.
+     * <p>
+     * The angle is the gait's own body pitch rather than {@code xRot}, which is where the mob is
+     * looking and is nothing to do with where its body is pointed. The model needs it too, to keep
+     * the head level against it, and this runs before {@code setupAnim}, so handing it over here is
+     * the whole of that. Bank is derived rather than synched because yaw is interpolated already.
      */
     @Override
     protected void setupRotations(BirdTestMob entity, PoseStack poseStack, float bob, float yBodyRot,
                                   float partialTick, float scale) {
         super.setupRotations(entity, poseStack, bob, yBodyRot, partialTick, scale);
-        poseStack.mulPose(Axis.XP.rotationDegrees(-entity.getViewXRot(partialTick)));
+        float bodyPitch = entity.getBodyPitch(partialTick);
+        this.model.bodyPitch = bodyPitch;
+        poseStack.mulPose(Axis.XP.rotationDegrees(-bodyPitch));
 
         // as a fraction of the rate the bird can turn at rather than a flat degrees-per-degree, so a
         // full-rate corner banks fully at any speed. FLYING_SPEED is syncable, so the client can

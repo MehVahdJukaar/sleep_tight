@@ -1,5 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.test;
 
+import net.mehvahdjukaar.sleep_tight.test.controller.GaitChoice;
+import net.mehvahdjukaar.sleep_tight.test.navigator.BirdPathNavigation;
 import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdNodeEvaluator;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -23,8 +25,9 @@ import java.util.List;
 
 /**
  * Right click a block with a ghast tear to make the nearest {@link BirdTestMob} path to the block
- * above it, draw the result, fly it slowly, and report what the search cost against plain vanilla
- * flying A* on the same query.
+ * above it, draw the result, travel it slowly, and report what the search cost against plain vanilla
+ * flying A* on the same query. Short hops may come out as a walk rather than a flight, in which case
+ * what is drawn is the ground path the mob chose; the report says which and why.
  * <p>
  * Drawing goes through our own debug channel in {@link net.mehvahdjukaar.sleep_tight.test.debug},
  * so it works on a plain client with nothing enabled. Vanilla's equivalent cannot: its DebugPackets
@@ -52,14 +55,17 @@ public class BirdDebug {
         SearchRun lattice = runLattice(mob, target);
         SearchRun vanilla = runVanillaBaseline(mob, target);
 
-        mob.followPath(lattice.path);
-        if (lattice.path == null) {
+        // the mob may decide the hop is not worth flying and walk it instead, in which case the path
+        // that gets drawn is the ground one it picked rather than the lattice one measured above
+        GaitChoice choice = mob.travelTo(target, lattice.path);
+        Path travelled = choice.walk() ? choice.groundPath() : lattice.path;
+        if (travelled == null) {
             feedback(player, "No path to " + target.toShortString(), ChatFormatting.RED);
             return;
         }
 
-        broadcastPath(mob, lattice.path);
-        report(player, lattice, vanilla);
+        broadcastPath(mob, travelled);
+        report(player, travelled, lattice, vanilla, choice);
     }
 
     /**
@@ -71,9 +77,11 @@ public class BirdDebug {
     }
 
     private static SearchRun runLattice(BirdTestMob mob, BlockPos target) {
-        BirdNodeEvaluator evaluator = (BirdNodeEvaluator) mob.getNavigation().getNodeEvaluator();
+        // deliberately not getNavigation(): that is vanilla's walker while the bird is on foot
+        BirdPathNavigation navigation = mob.getFlightNavigation();
+        BirdNodeEvaluator evaluator = (BirdNodeEvaluator) navigation.getNodeEvaluator();
         long start = System.nanoTime();
-        Path path = mob.getNavigation().createPath(target, ACCURACY);
+        Path path = navigation.createPath(target, ACCURACY);
         return new SearchRun(path, System.nanoTime() - start, evaluator.expansions, evaluator.generatedNeighbors);
     }
 
@@ -89,11 +97,16 @@ public class BirdDebug {
         return new BaselineNavigation(mob, mob.level());
     }
 
-    private static void report(Player player, SearchRun lattice, SearchRun vanilla) {
-        Path path = lattice.path;
+    private static void report(Player player, Path path, SearchRun lattice, SearchRun vanilla,
+                               GaitChoice choice) {
         feedback(player, String.format("%d nodes, %s (dist %.1f)", path.getNodeCount(),
                         path.canReach() ? "reached" : "closest approach", path.getDistToTarget()),
                 path.canReach() ? ChatFormatting.GREEN : ChatFormatting.YELLOW);
+
+        player.sendSystemMessage(Component.literal(String.format("%s: %s (walk %s, fly %s)",
+                        choice.walk() ? "WALK" : "FLY", choice.reason(),
+                        ticks(choice.walkTicks()), ticks(choice.flightTicks())))
+                .withStyle(choice.walk() ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.WHITE));
 
         player.sendSystemMessage(Component.literal(String.format(
                         "lattice: %d expanded, %d generated, %.2f ms", lattice.expansions,
@@ -111,6 +124,12 @@ public class BirdDebug {
 
     private static double ratio(double lattice, double vanilla) {
         return vanilla <= 0 ? Double.NaN : lattice / vanilla;
+    }
+
+    /** An estimate that was never worked out prints as a dash rather than as NaN or a huge number. */
+    private static String ticks(double estimate) {
+        return Double.isNaN(estimate) || estimate >= Double.MAX_VALUE
+                ? "-" : String.format("%.0ft", estimate);
     }
 
     @Nullable

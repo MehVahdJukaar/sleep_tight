@@ -15,6 +15,13 @@ public class TestMobModel extends HierarchicalModel<BirdTestMob> {
     private final ModelPart[] rightLegs;
     private final ModelPart[] leftLegs;
 
+    /**
+     * How far the whole body is pitched, in degrees, set by the renderer just before this poses. The
+     * head cancels it out: a bird holds its head level while the body rotates underneath, and
+     * without this the head would carry the dive on top of wherever it is looking.
+     */
+    public float bodyPitch;
+
     public TestMobModel(ModelPart root) {
         this.root = root;
         this.head = root.getChild("head");
@@ -32,7 +39,7 @@ public class TestMobModel extends HierarchicalModel<BirdTestMob> {
 
     @Override
     public void setupAnim(BirdTestMob entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-        this.head.xRot = (27.5F + headPitch) * Mth.DEG_TO_RAD;
+        this.head.xRot = (27.5F + headPitch + this.bodyPitch) * Mth.DEG_TO_RAD;
         this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;
         this.antenna.xRot = 0.4F + Mth.cos(ageInTicks * 1.5F) * 0.1F;
 
