@@ -109,7 +109,7 @@ public class BirdDebug {
 
         player.sendSystemMessage(Component.literal(String.format("%s: %s (walk %s, fly %s)",
                         choice.walk() ? "WALK" : "FLY", choice.reason(),
-                        ticks(choice.walkTicks()), ticks(choice.flightTicks())))
+                        cost(choice.walkCost()), cost(choice.flightCost())))
                 .withStyle(choice.walk() ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.WHITE));
 
         player.sendSystemMessage(Component.literal(String.format(
@@ -130,10 +130,10 @@ public class BirdDebug {
         return vanilla <= 0 ? Double.NaN : lattice / vanilla;
     }
 
-    /** An estimate that was never worked out prints as a dash rather than as NaN or a huge number. */
-    private static String ticks(double estimate) {
-        return Double.isNaN(estimate) || estimate >= Double.MAX_VALUE
-                ? "-" : String.format("%.0ft", estimate);
+    /** A cost that was never worked out prints as a dash rather than as NaN or a huge number. */
+    private static String cost(double blocks) {
+        return Double.isNaN(blocks) || blocks >= Double.MAX_VALUE
+                ? "-" : String.format("%.1f", blocks);
     }
 
     @Nullable

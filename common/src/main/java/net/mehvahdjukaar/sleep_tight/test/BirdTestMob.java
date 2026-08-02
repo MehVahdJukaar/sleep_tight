@@ -24,6 +24,7 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.animal.FlyingAnimal;
+import net.minecraft.world.entity.animal.PolarBear;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.Path;
@@ -59,6 +60,7 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
 
     /** How hard the debug tool flies its paths, as a fraction of the envelope. */
     private static final double FLIGHT_SPEED_MODIFIER = 0.7;
+    private static final double WALK_SPEED_MODIFIER = 0.7;
 
     private final BirdGroundControl groundControl = new BirdGroundControl(this);
     private final BirdFlightControl flightControl;
@@ -308,7 +310,7 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
         this.beginDebugPath(path);
         this.installLocomotionForMode();
         this.groundNavigation.stop();
-        this.groundNavigation.moveTo(path, BirdGroundConfig.walkSpeedModifier);
+        this.groundNavigation.moveTo(path, WALK_SPEED_MODIFIER);
     }
 
     private void beginDebugPath(@Nullable Path path) {

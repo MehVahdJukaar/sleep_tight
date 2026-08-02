@@ -49,21 +49,19 @@ flier and plain vanilla `GroundPathNavigation` + `MoveControl`, and installs exa
 `customServerAiStep`, which is the one slot after the navigation has ticked and before the move
 control does. So no throttle profile is ever applied to a walk and no walk ever reaches the follower.
 `controller/WalkOrFly` picks between them per destination: only from a standstill, only inside
-`walkMaxDistance` and `walkMaxRise`, and only when the ground path's estimated time beats the
-flight's. Both estimates are in ticks. The flight side is charged `takeoffCostTicks` for the pivot,
-the spool and the descent, and the walk side is multiplied by `walkCostPenalty`, which defaults to 1
-because the honest numbers already favour flying.
+`walkMaxDistance` and `walkMaxRise`, and only when the ground route's length times
+`walkCostMultiplier` comes in under the flight's. That multiplier is the whole decision and is
+deliberately arbitrary: flying always takes the straight line, so what it really sets is how much of
+a detour walking is allowed to be. It is not a travel time, and modelling one would mean copying
+vanilla's friction arithmetic in here to produce a number nobody would tune by.
 
-Those numbers are worth writing down, because two vanilla details make them nothing like the
-attributes they come from. On the ground, `Mob.setSpeed` writes the attribute into **both** `zza` and
-`speed`, and `travel` scales that input by `getFrictionInfluencedSpeed`, which is the same number
-again at 0.6 friction, so the acceleration is the attribute *squared*. In the air, `getFlyingSpeed`
-is a hardcoded `0.02` for anything not ridden by a player, and `FLYING_SPEED` is only the throttle
-fraction on top of it. And what a travel time needs is ground covered per tick, `a / (1 - drag)`, not
-the velocity the mob settles at, because `move()` runs before drag. That gives 0.138 blocks a tick on
-foot at MOVEMENT_SPEED 0.25 against 0.178 cruising, so flying is only about a third quicker and the
-takeoff charge is what decides most short hops. Override `getFlyingSpeed` on the mob and that gap
-opens up.
+Worth knowing when watching the two side by side: they look equally fast, and that is the test rig,
+not the physics. `BirdTestMob.FLIGHT_SPEED_MODIFIER` flies debug paths at 0.7 so the shape of the
+lattice can be seen, while walks go out at `walkSpeedModifier`, which is 1. Underneath, a flier's
+acceleration is a hardcoded `0.02` in `LivingEntity.getFlyingSpeed` for anything not ridden by a
+player (`FLYING_SPEED` is only a throttle fraction on top of it), and a walker's is its
+MOVEMENT_SPEED applied twice, once as `zza` and once as the `moveRelative` scaler. Those land close
+together by coincidence, and the 0.7 closes what is left of the gap.
 
 Both navigations route every "go there" overload to `PerchingFlier.travelTo` on the mob, which is
 where the choice is made, so a goal that only knows `getNavigation().moveTo(...)` gets it without

@@ -37,19 +37,12 @@ public class BirdGroundConfig {
     // can step over, not about how far it is: a target two blocks away and five up is a flight
     public static double walkMaxRise = 2.0;
 
-    // the debuff, multiplying the estimated walking time only; the mob still walks at its real
-    // MOVEMENT_SPEED. One because the honest numbers already favour flying: 0.138 blocks a tick on
-    // foot against 0.178 cruising, so walking only wins short hops, and only because takeoffCostTicks
-    // is charged against the flight. Raise it to make walking rarer still
-    public static double walkCostPenalty = 1.0;
+    // the one dial the choice turns on. Both routes cost their own length in blocks and the walk is
+    // multiplied by this, so it is really "how much of a detour is walking allowed to be": at 0.75 a
+    // ground route may be a third longer than the flight and still win, at 1 it has to be no longer,
+    // above 1 it has to be shorter, which it essentially never is since flying takes the straight
+    // line. Lower it to see the bird walk more. Arbitrary on purpose, it is a preference and not an
+    // estimate of anything
+    public static double walkCostMultiplier = 0.75;
 
-    // what flying a path costs before any of its length is flown: the launch pivot, the wings
-    // spooling up, the descent and the perch at the far end. Roughly a second, and it is the term
-    // that actually decides short hops, since no length-based comparison can see it
-    public static double takeoffCostTicks = 20.0;
-
-    // speed modifier handed to the walking navigation. One means the mob's own MOVEMENT_SPEED; the
-    // debuff lives in the comparison above rather than here, so what gets chosen and how fast it
-    // then happens stay separate knobs
-    public static double walkSpeedModifier = 1.0;
 }

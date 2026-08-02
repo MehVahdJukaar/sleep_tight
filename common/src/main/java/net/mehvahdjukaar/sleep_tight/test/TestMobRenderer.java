@@ -47,6 +47,6 @@ public class TestMobRenderer extends MobRenderer<BirdTestMob, TestMobModel> {
         float bank = maxYawRate <= 1.0E-4F ? 0.0F
                 : Mth.clamp(BirdFlightConfig.maxBankAngle * yawRate / maxYawRate,
                         -BirdFlightConfig.maxBankAngle, BirdFlightConfig.maxBankAngle);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(bank));
+        //poseStack.mulPose(Axis.ZP.rotationDegrees(bank));
     }
 }
