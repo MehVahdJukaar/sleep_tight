@@ -22,13 +22,13 @@ import org.jetbrains.annotations.Nullable;
  * in order to walk the last four blocks costs more than flying them, and vanilla's
  * {@code GroundPathNavigation.canUpdatePath} would refuse to produce a path anyway.
  */
-public record GaitChoice(boolean walk, @Nullable Path groundPath,
+public record WalkOrFly(boolean walk, @Nullable Path groundPath,
                          double walkTicks, double flightTicks, String reason) {
 
     /** Vanilla's default block friction, which is the drag a walker settles its speed against. */
     private static final float DEFAULT_FRICTION = 0.6F;
 
-    public static GaitChoice decide(Mob mob, PathNavigation groundNavigation,
+    public static WalkOrFly decide(Mob mob, PathNavigation groundNavigation,
                                     BlockPos target, @Nullable Path flightPath) {
         double flightTicks = flightTicks(mob, flightPath);
         if (!(mob instanceof PerchingFlier flier) || !flier.isGrounded()) {
@@ -37,10 +37,10 @@ public record GaitChoice(boolean walk, @Nullable Path groundPath,
 
         Vec3 away = Vec3.atBottomCenterOf(target).subtract(mob.position());
         double distance = away.horizontalDistance();
-        if (distance > BirdGaitConfig.walkMaxDistance) {
+        if (distance > BirdGroundConfig.walkMaxDistance) {
             return fly(flightTicks, String.format("%.1f blocks out", distance));
         }
-        if (Math.abs(away.y) > BirdGaitConfig.walkMaxRise) {
+        if (Math.abs(away.y) > BirdGroundConfig.walkMaxRise) {
             return fly(flightTicks, String.format("%.1f blocks of rise", away.y));
         }
 
@@ -53,13 +53,13 @@ public record GaitChoice(boolean walk, @Nullable Path groundPath,
 
         double walkTicks = walkTicks(mob, groundPath);
         if (walkTicks > flightTicks) {
-            return new GaitChoice(false, null, walkTicks, flightTicks, "walking costs more");
+            return new WalkOrFly(false, null, walkTicks, flightTicks, "walking costs more");
         }
-        return new GaitChoice(true, groundPath, walkTicks, flightTicks, "walking is cheaper");
+        return new WalkOrFly(true, groundPath, walkTicks, flightTicks, "walking is cheaper");
     }
 
-    private static GaitChoice fly(double flightTicks, String reason) {
-        return new GaitChoice(false, null, Double.NaN, flightTicks, reason);
+    private static WalkOrFly fly(double flightTicks, String reason) {
+        return new WalkOrFly(false, null, Double.NaN, flightTicks, reason);
     }
 
     private static double walkTicks(Mob mob, Path groundPath) {
@@ -67,7 +67,7 @@ public record GaitChoice(boolean walk, @Nullable Path groundPath,
         if (speed <= 1.0E-6) {
             return Double.MAX_VALUE;
         }
-        return pathLength(groundPath, mob) / speed * BirdGaitConfig.walkCostPenalty;
+        return pathLength(groundPath, mob) / speed * BirdGroundConfig.walkCostPenalty;
     }
 
     /** Cruising the whole line, plus the fixed cost of getting off the ground and back onto it. */
@@ -79,7 +79,7 @@ public record GaitChoice(boolean walk, @Nullable Path groundPath,
         if (cruise <= 1.0E-6) {
             return Double.MAX_VALUE;
         }
-        return pathLength(flightPath, mob) / cruise + BirdGaitConfig.takeoffCostTicks;
+        return pathLength(flightPath, mob) / cruise + BirdGroundConfig.takeoffCostTicks;
     }
 
     /**
@@ -88,7 +88,7 @@ public record GaitChoice(boolean walk, @Nullable Path groundPath,
      * drag it is fighting. On the ground that drag is the block's friction times the same air drag
      * the flier pays, so at vanilla's 0.6 a MOVEMENT_SPEED of 0.25 comes out around 0.3 blocks a
      * tick, comfortably faster than this bird cruises. Which is the whole reason
-     * {@link BirdGaitConfig#walkCostPenalty} exists.
+     * {@link BirdGroundConfig#walkCostPenalty} exists.
      * <p>
      * The friction is assumed rather than sampled: the mob is about to walk over ground it has not
      * pathed across yet, and the answer only feeds a comparison.

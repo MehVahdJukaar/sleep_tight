@@ -452,13 +452,13 @@ public class PathDebugRenderer {
         poseStack.translate(0,1.4,0);
         // steering is the exact condition BirdMoveControl branches on, so it reads COASTING both
         // when there is nothing to fly and when the ground layer is holding the mob for a launch
-        // turn; the gait is what tells those apart. Raw operation is kept as a footnote since
+        // turn; the mode is what tells those apart. Raw operation is kept as a footnote since
         // MoveControl never resets it back to WAIT here, same as vanilla's SmoothSwimmingMoveControl
-        String gait = info.holdingForLaunch()
-                ? String.format(Locale.ROOT, "%s %+.0fdeg", info.gait(), info.launchYawError())
-                : info.gait();
+        String mode = info.holdingForLaunch()
+                ? String.format(Locale.ROOT, "%s %+.0fdeg", info.mode(), info.launchYawError())
+                : info.mode();
         String status = (info.stuck() ? "STUCK " : "") + (info.steering() ? "STEERING" : "COASTING")
-                + (info.pathDone() ? " done" : "") + " " + gait + " (" + info.operation() + ")";
+                + (info.pathDone() ? " done" : "") + " " + mode + " (" + info.operation() + ")";
         DebugRenderHelper.renderFloatingText(poseStack, bufferSource, status,
                 pos.x, pos.y + 1.0, pos.z, info.holdingForLaunch() ? LAUNCH_COLOR | 0xFF000000 : textColor,
                 textScale(), true, true);

@@ -20,7 +20,7 @@ import java.util.List;
  * <p>
  * {@code steering} is the exact condition {@code BirdMoveControl.tick()} itself branches on, which
  * includes the ground layer's launch hold: a bird turning on the spot to line up with a fresh path
- * has a waypoint and an unfinished path and is still deliberately not flying. {@code gait} is the
+ * has a waypoint and an unfinished path and is still deliberately not flying. {@code mode} is the
  * phase that hold comes from, and is the first thing to read when a mob will not leave the ground.
  * {@code operation} is the raw vanilla
  * {@code MoveControl.Operation} name and is kept only for reference: neither {@code BirdMoveControl}
@@ -29,7 +29,7 @@ import java.util.List;
  * forever - {@code steering} is what actually answers "is it doing something right now."
  */
 public record MobDebugInfo(boolean stuck, boolean pathDone, boolean steering, String operation,
-                           String gait, float launchYaw,
+                           String mode, float launchYaw,
                            Vec3 mobPos, Vec3 wantedPos, Vec3 velocity, float yRot,
                            double rulerCursor, double rulerLength, double offRoute,
                            int nextNodeIndex, int nodeCount,
@@ -52,7 +52,7 @@ public record MobDebugInfo(boolean stuck, boolean pathDone, boolean steering, St
         buf.writeBoolean(this.pathDone);
         buf.writeBoolean(this.steering);
         buf.writeUtf(this.operation);
-        buf.writeUtf(this.gait);
+        buf.writeUtf(this.mode);
         buf.writeFloat(this.launchYaw);
         writeVec3(buf, this.mobPos);
         writeVec3(buf, this.wantedPos);
@@ -106,7 +106,7 @@ public record MobDebugInfo(boolean stuck, boolean pathDone, boolean steering, St
 
     /**
      * True while the ground layer is holding the mob on its feet to line it up with the path.
-     * Carried by {@code launchYaw} being a real angle rather than by matching the gait name, so the
+     * Carried by {@code launchYaw} being a real angle rather than by matching the mode name, so the
      * renderer never has to know what the ground layer calls its phases.
      */
     public boolean holdingForLaunch() {

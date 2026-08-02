@@ -1,6 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.test.controller;
 
-import net.mehvahdjukaar.sleep_tight.test.navigator.BirdPathNavigation;
+import net.mehvahdjukaar.sleep_tight.test.navigator.BirdFlightNavigation;
 import net.mehvahdjukaar.sleep_tight.test.throttle.FlightEnvelope;
 import net.mehvahdjukaar.sleep_tight.test.throttle.ThrottleProfile;
 import net.minecraft.util.Mth;
@@ -26,7 +26,7 @@ import net.minecraft.world.phys.Vec3;
  * whatever speed it was told it may hold.
  * <p>
  * It holds almost no history: where it is aimed and how fast it may go are handed down fresh every
- * tick by {@link BirdPathNavigation}, so a mob that gets shoved recovers from wherever it lands
+ * tick by {@link BirdFlightNavigation}, so a mob that gets shoved recovers from wherever it lands
  * instead of being confused by it. The one exception is {@link #thrust}, how hard the wings are
  * already working, and it is self correcting rather than remembered. The one policy it owns is
  * {@link #lookahead}, how much of the drawn line it is willing to round off, because that is a
@@ -40,8 +40,8 @@ import net.minecraft.world.phys.Vec3;
  * <p>
  * Sections 1, 2 and 6 of {@code believable_bird_flight.md} are all in now: velocity steering here,
  * arc-length pure pursuit in {@link net.mehvahdjukaar.sleep_tight.test.navigator.PathRuler}, and an
- * absorbing arrival in {@code BirdPathNavigation.followThePath}. Section 6's gait machine is half
- * built: takeoff, perch and walking live in {@link BirdGaitControl}, which also owns
+ * absorbing arrival in {@code BirdPathNavigation.followThePath}. Section 6's mode machine is half
+ * built: takeoff, perch and walking live in {@link BirdGroundControl}, which also owns
  * {@code noGravity} and the body's pitch now, so this class no longer touches either. The flare is
  * still missing, as is banking from section 5.
  * <p>
@@ -50,7 +50,7 @@ import net.minecraft.world.phys.Vec3;
  * factor. If the bird still cuts a corner now, that is the planner's numbers being wrong rather than
  * a second slowdown fighting the first, which is the whole point of testing it this way.
  */
-public class BirdMoveControl extends MoveControl {
+public class BirdFlightControl extends MoveControl {
 
     // the carrot always sits some way ahead, so this only ever catches a degenerate direction, never
     // arrival. Not vanilla's MIN_SPEED_SQR, which is an acceptance sphere and has no meaning here
@@ -67,7 +67,7 @@ public class BirdMoveControl extends MoveControl {
     // mob does not carry a stale one
     private double thrust;
 
-    public BirdMoveControl(Mob mob) {
+    public BirdFlightControl(Mob mob) {
         super(mob);
     }
 
@@ -99,7 +99,7 @@ public class BirdMoveControl extends MoveControl {
 
     /**
      * The yaw a mob has to hold to travel along a horizontal direction, in MC's convention where 0
-     * faces +Z. Shared with {@link BirdGaitControl}'s launch turn through the navigation, so the
+     * faces +Z. Shared with {@link BirdGroundControl}'s launch turn through the navigation, so the
      * heading the bird turns to on the ground and the one it steers to in the air are the same
      * number by construction.
      */
@@ -143,7 +143,7 @@ public class BirdMoveControl extends MoveControl {
      * off its perch sideways, which is the thing turning on the ground was there to avoid.
      */
     private boolean isHeldOnGround() {
-        return this.mob.getNavigation() instanceof BirdPathNavigation navigation
+        return this.mob.getNavigation() instanceof BirdFlightNavigation navigation
                 && navigation.isHeldOnGround();
     }
 
@@ -264,13 +264,13 @@ public class BirdMoveControl extends MoveControl {
      */
     private double targetSpeed(FlightEnvelope envelope) {
         double ceiling = envelope.maxSpeed() * this.speedModifier;
-        return this.mob.getNavigation() instanceof BirdPathNavigation navigation
+        return this.mob.getNavigation() instanceof BirdFlightNavigation navigation
                 ? Math.min(ceiling, navigation.getSpeedLimit()) : ceiling;
     }
 
     /** The one the current path was planned against, so plan and flight cannot drift apart. */
     private FlightEnvelope envelope() {
-        if (this.mob.getNavigation() instanceof BirdPathNavigation navigation) {
+        if (this.mob.getNavigation() instanceof BirdFlightNavigation navigation) {
             FlightEnvelope planned = navigation.getFlightEnvelope();
             if (planned != null) {
                 return planned;

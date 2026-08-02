@@ -4,7 +4,7 @@ package net.mehvahdjukaar.sleep_tight.test.controller;
  * Knobs for the ground half of locomotion, as opposed to {@link BirdFlightConfig} which tunes the
  * flying half. Same deal as the others: public static and mutable so they can be poked at runtime.
  */
-public class BirdGaitConfig {
+public class BirdGroundConfig {
 
     // how fast the bird swings round on the spot before taking off. Slower than the airborne rate on
     // purpose: this is feet and tail shuffling, not a banked turn, and it is the one moment the whole
@@ -22,8 +22,8 @@ public class BirdGaitConfig {
     public static double perchProbeDepth = 2.0;
 
     // whether arriving anywhere with ground under it ends in a perch at all. Off means the bird
-    // hovers wherever the path left it, which is the pre-gait behaviour and the thing to compare
-    // against if landing starts misbehaving
+    // hovers wherever the path left it, which is what it did before landing existed and the thing
+    // to compare against if landing starts misbehaving
     public static boolean perchOnArrival = true;
 
     // ---- walking ----

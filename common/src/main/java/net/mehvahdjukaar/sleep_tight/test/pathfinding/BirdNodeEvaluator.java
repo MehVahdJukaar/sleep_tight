@@ -104,7 +104,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
      * momentum is the whole reason this lattice exists. A bird with its feet down has no airspeed at
      * all, so it leaves whichever way the route wants and pays nothing for it: the start is marked
      * {@link BirdNode#freeHeading}, which lifts both the turn cap and the turn charge on the first
-     * step. Making that true on the mob is the ground layer's job, see {@code BirdGaitControl}.
+     * step. Making that true on the mob is the ground layer's job, see {@code BirdGroundControl}.
      * <p>
      * Seeding the heading from yaw regardless was a real bug: a perched bird facing away from the
      * only way out of a dead end had no legal horizontal move at all, since the two purely vertical

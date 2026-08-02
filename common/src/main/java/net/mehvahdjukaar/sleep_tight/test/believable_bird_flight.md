@@ -218,7 +218,7 @@ Real bird movement reads as distinct gaits. At minimum:
   oscillate. That is the second most likely 180 after the missed-node one.
 - **Perch** - `setNoGravity(false)`, zero velocity, hand off to ground navigation.
 
-**Half of this is in as of 2026-08-01**, in `controller/BirdGaitControl`: takeoff and perch, plus
+**Half of this is in as of 2026-08-01**, in `controller/BirdGroundControl`: takeoff and perch, plus
 the gravity ownership the two need, and walking joined them 2026-08-02. Cruise is the sections 1-4
 controller as before. The flare is still missing, and is now the only gap in the list.
 
@@ -245,7 +245,7 @@ control sets and everything else reads. Three things hang off it:
   ground path comes out cheaper in ticks than flying one. Cheaper counts the launch pivot, the spool
   and the descent against the flight, since that overhead is what makes a four-block flight look
   silly, and it multiplies the walk by `walkCostPenalty`, since this bird's MOVEMENT_SPEED is
-  actually quicker than its cruise. `controller/GaitChoice` is that decision and nothing else.
+  actually quicker than its cruise. `controller/WalkOrFly` is that decision and nothing else.
 
 Walking is a **swap, not a blend**: the mob carries the lattice flier and a plain vanilla
 `GroundPathNavigation` + `MoveControl`, and installs exactly one pair at a time, in
@@ -262,7 +262,7 @@ down until it next took off.
 
 `setNoGravity` used to be set in the `BirdTestMob` constructor and again every move control tick, and
 never cleared - a bird that can never land is not a bird, and a dead or AI-disabled one floats. It is
-now `BirdGaitControl`'s alone: on while airborne, off from the moment it commits to descending, and
+now `BirdGroundControl`'s alone: on while airborne, off from the moment it commits to descending, and
 forced off by `BirdTestMob.tick` for a mob whose AI is not running at all, which is the case the
 gait control cannot see because it rides on `customServerAiStep`.
 

@@ -2,8 +2,8 @@ package net.mehvahdjukaar.sleep_tight.test.debug;
 
 import net.mehvahdjukaar.moonlight.api.platform.network.NetworkHelper;
 import net.mehvahdjukaar.sleep_tight.test.BirdTestMob;
-import net.mehvahdjukaar.sleep_tight.test.controller.BirdMoveControl;
-import net.mehvahdjukaar.sleep_tight.test.navigator.BirdPathNavigation;
+import net.mehvahdjukaar.sleep_tight.test.controller.BirdFlightControl;
+import net.mehvahdjukaar.sleep_tight.test.navigator.BirdFlightNavigation;
 import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdPathFinder.ConsideredMove;
 import net.mehvahdjukaar.sleep_tight.test.throttle.FlightEnvelope;
 import net.mehvahdjukaar.sleep_tight.test.throttle.ThrottleProfile;
@@ -29,11 +29,11 @@ public class PathDebugPackets {
 
     public static void sendPathFindingPacket(BirdTestMob mob, @Nullable Path path, float nodeHalfWidth) {
         if (path == null || !(mob.level() instanceof ServerLevel serverLevel)) return;
-        boolean bird = mob.getNavigation() instanceof BirdPathNavigation;
+        boolean bird = mob.getNavigation() instanceof BirdFlightNavigation;
         ThrottleProfile throttle = bird
-                ? ((BirdPathNavigation) mob.getNavigation()).getThrottleProfile() : null;
+                ? ((BirdFlightNavigation) mob.getNavigation()).getThrottleProfile() : null;
         List<ConsideredMove> considered = bird
-                ? ((BirdPathNavigation) mob.getNavigation()).getConsideredMoves() : List.of();
+                ? ((BirdFlightNavigation) mob.getNavigation()).getConsideredMoves() : List.of();
         FlightEnvelope envelope = FlightEnvelope.forMob(mob);
         MobDebugInfo mobInfo = buildMobDebugInfo(mob);
         DebugPath debugPath = DebugPath.of(path, throttle, envelope.maxSpeed(), considered);
@@ -46,7 +46,7 @@ public class PathDebugPackets {
         PathNavigation navigation = mob.getNavigation();
         MoveControl moveControl = mob.getMoveControl();
 
-        String operation = moveControl instanceof BirdMoveControl birdMoveControl
+        String operation = moveControl instanceof BirdFlightControl birdMoveControl
                 ? birdMoveControl.getOperationName() : "?";
         boolean steering = moveControl.hasWanted() && !navigation.isDone() && !mob.isHoldingForLaunch();
         Vec3 wantedPos = moveControl.hasWanted()
@@ -64,7 +64,7 @@ public class PathDebugPackets {
         // or has been shoved clear of the line, so the gap between them is the correction working
         double speedLimitNow = -1.0;
         double speedLimitCommanded = -1.0;
-        if (navigation instanceof BirdPathNavigation birdNavigation) {
+        if (navigation instanceof BirdFlightNavigation birdNavigation) {
             rulerCursor = birdNavigation.getRulerCursor();
             rulerLength = birdNavigation.getRulerLength();
             offRoute = birdNavigation.getOffRoute();
@@ -80,7 +80,7 @@ public class PathDebugPackets {
         int nodeCount = currentPath != null ? currentPath.getNodeCount() : 0;
 
         return new MobDebugInfo(navigation.isStuck(), navigation.isDone(), steering, operation,
-                mob.getGaitName(), mob.getLaunchYaw(),
+                mob.getModeName(), mob.getLaunchYaw(),
                 mob.position(), wantedPos, mob.getDeltaMovement(), mob.getYRot(),
                 rulerCursor, rulerLength, offRoute, nextNodeIndex, nodeCount,
                 timeoutTimer, timeoutLimit, ticksSinceStuckCheck, speedLimitNow, speedLimitCommanded,

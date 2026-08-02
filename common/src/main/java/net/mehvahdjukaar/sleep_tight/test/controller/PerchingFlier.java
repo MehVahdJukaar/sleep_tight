@@ -1,5 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.test.controller;
 
+import net.minecraft.core.BlockPos;
+
 /**
  * A flier that can put its feet down, and the seam between its two halves of locomotion.
  * <p>
@@ -17,7 +19,7 @@ public interface PerchingFlier {
      * <p>
      * What reads it: the pathfinder, which lets a grounded bird's search leave in any direction
      * because there is no airspeed to conserve (see {@code BirdNodeEvaluator#getStart}), and
-     * {@link GaitChoice}, which will only consider walking somewhere from a standstill.
+     * {@link WalkOrFly}, which will only consider walking somewhere from a standstill.
      */
     boolean isGrounded();
 
@@ -38,4 +40,17 @@ public interface PerchingFlier {
 
     /** The path went away before the mob left the ground, so there is nothing to line up with. */
     void cancelLaunch();
+
+    /**
+     * Go to the target by whichever locomotion is cheaper, and say whether anything was started.
+     * <p>
+     * Both navigations call this from every "go there" overload they have, so an ordinary goal that
+     * only knows {@code getNavigation().moveTo(...)} gets the choice without having heard of it, and
+     * gets the same one whichever half happens to be installed when it asks. That is the whole
+     * reason this is on the mob rather than in a navigation that wraps the other two: the decision
+     * needs both halves, and only the mob owns both.
+     *
+     * @param accuracy how close counts as arrived, passed straight to the search
+     */
+    boolean travelTo(BlockPos target, int accuracy, double speed);
 }

@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.test.navigator;
 
 import net.mehvahdjukaar.sleep_tight.test.controller.BirdFlightConfig;
-import net.mehvahdjukaar.sleep_tight.test.controller.BirdMoveControl;
+import net.mehvahdjukaar.sleep_tight.test.controller.BirdFlightControl;
 import net.mehvahdjukaar.sleep_tight.test.controller.PerchingFlier;
 import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdNodeEvaluator;
 import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdPathFinder;
@@ -9,7 +9,9 @@ import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdPathfindingConfig;
 import net.mehvahdjukaar.sleep_tight.test.throttle.FlightEnvelope;
 import net.mehvahdjukaar.sleep_tight.test.throttle.ThrottlePlanner;
 import net.mehvahdjukaar.sleep_tight.test.throttle.ThrottleProfile;
+import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
@@ -23,15 +25,15 @@ import java.util.List;
 
 /**
  * Drop-in flying navigation using the bird lattice pathfinder. Hook it to a mob by
- * returning this from {@code Mob.createNavigation}, and pair it with {@link BirdMoveControl};
+ * returning this from {@code Mob.createNavigation}, and pair it with {@link BirdFlightControl};
  * vanilla's FlyingMoveControl will not fly these paths as planned.
  * <p>
  * Besides swapping in the finder this replaces the whole waypoint rule with a {@link PathRuler}.
  * Vanilla's is built for mobs that can stop on a dime and turn instantly, neither of which is true
  * here. This class only wires the ruler up; the geometry lives in the ruler and the steering in
- * {@link BirdMoveControl}.
+ * {@link BirdFlightControl}.
  */
-public class BirdPathNavigation extends FlyingPathNavigation {
+public class BirdFlightNavigation extends FlyingPathNavigation {
 
     /** Below this much horizontal spread the path leaves vertically and there is nothing to face. */
     private static final double MIN_LAUNCH_SPREAD = 1.0E-4;
@@ -59,7 +61,7 @@ public class BirdPathNavigation extends FlyingPathNavigation {
     private double speedLimit = Double.MAX_VALUE;
     private double profiledSpeedLimit = Double.MAX_VALUE;
 
-    public BirdPathNavigation(Mob mob, Level level) {
+    public BirdFlightNavigation(Mob mob, Level level) {
         super(mob, level);
     }
 
@@ -88,6 +90,41 @@ public class BirdPathNavigation extends FlyingPathNavigation {
         double followRange = mob.getAttributeValue(Attributes.FOLLOW_RANGE);
         return Mth.floor(followRange * BirdPathfindingConfig.nodesPerBlockOfRange
                 * BirdNodeEvaluator.HEADING_BINS);
+    }
+
+    /**
+     * Every "go there" overload hands the destination to the mob, which owns both halves of the
+     * locomotion and so is the only thing that can weigh walking against flying it. What comes back
+     * here is a flight, through {@link #moveTo(Path, double)}, or nothing because the mob is already
+     * walking there. {@link BirdWalkNavigation} has the mirror image of this.
+     * <p>
+     * The alternative shape, one navigation wrapping the two and delegating, was rejected: it would
+     * have to forward around thirty public methods, implement {@code createPathFinder} with a third
+     * pathfinder it never uses, shadow a dozen protected fields that would then always read empty,
+     * and be paired with a second wrapper around the move control. Worse, it would make
+     * {@code getNavigation()} return the same type in both modes, and the follower, the throttle
+     * layer and the debug packets all discover which half is live by {@code instanceof} on exactly
+     * that.
+     */
+    @Override
+    public boolean moveTo(double x, double y, double z, double speed) {
+        return this.mob instanceof PerchingFlier flier
+                ? flier.travelTo(BlockPos.containing(x, y, z), 1, speed)
+                : super.moveTo(x, y, z, speed);
+    }
+
+    @Override
+    public boolean moveTo(double x, double y, double z, int accuracy, double speed) {
+        return this.mob instanceof PerchingFlier flier
+                ? flier.travelTo(BlockPos.containing(x, y, z), accuracy, speed)
+                : super.moveTo(x, y, z, accuracy, speed);
+    }
+
+    @Override
+    public boolean moveTo(Entity entity, double speed) {
+        return this.mob instanceof PerchingFlier flier
+                ? flier.travelTo(entity.blockPosition(), 1, speed)
+                : super.moveTo(entity, speed);
     }
 
     /**
@@ -129,7 +166,7 @@ public class BirdPathNavigation extends FlyingPathNavigation {
         PathRuler ruler = this.ruler();
         Vec3 away = this.carrotFor(ruler).subtract(this.getTempMobPos());
         float launchYaw = away.horizontalDistanceSqr() < MIN_LAUNCH_SPREAD
-                ? this.mob.getYRot() : BirdMoveControl.yawTowards(away.x, away.z);
+                ? this.mob.getYRot() : BirdFlightControl.yawTowards(away.x, away.z);
         flier.requestLaunch(launchYaw);
     }
 
@@ -220,7 +257,7 @@ public class BirdPathNavigation extends FlyingPathNavigation {
     }
 
     private double lookahead(PathRuler ruler) {
-        return this.mob.getMoveControl() instanceof BirdMoveControl bird
+        return this.mob.getMoveControl() instanceof BirdFlightControl bird
                 ? bird.lookahead(ruler.enclosureAt(ruler.cursor()), ruler.offRoute())
                 : BirdFlightConfig.openAirLookahead;
     }

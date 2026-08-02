@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.test;
 
-import net.mehvahdjukaar.sleep_tight.test.controller.GaitChoice;
-import net.mehvahdjukaar.sleep_tight.test.navigator.BirdPathNavigation;
+import net.mehvahdjukaar.sleep_tight.test.controller.WalkOrFly;
+import net.mehvahdjukaar.sleep_tight.test.navigator.BirdFlightNavigation;
 import net.mehvahdjukaar.sleep_tight.test.pathfinding.BirdNodeEvaluator;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -56,8 +56,12 @@ public class BirdDebug {
         SearchRun vanilla = runVanillaBaseline(mob, target);
 
         // the mob may decide the hop is not worth flying and walk it instead, in which case the path
-        // that gets drawn is the ground one it picked rather than the lattice one measured above
-        GaitChoice choice = mob.travelTo(target, lattice.path);
+        // that gets drawn is the ground one it picked rather than the lattice one measured above.
+        // Asked directly rather than through moveTo so the search above is not run a second time
+        WalkOrFly choice = mob.walkIfCheaper(target, lattice.path);
+        if (!choice.walk()) {
+            mob.followPath(lattice.path);
+        }
         Path travelled = choice.walk() ? choice.groundPath() : lattice.path;
         if (travelled == null) {
             feedback(player, "No path to " + target.toShortString(), ChatFormatting.RED);
@@ -78,7 +82,7 @@ public class BirdDebug {
 
     private static SearchRun runLattice(BirdTestMob mob, BlockPos target) {
         // deliberately not getNavigation(): that is vanilla's walker while the bird is on foot
-        BirdPathNavigation navigation = mob.getFlightNavigation();
+        BirdFlightNavigation navigation = mob.getFlightNavigation();
         BirdNodeEvaluator evaluator = (BirdNodeEvaluator) navigation.getNodeEvaluator();
         long start = System.nanoTime();
         Path path = navigation.createPath(target, ACCURACY);
@@ -98,7 +102,7 @@ public class BirdDebug {
     }
 
     private static void report(Player player, Path path, SearchRun lattice, SearchRun vanilla,
-                               GaitChoice choice) {
+                               WalkOrFly choice) {
         feedback(player, String.format("%d nodes, %s (dist %.1f)", path.getNodeCount(),
                         path.canReach() ? "reached" : "closest approach", path.getDistToTarget()),
                 path.canReach() ? ChatFormatting.GREEN : ChatFormatting.YELLOW);

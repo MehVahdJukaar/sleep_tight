@@ -32,7 +32,7 @@ how fast the bird flies, and the follower does not re-derive geometry.
 
 ## The one thing that is not in that stack
 
-`controller/BirdGaitControl` is not a fourth layer, it is the **other half** of the bottom one: the
+`controller/BirdGroundControl` is not a fourth layer, it is the **other half** of the bottom one: the
 locomotion the bird does with its feet. It owns whether the bird's feet are down, gravity, the turn on
 the spot that lines the mob up with a path before it takes off, the walk, and the body's pitch. The
 flying stack talks to it through `controller/PerchingFlier`, implemented by the mob, and through
@@ -48,12 +48,27 @@ Walking is a **swap, not a blend**. `BirdTestMob` carries two complete locomotio
 flier and plain vanilla `GroundPathNavigation` + `MoveControl`, and installs exactly one at a time in
 `customServerAiStep`, which is the one slot after the navigation has ticked and before the move
 control does. So no throttle profile is ever applied to a walk and no walk ever reaches the follower.
-`controller/GaitChoice` picks between them per destination: only from a standstill, only inside
+`controller/WalkOrFly` picks between them per destination: only from a standstill, only inside
 `walkMaxDistance` and `walkMaxRise`, and only when the ground path's estimated time beats the
 flight's. Both estimates are in ticks. The flight side is charged `takeoffCostTicks` for the pivot,
 the spool and the descent, which is the term that actually decides short hops, and the walk side is
 multiplied by `walkCostPenalty`, because a MOVEMENT_SPEED of 0.25 is genuinely faster than this bird
 cruises and without a thumb on the scale it would walk every short hop going.
+
+Both navigations route every "go there" overload to `PerchingFlier.travelTo` on the mob, which is
+where the choice is made, so a goal that only knows `getNavigation().moveTo(...)` gets it without
+having heard of it and gets the same answer whichever half was installed when it asked. The decision
+needs both halves and only the mob owns both, which is why it sits there and not in either
+navigation.
+
+That is deliberately **not** a navigation that wraps the two and delegates. A wrapper would have to
+forward around thirty public methods, implement `createPathFinder` with a third pathfinder it never
+uses (the base class builds one in its constructor), shadow a dozen protected fields that would then
+always read empty, and be paired with a second wrapper around `MoveControl` duplicating `operation`
+and the wanted position. Worse, it would make `getNavigation()` return the same type in both modes,
+and the follower, the throttle layer and the debug packets all discover which half is live by
+`instanceof` on exactly that. The swap keeps that honest; a wrapper would have hidden it and needed
+unwrapping at every site.
 
 ## Why it is split here and not somewhere else
 
@@ -136,7 +151,7 @@ Done:
 Not done, in the order they should happen:
 
 1. **The flare.** `believable_bird_flight.md` section 6 wanted four gaits: takeoff, cruise, flare,
-   perch. Takeoff and perch landed 2026-08-01 in `controller/BirdGaitControl`, which also took
+   perch. Takeoff and perch landed 2026-08-01 in `controller/BirdGroundControl`, which also took
    ownership of `setNoGravity` from the mob constructor and the move control, so arrival now descends
    and lands instead of leaving the bird hovering. What is still missing is the approach: nothing
    levels out, bleeds horizontal speed and pitches up before the perch, so the descent is the profile
