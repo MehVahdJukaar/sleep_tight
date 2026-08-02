@@ -31,8 +31,7 @@ public record DebugPath(List<DebugNode> nodes, int nextNodeIndex, BlockPos targe
                         List<DebugNode> openSet, List<DebugNode> closedSet, List<DebugNode> considered,
                         float envelopeMaxSpeed, float expectedFlightTicks) {
 
-    public static DebugPath of(Path path, @Nullable ThrottleProfile throttle, double envelopeMaxSpeed,
-                               List<ConsideredMove> consideredMoves) {
+    public static DebugPath of(Path path, @Nullable ThrottleProfile throttle, double envelopeMaxSpeed) {
         List<DebugNode> nodes = new ArrayList<>(path.getNodeCount());
         for (int i = 0; i < path.getNodeCount(); i++) {
             // the profile is built from the path, so the indices line up, but a path replaced under
@@ -47,7 +46,8 @@ public record DebugPath(List<DebugNode> nodes, int nextNodeIndex, BlockPos targe
         return new DebugPath(nodes, path.getNextNodeIndex(), path.getTarget(), path.canReach(),
                 searchData == null ? List.of() : convert(searchData.openSet()),
                 searchData == null ? List.of() : convert(searchData.closedSet()),
-                convertConsidered(consideredMoves, nodes),
+                convertConsidered(List.of() //unused
+                         , nodes),
                 (float) envelopeMaxSpeed,
                 throttle == null ? 0.0F : (float) throttle.expectedFlightTicks());
     }

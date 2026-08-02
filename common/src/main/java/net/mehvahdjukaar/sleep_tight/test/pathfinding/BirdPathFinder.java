@@ -37,7 +37,6 @@ public class BirdPathFinder extends PathFinder {
     private final int maxVisitedNodes;
     private final BirdNodeEvaluator nodeEvaluator;
     private final BinaryHeap openSet = new BinaryHeap();
-    private List<ConsideredMove> consideredMoves = List.of();
 
     public BirdPathFinder(BirdNodeEvaluator nodeEvaluator, int maxVisitedNodes) {
         super(nodeEvaluator, maxVisitedNodes);
@@ -58,8 +57,6 @@ public class BirdPathFinder extends PathFinder {
                 pos -> this.nodeEvaluator.getTarget(pos.getX(), pos.getY(), pos.getZ()), Function.identity()));
         Path path = this.findLatticePath(region.getProfiler(), start, targetMap, maxRange, accuracy, searchDepthMultiplier);
         // has to happen before done(), which drops the cell caches offeredMoves reads
-        this.consideredMoves = path != null && BirdPathfindingConfig.collectConsideredMoves
-                ? this.collectConsideredMoves(path) : List.of();
         this.nodeEvaluator.done();
         return path;
     }
@@ -78,11 +75,6 @@ public class BirdPathFinder extends PathFinder {
             }
         }
         return moves;
-    }
-
-    /** Empty unless {@link BirdPathfindingConfig#collectConsideredMoves} was on for the last search. */
-    public List<ConsideredMove> getConsideredMoves() {
-        return this.consideredMoves;
     }
 
     /** One step the search had available at a path node, taken or not. */
@@ -108,7 +100,6 @@ public class BirdPathFinder extends PathFinder {
         Map<Target, Node> bestEndpoints = Maps.newHashMapWithExpectedSize(targets.size());
         targets.forEach(target -> bestEndpoints.put(target, from));
         int maxVisited = (int) (this.maxVisitedNodes * searchDepthMultiplier);
-        List<Node> closedNodes = BirdPathfindingConfig.collectDebugData ? Lists.newArrayList() : null;
 
         while (!this.openSet.isEmpty()) {
             if (++visited >= maxVisited) {
@@ -117,9 +108,6 @@ public class BirdPathFinder extends PathFinder {
 
             Node current = this.openSet.pop();
             current.closed = true;
-            if (closedNodes != null) {
-                closedNodes.add(current);
-            }
 
             for (Target target : targets) {
                 nominateEndpoint(bestEndpoints, target, current);
@@ -165,11 +153,7 @@ public class BirdPathFinder extends PathFinder {
                 .map(target -> this.reconstructPath(bestEndpoints.get(target), targetMap.get(target), false))
                 .min(Comparator.comparingDouble(Path::getDistToTarget).thenComparingInt(Path::getNodeCount));
         profiler.pop();
-        Path path = best.orElse(null);
-        if (path != null && closedNodes != null) {
-            path.setDebug(this.openSet.getHeap(), closedNodes.toArray(new Node[0]), targets);
-        }
-        return path;
+        return best.orElse(null);
     }
 
     /**

@@ -32,11 +32,9 @@ public class PathDebugPackets {
         boolean bird = mob.getNavigation() instanceof BirdFlightNavigation;
         ThrottleProfile throttle = bird
                 ? ((BirdFlightNavigation) mob.getNavigation()).getThrottleProfile() : null;
-        List<ConsideredMove> considered = bird
-                ? ((BirdFlightNavigation) mob.getNavigation()).getConsideredMoves() : List.of();
         FlightEnvelope envelope = FlightEnvelope.forMob(mob);
         MobDebugInfo mobInfo = buildMobDebugInfo(mob);
-        DebugPath debugPath = DebugPath.of(path, throttle, envelope.maxSpeed(), considered);
+        DebugPath debugPath = DebugPath.of(path, throttle, envelope.maxSpeed());
         sendToAllPlayers(serverLevel,
                 new ClientBoundPathDebugMessage(mob.getId(), debugPath, nodeHalfWidth, mobInfo));
     }

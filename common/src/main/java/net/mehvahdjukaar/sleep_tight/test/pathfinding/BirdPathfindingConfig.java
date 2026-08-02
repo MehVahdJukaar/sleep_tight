@@ -109,14 +109,4 @@ public class BirdPathfindingConfig {
     // 1.6: still cheaper than vanilla, still lets clearance steer the route
     public static float heuristicWeight = 1.6F;
 
-    // record the open and closed sets on the finished path. Off by default: it is only used to
-    // shade every node the search touched, which buries the path itself and is a lot of nodes to
-    // ship to the client. The path draws fine without it
-    public static boolean collectDebugData = false;
-
-    // record the moves offered at each node of the finished path, so the renderer can show what the
-    // search turned down. Cheap next to the search itself (26 checks per path node, against
-    // thousands of expansions) but it does add a few hundred cells to every debug packet, so this
-    // is the knob to pull if the debug channel starts costing anything
-    public static boolean collectConsideredMoves = true;
 }
