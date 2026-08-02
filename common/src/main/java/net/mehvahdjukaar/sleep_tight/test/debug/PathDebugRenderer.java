@@ -34,8 +34,10 @@ public class PathDebugRenderer {
     private static final int FACING_COLOR = 0xFFFF55;
     private static final int VELOCITY_COLOR = 0x55FFFF;
     private static final int LAUNCH_COLOR = 0x55FF55;
-    // orange, so it stays apart from the path's green-to-red speed ramp
-    private static final float TRAIL_HUE = 0.08F;
+    // red through green, as a fraction of the envelope's top speed. Shared by the profile's arrows
+    // and the flown trail on purpose: a stretch flown at the limit comes out the same colour as the
+    // arrow that allowed it, so the two can be read against each other rather than only side by side
+    private static final float SPEED_HUE_SPAN = 0.33F;
     // the moves that were offered and not taken. Flat, small and faint on purpose: there are up to
     // a couple of dozen per node, and they are context for the path rather than the subject
     private static final float CONSIDERED_HALF_WIDTH = 0.15F;
@@ -97,7 +99,7 @@ public class PathDebugRenderer {
         renderPath(poseStack, bufferSource, entry.path, entry.nodeHalfWidth,
                 ClientConfigs.PATH_DEBUG_NODE_LABELS.get(), camX, camY, camZ);
         if (ClientConfigs.PATH_DEBUG_TRAIL.get()) {
-            renderTrail(poseStack, bufferSource, entry.trail(), camX, camY, camZ);
+            renderTrail(poseStack, bufferSource, entry.trail(), entry.path.envelopeMaxSpeed(), camX, camY, camZ);
         }
         renderMobInfo(poseStack, bufferSource, entry, camX, camY, camZ);
     }
@@ -196,7 +198,7 @@ public class PathDebugRenderer {
             Vec3 tip = base.add(direction.normalize().scale(length));
             float fraction = maxSpeed > 1.0E-5F ? Mth.clamp(node.speedLimit() / maxSpeed, 0, 1) : 1;
             DebugRenderHelper.renderArrow(poseStack, bufferSource, base, tip,
-                    Math.min(0.2, length * 0.35), Mth.hsvToRgb(fraction * 0.33F, 0.9F, 1.0F));
+                    Math.min(0.2, length * 0.35), Mth.hsvToRgb(fraction * SPEED_HUE_SPAN, 0.9F, 1.0F));
         }
     }
 
@@ -531,20 +533,28 @@ public class PathDebugRenderer {
     }
 
     /**
-     * The line actually flown, one segment per tick, drawn dim to bright with age so the direction
-     * of travel and the most recent stretch read without a legend. Accumulated across packets, so
-     * this is the whole flight rather than a window of it.
+     * The line actually flown, one segment per tick, hued on the speed it was flown at against the
+     * envelope's top speed. Samples are taken every tick, so the gap between two of them is the speed
+     * in blocks per tick directly, with nothing to divide by and no smoothing. Read it against the
+     * profile's arrows: the trail going red where the arrows are still green is the follower leaving
+     * speed on the table, and green trail past a red arrow is it overrunning the plan.
+     * <p>
+     * Brightness still ramps with age, so the direction of travel and the most recent stretch read
+     * without a legend. Accumulated across packets, so this is the whole flight rather than a window
+     * of it. A path with no profile has no top speed to scale against and comes out flat green.
      */
     private static void renderTrail(PoseStack poseStack, MultiBufferSource bufferSource, List<Vec3> trail,
-                                    double camX, double camY, double camZ) {
+                                    float maxSpeed, double camX, double camY, double camZ) {
         for (int i = 1; i < trail.size(); i++) {
             Vec3 from = trail.get(i - 1);
             Vec3 to = trail.get(i);
             if (distanceToCamera(from.x, from.y, from.z, camX, camY, camZ) > maxRenderDistance()) continue;
             float freshness = (float) i / trail.size();
+            float fraction = maxSpeed > 1.0E-5F
+                    ? Mth.clamp((float) from.distanceTo(to) / maxSpeed, 0.0F, 1.0F) : 1.0F;
             DebugRenderHelper.renderLine(poseStack, bufferSource,
                     from.subtract(camX, camY, camZ), to.subtract(camX, camY, camZ),
-                    Mth.hsvToRgb(TRAIL_HUE, 0.9F, 0.35F + 0.65F * freshness));
+                    Mth.hsvToRgb(fraction * SPEED_HUE_SPAN, 0.9F, 0.35F + 0.65F * freshness));
         }
     }
 

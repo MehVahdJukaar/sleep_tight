@@ -33,24 +33,8 @@ import java.util.List;
  */
 public class BirdPathNavigation extends FlyingPathNavigation {
 
-    /**
-     * How far off the line the mob has to be before the profile stops being applied at face value,
-     * and the distance by which the floor has fully ramped in. Comfortably outside anything normal
-     * flying reaches, rounding corners off peaks near a block, so this only fires on a real shove.
-     */
-    private static final double REJOIN_FROM = 2.0;
-    private static final double REJOIN_BY = 4.0;
-
     /** Below this much horizontal spread the path leaves vertically and there is nothing to face. */
     private static final double MIN_LAUNCH_SPREAD = 1.0E-4;
-
-    /**
-     * How hard the lookahead is pulled in each time the cut it implies still does not fit the
-     * corridor, and how many times that is tried. Three trims take the open air 1.5 to 0.51, which is
-     * already under the enclosed floor, so this always ends on the floor rather than on the counter.
-     */
-    private static final double LOOKAHEAD_TRIM = 0.7;
-    private static final int MAX_LOOKAHEAD_TRIMS = 3;
 
     // vanilla keeps its PathFinder private, and createPathFinder runs from the super constructor,
     // so this deliberately has no initializer: one here would run afterwards and wipe it
@@ -222,9 +206,9 @@ public class BirdPathNavigation extends FlyingPathNavigation {
         double lookahead = this.lookahead(ruler);
         FlightEnvelope corridor = this.envelope != null ? this.envelope : FlightEnvelope.forMob(this.mob);
         Vec3 cut = ruler.chordDeviation(cursor, cursor + lookahead);
-        for (int trim = 0; trim < MAX_LOOKAHEAD_TRIMS && lookahead > BirdFlightConfig.enclosedLookahead
+        for (int trim = 0; trim < BirdFlightConfig.maxLookaheadTrims && lookahead > BirdFlightConfig.enclosedLookahead
                 && !fitsCorridor(corridor, cut); trim++) {
-            lookahead = Math.max(BirdFlightConfig.enclosedLookahead, lookahead * LOOKAHEAD_TRIM);
+            lookahead = Math.max(BirdFlightConfig.enclosedLookahead, lookahead * BirdFlightConfig.lookaheadTrim);
             cut = ruler.chordDeviation(cursor, cursor + lookahead);
         }
         // towards the bulge, since that is the side the chord falls short on
@@ -334,8 +318,8 @@ public class BirdPathNavigation extends FlyingPathNavigation {
     }
 
     /**
-     * A floor on the speed while the mob is nowhere near the line, ramping in from {@link #REJOIN_FROM}
-     * to {@link #REJOIN_BY} blocks off it.
+     * A floor on the speed while the mob is nowhere near the line, ramping in from
+     * {@link BirdFlightConfig#rejoinFrom} to {@link BirdFlightConfig#rejoinBy} blocks off it.
      * <p>
      * The profile describes speeds for a mob <i>on</i> the path, and every limit in it is about
      * geometry the mob is only subject to while tracing it. A mob that has been knocked well clear
@@ -350,7 +334,8 @@ public class BirdPathNavigation extends FlyingPathNavigation {
      * stands exactly as planned.
      */
     private double rejoinSpeed(FlightEnvelope flightEnvelope, double offRoute) {
-        double lost = Mth.clamp((offRoute - REJOIN_FROM) / (REJOIN_BY - REJOIN_FROM), 0.0, 1.0);
+        double lost = Mth.clamp((offRoute - BirdFlightConfig.rejoinFrom)
+                / (BirdFlightConfig.rejoinBy - BirdFlightConfig.rejoinFrom), 0.0, 1.0);
         return lost * flightEnvelope.cruiseSpeed();
     }
 

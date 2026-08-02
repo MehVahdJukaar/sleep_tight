@@ -42,6 +42,7 @@ public class BirdFlightConfig {
     // yaw rate now moves with speed, and a fixed ratio would peg a fast bird at full bank forever
     public static float maxBankAngle = 55.0F;
 
+
     // how far along the path ahead of the mob the steering target sits when there is nothing anywhere
     // near the line. Steering only: it says nothing about speed, which comes from the throttle
     // profile. This is the corner rounding dial: the flown arc cuts inside a corner by roughly a
@@ -64,6 +65,19 @@ public class BirdFlightConfig {
     // gently it can take longer than the path itself. Pulling it in makes the rejoin an actual
     // correction, at the cost of a sharper turn while it happens
     public static double offRouteRecoveryGain = 1.0;
+
+    // how hard the lookahead is pulled in each time the cut it implies still does not fit the
+    // corridor, and how many times that is tried. Three trims take the open air 1.5 to 0.51, which is
+    // already under the enclosed floor, so this always ends on the floor rather than on the counter
+    public static double lookaheadTrim = 0.7;
+    public static int maxLookaheadTrims = 3;
+
+    // how far off the line the mob has to be before the profile stops being applied at face value,
+    // and the distance by which the speed floor has fully ramped in. Comfortably outside anything
+    // normal flying reaches, rounding corners off peaks near a block, so this only fires on a real
+    // shove
+    public static double rejoinFrom = 2.0;
+    public static double rejoinBy = 4.0;
 
     // how far either side of the cursor to look when projecting the mob back onto the path. Only has
     // to cover a tick of travel; kept short because a long window can snap the cursor across a

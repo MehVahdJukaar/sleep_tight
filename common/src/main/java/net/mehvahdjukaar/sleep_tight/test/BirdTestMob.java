@@ -1,5 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.test;
 
+import net.mehvahdjukaar.sleep_tight.test.controller.BirdFlightConfig;
 import net.mehvahdjukaar.sleep_tight.test.controller.BirdGroundControl;
 import net.mehvahdjukaar.sleep_tight.test.controller.BirdLookControl;
 import net.mehvahdjukaar.sleep_tight.test.controller.PerchingFlier;
