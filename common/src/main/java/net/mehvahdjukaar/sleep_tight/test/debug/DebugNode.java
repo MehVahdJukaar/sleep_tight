@@ -53,7 +53,8 @@ public record DebugNode(int x, int y, int z, float costMalus, float clearanceCos
     public static DebugNode read(FriendlyByteBuf buf) {
         return new DebugNode(buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
                 buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readEnum(PathType.class),
-                new EdgeCost(buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat()));
+                new EdgeCost(buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(),
+                        buf.readFloat(), buf.readFloat()));
     }
 
     public void write(FriendlyByteBuf buf) {
@@ -69,6 +70,7 @@ public record DebugNode(int x, int y, int z, float costMalus, float clearanceCos
         buf.writeFloat(this.edgeCost.clearance());
         buf.writeFloat(this.edgeCost.vertical());
         buf.writeFloat(this.edgeCost.turn());
+        buf.writeFloat(this.edgeCost.pitch());
     }
 
     public boolean hasSpeedLimit() {

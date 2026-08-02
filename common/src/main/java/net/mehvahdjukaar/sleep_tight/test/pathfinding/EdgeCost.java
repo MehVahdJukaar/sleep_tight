@@ -7,12 +7,13 @@ import net.minecraft.world.level.pathfinder.Node;
  * search compared when it picked one successor over the others offered at the same node, which is
  * otherwise invisible: the finished path only shows the winner, not what it beat or by how much.
  * <p>
- * {@link BirdNodeEvaluator#getEdgeCost} is the sum of the three lattice terms, so the two cannot
+ * {@link BirdNodeEvaluator#getEdgeCost} is the sum of the four lattice terms, so the two cannot
  * drift apart.
  */
-public record EdgeCost(float distance, float malus, float clearance, float vertical, float turn) {
+public record EdgeCost(float distance, float malus, float clearance, float vertical, float turn,
+                       float pitch) {
 
-    public static final EdgeCost NONE = new EdgeCost(0, 0, 0, 0, 0);
+    public static final EdgeCost NONE = new EdgeCost(0, 0, 0, 0, 0, 0);
 
     /**
      * Reads clearance off the destination node rather than remeasuring it, so this works on a
@@ -28,8 +29,9 @@ public record EdgeCost(float distance, float malus, float clearance, float verti
         }
 
         // a state with no heading to conserve charges nothing to leave in any direction: its own
-        // heading is undefined, so the bin difference against it would be noise
+        // heading and climb are undefined, so the bin differences against them would be noise
         float turn = 0;
+        float pitch = 0;
         if (from instanceof BirdNode a && to instanceof BirdNode b && !a.freeHeading) {
             turn = switch (BirdNodeEvaluator.turnAmount(a.heading, b.heading)) {
                 case 1 -> BirdPathfindingConfig.turnCost45;
@@ -38,13 +40,18 @@ public record EdgeCost(float distance, float malus, float clearance, float verti
                 case 4 -> BirdPathfindingConfig.turnCost180;
                 default -> 0.0F;
             };
+            pitch = switch (BirdNodeEvaluator.pitchAmount(a.climb, b.climb)) {
+                case 1 -> BirdPathfindingConfig.pitchCost45;
+                case 2 -> BirdPathfindingConfig.pitchCost90;
+                default -> 0.0F;
+            };
         }
-        return new EdgeCost(from.distanceTo(to), to.costMalus, clearance, vertical, turn);
+        return new EdgeCost(from.distanceTo(to), to.costMalus, clearance, vertical, turn, pitch);
     }
 
     /** Everything the lattice adds on top of the step length a plain flying A* would have paid. */
     public float extras() {
-        return this.clearance + this.vertical + this.turn;
+        return this.clearance + this.vertical + this.turn + this.pitch;
     }
 
     public float total() {
@@ -53,6 +60,7 @@ public record EdgeCost(float distance, float malus, float clearance, float verti
 
     public EdgeCost plus(EdgeCost other) {
         return new EdgeCost(this.distance + other.distance, this.malus + other.malus,
-                this.clearance + other.clearance, this.vertical + other.vertical, this.turn + other.turn);
+                this.clearance + other.clearance, this.vertical + other.vertical,
+                this.turn + other.turn, this.pitch + other.pitch);
     }
 }

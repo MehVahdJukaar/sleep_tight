@@ -7,30 +7,35 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.mehvahdjukaar.sleep_tight.test.controller.PerchingFlier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.PathNavigationRegion;
 import net.minecraft.world.level.pathfinder.FlyNodeEvaluator;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
 
 /**
- * State-lattice evaluator for flying animals. Search states are (x, y, z, heading) instead of
- * plain cells: the heading is the direction of the last step, so the bird has momentum and the
- * pathfinder can charge for turning. Block checks, path types, maluses and the 26-way move
- * geometry are all reused from vanilla's flying evaluator.
+ * State-lattice evaluator for flying animals. Search states are (x, y, z, heading, climb) instead
+ * of plain cells: the two together are the direction of the last step, so the bird has momentum in
+ * both planes and the pathfinder can charge for turning and for changing pitch. Block checks, path
+ * types, maluses and the 26-way move geometry are all reused from vanilla's flying evaluator.
  */
 public class BirdNodeEvaluator extends FlyNodeEvaluator {
 
     /**
-     * How many discrete headings a cell can be entered with, and therefore how many search states
-     * exist per cell. The whole lattice is sized off this: the move table, the key packing, and the
-     * node budget the navigation has to ask for.
+     * How many discrete headings a cell can be entered with. Together with {@link #CLIMB_STATES}
+     * this is how many search states exist per cell, which the whole lattice is sized off: the move
+     * table, the key packing, and the node budget the navigation has to ask for.
      */
     public static final int HEADING_BINS = 8;
+
+    /** {@code dy} of the entering step, -1, 0 or +1. The vertical half of a state's heading. */
+    public static final int CLIMB_STATES = 3;
 
     // heading bin to horizontal step, counter-clockwise from +X (bin = atan2(dz, dx) / 45 deg)
     private static final int[] BIN_DX = {1, 1, 0, -1, -1, -1, 0, 1};
@@ -100,11 +105,13 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
      * Vanilla picks a safe start cell (water surface, bounding box candidates); we only swap the node
      * for a lattice one carrying the heading the mob leaves along.
      * <p>
-     * A bird in the air leaves along its body yaw, because that is where its airspeed points and
-     * momentum is the whole reason this lattice exists. A bird with its feet down has no airspeed at
+     * A bird in the air leaves along its body yaw and along the pitch of its current velocity,
+     * because that is where its airspeed points and momentum is the whole reason this lattice
+     * exists. A bird with its feet down has no airspeed at
      * all, so it leaves whichever way the route wants and pays nothing for it: the start is marked
-     * {@link BirdNode#freeHeading}, which lifts both the turn cap and the turn charge on the first
-     * step. Making that true on the mob is the ground layer's job, see {@code BirdGroundControl}.
+     * {@link BirdNode#freeHeading}, which lifts the turn cap and both the turn and pitch charges on
+     * the first step. Making that true on the mob is the ground layer's job, see
+     * {@code BirdGroundControl}.
      * <p>
      * Seeding the heading from yaw regardless was a real bug: a perched bird facing away from the
      * only way out of a dead end had no legal horizontal move at all, since the two purely vertical
@@ -115,7 +122,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     public Node getStart() {
         Node vanillaStart = super.getStart();
         BirdNode start = this.getLatticeNode(vanillaStart.x, vanillaStart.y, vanillaStart.z,
-                yawToBin(this.mob.getYRot()), this.startsGrounded);
+                yawToBin(this.mob.getYRot()), climbOf(this.mob.getDeltaMovement()), this.startsGrounded);
         start.type = vanillaStart.type;
         start.costMalus = vanillaStart.costMalus;
         return start;
@@ -156,17 +163,20 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
                 continue;
             }
             int newHeading = moveBin < 0 ? heading : moveBin;
+            // the move's dy is the successor's climb state: the two are the same thing, one read as
+            // an offset and one as the vertical half of the heading it arrives with
+            int climb = move[1];
             // a vertical hop off a perch stays free: it buys no airspeed to conserve, and the hover
             // it does cost is already charged as straightUpCost. So a 1-wide shaft can be climbed
             // and then left in any direction, rather than in whichever one the mob happened to face
             boolean stillFree = free && moveBin < 0;
 
             BirdNode neighbor = this.findAcceptedLatticeNode(
-                    node.x + move[0], node.y + move[1], node.z + move[2], newHeading, stillFree);
+                    node.x + move[0], node.y + climb, node.z + move[2], newHeading, climb, stillFree);
             if (neighbor == null || (skipClosed && neighbor.closed)) {
                 continue;
             }
-            if (!this.hasClearance(node, move[0], move[1], move[2])) {
+            if (!this.hasClearance(node, move[0], climb, move[2])) {
                 continue;
             }
             outputArray[count++] = neighbor;
@@ -175,11 +185,12 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     }
 
     /**
-     * Everything charged for arriving at {@code to} beyond the step length: turning, purely
-     * vertical flight, and how walled in the destination is.
+     * Everything charged for arriving at {@code to} beyond the step length: turning, changing
+     * pitch, purely vertical flight, and how walled in the destination is.
      * <p>
-     * Turning and vertical cost depend on the parent, so they can't live in the node's costMalus
-     * (the same state is reachable both by a diagonal climb and by a vertical hop from below).
+     * Turning, pitch and vertical cost depend on the parent, so they can't live in the node's
+     * costMalus (the same state is reachable both by a diagonal climb and by a vertical hop from
+     * below).
      * Wall clearance is a plain property of the destination cell and would belong in costMalus,
      * but vanilla's findAcceptedNode pattern <i>accumulates</i> into that field
      * ({@code costMalus = max(costMalus, malus)} then {@code ++} for WALKABLE) on a cached node, so
@@ -208,7 +219,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
         if (!BirdPathfindingConfig.measureClearance) {
             return 0;
         }
-        long key = this.packKey(x, y, z, 0, false);
+        long key = this.packKey(x, y, z, 0, 0, false);
         float cached = this.enclosures.get(key);
         if (cached != NOT_MEASURED) {
             return cached;
@@ -240,13 +251,13 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
      * cell next to it, which is order dependence rather than terrain.
      */
     @Nullable
-    private BirdNode findAcceptedLatticeNode(int x, int y, int z, int heading, boolean freeHeading) {
+    private BirdNode findAcceptedLatticeNode(int x, int y, int z, int heading, int climb, boolean freeHeading) {
         PathType type = this.getCachedPathType(x, y, z);
         float malus = this.mob.getPathfindingMalus(type);
         if (malus < 0.0F) {
             return null;
         }
-        BirdNode node = this.getLatticeNode(x, y, z, heading, freeHeading);
+        BirdNode node = this.getLatticeNode(x, y, z, heading, climb, freeHeading);
         node.type = type;
         // rides on the node so the throttle planner and the renderer can read it off the finished
         // path. The search itself charges for it in getEdgeCost, not from here
@@ -258,9 +269,9 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
         return node;
     }
 
-    private BirdNode getLatticeNode(int x, int y, int z, int heading, boolean freeHeading) {
-        return this.latticeNodes.computeIfAbsent(this.packKey(x, y, z, heading, freeHeading),
-                key -> new BirdNode(x, y, z, heading, freeHeading));
+    private BirdNode getLatticeNode(int x, int y, int z, int heading, int climb, boolean freeHeading) {
+        return this.latticeNodes.computeIfAbsent(this.packKey(x, y, z, heading, climb, freeHeading),
+                key -> new BirdNode(x, y, z, heading, climb, freeHeading));
     }
 
     /**
@@ -289,13 +300,14 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
 
     // the 3 heading bits below are the one place HEADING_BINS is not read from the constant: raising
     // it past 8 needs a wider field here (and one fewer bit of coordinate range)
-    private long packKey(int x, int y, int z, int heading, boolean freeHeading) {
+    private long packKey(int x, int y, int z, int heading, int climb, boolean freeHeading) {
         long key = 0;
         key |= ((long) (x - origin.getX()) & 0x1FFF);          // 13 signed bits, +-4096
         key |= ((long) (y - origin.getY()) & 0x3FF) << 13;     // 10 signed bits
         key |= ((long) (z - origin.getZ()) & 0x1FFF) << 23;    // 13 signed bits
         key |= ((long) heading & 0x7) << 36;
         key |= (freeHeading ? 1L : 0L) << 39;            // free states are their own layer
+        key |= ((long) (climb + 1) & 0x3) << 40;         // biased to 0..2, CLIMB_STATES of them
         return key;
     }
 
@@ -303,6 +315,21 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
     static int turnAmount(int headingA, int headingB) {
         int diff = Math.abs(headingA - headingB);
         return diff > HEADING_BINS / 2 ? HEADING_BINS - diff : diff;
+    }
+
+    /** How many climb states apart two of them are: 0, 1 (level to a slope) or 2 (climb to dive). */
+    static int pitchAmount(int climbA, int climbB) {
+        return Math.abs(climbA - climbB);
+    }
+
+    /**
+     * Which climb state a real velocity reads as. The three states stand for slopes roughly 45
+     * degrees apart, so this rounds to the nearest the same way {@link #yawToBin} rounds a yaw, and
+     * clamps because a dive steeper than 45 degrees is still just a dive to the lattice.
+     */
+    static int climbOf(Vec3 velocity) {
+        double pitchDegrees = Mth.atan2(velocity.y, velocity.horizontalDistance()) * Mth.RAD_TO_DEG;
+        return Mth.clamp(Math.round((float) pitchDegrees / 45.0F), -1, 1);
     }
 
     // mc yaw convention: 0 faces +Z (south), 90 faces -X (west)

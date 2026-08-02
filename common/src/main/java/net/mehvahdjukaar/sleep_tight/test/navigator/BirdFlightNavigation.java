@@ -85,11 +85,11 @@ public class BirdFlightNavigation extends FlyingPathNavigation {
         return this.finder != null ? this.finder.getConsideredMoves() : List.of();
     }
 
-    /** {@code followRange * nodesPerBlockOfRange * statesPerCell}, at defaults 64 * 16 * 8 = 8192. */
+    /** {@code followRange * nodesPerBlockOfRange * statesPerCell}, at defaults 64 * 16 * 24 = 24576. */
     private static int latticeNodeBudget(Mob mob) {
         double followRange = mob.getAttributeValue(Attributes.FOLLOW_RANGE);
         return Mth.floor(followRange * BirdPathfindingConfig.nodesPerBlockOfRange
-                * BirdNodeEvaluator.HEADING_BINS);
+                * BirdNodeEvaluator.HEADING_BINS * BirdNodeEvaluator.CLIMB_STATES);
     }
 
     /**

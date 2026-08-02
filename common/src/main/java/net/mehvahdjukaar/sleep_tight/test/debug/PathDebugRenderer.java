@@ -258,6 +258,7 @@ public class PathDebugRenderer {
         StringBuilder label = new StringBuilder(String.format(Locale.ROOT, "%.1f = dist %.1f",
                 cost.total(), cost.distance()));
         appendTerm(label, "turn", cost.turn());
+        appendTerm(label, "pitch", cost.pitch());
         appendTerm(label, "vert", cost.vertical());
         appendTerm(label, "hug", cost.clearance());
         appendTerm(label, "malus", cost.malus());
@@ -294,9 +295,9 @@ public class PathDebugRenderer {
             total = total.plus(node.edgeCost());
         }
         DebugRenderHelper.renderFloatingText(poseStack, bufferSource, String.format(Locale.ROOT,
-                        "cost %.1f = dist %.1f + turn %.1f + vert %.1f + hug %.1f + malus %.1f",
-                        total.total(), total.distance(), total.turn(), total.vertical(),
-                        total.clearance(), total.malus()),
+                        "cost %.1f = dist %.1f + turn %.1f + pitch %.1f + vert %.1f + hug %.1f + malus %.1f",
+                        total.total(), total.distance(), total.turn(), total.pitch(),
+                        total.vertical(), total.clearance(), total.malus()),
                 target.getX() + 0.5, target.getY() + 1.8, target.getZ() + 0.5, -1, textScale(), true, true);
     }
 

@@ -31,8 +31,32 @@ public class BirdPathfindingConfig {
     // four 45s for 2.0, and only pay this where the geometry leaves nothing else
     public static float turnCost180 = 25.0F;
 
+    // the same ladder in the vertical plane, charged on the change in BirdNode#climb between two
+    // steps. Only two rungs exist because the lattice only has three climb states: one bin is
+    // levelling off or tipping into a slope (35 to 45 degrees, depending on the step's horizontal
+    // length), two is a climb reversed straight into a dive.
+    //
+    // Without these a pitch reversal was free, and two things followed from that. Porpoising: a
+    // shallow climb has to be a sawtooth of 45 degree steps and level ones, and that cost the same
+    // as the smooth ramp it should lose to. And, worse, hopping over ground: a cell with a block
+    // under it pays vanilla's WALKABLE +1 plus its wallHugCost share, and stepping over one cell
+    // diagonally instead of through it only costs 2*sqrt(2) - 2 = 0.83 of extra distance, so the
+    // +1 alone was already enough to make the detour cheaper. Every approach to a perch ended in a
+    // pop-up and a 90 degree dive. At 5, that detour now costs 0.83 + 0.5 + 5 against the 1.3 to
+    // 2.1 of flying straight through, and where a climb genuinely is needed the search spreads it
+    // over two 1-bin changes (1.0) rather than one 2-bin snap, which is the same ordering that
+    // makes four 45s beat a 180 horizontally.
+    //
+    // Deliberately separate knobs from the yaw ladder even though they start at the same values: a
+    // pull-up is not a bank and there is no reason the two have to stay in step.
+    public static float pitchCost45 = 0.5F;
+    public static float pitchCost90 = 5.0F;
+
     // purely vertical moves only; climbs and dives with horizontal motion are ordinary flight.
-    // priced rather than forbidden so vertical shafts stay reachable as a last resort
+    // priced rather than forbidden so vertical shafts stay reachable as a last resort.
+    // A vertical hop is really +-90 degrees of pitch but only reads as one climb bin, so entering
+    // one from level flight is charged pitchCost45 rather than pitchCost90. That understatement is
+    // deliberate: these two costs already dominate anything the pitch ladder would add
     public static float straightUpCost = 7.0F;
     public static float straightDownCost = 7.0F;
 
@@ -71,13 +95,13 @@ public class BirdPathfindingConfig {
     //   nodesPerBlockOfRange   how much slack per block of range the search gets to route around
     //                          obstacles. 16 is vanilla's number and the only reason to change it
     //                          is if paths keep coming back partial in cluttered terrain
-    //   statesPerCell          BirdNodeEvaluator.HEADING_BINS. Vanilla has one node per cell; the
-    //                          lattice has one per heading, so a budget sized vanilla's way reaches
-    //                          an eighth as far and returns a partial path from a search that had
-    //                          plenty of room left
+    //   statesPerCell          BirdNodeEvaluator.HEADING_BINS * CLIMB_STATES. Vanilla has one node
+    //                          per cell; the lattice has one per heading per climb state, so a
+    //                          budget sized vanilla's way reaches a twenty-fourth as far and
+    //                          returns a partial path from a search that had plenty of room left
     //
-    // At FOLLOW_RANGE 64 that is 64 * 16 * 8 = 8192. It is synchronous server thread work, so this
-    // is the first knob to look at if pathing shows up in a profile
+    // At FOLLOW_RANGE 64 that is 64 * 16 * 8 * 3 = 24576. It is synchronous server thread work, so
+    // this is the first knob to look at if pathing shows up in a profile
     public static int nodesPerBlockOfRange = 16;
 
     // A* heuristic weight. Vanilla uses 1.5. 2.0 halves search cost but is greedy enough that it

@@ -106,14 +106,16 @@ since its cursor is a distance. Three things worth knowing:
 
 ## Why speed is not in the search state
 
-The obvious alternative is to make the search state `(x, y, z, heading, speed)` so A* can trade off
-"detour wide and fast" against "go direct and slow". Analysed and rejected:
+The obvious alternative is to make the search state `(x, y, z, heading, climb, speed)` so A* can
+trade off "detour wide and fast" against "go direct and slow". Analysed and rejected:
 
-- **Growth is multiplicative, not exponential.** Three speed bins is 3x, giving 24 states per cell.
-  Bad but not fatal on its own.
+- **Growth is multiplicative, not exponential.** Three speed bins is 3x. That was 24 states per cell
+  when this was written; the lattice has since spent its 3x on `climb` instead (see the
+  up-and-over hop in `../pathfinding/PATHFINDING_NOTES.md`), so it is 72 now. Bad but not fatal on
+  its own.
 - **The cost is search range, not memory.** `maxVisitedNodes` is a fixed budget (`FOLLOW_RANGE * 16`,
-  now multiplied by the heading count). Tripling the states per cell divides the reach by three, and
-  the reach is already short of the follow range. Raising the budget instead costs synchronous
+  now multiplied by the states per cell). Tripling the states per cell divides the reach by three,
+  and the reach is already short of the follow range. Raising the budget instead costs synchronous
   server-thread time, which is the thing that makes flocks impossible.
 - **The turn costs already approximate the answer.** If speed is a known function of turn angle then
   so is the time lost at a corner, and that is what `turnCost45/90/135` is. Working the physics

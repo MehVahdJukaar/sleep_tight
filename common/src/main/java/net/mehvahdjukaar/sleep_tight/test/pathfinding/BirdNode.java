@@ -8,7 +8,21 @@ public class BirdNode extends Node {
     public final int heading;
 
     /**
-     * No heading to conserve, so the turn charge does not apply to moves leaving this state.
+     * Vertical half of the heading: the {@code dy} of the step that entered this state, -1 diving,
+     * 0 level, +1 climbing. Three states rather than an angle because that is all the move set can
+     * express, and the real angle a bin stands for depends on the step's horizontal length anyway
+     * (35 degrees on a diagonal, 45 on a cardinal, 90 on a purely vertical hop).
+     * <p>
+     * It is here for the same reason {@link #heading} is: without it the search cannot tell a step
+     * that continues a climb from one that reverses it, so a pitch change costs nothing and a
+     * sawtooth is priced identically to the smooth ramp it should lose to. It is what
+     * {@code pitchCost45}/{@code pitchCost90} are charged off.
+     */
+    public final int climb;
+
+    /**
+     * No heading to conserve, so neither the turn nor the pitch charge applies to moves leaving
+     * this state.
      * <p>
      * True for a search started from a perched bird, and that is the only case it is true <i>for
      * free</i>. On the ground the body rotates and nothing translates, because the legs supply the
@@ -27,7 +41,8 @@ public class BirdNode extends Node {
      * relaxation reaching the start cell the normal way would inherit the freedom and the turn cap
      * would quietly stop applying mid-path.
      * <p>
-     * When it is set, {@link #heading} is meaningless and only there to keep the key well defined.
+     * When it is set, {@link #heading} and {@link #climb} are meaningless and only there to keep the
+     * key well defined.
      */
     public final boolean freeHeading;
 
@@ -39,15 +54,16 @@ public class BirdNode extends Node {
      */
     public float enclosure;
 
-    public BirdNode(int x, int y, int z, int heading, boolean freeHeading) {
+    public BirdNode(int x, int y, int z, int heading, int climb, boolean freeHeading) {
         super(x, y, z);
         this.heading = heading;
+        this.climb = climb;
         this.freeHeading = freeHeading;
     }
 
     @Override
     public Node cloneAndMove(int x, int y, int z) {
-        BirdNode moved = new BirdNode(x, y, z, this.heading, this.freeHeading);
+        BirdNode moved = new BirdNode(x, y, z, this.heading, this.climb, this.freeHeading);
         moved.enclosure = this.enclosure;
         moved.type = this.type;
         moved.costMalus = this.costMalus;
@@ -63,12 +79,12 @@ public class BirdNode extends Node {
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof BirdNode node && super.equals(other)
-                && this.heading == node.heading && this.freeHeading == node.freeHeading;
+        return other instanceof BirdNode node && super.equals(other) && this.heading == node.heading
+                && this.climb == node.climb && this.freeHeading == node.freeHeading;
     }
 
     @Override
     public int hashCode() {
-        return (super.hashCode() * 31 + this.heading) * 31 + (this.freeHeading ? 1 : 0);
+        return ((super.hashCode() * 31 + this.heading) * 31 + this.climb) * 31 + (this.freeHeading ? 1 : 0);
     }
 }
