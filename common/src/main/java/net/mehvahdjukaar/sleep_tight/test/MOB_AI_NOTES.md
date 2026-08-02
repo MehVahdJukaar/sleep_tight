@@ -422,7 +422,7 @@ Three gotchas that this ran into, all of them tick-order or vanilla-default prob
 1. **`LookControl` ticks after `MoveControl`** and `resetXRotOnTick()` defaults to true, so any pitch
    the move control writes is silently zeroed the same tick. This used to be worked around with a
    `BirdLookControl` that surrendered pitch entirely, at the cost of a bird that could never look up
-   or down. Body pitch is now its own synched field owned by `BirdGroundControl`, so `xRot` goes back
+   or down. Body pitch is now its own synched field owned by `BirdStateMachine`, so `xRot` goes back
    to being the look direction and nothing has to fight over it.
 2. **Nothing clears `MoveControl.operation` back to `WAIT`** except the base implementation
    consuming it. A control that does not consume it must gate on `mob.getNavigation().isDone()`

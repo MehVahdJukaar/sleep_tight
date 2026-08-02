@@ -1,7 +1,7 @@
 package net.mehvahdjukaar.sleep_tight.test;
 
 import net.mehvahdjukaar.sleep_tight.test.controller.BirdFlightConfig;
-import net.mehvahdjukaar.sleep_tight.test.controller.BirdGroundControl;
+import net.mehvahdjukaar.sleep_tight.test.controller.BirdStateMachine;
 import net.mehvahdjukaar.sleep_tight.test.throttle.FlightEnvelope;
 import net.mehvahdjukaar.sleep_tight.test.controller.WalkOrFly;
 import net.mehvahdjukaar.sleep_tight.test.controller.PerchingFlier;
@@ -25,7 +25,6 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.animal.FlyingAnimal;
-import net.minecraft.world.entity.animal.PolarBear;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.Path;
@@ -48,19 +47,19 @@ import org.jetbrains.annotations.Nullable;
 public class BirdTestMob extends PathfinderMob implements FlyingAnimal, PerchingFlier {
 
     // synched rather than derived, because there is no measurement that distinguishes a bird
-    // gripping a branch from one hovering an inch above it. BirdGroundControl decides it server side
+    // gripping a branch from one hovering an inch above it. BirdStateMachine decides it server side
     // and this mirrors the answer out to the client for the model to pose off
     private static final EntityDataAccessor<Boolean> GROUNDED =
             SynchedEntityData.defineId(BirdTestMob.class, EntityDataSerializers.BOOLEAN);
 
-    // pitch is the ground control's decision, not a look direction, so it travels in its own field
+    // pitch is the state machine's decision, not a look direction, so it travels in its own field
     // rather than riding on xRot the way it used to. That leaves xRot to the look control, which is
     // what a bird turning its head while diving needs, and it costs a float only on ticks it changes
     private static final EntityDataAccessor<Float> BODY_PITCH =
             SynchedEntityData.defineId(BirdTestMob.class, EntityDataSerializers.FLOAT);
 
     // what the wings are putting out, in blocks per tick squared. Whichever layer is in charge sets
-    // it - the flight control while flying a path, the ground control while fluttering - and the
+    // it - the flight control while flying a path, the state machine while fluttering - and the
     // model is a readout of it and nothing else. Synched rather than derived because neither of
     // those layers exists client side, and it is the only wing input the renderer needs: the flap
     // rate follows from it, and the phase is integrated locally from that on both sides
@@ -75,7 +74,7 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
     // is spent with them out rather than still opening, slow enough not to snap
     private static final float WING_SPREAD_PER_TICK = 0.25F;
 
-    private final BirdGroundControl groundControl = new BirdGroundControl(this);
+    private final BirdStateMachine stateMachine = new BirdStateMachine(this);
     private final BirdFlightControl flightControl;
     private final MoveControl walkControl;
     private final BirdWalkNavigation groundNavigation;
@@ -133,29 +132,29 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
     }
 
     /**
-     * The ground control is the authority, and it only exists server side, so the client reads the
+     * The state machine is the authority, and it only exists server side, so the client reads the
      * mirror instead. Asking the control directly rather than the mirror matters on the tick a walk
      * is chosen: the two are one {@code customServerAiStep} apart, and {@link WalkOrFly} decides
      * outside that window.
      */
     @Override
     public boolean isGrounded() {
-        return this.level().isClientSide ? this.entityData.get(GROUNDED) : this.groundControl.isGrounded();
+        return this.level().isClientSide ? this.entityData.get(GROUNDED) : this.stateMachine.isGrounded();
     }
 
     @Override
     public boolean isHoldingForLaunch() {
-        return this.groundControl.isHoldingForLaunch();
+        return this.stateMachine.isHoldingForLaunch();
     }
 
     @Override
     public void requestLaunch(float launchYaw) {
-        this.groundControl.requestLaunch(launchYaw);
+        this.stateMachine.requestLaunch(launchYaw);
     }
 
     @Override
     public void cancelLaunch() {
-        this.groundControl.cancelLaunch();
+        this.stateMachine.cancelLaunch();
     }
 
     /**
@@ -163,8 +162,10 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
      * a bird that has settled on a branch but whose collision has not caught up yet.
      * <p>
      * Note this is not what picks the flier drag in {@code LivingEntity.travel}; that is an
-     * {@code instanceof FlyingAnimal} test and applies whatever this returns. Which is why a walking
-     * bird still gets a flier's vertical drag, and why that does not matter: gravity dwarfs it.
+     * {@code instanceof FlyingAnimal} test and ignores whatever this returns, so a walking bird
+     * still gets a flier's 0.91 vertical drag instead of the usual 0.98. That is not harmless, as
+     * this used to claim: it is a fifth off the height of every jump, and it is why the mob needs a
+     * {@code JUMP_STRENGTH} of 0.46 to step up what a chicken steps up on 0.42.
      */
     @Override
     public boolean isFlying() {
@@ -215,11 +216,11 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
      * always straightens the bird out, whatever is set here.
      */
     public void setFlightPitch(float degrees) {
-        this.groundControl.setPitchOverride(degrees);
+        this.stateMachine.setPitchOverride(degrees);
     }
 
     public void clearFlightPitch() {
-        this.groundControl.clearPitchOverride();
+        this.stateMachine.clearPitchOverride();
     }
 
     /**
@@ -230,19 +231,31 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
     @Override
     protected void customServerAiStep() {
         super.customServerAiStep();
-        this.groundControl.tick();
+        this.stateMachine.tick();
         this.installLocomotionForMode();
         // set rather than pushed, so the control never has to know what a synched field is.
         // SynchedEntityData ignores a write that does not change the value, so a perched bird holding
         // a level pitch costs nothing
-        this.entityData.set(GROUNDED, this.groundControl.isGrounded());
-        this.entityData.set(BODY_PITCH, this.groundControl.bodyPitch());
-        // whichever layer was in charge this tick owns the wings, and the mode is what says which.
-        // The flight control runs after this, so what it reports is last tick's - a tick of lag on a
-        // flap rate is not something anyone can see, and it saves the entity having to know when the
-        // move control has run. Every grounded mode reports zero, which is what folds the wings
-        this.entityData.set(WING_THRUST, (float) (this.groundControl.isAirborne()
-                ? this.flightControl.wingThrust() : this.groundControl.wingThrust()));
+        this.entityData.set(GROUNDED, this.stateMachine.isGrounded());
+        this.entityData.set(BODY_PITCH, this.stateMachine.bodyPitch());
+        this.entityData.set(WING_THRUST, (float) this.wingThrust());
+    }
+
+    /**
+     * What the wings are putting out, in blocks per tick squared. Two regimes rather than two copies
+     * of one number: flying it out of a servo against a speed limit, and holding yourself up with no
+     * path to fly, which is a constant because there is nothing to servo against. Everything with
+     * its feet down is zero, which is what folds the wings.
+     * <p>
+     * Read one {@code customServerAiStep} before the flight control recomputes it, so a flying
+     * bird's figure is a tick stale. A tick of lag on a flap rate is not something anyone can see,
+     * and the alternative is the entity having to know when the move control has run.
+     */
+    private double wingThrust() {
+        if (this.stateMachine.isFluttering()) {
+            return BirdStateMachine.flutterThrust();
+        }
+        return this.stateMachine.isAirborne() ? this.flightControl.wingThrust() : 0.0;
     }
 
     /**
@@ -256,9 +269,9 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
      * swapping the pair over during that would stop the walk it is halfway through.
      */
     private void installLocomotionForMode() {
-        BirdGroundControl.Locomotion wanted = this.groundControl.locomotion();
-        boolean walking = wanted == BirdGroundControl.Locomotion.WALK;
-        if (wanted == BirdGroundControl.Locomotion.KEEP
+        BirdStateMachine.Locomotion wanted = this.stateMachine.locomotion();
+        boolean walking = wanted == BirdStateMachine.Locomotion.WALK;
+        if (wanted == BirdStateMachine.Locomotion.KEEP
                 || walking == (this.navigation == this.groundNavigation)) {
             return;
         }
@@ -290,7 +303,7 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
         super.tick();
         this.bodyPitch = this.entityData.get(BODY_PITCH);
         if (this.level().isClientSide) return;
-        // the ground control rides on customServerAiStep, which does not run for a dead or AI
+        // the state machine rides on customServerAiStep, which does not run for a dead or AI
         // disabled mob. Nothing would then ever clear noGravity and the corpse would hang in the air
         if (this.isImmobile() || !this.isEffectiveAi()) {
             this.setNoGravity(false);
@@ -326,12 +339,12 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
 
     /** Which mode the mob is in, for the debug overlay. */
     public String getModeName() {
-        return this.groundControl.getModeName();
+        return this.stateMachine.getModeName();
     }
 
     /** The heading a launch turn is aiming at, or NaN when there is no launch turn. */
     public float getLaunchYaw() {
-        return this.groundControl.getLaunchYaw();
+        return this.stateMachine.getLaunchYaw();
     }
 
     /**
@@ -371,7 +384,7 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
         this.beginDebugPath(path);
         // a flight request ends any walk, and the swap has to happen before the path is handed over
         // or it would go to a navigation that is about to be uninstalled
-        this.groundControl.onFlightRequested();
+        this.stateMachine.onFlightRequested();
         this.installLocomotionForMode();
         // clear first: moveTo keeps the old path when the new one compares equal, and an already
         // finished one would make it bail out
@@ -385,8 +398,8 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
      * a standstill, so the guard is a belt rather than a branch anything reaches.
      */
     public void walkPath(Path path) {
-        this.groundControl.beginWalk();
-        if (!this.groundControl.isWalking()) {
+        this.stateMachine.beginWalk();
+        if (!this.stateMachine.isWalking()) {
             return;
         }
         this.beginDebugPath(path);
@@ -405,6 +418,13 @@ public class BirdTestMob extends PathfinderMob implements FlyingAnimal, Perching
                 .add(Attributes.MAX_HEALTH, 10.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.25)
                 .add(Attributes.FLYING_SPEED, 1)
+                // vanilla's 0.42 is tuned against the 0.98 vertical drag everything that is not a
+                // FlyingAnimal gets. This mob is one, so LivingEntity.travel gives it 0.91 instead
+                // (the same drag as its horizontal axes) and the identical jump peaks at 1.09 blocks
+                // rather than 1.25 - which reads as "can't quite make a one block step", because it
+                // can't, for about two ticks either side of the apex. 0.46 puts the peak back on
+                // 1.25 exactly, so the bird steps up what a chicken steps up
+                .add(Attributes.JUMP_STRENGTH, 0.6)
                 // doubles as the pathfinder's range cap and node budget (16 nodes per block of
                 // follow range), so it needs to be generous enough to path across a test arena
                 .add(Attributes.FOLLOW_RANGE, 64.0);

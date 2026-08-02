@@ -40,7 +40,7 @@ import net.minecraft.world.phys.Vec3;
  * Sections 1, 2 and 6 of {@code believable_bird_flight.md} are all in now: velocity steering here,
  * arc-length pure pursuit in {@link net.mehvahdjukaar.sleep_tight.test.navigator.PathRuler}, and an
  * absorbing arrival in {@code BirdFlightNavigation.followThePath}. Section 6's mode machine is half
- * built: takeoff, perch, walking and the flare all live in {@link BirdGroundControl}, which also
+ * built: takeoff, perch, walking and the flare all live in {@link BirdStateMachine}, which also
  * owns {@code noGravity} and the body's pitch now, so this class no longer touches any of it.
  * Banking from section 5 is still missing.
  * <p>
@@ -98,7 +98,7 @@ public class BirdFlightControl extends MoveControl {
 
     /**
      * The yaw a mob has to hold to travel along a horizontal direction, in MC's convention where 0
-     * faces +Z. Shared with {@link BirdGroundControl}'s launch turn through the navigation, so the
+     * faces +Z. Shared with {@link BirdStateMachine}'s launch turn through the navigation, so the
      * heading the bird turns to on the ground and the one it steers to in the air are the same
      * number by construction.
      */

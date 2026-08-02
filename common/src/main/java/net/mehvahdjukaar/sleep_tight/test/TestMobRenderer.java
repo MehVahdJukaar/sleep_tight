@@ -26,7 +26,7 @@ public class TestMobRenderer extends MobRenderer<BirdTestMob, TestMobModel> {
      * head alone, so without this the flown slope is invisible and a mob climbing at 45 degrees
      * looks identical to one flying level.
      * <p>
-     * The angle is the ground control's own body pitch rather than {@code xRot}, which is where the mob is
+     * The angle is the state machine's own body pitch rather than {@code xRot}, which is where the mob is
      * looking and is nothing to do with where its body is pointed. The model needs it too, to keep
      * the head level against it, and this runs before {@code setupAnim}, so handing it over here is
      * the whole of that. Bank is derived rather than synched because yaw is interpolated already.

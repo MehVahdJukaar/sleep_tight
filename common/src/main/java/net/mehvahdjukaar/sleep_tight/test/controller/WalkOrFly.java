@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * tool can report them.
  * <p>
  * The cost of a route is how long it is, and the walk is then scaled by
- * {@link BirdGroundConfig#walkCostMultiplier}. That is a dial, not a model: flying is always the
+ * {@link BirdStateConfig#walkCostMultiplier}. That is a dial, not a model: flying is always the
  * shorter line, so the multiplier is the whole of what decides how much of a detour walking is
  * allowed to be before it stops being worth it. Deliberately not a travel time, which would mean
  * copying vanilla's friction and speed arithmetic in here to produce a number nobody would tune by
@@ -39,10 +39,10 @@ public record WalkOrFly(boolean walk, @Nullable Path groundPath,
 
         Vec3 away = Vec3.atBottomCenterOf(target).subtract(mob.position());
         double distance = away.horizontalDistance();
-        if (distance > BirdGroundConfig.walkMaxDistance) {
+        if (distance > BirdStateConfig.walkMaxDistance) {
             return fly(flightCost, String.format("%.1f blocks out", distance));
         }
-        if (Math.abs(away.y) > BirdGroundConfig.walkMaxRise) {
+        if (Math.abs(away.y) > BirdStateConfig.walkMaxRise) {
             return fly(flightCost, String.format("%.1f blocks of rise", away.y));
         }
 
@@ -53,7 +53,7 @@ public record WalkOrFly(boolean walk, @Nullable Path groundPath,
             return fly(flightCost, "no walkable route");
         }
 
-        double walkCost = pathLength(groundPath, mob) * BirdGroundConfig.walkCostMultiplier;
+        double walkCost = pathLength(groundPath, mob) * BirdStateConfig.walkCostMultiplier;
         if (walkCost > flightCost) {
             return new WalkOrFly(false, null, walkCost, flightCost, "walking costs more");
         }

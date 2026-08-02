@@ -11,13 +11,20 @@ import net.minecraft.world.phys.Vec3;
  * {@code believable_bird_flight.md} asked for takeoff, cruise, flare and perch; this owns all of
  * them except cruise, which is the flight stack's business.
  * <p>
- * Three jobs. It owns whether the bird's feet are <b>down</b>, which is a state and not a
+ * It was called {@code BirdGroundControl} while it only knew about feet, which stopped being true
+ * the moment the modes it holds covered being in the air as well. The name matters because it is the
+ * thing that decides, per tick, which of the mob's two locomotion pairs is installed, whether
+ * gravity is on, where the body is pointed and how hard the wings are working. Nothing else in the
+ * package holds an opinion about any of those.
+ * <p>
+ * Four jobs. It owns whether the bird's feet are <b>down</b>, which is a state and not a
  * measurement: a bird gripping a branch is grounded, one hovering an inch above it is not, and no
  * amount of looking at velocity or at {@code onGround} alone tells the two apart. It owns the
  * <b>launch turn</b>, swinging the mob on the spot to face where the path leaves from before flight
- * is allowed to start. And it owns <b>body pitch</b>, which is a target per mode rather than a value
+ * is allowed to start. It owns <b>body pitch</b>, which is a target per mode rather than a value
  * anything writes directly, so a bird that lands mid dive straightens out instead of freezing nose
- * down.
+ * down. And through {@link Mode#FLUTTERING} it owns <b>everything that happens between losing the
+ * ground and getting it back</b>, which is the difference between a bird and a thrown brick.
  * <p>
  * The launch turn is the reason the search may plan a departure in any direction at all. A grounded
  * bird carries no airspeed, so {@code BirdNodeEvaluator} lifts the turn cap on the first step and
@@ -31,7 +38,7 @@ import net.minecraft.world.phys.Vec3;
  * Gravity is this class's alone. It used to be switched on in the mob's constructor and again every
  * move control tick and never cleared, which is how a bird ends up unable to land.
  */
-public class BirdGroundControl {
+public class BirdStateMachine {
 
     public enum Mode {
         /** In the air flying a path. Gravity off, the flight layer is in charge. */
@@ -66,11 +73,7 @@ public class BirdGroundControl {
     // NaN when nothing outside is asking for a pitch, which is the normal case
     private float pitchOverride = Float.NaN;
 
-    // what the wings are putting out, in blocks per tick squared. Only ever non zero while
-    // fluttering; the flight control owns it in the air
-    private double wingThrust;
-
-    public BirdGroundControl(Mob mob) {
+    public BirdStateMachine(Mob mob) {
         this.mob = mob;
     }
 
@@ -93,9 +96,14 @@ public class BirdGroundControl {
         return this.mode == Mode.AIRBORNE;
     }
 
-    /** What the wings are putting out this tick, in blocks per tick squared. Zero unless fluttering. */
-    public double wingThrust() {
-        return this.wingThrust;
+    /**
+     * What a fluttering bird's wings put out, in blocks per tick squared. A constant rather than a
+     * servo output: there is no path being flown, so there is nothing to servo against. Public
+     * because the mob reads the same number to drive the model, and two copies of it would be one
+     * too many.
+     */
+    public static double flutterThrust() {
+        return FlightEnvelope.wingPeakThrust() * BirdStateConfig.flutterWingEffort;
     }
 
     /**
@@ -185,7 +193,6 @@ public class BirdGroundControl {
      * hold off the same tick's steering.
      */
     public void tick() {
-        this.wingThrust = 0.0;
         switch (this.mode) {
             case AIRBORNE -> this.tickAirborne();
             case FLUTTERING -> this.tickFluttering();
@@ -198,9 +205,23 @@ public class BirdGroundControl {
 
     private void tickAirborne() {
         this.mob.setNoGravity(true);
-        if (BirdGroundConfig.perchOnArrival && this.mob.getNavigation().isDone() && this.groundWithinReach()) {
-            this.mode = Mode.FLUTTERING;
+        if (BirdStateConfig.perchOnArrival && this.mob.getNavigation().isDone() && this.groundWithinReach()) {
+            this.enterFlutter();
         }
+    }
+
+    /**
+     * Flip to fluttering and put the wings to work the same tick, rather than leaving them idle
+     * until the next one comes round to the right switch arm.
+     * <p>
+     * That tick is not free. This layer runs from {@code serverAiStep}, which vanilla calls before
+     * it applies a jump and before {@code travel}, so a mode is only ever told the ground is gone
+     * one tick after it went - and a jump's height is decided in its first two or three ticks, while
+     * the vertical velocity is still large. Wings that start late start after the part that mattered.
+     */
+    private void enterFlutter() {
+        this.mode = Mode.FLUTTERING;
+        this.tickFluttering();
     }
 
     /**
@@ -213,9 +234,15 @@ public class BirdGroundControl {
      * <p>
      * The wings put out real upward thrust against gravity rather than gravity being quietly turned
      * down, which is what makes this the same thing the flight control is doing and not a special
-     * case beside it. Under gravity it buys the parachute: a bird knocked off a ledge beats its way
-     * down and lands rather than dropping like a brick, and nothing ever has to decide that a fall
-     * has become a flight.
+     * case beside it. It buys the parachute: a bird knocked off a ledge beats its way down and lands
+     * rather than dropping like a brick, and nothing ever has to decide that a fall has become a
+     * flight.
+     * <p>
+     * Only ever on the way down, which is chicken's rule and is worth the asymmetry. Thrust applied
+     * while still rising compounds across the whole climb, and a jump that would peak at a block and
+     * a quarter peaks at better than two - at which point jump height is set by how the wings happen
+     * to be tuned rather than by {@code JUMP_STRENGTH}, which is the one place anybody would look
+     * for it. Wings arrest a fall; legs decide how high you got.
      */
     private void tickFluttering() {
         this.mob.setNoGravity(false);
@@ -225,8 +252,10 @@ public class BirdGroundControl {
             this.mode = this.mob.getNavigation().isDone() ? Mode.PERCHED : Mode.WALKING;
             return;
         }
-        this.wingThrust = FlightEnvelope.wingPeakThrust() * BirdGroundConfig.flutterWingEffort;
-        this.mob.setDeltaMovement(this.mob.getDeltaMovement().add(0.0, this.wingThrust, 0.0));
+        Vec3 velocity = this.mob.getDeltaMovement();
+        if (velocity.y < 0.0) {
+            this.mob.setDeltaMovement(velocity.add(0.0, flutterThrust(), 0.0));
+        }
     }
 
     private void tickPerched() {
@@ -267,10 +296,10 @@ public class BirdGroundControl {
         Vec3 velocity = this.mob.getDeltaMovement();
         this.mob.setDeltaMovement(0.0, velocity.y, 0.0);
 
-        float turned = Mth.approachDegrees(this.mob.getYRot(), this.launchYaw, BirdGroundConfig.launchTurnPerTick);
+        float turned = Mth.approachDegrees(this.mob.getYRot(), this.launchYaw, BirdStateConfig.launchTurnPerTick);
         this.mob.setYRot(turned);
         this.mob.yBodyRot = turned;
-        if (Math.abs(Mth.degreesDifference(turned, this.launchYaw)) <= BirdGroundConfig.launchYawTolerance) {
+        if (Math.abs(Mth.degreesDifference(turned, this.launchYaw)) <= BirdStateConfig.launchYawTolerance) {
             this.mode = Mode.AIRBORNE;
         }
     }
@@ -306,7 +335,7 @@ public class BirdGroundControl {
         }
         if (this.mode == Mode.FLUTTERING) {
             double going = this.mob.getDeltaMovement().horizontalDistance();
-            return this.velocitySlope((float) Math.min(1.0, going / BirdGroundConfig.flutterPitchSpeedRef));
+            return this.velocitySlope((float) Math.min(1.0, going / BirdStateConfig.flutterPitchSpeedRef));
         }
         return 0.0F;
     }
@@ -325,7 +354,7 @@ public class BirdGroundControl {
      * it, and "arrived" would read as "fell out of the sky".
      */
     private boolean groundWithinReach() {
-        AABB swept = this.mob.getBoundingBox().expandTowards(0.0, -BirdGroundConfig.perchProbeDepth, 0.0);
+        AABB swept = this.mob.getBoundingBox().expandTowards(0.0, -BirdStateConfig.perchProbeDepth, 0.0);
         return !this.mob.level().noCollision(this.mob, swept);
     }
 

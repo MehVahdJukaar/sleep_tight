@@ -218,7 +218,7 @@ Real bird movement reads as distinct gaits. At minimum:
   oscillate. That is the second most likely 180 after the missed-node one.
 - **Perch** - `setNoGravity(false)`, zero velocity, hand off to ground navigation.
 
-**All of this is in as of 2026-08-02**, in `controller/BirdGroundControl`: takeoff and perch landed
+**All of this is in as of 2026-08-02**, in `controller/BirdStateMachine`: takeoff and perch landed
 2026-08-01 with the gravity ownership the two need, walking joined them, and the flare arrived with
 the `FLUTTERING` mode. Cruise is the sections 1-4 controller as before.
 
@@ -268,7 +268,7 @@ down until it next took off.
 
 `setNoGravity` used to be set in the `BirdTestMob` constructor and again every move control tick, and
 never cleared - a bird that can never land is not a bird, and a dead or AI-disabled one floats. It is
-now `BirdGroundControl`'s alone: on while airborne, off from the moment it commits to descending, and
+now `BirdStateMachine`'s alone: on while airborne, off from the moment it commits to descending, and
 forced off by `BirdTestMob.tick` for a mob whose AI is not running at all, which is the case the
 gait control cannot see because it rides on `customServerAiStep`.
 

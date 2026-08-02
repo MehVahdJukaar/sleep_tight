@@ -111,7 +111,7 @@ public class BirdNodeEvaluator extends FlyNodeEvaluator {
      * all, so it leaves whichever way the route wants and pays nothing for it: the start is marked
      * {@link BirdNode#freeHeading}, which lifts the turn cap and both the turn and pitch charges on
      * the first step. Making that true on the mob is the ground layer's job, see
-     * {@code BirdGroundControl}.
+     * {@code BirdStateMachine}.
      * <p>
      * Seeding the heading from yaw regardless was a real bug: a perched bird facing away from the
      * only way out of a dead end had no legal horizontal move at all, since the two purely vertical

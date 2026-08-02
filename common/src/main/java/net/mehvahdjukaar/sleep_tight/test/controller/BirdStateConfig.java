@@ -1,10 +1,10 @@
 package net.mehvahdjukaar.sleep_tight.test.controller;
 
 /**
- * Knobs for the ground half of locomotion, as opposed to {@link BirdFlightConfig} which tunes the
+ * Knobs for the gaits the state machine runs, as opposed to {@link BirdFlightConfig} which tunes the
  * flying half. Same deal as the others: public static and mutable so they can be poked at runtime.
  */
-public class BirdGroundConfig {
+public class BirdStateConfig {
 
     // how fast the bird swings round on the spot before taking off. Slower than the airborne rate on
     // purpose: this is feet and tail shuffling, not a banked turn, and it is the one moment the whole

@@ -32,7 +32,7 @@ how fast the bird flies, and the follower does not re-derive geometry.
 
 ## The one thing that is not in that stack
 
-`controller/BirdGroundControl` is not a fourth layer, it is the **other half** of the bottom one: the
+`controller/BirdStateMachine` is not a fourth layer, it is the **other half** of the bottom one: the
 locomotion the bird does with its feet. It owns whether the bird's feet are down, gravity, the turn on
 the spot that lines the mob up with a path before it takes off, the walk, and the body's pitch. The
 flying stack talks to it through `controller/PerchingFlier`, implemented by the mob, and through

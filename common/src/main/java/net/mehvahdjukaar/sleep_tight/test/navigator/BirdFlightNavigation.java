@@ -202,7 +202,7 @@ public class BirdFlightNavigation extends FlyingPathNavigation {
         // not the cursor, not the ruler, and above all not the timeouts, which would otherwise spend
         // the whole turn counting the mob as failing to reach its first node.
         // The carrot is parked on the mob rather than left alone, because the hold lifts from the
-        // ground control, which runs after this method: on the tick it does, the move control would
+        // state machine, which runs after this method: on the tick it does, the move control would
         // otherwise find whatever the last path left in there and fly a tick at it, in a direction
         // the turn was there to get away from. Aimed at itself, that tick coasts instead
         if (this.isHeldOnGround()) {
