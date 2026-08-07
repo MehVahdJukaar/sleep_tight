@@ -275,7 +275,7 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
 
         if (IModBed.tryExploding(level, pos)) return InteractionResult.sidedSuccess(level.isClientSide);
 
-        if (state.getValue(OCCUPIED)) {
+        if (ModEvents.isReallyOccupied(level, pos, state)) {
             //TODO: make nitwids use hammocks if available
             //if (!this.kickVillagerOutOfBed(level, pos)) {
             player.displayClientMessage(Component.translatable("block.minecraft.bed.occupied"), true);
@@ -373,7 +373,10 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
 
     @ForgeOverride
     public Direction getBedDirection(BlockState state, LevelReader level, BlockPos pos) {
-        return state.getValue(HorizontalDirectionalBlock.FACING);
+        //UP is the "no bed orientation" sentinel on neoforge (vanilla/fabric return null here). Handing out a
+        //horizontal direction makes LivingEntityRenderer shove the sleeping model a bed's length off the
+        //hammock, since a hammock is centred on its master block instead of ending at it
+        return Direction.UP;
     }
 
     @Override

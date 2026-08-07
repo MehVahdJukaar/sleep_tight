@@ -11,7 +11,6 @@ import net.mehvahdjukaar.sleep_tight.common.blocks.DreamEssenceBlock;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.configs.ClientConfigs;
 import net.mehvahdjukaar.sleep_tight.core.BedData;
-import net.mehvahdjukaar.sleep_tight.test.TestClientStuff;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.entity.NoopRenderer;
@@ -55,7 +54,6 @@ public class SleepTightClient {
         ClientHelper.addEntityRenderersRegistration(SleepTightClient::registerEntityRenderers);
         ClientHelper.addBlockEntityRenderersRegistration(SleepTightClient::registerBlockEntityRenderers);
         ClientHelper.addParticleRegistration(SleepTightClient::registerParticles);
-        TestClientStuff.init();
     }
 
 

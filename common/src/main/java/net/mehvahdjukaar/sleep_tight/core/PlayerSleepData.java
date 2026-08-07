@@ -24,13 +24,15 @@ import java.util.UUID;
 
 public class PlayerSleepData {
 
+    //every field is optional: player data written by an older version of the mod must still load, otherwise
+    //updating turns every existing player into "Invalid player data" and locks them out of the world
     public static final Codec<PlayerSleepData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             UUIDUtil.CODEC.optionalFieldOf("home_bed_id").forGetter(d -> Optional.ofNullable(d.homeBed)),
-            InsomniaCooldown.CODEC.fieldOf("insomnia").forGetter(d -> d.insomnia),
-            Codec.LONG.fieldOf("last_time_slept").forGetter(PlayerSleepData::getLastWokenUpTime),
-            Codec.INT.fieldOf("consecutive_nights").forGetter(PlayerSleepData::getConsecutiveNightsSlept),
-            Codec.INT.fieldOf("home_bed_nights").forGetter(d -> d.nightsSleptInSameBed),
-            Codec.BOOL.fieldOf("using_double_bed").forGetter(d -> d.usingDoubleBed)
+            InsomniaCooldown.CODEC.optionalFieldOf("insomnia").forGetter(d -> Optional.of(d.insomnia)),
+            Codec.LONG.optionalFieldOf("last_time_slept", -1L).forGetter(PlayerSleepData::getLastWokenUpTime),
+            Codec.INT.optionalFieldOf("consecutive_nights", 0).forGetter(PlayerSleepData::getConsecutiveNightsSlept),
+            Codec.INT.optionalFieldOf("home_bed_nights", 0).forGetter(d -> d.nightsSleptInSameBed),
+            Codec.BOOL.optionalFieldOf("using_double_bed", false).forGetter(d -> d.usingDoubleBed)
     ).apply(instance, PlayerSleepData::new));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, PlayerSleepData> STREAM_CODEC = StreamCodec.composite(
@@ -40,7 +42,8 @@ public class PlayerSleepData {
             ByteBufCodecs.INT, PlayerSleepData::getConsecutiveNightsSlept,
             ByteBufCodecs.INT, d -> d.nightsSleptInSameBed,
             ByteBufCodecs.BOOL, d -> d.usingDoubleBed,
-            PlayerSleepData::new
+            (homeBed, insomnia, lastWokenUp, consecutiveNights, bedNights, doubleBed) ->
+                    new PlayerSleepData(homeBed, Optional.of(insomnia), lastWokenUp, consecutiveNights, bedNights, doubleBed)
     );
 
     @Nullable
@@ -58,9 +61,9 @@ public class PlayerSleepData {
     public PlayerSleepData() {
     }
 
-    public PlayerSleepData(Optional<UUID> homeBed, InsomniaCooldown insomnia, long lastWokenUpTimeStamp, int consecutiveNightsSlept, int nightsSleptInSameBed, boolean usingDoubleBed) {
+    public PlayerSleepData(Optional<UUID> homeBed, Optional<InsomniaCooldown> insomnia, long lastWokenUpTimeStamp, int consecutiveNightsSlept, int nightsSleptInSameBed, boolean usingDoubleBed) {
         this.homeBed = homeBed.orElse(null);
-        this.insomnia = insomnia;
+        this.insomnia = insomnia.orElseGet(InsomniaCooldown::new);
         this.lastWokenUpTimeStamp = lastWokenUpTimeStamp;
         this.consecutiveNightsSlept = consecutiveNightsSlept;
         this.nightsSleptInSameBed = nightsSleptInSameBed;

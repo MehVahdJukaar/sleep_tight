@@ -31,6 +31,10 @@ dependencies {
     modCompileOnly("curse.maven:entity-texture-features-fabric-568563:5000985")
     modCompileOnly("curse.maven:quark-243121:8146177")
     modCompileOnly("curse.maven:zeta-968868:7980010")
+    //issue triage only, remove when done: #146 (3d skin layers) and #139 (sable sublevels)
+    //version id, not "1.11.2": 41 artifacts share that version number and gradle picks the fabric one
+    modCompileOnly("maven.modrinth:3dskinlayers:xPYbAPfz")
+    modCompileOnly("curse.maven:fsable-1312371:8263584")
 
     modRuntimeOnly("curse.maven:farmers-delight-398521:8083481")
     modRuntimeOnly("curse.maven:artsandcrafts-1034791:8041062")
