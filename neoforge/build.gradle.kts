@@ -8,12 +8,14 @@ neoforge {
 }
 
 val moonlight_version: String by extra
+val codecui_version = extra["codecui_version"] as String
 val mc_version: String by extra
 val sbl_version: String by extra
 
 dependencies {
     modImplementation("net.mehvahdjukaar:moonlight-neoforge:${moonlight_version}")
     accessTransformers("net.mehvahdjukaar:moonlight-neoforge:${moonlight_version}")
+    modRuntimeOnly("net.mehvahdjukaar:codecui-neoforge:${codecui_version}")
 
     modCompileOnly("curse.maven:supplementaries-412082:4375776")
     modImplementation("curse.maven:heartstone-573152:7278328")
