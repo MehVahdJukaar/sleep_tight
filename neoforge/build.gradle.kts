@@ -35,6 +35,7 @@ dependencies {
     //version id, not "1.11.2": 41 artifacts share that version number and gradle picks the fabric one
     modCompileOnly("maven.modrinth:3dskinlayers:xPYbAPfz")
     modCompileOnly("curse.maven:fsable-1312371:8263584")
+    modCompileOnly("maven.modrinth:vampirism:rAtxPNwi")
 
     modRuntimeOnly("curse.maven:farmers-delight-398521:8083481")
     modRuntimeOnly("curse.maven:artsandcrafts-1034791:8041062")

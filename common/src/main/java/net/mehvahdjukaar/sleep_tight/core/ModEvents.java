@@ -147,7 +147,9 @@ public class ModEvents {
                     }
                 }
             }
-            if ((block instanceof NightBagBlock)) {
+            //any of our beds, not just night bags: fabric only wires this hook, so hammocks used to slip
+            //through and set a respawn point that later resolves to nothing, sending you to world spawn
+            if (block instanceof IModBed modBed && !modBed.canSetSpawn()) {
                 return false;
             }
         }
