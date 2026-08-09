@@ -23,13 +23,15 @@ import java.util.UUID;
 
 public class PlayerSleepData {
 
+    //every field is optional: player data written by an older version of the mod must still load, otherwise
+    //updating turns every existing player into "Invalid player data" and locks them out of the world
     private static final Codec<PlayerSleepData> CURRENT_CODEC = RecordCodecBuilder.create(instance -> instance.group(
             UUIDUtil.CODEC.optionalFieldOf("home_bed_id").forGetter(d -> Optional.ofNullable(d.homeBed)),
-            InsomniaCooldown.CODEC.fieldOf("insomnia").forGetter(d -> d.insomnia),
-            Codec.LONG.fieldOf("last_time_slept").forGetter(PlayerSleepData::getLastWokenUpTime),
-            Codec.INT.fieldOf("consecutive_nights").forGetter(PlayerSleepData::getConsecutiveNightsSlept),
-            Codec.INT.fieldOf("home_bed_nights").forGetter(d -> d.nightsSleptInSameBed),
-            Codec.BOOL.fieldOf("using_double_bed").forGetter(d -> d.usingDoubleBed)
+            InsomniaCooldown.CODEC.optionalFieldOf("insomnia").forGetter(d -> Optional.of(d.insomnia)),
+            Codec.LONG.optionalFieldOf("last_time_slept", -1L).forGetter(PlayerSleepData::getLastWokenUpTime),
+            Codec.INT.optionalFieldOf("consecutive_nights", 0).forGetter(PlayerSleepData::getConsecutiveNightsSlept),
+            Codec.INT.optionalFieldOf("home_bed_nights", 0).forGetter(d -> d.nightsSleptInSameBed),
+            Codec.BOOL.optionalFieldOf("using_double_bed", false).forGetter(d -> d.usingDoubleBed)
     ).apply(instance, PlayerSleepData::new));
 
     //legacy layout (pre nested-insomnia rework): the cooldown was a single day-clock deadline stored flat as
@@ -45,9 +47,11 @@ public class PlayerSleepData {
             Codec.BOOL.fieldOf("using_double_bed").forGetter(d -> d.usingDoubleBed)
     ).apply(instance, PlayerSleepData::fromLegacy));
 
-    //decode tries the current layout first, falling back to the legacy flat layout; always encode as current.
-    public static final Codec<PlayerSleepData> CODEC = Codec.either(CURRENT_CODEC, LEGACY_CODEC)
-            .xmap(e -> e.map(d -> d, d -> d), Either::left);
+    //legacy has to be tried first now that every current field is optional: current would happily decode legacy
+    //data and silently drop the old cooldown. Legacy still has mandatory fields, so it only matches real legacy
+    //data and current data falls through to it. Always encode as current.
+    public static final Codec<PlayerSleepData> CODEC = Codec.either(LEGACY_CODEC, CURRENT_CODEC)
+            .xmap(e -> e.map(d -> d, d -> d), Either::right);
 
     @Nullable
     private UUID homeBed = null; //last bed slept into
@@ -64,9 +68,9 @@ public class PlayerSleepData {
     public PlayerSleepData() {
     }
 
-    public PlayerSleepData(Optional<UUID> homeBed, InsomniaCooldown insomnia, long lastWokenUpTimeStamp, int consecutiveNightsSlept, int nightsSleptInSameBed, boolean usingDoubleBed) {
+    public PlayerSleepData(Optional<UUID> homeBed, Optional<InsomniaCooldown> insomnia, long lastWokenUpTimeStamp, int consecutiveNightsSlept, int nightsSleptInSameBed, boolean usingDoubleBed) {
         this.homeBed = homeBed.orElse(null);
-        this.insomnia = insomnia;
+        this.insomnia = insomnia.orElseGet(InsomniaCooldown::new);
         this.lastWokenUpTimeStamp = lastWokenUpTimeStamp;
         this.consecutiveNightsSlept = consecutiveNightsSlept;
         this.nightsSleptInSameBed = nightsSleptInSameBed;
@@ -78,7 +82,7 @@ public class PlayerSleepData {
     private static PlayerSleepData fromLegacy(Optional<UUID> homeBed, long insomniaElapsesAt, long lastKnownTime,
                                              long lastWokenUp, int consecutiveNights, int homeBedNights, boolean doubleBed) {
         InsomniaCooldown insomnia = new InsomniaCooldown(insomniaElapsesAt, Long.MAX_VALUE, lastKnownTime);
-        return new PlayerSleepData(homeBed, insomnia, lastWokenUp, consecutiveNights, homeBedNights, doubleBed);
+        return new PlayerSleepData(homeBed, Optional.of(insomnia), lastWokenUp, consecutiveNights, homeBedNights, doubleBed);
     }
 
     public void tick(ServerPlayer player) {

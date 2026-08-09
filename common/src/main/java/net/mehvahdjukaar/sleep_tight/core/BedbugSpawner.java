@@ -124,6 +124,7 @@ public class BedbugSpawner implements CustomSpawner {
 
     static boolean tryWakeUpSpawn(BlockPos bedPos, ServerPlayer player, BedData data) {
         ServerLevel level = (ServerLevel) player.level();
+        if (!CommonConfigs.BEDBUGS_ENABLED.get()) return false;
         if (!level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) return false;
 
         double spawnChance = CommonConfigs.BEDBUG_SPAWN_CHANCE.get();

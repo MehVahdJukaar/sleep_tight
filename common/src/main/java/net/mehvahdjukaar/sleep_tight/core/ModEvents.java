@@ -8,7 +8,6 @@ import net.mehvahdjukaar.sleep_tight.client.ClientEvents;
 import net.mehvahdjukaar.sleep_tight.common.InvigoratedEffect;
 import net.mehvahdjukaar.sleep_tight.common.blocks.IModBed;
 import net.mehvahdjukaar.sleep_tight.common.blocks.ISleepTightBed;
-import net.mehvahdjukaar.sleep_tight.common.blocks.NightBagBlock;
 import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.items.BedbugEggsItem;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundNightmarePacket;
@@ -147,7 +146,9 @@ public class ModEvents {
                     }
                 }
             }
-            if ((block instanceof NightBagBlock)) {
+            //any of our beds, not just night bags: fabric only wires this hook, so hammocks used to slip
+            //through and set a respawn point that later resolves to nothing, sending you to world spawn
+            if (block instanceof IModBed modBed && !modBed.canSetSpawn()) {
                 return false;
             }
         }
@@ -232,6 +233,10 @@ public class ModEvents {
                         occupied = false;
                     }
                 }
+                if (occupied) {
+                    occupied = isReallyOccupied(level, pos, state);
+                    if (!occupied) state = level.getBlockState(pos);
+                }
             }
 
             if (!occupied) {
@@ -248,6 +253,26 @@ public class ModEvents {
         return null;
     }
 
+    /**
+     * A bed can stay flagged as occupied forever when whatever was in it disappeared without a proper wake up:
+     * another mod relocating the block, a sleeper unloading with its chunk, a crash mid sleep. Without a way
+     * back the bed has to be broken and replaced, so clear the flag whenever nothing is actually using it.
+     *
+     * @return whether the bed is genuinely in use
+     */
+    public static boolean isReallyOccupied(Level level, BlockPos pos, BlockState state) {
+        if (!state.hasProperty(BedBlock.OCCUPIED) || !state.getValue(BedBlock.OCCUPIED)) return false;
+        //the entity that holds a player laying down, and the double bed one sits on the block next to it
+        if (!level.getEntitiesOfClass(BedEntity.class, new AABB(pos).inflate(1.5)).isEmpty()) return true;
+        for (var e : level.getEntitiesOfClass(LivingEntity.class, new AABB(pos).inflate(2))) {
+            if (e.isSleeping()) return true;
+        }
+        if (!level.isClientSide) {
+            level.setBlockAndUpdate(pos, state.setValue(BedBlock.OCCUPIED, false));
+        }
+        return false;
+    }
+
     private static boolean bedBlocked(Level level, BlockPos pos, Direction direction) {
         BlockPos blockPos = pos.above();
         return !freeAt(level, blockPos) || !freeAt(level, blockPos.relative(direction.getOpposite()));
@@ -258,27 +283,40 @@ public class ModEvents {
         return !level.getBlockState(pos).isSuffocating(level, pos);
     }
 
+    //absolute position, only for our own beds, where nothing else has a say on where the sleeper goes
+    @Nullable
     @EventCalled
     public static Vec3 getSleepingPosition(Entity entity, BlockState state, BlockPos pos) {
         //sleep started
         if (entity.level().isClientSide) ClientEvents.onSleepStarted(entity, state, pos);
         if (state.getBlock() instanceof IModBed iModBed) {
             return iModBed.getSleepingPosition(state, pos);
-        } else if (state.is(BlockTags.BEDS)) {
-            Vec3 c = Vec3.ZERO;
-            //vanilla places player 2 pixels above bed. Player then falls down
-            if (CommonConfigs.FIX_BED_POSITION.get()) {
-                c = c.add(pos.getX() + 0.5, pos.getY() + 9 / 16f, pos.getZ() + 0.5);
-            }
-            if (entity instanceof Player player) {
-                PlayerSleepData data = STPlatStuff.getPlayerSleepData(player);
-                if (data.usingDoubleBed()) {
-                    c = BedEntity.getDoubleBedOffset(state.getValue(BedBlock.FACING), c);
-                }
-            }
-            if (c != Vec3.ZERO) return c;
         }
         return null;
+    }
+
+    /**
+     * For vanilla and modded beds we only ever want to nudge the sleeper, so this returns a delta applied on
+     * top of whatever the game decided instead of replacing it. Other mods legitimately move where a bed puts
+     * you (Sable projects the position out of its sublevels, for one) and overwriting the result would throw
+     * that away.
+     */
+    @Nullable
+    @EventCalled
+    public static Vec3 getSleepingPositionOffset(Entity entity, BlockState state) {
+        if (!state.is(BlockTags.BEDS)) return null;
+        Vec3 offset = Vec3.ZERO;
+        //vanilla places player 2 pixels above bed. Player then falls down
+        if (CommonConfigs.FIX_BED_POSITION.get()) {
+            offset = offset.add(0, 9 / 16f - 0.6875, 0);
+        }
+        if (entity instanceof Player player) {
+            PlayerSleepData data = STPlatStuff.getPlayerSleepData(player);
+            if (data.usingDoubleBed()) {
+                offset = BedEntity.getDoubleBedOffset(state.getValue(BedBlock.FACING), offset);
+            }
+        }
+        return offset == Vec3.ZERO ? null : offset;
     }
 
 
@@ -322,6 +360,9 @@ public class ModEvents {
             BedData data = STPlatStuff.getBedDataIfPresent(level, pos);
             if (data != null) {
                 playerCap.increaseNightSleptInThisBed(data, player);
+                //bed level lives on the bed itself: without this it is neither saved nor sent to the client,
+                //so the bed looks like it never levels up
+                syncBedDataToClients(level.getBlockEntity(getBedHead(state, pos)));
             }
 
             playerCap.increaseConsecutiveNightSleptCounter(wakeUpTime);
@@ -541,6 +582,7 @@ public class ModEvents {
     //infests a random subset of beds that a structure piece (woodland mansion) just placed.
     //works on any bed block entity (vanilla or modded) since it matches BlockTags.BEDS, not a specific block.
     public static void infestStructureBeds(WorldGenLevel level, ChunkPos chunkPos, BoundingBox pieceBox, RandomSource random) {
+        if (!CommonConfigs.BEDBUGS_ENABLED.get()) return;
         double chance = CommonConfigs.MANSION_INFESTATION_CHANCE.get();
         if (chance <= 0) return;
 

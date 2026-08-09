@@ -1,8 +1,6 @@
 package net.mehvahdjukaar.sleep_tight.mixins.fabric;
 
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
-import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
-import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,7 +9,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin extends Entity {
@@ -19,15 +16,7 @@ public abstract class LivingEntityMixin extends Entity {
         super(entityType, level);
     }
 
-    @Inject(
-            method = {"getBedOrientation"},
-            at = {@At("HEAD")},
-            cancellable = true
-    )
-    private void getBedDirection(CallbackInfoReturnable<Direction> cir) {
-        if (this.getVehicle() instanceof BedEntity) cir.setReturnValue(Direction.UP);
-    }
-
+    //getBedOrientation moved to the common LivingEntityMixin, forge needs it too
 
     @Inject(method = "aiStep", at = @At("HEAD"))
     private void sleepTight$onEntityTick(CallbackInfo ci) {
