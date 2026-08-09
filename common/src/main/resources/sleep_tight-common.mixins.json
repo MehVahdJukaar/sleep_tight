@@ -12,11 +12,13 @@
   ],
   "mixins": [
     "BedBlockMixin",
+    "ChunkHolderMixin",
     "CompatEMFMixin",
     "CompatHandcraftedBedMixin",
     "DoorBlockMixin",
     "LivingEntityMixin",
     "PhantomMixin",
+    "PlayerListMixin",
     "PlayerMixin",
     "ServerLevelMixin",
     "SleepStatusMixin",

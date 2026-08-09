@@ -30,7 +30,14 @@ public class STPlatStuffImpl {
     @Contract
     @Nullable
     public static BedData getBedDataFromThis(BlockEntity be) {
-        return be.getAttached(SleepTightFabric.BED_DATA);
+        BedData data = be.getAttached(SleepTightFabric.BED_DATA);
+        //the attachment initializer only runs on the server (BLOCK_ENTITY_LOAD), so client side we create an
+        //empty one on demand for the sync packet to fill in. Without it nothing client side (bedbug particles)
+        //ever sees the data
+        if (data == null && be.getLevel() != null && be.getLevel().isClientSide && ModEvents.shouldHaveBedData(be)) {
+            data = be.getAttachedOrCreate(SleepTightFabric.BED_DATA);
+        }
+        return data;
     }
 
     //Fabric has no sleep events like Forge so we run the same checks the vanilla logic would, inline.

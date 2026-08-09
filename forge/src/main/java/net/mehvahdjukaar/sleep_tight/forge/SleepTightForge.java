@@ -75,9 +75,8 @@ public class SleepTightForge {
     // TODO 1.20.1 backport: BedbugSpawner registration is handled in mixins/forge/ServerLevelMixin
     // since Forge 1.20.1 has no ModifyCustomSpawnersEvent equivalent.
 
-    // TODO 1.20.1 backport: ModEvents.shouldCancelRespawnHere (ONLY_RESPAWN_IN_HOME_BED) had no
-    // clean Forge 1.20.1 pre-respawn position event (NeoForge PlayerRespawnPositionEvent). Left
-    // unimplemented to keep the module compiling; respawn position is not redirected here.
+    // ONLY_RESPAWN_IN_HOME_BED (NeoForge PlayerRespawnPositionEvent) has no Forge 1.20.1 event, so it lives
+    // in the common PlayerListMixin instead, which also covers fabric.
 
     @SubscribeEvent
     public void onSleepConditionCheck(PlayerSleepInBedEvent event) {

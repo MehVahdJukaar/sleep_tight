@@ -28,11 +28,12 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
         super(context);
     }
 
-    //getBob, not the first PoseStack#translate: that translate sits inside vanilla's
-    //`if (getBedOrientation() != null)` branch, so anything making the orientation null silently took the
-    //whole laying transform with it. getBob is the next call, unconditional, with the same pose state
+    //before vanilla's head-to-feet translate inside the Pose.SLEEPING branch, so the hammock roll pivots
+    //around the entity position and not the already-shifted model. Same injection point as the 1.20 branch:
+    //the branch is always entered while laying too, because getBedOrientation stays non-null (UP) for
+    //BedEntity riders, which turns the translate itself into a no-op there
     @Inject(method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;getBob(Lnet/minecraft/world/entity/LivingEntity;F)F"))
+            at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;translate(FFF)V", ordinal = 0))
     public void sleep_tight$hammockRender(T entity, float entityYaw, float partialTicks, PoseStack matrixStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
         ClientEvents.rotatePlayerInBed(entity, matrixStack, partialTicks, buffer);
     }

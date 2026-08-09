@@ -357,8 +357,11 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
     }
 
 
+    //Forge 1.20.1 takes an Entity here (neoforge narrowed it to LivingEntity later). With the wrong parameter
+    //type this silently stops overriding IForgeBlock#isBed, so Player#checkBedExists says the hammock isn't a
+    //bed and kicks the player awake on the tick right after they start sleeping
     @ForgeOverride
-    public boolean isBed(BlockState state, BlockGetter level, BlockPos pos, LivingEntity sleeper) {
+    public boolean isBed(BlockState state, BlockGetter level, BlockPos pos, Entity sleeper) {
         return true;
     }
 
@@ -367,12 +370,14 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
         level.setBlock(pos, state.setValue(BedBlock.OCCUPIED, occupied), 3);
     }
 
+    //has to be the real direction (as on the 1.20 branch): while asleep the camera yaw (Camera#setup) and the
+    //model yaw+offset (LivingEntityRenderer) are all derived from it. The UP sentinel the 1.21 branch hands
+    //out means nothing special on 1.20.1, it just reads as fixed 270/0 degree yaws, pointing camera and model
+    //two different wrong ways. The sleeper is positioned bed-like along FACING (getSleepingPosition), so
+    //vanilla's head-to-feet model shift lands correctly too
     @ForgeOverride
     public Direction getBedDirection(BlockState state, LevelReader level, BlockPos pos) {
-        //UP is the "no bed orientation" sentinel on forge (vanilla/fabric return null here). Handing out a
-        //horizontal direction makes LivingEntityRenderer shove the sleeping model a bed's length off the
-        //hammock, since a hammock is centred on its master block instead of ending at it
-        return Direction.UP;
+        return state.getValue(FACING);
     }
 
     private enum Connection {

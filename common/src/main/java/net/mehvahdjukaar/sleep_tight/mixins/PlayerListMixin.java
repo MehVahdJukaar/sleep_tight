@@ -1,4 +1,4 @@
-package net.mehvahdjukaar.sleep_tight.mixins.fabric;
+package net.mehvahdjukaar.sleep_tight.mixins;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
