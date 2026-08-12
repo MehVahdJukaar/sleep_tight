@@ -37,9 +37,11 @@ public class BedData {
     }
 
     //called on the client when receiving a sync packet from the server
-    public void acceptFromServer(UUID id, boolean hasBedBug) {
+    public void acceptFromServer(UUID id, boolean hasBedBug, Map<UUID, Byte> bedLevels) {
         this.id = id;
         this.bedBug = hasBedBug ? new CompoundTag() : null;
+        this.bedLevel.clear();
+        this.bedLevel.putAll(bedLevels);
     }
 
     public void incrementBedLevel(Player player) {

@@ -23,7 +23,8 @@ public class PlayerListMixin {
             ServerLevel level, BlockPos pos, float angle, boolean forced, boolean isRespawn,
             Operation<Optional<Vec3>> operation, @Local(argsOnly = true) ServerPlayer player) {
         Optional<Vec3> result = operation.call(level, pos, angle, forced, isRespawn);
-        if (ModEvents.shouldCancelRespawnHere(player, pos)) {
+        //level is the respawn dimension, which is not necessarily the one the player died in
+        if (ModEvents.shouldCancelRespawnHere(player, level, pos)) {
             return Optional.empty();
         }
         return result;

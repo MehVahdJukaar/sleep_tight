@@ -154,7 +154,24 @@ public class SleepTightForge {
     @SubscribeEvent
     public void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            STPlatStuff.getPlayerSleepData(player).syncToClient(player);
             ModEvents.onPlayerRespawned(player);
+        }
+    }
+
+    //the client rebuilds its player on login, on respawn and on every dimension change, losing our data with
+    //it. Unlike the data attachments of newer versions nothing resyncs it on its own
+    @SubscribeEvent
+    public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            STPlatStuff.getPlayerSleepData(player).syncToClient(player);
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            STPlatStuff.getPlayerSleepData(player).syncToClient(player);
         }
     }
 

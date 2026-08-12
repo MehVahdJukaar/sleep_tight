@@ -1,7 +1,9 @@
+import net.darkhax.curseforgegradle.TaskPublishCurseForge
+
 plugins {
     id "architectury-plugin" version "3.4-SNAPSHOT"
     id "dev.architectury.loom" version "1.11-SNAPSHOT" apply false
-    id "com.matthewprenger.cursegradle" version "1.4.0"
+    id "net.darkhax.curseforgegradle" version "1.1.28" apply false
     id "com.modrinth.minotaur" version "2.+"
     id "com.github.johnrengelman.shadow" version "7.1.2" apply false
 }
@@ -13,7 +15,7 @@ architectury {
 subprojects {
     apply plugin: "dev.architectury.loom"
     apply plugin: "com.github.johnrengelman.shadow"
-    apply plugin: "com.matthewprenger.cursegradle"
+    apply plugin: "net.darkhax.curseforgegradle"
     apply plugin: "com.modrinth.minotaur"
 
     loom {
@@ -63,38 +65,38 @@ subprojects {
         }
     }
 
-    if (env.CURSEFORGE_TOKEN) {
-        curseforge {
-            apiKey = env.CURSEFORGE_TOKEN
-            project {
-                id = rootProject.project_id
-                changelog = changelogText
-                releaseType = 'release'
-                addGameVersion rootProject.minecraft_version
-                addGameVersion modLoader.capitalize()
-                if (modLoader == "forge") {
-                    addGameVersion "NeoForge"
-                }
+    tasks.register("curseforge", TaskPublishCurseForge) {
+        group = "upload"
+        description = "Uploads the jar to CurseForge"
+        onlyIf { env.CURSEFORGE_TOKEN != null }
 
+        dependsOn project.tasks.remapJar
+        mustRunAfter project.tasks.build
 
-                mainArtifact(tasks.remapJar)
+        apiToken = env.CURSEFORGE_TOKEN ?: ""
+        // we declare everything ourselves, detection would guess wrong on an architectury setup
+        disableVersionDetection()
 
-                if (modLoader == "fabric") {
-                    relations {
-                        requiredDependency "fabric-api"
-                        requiredDependency "selene"
+        def mainFile = upload(rootProject.project_id, project.tasks.remapJar)
+        mainFile.releaseType = rootProject.release_type
+        mainFile.changelog = changelogText
+        mainFile.changelogType = "markdown"
 
-                        optionalDependency("heartstone")
-                    }
-                } else {
-                    relations {
-                        requiredDependency("selene")
+        mainFile.addGameVersion rootProject.minecraft_version
+        mainFile.addJavaVersion "Java ${rootProject.java_version}"
+        // CurseForge rejects uploads without an environment tag
+        mainFile.addEnvironment "Client", "Server"
 
-                        optionalDependency("heartstone")
-                    }
-                }
-            }
+        mainFile.addModLoader modLoader.capitalize()
+        if (modLoader == "forge") {
+            mainFile.addModLoader "NeoForge"
         }
+
+        mainFile.addRequirement "selene"
+        if (modLoader == "fabric") {
+            mainFile.addRequirement "fabric-api"
+        }
+        mainFile.addOptional "heartstone"
     }
 
 }

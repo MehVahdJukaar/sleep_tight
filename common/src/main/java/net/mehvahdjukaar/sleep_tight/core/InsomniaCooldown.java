@@ -7,19 +7,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
 /**
- * A sleep-cooldown deadline expressed against two clocks at once, plus the day-clock rewind detection that
- * guards it.
- * <p>
- * {@code dayDeadline} is measured against {@link net.minecraft.world.level.Level#getDayTime()} and gives the
- * intended sleep-cycle behaviour and tuning. {@code gameDeadline} is measured against the monotonic
- * {@link net.minecraft.world.level.Level#getGameTime()} and acts as a backstop: day time can be frozen
- * (daylight cycle off) or rewound (/time set), but game time always advances while the level ticks, so the
- * cooldown is guaranteed to elapse. The cooldown is over as soon as EITHER clock passes its deadline.
- * <p>
- * {@code lastKnownDayTime} is the day time observed when the cooldown was last (re)started. It lets
- * {@link #tickRewind} tell a true day-time <em>rewind</em> (day time set to an earlier value) from a daylight
- * cycle <em>freeze</em>: a freeze leaves day time equal to what we last saw and is handled silently by the
- * game-time backstop, while a rewind drops below it and is surfaced to the player.
+ * Sleep-cooldown deadline tracked against two clocks: {@code dayDeadline} on day time (the intended
+ * behaviour) and {@code gameDeadline} on the monotonic game time as a backstop, since day time can be
+ * frozen or rewound while game time always advances. The cooldown ends when either clock passes its
+ * deadline. {@code lastKnownDayTime} lets {@link #tickRewind} tell a real rewind (surfaced to the player)
+ * from a daylight-cycle freeze (ended silently by the backstop).
  */
 public class InsomniaCooldown {
 
@@ -55,27 +47,24 @@ public class InsomniaCooldown {
         return Math.min(dayRemaining, gameRemaining);
     }
 
-    /** Deadline against the day clock; basis for the on-screen cooldown bar. */
     public long dayDeadline() {
         return dayDeadline;
     }
 
-    /** Deadline against the monotonic game clock; backstop for frozen/rewound day time. */
     public long gameDeadline() {
         return gameDeadline;
     }
 
-    /** Day time observed when the cooldown was last (re)started; used for rewind detection. */
     public long lastKnownDayTime() {
         return lastKnownDayTime;
     }
 
     /**
-     * Detects a day-time rewind (world day time set to an earlier value than last observed) and, if so,
-     * notifies the player and clears the cooldown. A daylight-cycle freeze leaves day time at the last seen
-     * value and is NOT treated as a rewind — the game-time backstop ends such cooldowns silently.
+     * Detects a day-time rewind (day time set to an earlier value than last observed); notifies the player
+     * and clears the cooldown. A daylight-cycle freeze is not a rewind: the game-time backstop ends those
+     * cooldowns silently.
      *
-     * @return true if a rewind was detected and handled (the caller should reset dependent state and resync)
+     * @return true if a rewind was handled (caller should reset dependent state and resync)
      */
     public boolean tickRewind(ServerPlayer player) {
         long dayTime = player.level().getDayTime();

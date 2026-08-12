@@ -484,9 +484,9 @@ public class ModEvents {
 
     //all called by mixins
 
-    public static boolean shouldCancelRespawnHere(Player player, BlockPos respawnPos) {
+    public static boolean shouldCancelRespawnHere(Player player, Level respawnLevel, BlockPos respawnPos) {
         if (CommonConfigs.ONLY_RESPAWN_IN_HOME_BED.get()) {
-            BedData bedData = STPlatStuff.getBedDataIfPresent(player.level(), respawnPos);
+            BedData bedData = STPlatStuff.getBedDataIfPresent(respawnLevel, respawnPos);
             if (bedData != null && !STPlatStuff.getPlayerSleepData(player).isBedLastSleptInto(bedData)) {
                 return true;
             }
