@@ -14,6 +14,7 @@ import net.minecraft.world.entity.ai.behavior.RandomStroll;
 import net.minecraft.world.entity.ai.behavior.RunOne;
 import net.minecraft.world.entity.ai.behavior.SetWalkTargetFromAttackTargetIfTargetOutOfReach;
 import net.minecraft.world.entity.ai.behavior.StopAttackingIfTargetInvalid;
+import net.minecraft.world.entity.ai.behavior.Swim;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.sensing.Sensor;
@@ -67,6 +68,7 @@ public class BedbugAi {
 
     private static void initCoreActivity(Brain<BedbugEntity> brain) {
         brain.addActivity(Activity.CORE, 0, ImmutableList.of(
+                new Swim(0.8F),
                 new LookAtTargetSink(45, 90),
                 new MoveToTargetSink(),
                 // claims the closest bed it can reach and remembers it as HOME. sits in CORE so it keeps looking
