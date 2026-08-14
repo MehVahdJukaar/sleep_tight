@@ -18,27 +18,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
-/**
- * Phantom-style ambient spawner with inverted insomnia logic: bedbugs appear when the player
- * has been sleeping consistently, not when they've gone without rest.
- */
+// like the phantom spawner but reversed: bedbugs show up when you sleep a lot, not when you don't
 public class BedbugSpawner implements CustomSpawner {
 
-    /**
-     * Same constant phantoms use ({@code random.nextInt(timeSinceRest) >= 72000}).
-     * Here, higher {@link PlayerSleepData#getConsecutiveNightsSlept()} lowers this threshold.
-     */
+    // same number phantoms use, except here more nights slept lowers the threshold instead of raising it
     private static final int PHANTOM_REST_TICKS = 72000;
 
-    /** Per-extra-night ramp of the ambient roll. Gentler than one full day (24000) so presence builds slowly. */
+    // how much each extra night helps the roll. less than a full day (24000) so it builds up slowly
     private static final int AMBIENT_NIGHT_STEP = 6000;
-    /** Cap on the ambient roll's virtual "rested" ticks; {@code /PHANTOM_REST_TICKS} => max ~1/3 chance per check. */
+    // caps the roll at about 1/3 chance per check
     private static final int AMBIENT_MAX_REST_TICKS = 24000;
 
-    /**
-     * Cooldown between ambient spawn cycles. PhantomSpawner uses {@code (60 + rnd(60)) * 20} (1-2 min);
-     * we stretch it ~5x so bedbugs stay an occasional nuisance rather than a constant one.
-     */
+    // phantoms wait 1-2 min between cycles, we wait about 5 times that so bugs stay occasional
     private static final int AMBIENT_INTERVAL_BASE_SECONDS = 300;
     private static final int AMBIENT_INTERVAL_RANDOM_SECONDS = 300;
 
@@ -86,8 +77,7 @@ public class BedbugSpawner implements CustomSpawner {
     private boolean shouldSpawnFor(ServerPlayer player, RandomSource random) {
         PlayerSleepData data = STPlatStuff.getPlayerSleepData(player);
 
-        // Only players who have committed to a home bed attract ambient bedbugs: they must have slept enough
-        // consecutive nights in the same bed for it to count as their home bed (the home-bed leveling threshold).
+        // only players with an established home bed get ambient bugs
         int requiredHomeNights = CommonConfigs.HOME_BED_REWARD_REQUIRED_NIGHTS.get();
         if (requiredHomeNights >= 0 && data.getNightsSleptInHomeBed() < requiredHomeNights) {
             return false;
@@ -99,8 +89,7 @@ public class BedbugSpawner implements CustomSpawner {
             return false;
         }
 
-        // Mirror phantom roll: more consecutive nights => easier spawn (phantoms: longer awake => easier).
-        // Ramp is deliberately gentle and capped well below 1 so it never becomes a guaranteed spawn each cycle.
+        // more nights slept means an easier roll, capped so it's never a sure spawn
         int restedTicks = Mth.clamp((nights - minNights + 1) * AMBIENT_NIGHT_STEP, 1, AMBIENT_MAX_REST_TICKS);
         return random.nextInt(PHANTOM_REST_TICKS) >= PHANTOM_REST_TICKS - restedTicks;
     }
@@ -109,11 +98,11 @@ public class BedbugSpawner implements CustomSpawner {
         if (!level.dimensionType().hasSkyLight()) {
             return true;
         }
-        // Phantoms need deep night (skyDarken >= 5). Bedbugs prefer the opposite: daylight...
+        // opposite of phantoms: daylight is fine
         if (level.getSkyDarken() < 5) {
             return true;
         }
-        // ...or dim indoor spaces at night (where you'd actually find them).
+        // at night only dark spots work
         int maxLight = CommonConfigs.BEDBUG_MAX_LIGHT.get();
         if (maxLight >= 15) {
             return true;
@@ -157,19 +146,13 @@ public class BedbugSpawner implements CustomSpawner {
         int max = CommonConfigs.BEDBUG_AMBIENT_MAX_RANGE.get();
         int attempts = CommonConfigs.BEDBUG_TRIES.get();
 
-        // ambient placement: gate each attempt on time/light and snap onto the ground,
-        // and measure spawn distance from the player (natural-spawn persistence rules)
+        // ambient spawns check time and light, snap to the ground and measure distance from the player
         return trySpawnBedbugs(level, center, min, max, attempts, MobSpawnType.NATURAL,
                 player.position(), true, null);
     }
 
-    /**
-     * Shared core for both bedbug spawn flows: repeatedly pick a random nearby position, validate it as a
-     * legal spawn, require a navigable path, then spawn. The flows differ only by parameters: the
-     * {@code spawnType}, whether to apply {@code ambient} placement (time/light gate + ground snap), the
-     * reference position for the natural-spawn distance check ({@code distanceFrom}, or the spawn position
-     * itself when null), and an optional {@code postSpawn} hook run on the spawned bug.
-     */
+    // picks random spots around center until one is a legal spawn the bug can path from.
+    // distanceFrom is what the natural spawn distance check uses, defaulting to the spawn pos itself
     private static boolean trySpawnBedbugs(ServerLevel level, BlockPos center, int min, int max, int maxAttempts,
                                            MobSpawnType spawnType, @Nullable Vec3 distanceFrom, boolean ambient,
                                            @Nullable Consumer<BedbugEntity> postSpawn) {

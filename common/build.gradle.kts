@@ -13,8 +13,8 @@ val supplementaries_version: String by extra
 val heartstone_version: String by extra
 
 dependencies {
-    //@jar skips moonlight's module metadata: its jar variants are tagged neoforge-only, so in this module gradle
-    //would otherwise fall back to the access transformer variant and the whole api would be missing from the classpath
+    //@jar ignores moonlight's module metadata. its jar variants are marked neoforge only, so here gradle
+    //would pick the access transformer variant instead and the api wouldn't be on the classpath at all
     modCompileOnly("net.mehvahdjukaar:moonlight-neoforge:${moonlight_version}@jar")
     accessTransformers("net.mehvahdjukaar:moonlight-neoforge:${moonlight_version}")
 

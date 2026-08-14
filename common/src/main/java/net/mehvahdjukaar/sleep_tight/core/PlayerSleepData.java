@@ -24,8 +24,8 @@ import java.util.UUID;
 
 public class PlayerSleepData {
 
-    //every field is optional: player data written by an older version of the mod must still load, otherwise
-    //updating turns every existing player into "Invalid player data" and locks them out of the world
+    //all fields are optional so data saved by older versions still loads.
+    //otherwise updating gives every existing player "Invalid player data" and locks them out of the world
     public static final Codec<PlayerSleepData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             UUIDUtil.CODEC.optionalFieldOf("home_bed_id").forGetter(d -> Optional.ofNullable(d.homeBed)),
             InsomniaCooldown.CODEC.optionalFieldOf("insomnia").forGetter(d -> Optional.of(d.insomnia)),

@@ -264,8 +264,7 @@ public class BedbugEntity extends PathfinderMob {
     /**
      * Returns true if the WatchableObject (Byte) is 0x01 otherwise returns false. The WatchableObject is updated using setBesideClimableBlock.
      */
-    // independent bit flags: climbing = bit0 (1), splattered = bit1 (2), burrowing = bit2 (4).
-    // they must NOT overlap: the per-tick setClimbing(horizontalCollision) would otherwise clobber the burrow flag.
+    // separate bits, they can't share values or setClimbing would wipe the burrow flag every tick
     private static final int FLAG_CLIMBING = 1;
     private static final int FLAG_SPLATTERED = 2;
     private static final int FLAG_BURROWING = 4;
@@ -309,11 +308,8 @@ public class BedbugEntity extends PathfinderMob {
         return new BedbugNavigation(this, level);
     }
 
-    /**
-     * Seeds the bedbug's initial target bed (e.g. the bed a player just slept in). Stored as the brain's
-     * HOME memory; once this bed is infested or becomes invalid, AcquirePoi finds and claims a new one.
-     * HOME persists across save/load via the brain, so no manual NBT is needed.
-     */
+    // sets the bed this bug goes for first. once that one is infested or gone AcquirePoi picks another.
+    // the brain saves HOME on its own so there's nothing to write to nbt
     public void setBedTarget(BlockPos pos) {
         this.getBrain().setMemory(MemoryModuleType.HOME, GlobalPos.of(this.level().dimension(), pos.immutable()));
     }
@@ -375,11 +371,7 @@ public class BedbugEntity extends PathfinderMob {
         return super.isColliding(pos, state);
     }
 
-    /**
-     * Finds the bed this bedbug is standing on and burrowing straight down into: the block at its feet, or
-     * the block directly below (when it rests on top of the bed). Strictly vertical - a bed merely next to
-     * the bug does not count, since it buries into the bed it stands on. Null clears the burrowing state.
-     */
+    // the bed the bug stands on, either at its feet or right below. beds to the side don't count since it digs down
     @Nullable
     private BlockPos findBedToBurrow() {
         Level level = this.level();

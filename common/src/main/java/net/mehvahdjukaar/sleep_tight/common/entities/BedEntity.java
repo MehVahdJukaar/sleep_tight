@@ -174,8 +174,8 @@ public class BedEntity extends Entity implements IControllableVehicle, IExtraCli
 
 
         if (dead && !level.isClientSide) {
-            //not just isBed: the block may have turned into something we no longer recognize as a bed (another
-            //mod moving it around). As long as it still carries the flag we set, clear it, or it stays stuck
+            //we don't check isBed since the block might not be a bed anymore (some mod moved it).
+            //if it still has the flag we set, clear it or it stays stuck
             if (newBedState.hasProperty(BedBlock.OCCUPIED) && newBedState.getValue(BedBlock.OCCUPIED)) {
                 level.setBlockAndUpdate(pos, newBedState.setValue(BedBlock.OCCUPIED, false));
             }

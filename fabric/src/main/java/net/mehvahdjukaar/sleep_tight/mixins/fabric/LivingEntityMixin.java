@@ -16,8 +16,6 @@ public abstract class LivingEntityMixin extends Entity {
         super(entityType, level);
     }
 
-    //getBedOrientation moved to the common LivingEntityMixin, neoforge needs it too
-
     @Inject(method = "aiStep", at = @At("HEAD"))
     private void sleepTight$onEntityTick(CallbackInfo ci) {
         if ( this.level().isClientSide()) {

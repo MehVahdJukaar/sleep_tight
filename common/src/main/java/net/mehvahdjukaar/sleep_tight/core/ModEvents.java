@@ -147,8 +147,8 @@ public class ModEvents {
                     }
                 }
             }
-            //any of our beds, not just night bags: fabric only wires this hook, so hammocks used to slip
-            //through and set a respawn point that later resolves to nothing, sending you to world spawn
+            //has to cover all our beds, not just night bags. fabric has no other hook, so a hammock would
+            //set a respawn point that resolves to nothing later and sends you to world spawn
             if (block instanceof IModBed modBed && !modBed.canSetSpawn()) {
                 return false;
             }
@@ -254,13 +254,8 @@ public class ModEvents {
         return null;
     }
 
-    /**
-     * A bed can stay flagged as occupied forever when whatever was in it disappeared without a proper wake up:
-     * another mod relocating the block, a sleeper unloading with its chunk, a crash mid sleep. Without a way
-     * back the bed has to be broken and replaced, so clear the flag whenever nothing is actually using it.
-     *
-     * @return whether the bed is genuinely in use
-     */
+    //beds can get stuck occupied if the sleeper vanishes without waking up (chunk unload, crash, another mod
+    //moving the block). only fix is breaking the bed, so we just clear the flag when nobody is in it
     public static boolean isReallyOccupied(Level level, BlockPos pos, BlockState state) {
         if (!state.hasProperty(BedBlock.OCCUPIED) || !state.getValue(BedBlock.OCCUPIED)) return false;
         //the entity that holds a player laying down, and the double bed one sits on the block next to it
@@ -296,12 +291,8 @@ public class ModEvents {
         return null;
     }
 
-    /**
-     * For vanilla and modded beds we only ever want to nudge the sleeper, so this returns a delta applied on
-     * top of whatever the game decided instead of replacing it. Other mods legitimately move where a bed puts
-     * you (Sable projects the position out of its sublevels, for one) and overwriting the result would throw
-     * that away.
-     */
+    //offset added on top of wherever the game put the sleeper, for vanilla and modded beds.
+    //other mods move that position for good reasons (Sable pulls it out of its sublevels) so we don't replace it
     @Nullable
     @EventCalled
     public static Vec3 getSleepingPositionOffset(Entity entity, BlockState state) {
@@ -364,8 +355,8 @@ public class ModEvents {
             BedData data = STPlatStuff.getBedDataIfPresent(level, pos);
             if (data != null) {
                 playerCap.increaseNightSleptInThisBed(data, player);
-                //bed level lives on the bed itself: without this it is neither saved nor sent to the client,
-                //so the bed looks like it never levels up
+                //bed level is stored on the bed, without this it's never saved or sent to the client
+                //and the bed looks like it doesn't level up
                 syncBedDataToClients(level.getBlockEntity(getBedHead(state, pos)));
             }
 

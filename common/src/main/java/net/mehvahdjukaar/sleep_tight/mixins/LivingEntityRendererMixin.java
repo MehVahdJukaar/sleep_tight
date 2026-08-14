@@ -28,9 +28,6 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
         super(context);
     }
 
-    //getScale, not the first PoseStack#translate: that translate sits inside vanilla's
-    //`if (getBedOrientation() != null)` branch, so anything making the orientation null silently took the
-    //whole laying transform with it. getScale is the next call, unconditional, with the same pose state
     @Inject(method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getScale()F"))
     public void sleep_tight$hammockRender(T entity, float entityYaw, float partialTicks, PoseStack matrixStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
