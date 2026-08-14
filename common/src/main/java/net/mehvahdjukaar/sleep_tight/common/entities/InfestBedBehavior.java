@@ -10,11 +10,8 @@ import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
 
-/**
- * Drives a bedbug to its remembered bed ({@link MemoryModuleType#HOME}) and starts burrowing once it is
- * actually standing on a bed block. Replaces the old {@code InfestBedGoal}: acquisition + ticket claiming is
- * handled upstream by {@code AcquirePoi}, this behavior only handles the "walk there and burrow" part.
- */
+//walks the bug to the bed it remembers and makes it burrow once it's standing on one.
+//finding and claiming the bed is AcquirePoi's job, this is just the walking and burrowing part
 public class InfestBedBehavior extends Behavior<BedbugEntity> {
 
     private final float speedModifier;
@@ -31,7 +28,7 @@ public class InfestBedBehavior extends Behavior<BedbugEntity> {
         return mob.getBrain().hasMemoryValue(MemoryModuleType.HOME);
     }
 
-    // run indefinitely while we still have a valid bed; invalidation is handled in tick()
+    // keeps going as long as it has a bed, tick() is what drops it
     @Override
     protected boolean timedOut(long gameTime) {
         return false;
@@ -60,8 +57,7 @@ public class InfestBedBehavior extends Behavior<BedbugEntity> {
             return;
         }
 
-        // burrow only while standing on top of the bed (its feet block, or one above with the bed
-        // directly below): the bug buries straight down into the bed it stands on, not from beside it.
+        // only burrows while standing on the bed, since it digs straight down
         BlockPos feet = mob.blockPosition();
         if (feet.equals(bed) || feet.equals(bed.above())) {
             brain.eraseMemory(MemoryModuleType.WALK_TARGET);
@@ -76,8 +72,7 @@ public class InfestBedBehavior extends Behavior<BedbugEntity> {
     @Override
     protected void stop(ServerLevel level, BedbugEntity mob, long gameTime) {
         mob.getBrain().eraseMemory(MemoryModuleType.WALK_TARGET);
-        // don't force-clear burrowing here: the entity tick clears it when no longer on a bed,
-        // so an idle->fight handoff that walks the bug off the bed cleans up naturally.
+        // no need to clear burrowing, the entity tick does that once it's off the bed
     }
 
     private static void forgetBed(BedbugEntity mob) {

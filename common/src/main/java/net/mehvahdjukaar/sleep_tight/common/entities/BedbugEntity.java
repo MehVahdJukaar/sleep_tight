@@ -25,7 +25,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
-import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Dynamic;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.world.entity.*;
@@ -36,8 +35,6 @@ import net.minecraft.world.entity.ai.goal.ClimbOnTopOfPowderSnowGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.entity.ai.sensing.Sensor;
-import net.minecraft.world.entity.ai.sensing.SensorType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.BedBlock;
@@ -57,23 +54,6 @@ import java.util.*;
 public class BedbugEntity extends PathfinderMob {
     private static final EntityDataAccessor<Byte> DATA_FLAGS_ID = SynchedEntityData.defineId(BedbugEntity.class, EntityDataSerializers.BYTE);
 
-    private static final ImmutableList<? extends SensorType<? extends Sensor<? super BedbugEntity>>> SENSOR_TYPES =
-            ImmutableList.of(SensorType.NEAREST_LIVING_ENTITIES, SensorType.NEAREST_PLAYERS, SensorType.HURT_BY);
-    private static final ImmutableList<? extends MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(
-            MemoryModuleType.HOME,
-            MemoryModuleType.NEAREST_LIVING_ENTITIES,
-            MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES,
-            MemoryModuleType.NEAREST_VISIBLE_PLAYER,
-            MemoryModuleType.NEAREST_VISIBLE_ATTACKABLE_PLAYER,
-            MemoryModuleType.LOOK_TARGET,
-            MemoryModuleType.WALK_TARGET,
-            MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
-            MemoryModuleType.PATH,
-            MemoryModuleType.ATTACK_TARGET,
-            MemoryModuleType.ATTACK_COOLING_DOWN,
-            MemoryModuleType.HURT_BY,
-            MemoryModuleType.HURT_BY_ENTITY);
-
     //client
     private int burrowingTicks = 0;
     private int prevBurrowingTicks = 0;
@@ -88,15 +68,14 @@ public class BedbugEntity extends PathfinderMob {
 
     @Override
     protected void registerGoals() {
-        // Reactive, non-navigation goals coexist fine with the brain (neither drives WALK_TARGET).
-        // Everything that moves the bedbug now lives in the brain (see makeBrain).
+        // these two don't move the bug around so they don't fight with the brain. everything else is in BedbugAi
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(1, new ClimbOnTopOfPowderSnowGoal(this, this.level()));
     }
 
     @Override
     protected Brain.Provider<BedbugEntity> brainProvider() {
-        return Brain.provider(MEMORY_TYPES, SENSOR_TYPES);
+        return BedbugAi.brainProvider();
     }
 
     @Override
@@ -129,7 +108,7 @@ public class BedbugEntity extends PathfinderMob {
         if (!this.level().isClientSide && hurt && !this.isAlive() && healthBefore >= this.getMaxHealth()) {
             this.setSplattered(true);
         }
-        // Provoked retaliation only when there's no bed to run to; otherwise it keeps fleeing toward the bed.
+        // only fights back if it has no bed to run to
         if (!this.level().isClientSide && hurt && this.isAlive() && this.level().getDifficulty() != Difficulty.PEACEFUL
                 && !this.hasBed()
                 && source.getEntity() instanceof LivingEntity attacker && this.canAttack(attacker)) {

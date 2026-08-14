@@ -50,8 +50,6 @@ public class WakeUpEncounterHelper {
 
                 //config
                 if (mob.hasLineOfSight(player)) {
-
-                    // generic encounter mobs keep finalizing as EVENT (unchanged behaviour)
                     SpawnHelper.doSpawnMob(level, mob, MobSpawnType.EVENT);
 
                     setupMobToTargetPlayer(player, mob);

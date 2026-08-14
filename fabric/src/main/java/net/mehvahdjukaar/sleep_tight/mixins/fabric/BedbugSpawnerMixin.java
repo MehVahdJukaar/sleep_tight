@@ -9,13 +9,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * NeoForge registers our {@link BedbugSpawner} through {@code ModifyCustomSpawnersEvent}.
- * Fabric has no such hook and {@link ServerLevel}'s {@code customSpawners} is an
- * {@link com.google.common.collect.ImmutableList} ({@code MinecraftServer#createLevels}), so we
- * can't add to it. Instead we piggyback on the vanilla {@link PhantomSpawner} (which lives in the
- * overworld's spawner list), exactly like Supplementaries does with {@code WanderingTraderSpawner}.
- */
+//on neoforge we just register our spawner with an event. fabric has nothing like that and the level's
+//customSpawners list is immutable, so we ride along with the phantom spawner instead, same as supplementaries
+//does with the wandering trader one
 @Mixin(PhantomSpawner.class)
 public class BedbugSpawnerMixin {
 

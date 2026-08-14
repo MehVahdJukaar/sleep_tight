@@ -16,15 +16,9 @@ public class SpawnHelper {
         level.addFreshEntityWithPassengers(mob);
     }
 
-    /**
-     * Modified from vanilla {@code NaturalSpawner#spawnCategoryForPosition}, which is private and only does
-     * random category-based spawning during chunk ticks. We need to force a specific {@code entityType} at a
-     * specific {@code pos} while still running the real spawn validation, so the inner check sequence is copied
-     * here. The category {@code SpawnerData} path ({@code NaturalSpawner#isValidSpawnPostitionForType}) is
-     * replaced by the equivalent per-type checks ({@link SpawnPlacements} + collision) since we know the type.
-     * {@code centerPos} is the reference point for the distance/persistence check ({@code isValidPositionForMob}).
-     * If vanilla changes its spawn validation, re-sync this against {@code spawnCategoryForPosition}.
-     */
+    //copy of NaturalSpawner.spawnCategoryForPosition, which is private and only spawns random mobs of a category.
+    //we want a specific type at a specific pos but with the same checks, so they're redone here.
+    //centerPos is what the distance check measures from. keep in sync if vanilla changes its spawn checks
     @Nullable
     static <T extends Entity> T createValidMobToSpawn(Vec3 centerPos, ServerLevel level, BlockPos.MutableBlockPos pos,
                                                       EntityType<T> entityType, MobSpawnType spawnType,
@@ -37,9 +31,8 @@ public class SpawnHelper {
 
         double f;
         if (naturalDistanceRules) {
-            // Replicate vanilla NaturalSpawner#isRightDistanceToPlayerAndSpawnPoint: never spawn within
-            // MIN_SPAWN_DISTANCE (24) blocks of the nearest non-creative/spectator player, nor within 24 of
-            // the world spawn. This is the vanilla rule that keeps natural mobs from popping next to a player.
+            // same as NaturalSpawner.isRightDistanceToPlayerAndSpawnPoint: nothing spawns within 24 blocks
+            // of a player or of world spawn
             Player nearest = level.getNearestPlayer(d, y, e, -1.0, false);
             if (nearest == null) return null;
             f = nearest.distanceToSqr(d, y, e);
