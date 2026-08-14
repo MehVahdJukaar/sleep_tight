@@ -34,7 +34,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
@@ -64,7 +63,6 @@ public class BedbugEntity extends PathfinderMob {
     public BedbugEntity(EntityType<? extends BedbugEntity> entityType, Level level) {
         super(entityType, level);
         this.getNavigation().setCanFloat(true);
-        this.setPathfindingMalus(PathType.POWDER_SNOW, 8.0F);
     }
 
     public BedbugEntity(Level level) {
