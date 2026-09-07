@@ -6,13 +6,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
-/**
- * Sleep-cooldown deadline tracked against two clocks: {@code dayDeadline} on day time (the intended
- * behaviour) and {@code gameDeadline} on the monotonic game time as a backstop, since day time can be
- * frozen or rewound while game time always advances. The cooldown ends when either clock passes its
- * deadline. {@code lastKnownDayTime} lets {@link #tickRewind} tell a real rewind (surfaced to the player)
- * from a daylight-cycle freeze (ended silently by the backstop).
- */
 public class InsomniaCooldown {
 
     public static final Codec<InsomniaCooldown> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -40,7 +33,6 @@ public class InsomniaCooldown {
         this.lastKnownDayTime = dayTimeNow;
     }
 
-    /** Ticks left before the cooldown elapses; <= 0 means it is over. */
     public long remaining(Player player) {
         long dayRemaining = dayDeadline - player.level().getDayTime();
         long gameRemaining = gameDeadline - player.level().getGameTime();
@@ -59,13 +51,7 @@ public class InsomniaCooldown {
         return lastKnownDayTime;
     }
 
-    /**
-     * Detects a day-time rewind (day time set to an earlier value than last observed); notifies the player
-     * and clears the cooldown. A daylight-cycle freeze is not a rewind: the game-time backstop ends those
-     * cooldowns silently.
-     *
-     * @return true if a rewind was handled (caller should reset dependent state and resync)
-     */
+    //someone set the time backwards. clears the cooldown and tells the player. returns true if that happened
     public boolean tickRewind(ServerPlayer player) {
         long dayTime = player.level().getDayTime();
         if (dayTime < lastKnownDayTime) {

@@ -23,8 +23,6 @@ import java.util.UUID;
 
 public class PlayerSleepData {
 
-    //every field is optional: player data written by an older version of the mod must still load, otherwise
-    //updating turns every existing player into "Invalid player data" and locks them out of the world
     private static final Codec<PlayerSleepData> CURRENT_CODEC = RecordCodecBuilder.create(instance -> instance.group(
             UUIDUtil.CODEC.optionalFieldOf("home_bed_id").forGetter(d -> Optional.ofNullable(d.homeBed)),
             InsomniaCooldown.CODEC.optionalFieldOf("insomnia").forGetter(d -> Optional.of(d.insomnia)),
@@ -34,9 +32,7 @@ public class PlayerSleepData {
             Codec.BOOL.optionalFieldOf("using_double_bed", false).forGetter(d -> d.usingDoubleBed)
     ).apply(instance, PlayerSleepData::new));
 
-    //legacy layout (pre nested-insomnia rework): the cooldown was a single day-clock deadline stored flat as
-    //"insomnia_elapses_at" + "last_known_time", with no game-clock backstop. Read those into an InsomniaCooldown
-    //whose game deadline never elapses (Long.MAX_VALUE), so behaviour matches the old day-only cooldown.
+    //old layout, where the cooldown was two flat fields and had no game time fallback
     private static final Codec<PlayerSleepData> LEGACY_CODEC = RecordCodecBuilder.create(instance -> instance.group(
             UUIDUtil.CODEC.optionalFieldOf("home_bed_id").forGetter(d -> Optional.ofNullable(d.homeBed)),
             Codec.LONG.fieldOf("insomnia_elapses_at").forGetter(d -> d.insomnia.dayDeadline()),
@@ -47,9 +43,6 @@ public class PlayerSleepData {
             Codec.BOOL.fieldOf("using_double_bed").forGetter(d -> d.usingDoubleBed)
     ).apply(instance, PlayerSleepData::fromLegacy));
 
-    //legacy has to be tried first now that every current field is optional: current would happily decode legacy
-    //data and silently drop the old cooldown. Legacy still has mandatory fields, so it only matches real legacy
-    //data and current data falls through to it. Always encode as current.
     public static final Codec<PlayerSleepData> CODEC = Codec.either(LEGACY_CODEC, CURRENT_CODEC)
             .xmap(e -> e.map(d -> d, d -> d), Either::right);
 
@@ -77,8 +70,7 @@ public class PlayerSleepData {
         this.usingDoubleBed = usingDoubleBed;
     }
 
-    //builds an instance from the legacy flat insomnia fields; the missing game-clock deadline is set to
-    //Long.MAX_VALUE so it never elapses, leaving the day-clock deadline as the sole (legacy) cooldown.
+    //game deadline never elapses so it behaves like the old day only cooldown
     private static PlayerSleepData fromLegacy(Optional<UUID> homeBed, long insomniaElapsesAt, long lastKnownTime,
                                              long lastWokenUp, int consecutiveNights, int homeBedNights, boolean doubleBed) {
         InsomniaCooldown insomnia = new InsomniaCooldown(insomniaElapsesAt, Long.MAX_VALUE, lastKnownTime);
@@ -86,8 +78,7 @@ public class PlayerSleepData {
     }
 
     public void tick(ServerPlayer player) {
-        //on a day-time rewind the cooldown clears itself and notifies the player; we then reset the
-        //consecutive-nights baseline (a player-level concern) and resync.
+        //cooldown clears itself on a time rewind, we just reset the nights counter and resync
         if (insomnia.tickRewind(player)) {
             this.lastWokenUpTimeStamp = -1;
             syncToClient(player);
@@ -174,7 +165,7 @@ public class PlayerSleepData {
         return homeBed;
     }
 
-    // Affects nightmare chance
+    //affects nightmare chance
     public int getConsecutiveNightsSlept() {
         return consecutiveNightsSlept;
     }

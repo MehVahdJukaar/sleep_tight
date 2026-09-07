@@ -12,15 +12,9 @@ import net.minecraft.world.entity.ai.util.LandRandomPos;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Peaceful-only flee, modelled on vanilla {@link net.minecraft.world.entity.ai.behavior.AnimalPanic}. Runs
- * when the bug can't fight back (peaceful wipes {@code ATTACK_TARGET}, see {@link BedbugAi#updateActivity})
- * and has no bed to run to; unlike vanilla it bails the instant a bed appears so {@link InfestBedBehavior}
- * takes over.
- */
+//copy of AnimalPanic, but only on peaceful and it stops as soon as it finds a bed
 public class BedbugPanicBehavior extends Behavior<BedbugEntity> {
 
-    // matches AnimalPanic's panic window so it feels the same
     private static final int PANIC_MIN_DURATION = 100;
     private static final int PANIC_MAX_DURATION = 120;
     private static final int FLEE_RADIUS_HORIZONTAL = 16;
@@ -30,9 +24,7 @@ public class BedbugPanicBehavior extends Behavior<BedbugEntity> {
 
     public BedbugPanicBehavior(float speedModifier) {
         super(ImmutableMap.of(
-                // no bed to flee to -> bed-seeking (InfestBedBehavior) has priority and runs instead
                 MemoryModuleType.HOME, MemoryStatus.VALUE_ABSENT,
-                // populated by the HurtBySensor when something attacks us
                 MemoryModuleType.HURT_BY_ENTITY, MemoryStatus.VALUE_PRESENT),
                 PANIC_MIN_DURATION, PANIC_MAX_DURATION);
         this.speedModifier = speedModifier;
@@ -55,7 +47,7 @@ public class BedbugPanicBehavior extends Behavior<BedbugEntity> {
 
     @Override
     protected void tick(ServerLevel level, BedbugEntity mob, long gameTime) {
-        // re-pick only once navigation stalls, like AnimalPanic
+        //only pick a new spot once it stopped moving
         if (!mob.getNavigation().isDone()) return;
         Vec3 target = this.findFleePos(mob);
         if (target != null) {
@@ -65,7 +57,6 @@ public class BedbugPanicBehavior extends Behavior<BedbugEntity> {
 
     @Nullable
     private Vec3 findFleePos(BedbugEntity mob) {
-        // flee the attacker while remembered, else AnimalPanic-style random scurry
         Vec3 awayFrom = mob.getBrain().getMemory(MemoryModuleType.HURT_BY_ENTITY)
                 .map(LivingEntity::position).orElse(null);
         if (awayFrom != null) {

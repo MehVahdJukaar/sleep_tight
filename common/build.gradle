@@ -19,7 +19,7 @@ dependencies {
 
     modImplementation("curse.maven:heartstone-573152:6173171")
     modImplementation("curse.maven:supplementaries-412082:4375776")
-    modImplementation("curse.maven:entity-model-features-844662:5717218")
+    modImplementation("curse.maven:entity-model-features-844662:8782763")
     modImplementation("curse.maven:entity-texture-features-fabric-568563:5000985")
 
     modCompileOnly("org.violetmoon.quark:Quark-4.0-beta-426")

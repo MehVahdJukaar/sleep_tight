@@ -74,7 +74,6 @@ subprojects {
         mustRunAfter project.tasks.build
 
         apiToken = env.CURSEFORGE_TOKEN ?: ""
-        // we declare everything ourselves, detection would guess wrong on an architectury setup
         disableVersionDetection()
 
         def mainFile = upload(rootProject.project_id, project.tasks.remapJar)
@@ -84,7 +83,6 @@ subprojects {
 
         mainFile.addGameVersion rootProject.minecraft_version
         mainFile.addJavaVersion "Java ${rootProject.java_version}"
-        // CurseForge rejects uploads without an environment tag
         mainFile.addEnvironment "Client", "Server"
 
         mainFile.addModLoader modLoader.capitalize()

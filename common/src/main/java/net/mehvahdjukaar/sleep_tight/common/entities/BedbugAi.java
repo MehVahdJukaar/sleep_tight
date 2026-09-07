@@ -21,12 +21,6 @@ import net.minecraft.world.entity.schedule.Activity;
 
 import java.util.Optional;
 
-/**
- * Brain wiring for {@link BedbugEntity}, kept out of the entity in the vanilla {@code GoatAi}/{@code PiglinAi} style.
- * <p>
- * The bedbug is timid: while it remembers a bed ({@link MemoryModuleType#HOME}) it always runs for it and never
- * fights, even while being hit. Only when it has no bed to flee to can a provoked bedbug enter {@link Activity#FIGHT}.
- */
 public class BedbugAi {
 
     private static final float SPEED_WHEN_GOING_TO_BED = 1.15F;
@@ -53,27 +47,20 @@ public class BedbugAi {
         brain.addActivity(Activity.CORE, 0, ImmutableList.of(
                 new LookAtTargetSink(45, 90),
                 new MoveToTargetSink(),
-                // find + claim (POI ticket) the nearest reachable bed, remembered as HOME. In CORE so it keeps
-                // scanning even while FIGHTing: claiming a bed clears the FIGHT condition (HOME absent), making
-                // the bug break off and flee to a bed placed mid-fight.
                 AcquirePoi.create(holder -> holder.is(PoiTypes.HOME), MemoryModuleType.HOME, false, Optional.empty())));
     }
 
     private static void initIdleActivity(Brain<BedbugEntity> brain) {
         brain.addActivity(Activity.IDLE, 10, ImmutableList.of(
-                // make a run for the remembered bed and burrow into it (faster than the search wander)
                 new InfestBedBehavior(SPEED_WHEN_GOING_TO_BED),
-                // bedless + can't fight back (peaceful): flee from whatever just hit us. Ordered after
-                // InfestBedBehavior and gated on HOME absent, so running for a bed always takes priority.
                 new BedbugPanicBehavior(SPEED_WHEN_PANICKING),
-                // no bed yet: calmly wander in search of one (only runs while WALK_TARGET is unset)
+                //no bed yet, wander around looking for one
                 new RunOne<>(ImmutableList.of(
                         Pair.of(RandomStroll.stroll(SPEED_WHEN_SEARCHING), 2),
                         Pair.of(new DoNothing(30, 60), 1)))));
     }
 
     private static void initFightActivity(Brain<BedbugEntity> brain) {
-        // Timid: FIGHT only when provoked (ATTACK_TARGET) and bedless (no HOME).
         brain.addActivityAndRemoveMemoriesWhenStopped(
                 Activity.FIGHT,
                 ImmutableList.of(

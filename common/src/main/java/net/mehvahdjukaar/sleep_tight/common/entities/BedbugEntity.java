@@ -88,8 +88,7 @@ public class BedbugEntity extends PathfinderMob {
 
     @Override
     protected void registerGoals() {
-        // Reactive, non-navigation goals coexist fine with the brain (neither drives WALK_TARGET).
-        // Everything that moves the bedbug now lives in the brain (see makeBrain).
+        //these dont touch WALK_TARGET so they are fine next to the brain. all the moving is in makeBrain
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(1, new ClimbOnTopOfPowderSnowGoal(this, this.level()));
     }
@@ -129,7 +128,7 @@ public class BedbugEntity extends PathfinderMob {
         if (!this.level().isClientSide && hurt && !this.isAlive() && healthBefore >= this.getMaxHealth()) {
             this.setSplattered(true);
         }
-        // Provoked retaliation only when there's no bed to run to; otherwise it keeps fleeing toward the bed.
+        //only fights back when it has no bed to run to
         if (!this.level().isClientSide && hurt && this.isAlive() && this.level().getDifficulty() != Difficulty.PEACEFUL
                 && !this.hasBed()
                 && source.getEntity() instanceof LivingEntity attacker && this.canAttack(attacker)) {
@@ -172,10 +171,7 @@ public class BedbugEntity extends PathfinderMob {
         if (!level.isClientSide) {
             this.setClimbing(this.horizontalCollision);
 
-            // Server is authoritative over the burrow: it re-checks the bed under the bug each tick,
-            // advances the timer, infests, plays the (broadcast) sounds, and clears the flag once the
-            // bug is no longer on a valid bed. FLAG_BURROWING is synced, so clients drive the animation
-            // straight off it (below) rather than re-deciding for themselves.
+            //server owns the burrow. FLAG_BURROWING is synced so the client just plays the animation
             if (this.isBurrowing()) {
                 BlockPos pos = this.findBedToBurrow();
                 if (pos == null) {
@@ -200,10 +196,8 @@ public class BedbugEntity extends PathfinderMob {
         } else {
             this.prevBurrowingTicks = burrowingTicks;
 
-            // Drive the burrow animation purely off the synced flag. Re-deriving the bed client-side is
-            // fragile: the bug's interpolated position (and, briefly, the bed's OCCUPIED state) can lag
-            // the server while it walks onto the bed, which would stall or flicker the animation even
-            // though the server is burrowing. Particles still need a bed block, so they stay best-effort.
+            //animation goes off the flag alone. the bug pos and the bed OCCUPIED state both lag here,
+            //so working it out client side just makes the animation stutter. particles still need a bed
             if (this.isBurrowing()) {
                 burrowingTicks++;
                 BlockPos pos = this.findBedToBurrow();
@@ -261,11 +255,7 @@ public class BedbugEntity extends PathfinderMob {
         }
     }
 
-    /**
-     * Returns true if the WatchableObject (Byte) is 0x01 otherwise returns false. The WatchableObject is updated using setBesideClimableBlock.
-     */
-    // independent bit flags: climbing = bit0 (1), splattered = bit1 (2), burrowing = bit2 (4).
-    // they must NOT overlap: the per-tick setClimbing(horizontalCollision) would otherwise clobber the burrow flag.
+    //these must not overlap, setClimbing runs every tick and would wipe the burrow flag
     private static final int FLAG_CLIMBING = 1;
     private static final int FLAG_SPLATTERED = 2;
     private static final int FLAG_BURROWING = 4;
@@ -309,11 +299,7 @@ public class BedbugEntity extends PathfinderMob {
         return new BedbugNavigation(this, level);
     }
 
-    /**
-     * Seeds the bedbug's initial target bed (e.g. the bed a player just slept in). Stored as the brain's
-     * HOME memory; once this bed is infested or becomes invalid, AcquirePoi finds and claims a new one.
-     * HOME persists across save/load via the brain, so no manual NBT is needed.
-     */
+    //initial bed, ie the one a player just slept in. brain saves HOME on its own
     public void setBedTarget(BlockPos pos) {
         this.getBrain().setMemory(MemoryModuleType.HOME, GlobalPos.of(this.level().dimension(), pos.immutable()));
     }
@@ -375,11 +361,7 @@ public class BedbugEntity extends PathfinderMob {
         return super.isColliding(pos, state);
     }
 
-    /**
-     * Finds the bed this bedbug is standing on and burrowing straight down into: the block at its feet, or
-     * the block directly below (when it rests on top of the bed). Strictly vertical - a bed merely next to
-     * the bug does not count, since it buries into the bed it stands on. Null clears the burrowing state.
-     */
+    //bed at its feet or right below it. a bed next to the bug doesnt count, it digs straight down
     @Nullable
     private BlockPos findBedToBurrow() {
         Level level = this.level();
@@ -398,9 +380,8 @@ public class BedbugEntity extends PathfinderMob {
     public static AttributeSupplier.Builder makeAttributes() {
         return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 9.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.325).add(Attributes.ATTACK_DAMAGE, 1.0)
-                // pathfinding reach is bounded by follow range, so without this the bug detects beds it can
-                // never path to and never claims them (gives up ~16 blocks). Kept below AcquirePoi.SCAN_RANGE
-                // (48) to cap pathfinding cost - beds farther than this just won't get infested.
+                //pathfinding range comes from this. default 16 makes it spot beds it can never walk to.
+                //kept under AcquirePoi.SCAN_RANGE (48) so pathfinding doesnt get too expensive
                 .add(Attributes.FOLLOW_RANGE, 38.0);
     }
 

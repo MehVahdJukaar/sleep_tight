@@ -35,7 +35,7 @@ dependencies {
     modCompileOnly("curse.maven:modmenu-308702:3920481") {
         exclude module: "fabric-api"
     }
-    modCompileOnly("curse.maven:entity-model-features-844662:5717218")
+    modCompileOnly("curse.maven:entity-model-features-844662:8782763")
     modCompileOnly("curse.maven:entity-texture-features-fabric-568563:5000985")
 }
 

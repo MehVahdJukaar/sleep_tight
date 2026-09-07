@@ -253,13 +253,6 @@ public class ModEvents {
         return null;
     }
 
-    /**
-     * A bed can stay flagged as occupied forever when whatever was in it disappeared without a proper wake up:
-     * another mod relocating the block, a sleeper unloading with its chunk, a crash mid sleep. Without a way
-     * back the bed has to be broken and replaced, so clear the flag whenever nothing is actually using it.
-     *
-     * @return whether the bed is genuinely in use
-     */
     public static boolean isReallyOccupied(Level level, BlockPos pos, BlockState state) {
         if (!state.hasProperty(BedBlock.OCCUPIED) || !state.getValue(BedBlock.OCCUPIED)) return false;
         //the entity that holds a player laying down, and the double bed one sits on the block next to it
@@ -295,12 +288,6 @@ public class ModEvents {
         return null;
     }
 
-    /**
-     * For vanilla and modded beds we only ever want to nudge the sleeper, so this returns a delta applied on
-     * top of whatever the game decided instead of replacing it. Other mods legitimately move where a bed puts
-     * you (Sable projects the position out of its sublevels, for one) and overwriting the result would throw
-     * that away.
-     */
     @Nullable
     @EventCalled
     public static Vec3 getSleepingPositionOffset(Entity entity, BlockState state) {
@@ -360,8 +347,7 @@ public class ModEvents {
             BedData data = STPlatStuff.getBedDataIfPresent(level, pos);
             if (data != null) {
                 playerCap.increaseNightSleptInThisBed(data, player);
-                //bed level lives on the bed itself: without this it is neither saved nor sent to the client,
-                //so the bed looks like it never levels up
+                //without this the level is neither saved nor sent, so the bed looks like it never levels up
                 syncBedDataToClients(level.getBlockEntity(getBedHead(state, pos)));
             }
 
@@ -579,22 +565,20 @@ public class ModEvents {
         return pos.relative(dir.getOpposite());
     }
 
-    //infests a random subset of beds that a structure piece (woodland mansion) just placed.
-    //works on any bed block entity (vanilla or modded) since it matches BlockTags.BEDS, not a specific block.
+    //infests some of the beds a structure piece just placed. matches BlockTags.BEDS so modded beds work too
     public static void infestStructureBeds(WorldGenLevel level, ChunkPos chunkPos, BoundingBox pieceBox, RandomSource random) {
         if (!CommonConfigs.BEDBUGS_ENABLED.get()) return;
         double chance = CommonConfigs.MANSION_INFESTATION_CHANCE.get();
         if (chance <= 0) return;
 
-        //iterate only the positions that actually have a block entity in this chunk, rather than probing
-        //every coordinate. copy the set since we read block states/entities while walking it.
+        //only the positions that have a block entity. copied since we read block entities while iterating
         ChunkAccess chunk = level.getChunk(chunkPos.x, chunkPos.z);
         List<BlockEntity> toInfest = null;
         for (BlockPos p : new ArrayList<>(chunk.getBlockEntitiesPos())) {
             if (!pieceBox.isInside(p)) continue;
             BlockState state = level.getBlockState(p);
             if (!state.is(BlockTags.BEDS)) continue;
-            //only the head holds the data; skips feet so a double bed is counted once
+            //only the head holds data, so a double bed is counted once
             if (!state.hasProperty(BedBlock.PART) || state.getValue(BedBlock.PART) != BedPart.HEAD) continue;
             if (random.nextFloat() >= chance) continue;
 
@@ -605,7 +589,7 @@ public class ModEvents {
         }
         if (toInfest == null) return;
 
-        //defer mutating the data attachment to the main thread, since postProcess runs on a worldgen worker thread.
+        //postProcess runs on a worldgen thread so the attachment has to be touched on the main one
 
         MinecraftServer server = level.getLevel().getServer();
         if (server == null) return;
