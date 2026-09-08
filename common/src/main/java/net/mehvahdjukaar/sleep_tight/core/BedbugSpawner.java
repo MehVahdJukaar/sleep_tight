@@ -18,18 +18,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
-// like the phantom spawner but reversed: bedbugs show up when you sleep a lot, not when you don't
+//phantom spawner but reversed: bugs show up when you sleep a lot, not when you don't
 public class BedbugSpawner implements CustomSpawner {
 
-    // same number phantoms use, except here more nights slept lowers the threshold instead of raising it
     private static final int PHANTOM_REST_TICKS = 72000;
 
-    // how much each extra night helps the roll. less than a full day (24000) so it builds up slowly
     private static final int AMBIENT_NIGHT_STEP = 6000;
-    // caps the roll at about 1/3 chance per check
     private static final int AMBIENT_MAX_REST_TICKS = 24000;
 
-    // phantoms wait 1-2 min between cycles, we wait about 5 times that so bugs stay occasional
     private static final int AMBIENT_INTERVAL_BASE_SECONDS = 300;
     private static final int AMBIENT_INTERVAL_RANDOM_SECONDS = 300;
 
@@ -37,7 +33,6 @@ public class BedbugSpawner implements CustomSpawner {
 
     @Override
     public int tick(ServerLevel level, boolean spawnEnemies, boolean spawnFriendlies) {
-        // Phantoms require monster spawning; we require creature/friendly spawning instead.
         if (!spawnFriendlies) {
             return 0;
         }
@@ -77,7 +72,6 @@ public class BedbugSpawner implements CustomSpawner {
     private boolean shouldSpawnFor(ServerPlayer player, RandomSource random) {
         PlayerSleepData data = STPlatStuff.getPlayerSleepData(player);
 
-        // only players with an established home bed get ambient bugs
         int requiredHomeNights = CommonConfigs.HOME_BED_REWARD_REQUIRED_NIGHTS.get();
         if (requiredHomeNights >= 0 && data.getNightsSleptInHomeBed() < requiredHomeNights) {
             return false;
@@ -89,7 +83,7 @@ public class BedbugSpawner implements CustomSpawner {
             return false;
         }
 
-        // more nights slept means an easier roll, capped so it's never a sure spawn
+        //more nights slept, easier roll
         int restedTicks = Mth.clamp((nights - minNights + 1) * AMBIENT_NIGHT_STEP, 1, AMBIENT_MAX_REST_TICKS);
         return random.nextInt(PHANTOM_REST_TICKS) >= PHANTOM_REST_TICKS - restedTicks;
     }
@@ -98,11 +92,9 @@ public class BedbugSpawner implements CustomSpawner {
         if (!level.dimensionType().hasSkyLight()) {
             return true;
         }
-        // opposite of phantoms: daylight is fine
         if (level.getSkyDarken() < 5) {
             return true;
         }
-        // at night only dark spots work
         int maxLight = CommonConfigs.BEDBUG_MAX_LIGHT.get();
         if (maxLight >= 15) {
             return true;
@@ -135,7 +127,6 @@ public class BedbugSpawner implements CustomSpawner {
         int max = CommonConfigs.BEDBUG_SPAWN_MAX_RANGE.get();
         int maxAttempts = (int) (attempts * (1 + level.getCurrentDifficultyAt(bedPos).getSpecialMultiplier()));
 
-        // spawn near the bed and tell the bug which bed to infest
         return trySpawnBedbugs(level, bedPos, min, max, maxAttempts, MobSpawnType.EVENT,
                 null, false, bug -> bug.setBedTarget(bedPos));
     }
@@ -146,13 +137,10 @@ public class BedbugSpawner implements CustomSpawner {
         int max = CommonConfigs.BEDBUG_AMBIENT_MAX_RANGE.get();
         int attempts = CommonConfigs.BEDBUG_TRIES.get();
 
-        // ambient spawns check time and light, snap to the ground and measure distance from the player
         return trySpawnBedbugs(level, center, min, max, attempts, MobSpawnType.NATURAL,
                 player.position(), true, null);
     }
 
-    // picks random spots around center until one is a legal spawn the bug can path from.
-    // distanceFrom is what the natural spawn distance check uses, defaulting to the spawn pos itself
     private static boolean trySpawnBedbugs(ServerLevel level, BlockPos center, int min, int max, int maxAttempts,
                                            MobSpawnType spawnType, @Nullable Vec3 distanceFrom, boolean ambient,
                                            @Nullable Consumer<BedbugEntity> postSpawn) {
