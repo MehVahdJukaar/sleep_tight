@@ -24,8 +24,6 @@ import net.minecraft.world.entity.schedule.Activity;
 
 import java.util.Optional;
 
-//bedbugs are timid: as long as they remember a bed they run for it and won't fight back even while hit.
-//only a bedless one that got hurt will fight
 public class BedbugAi {
 
     private static final ImmutableList<? extends SensorType<? extends Sensor<? super BedbugEntity>>> SENSOR_TYPES =
@@ -72,26 +70,19 @@ public class BedbugAi {
                 new ClimbPowderSnowBehavior(),
                 new LookAtTargetSink(45, 90),
                 new MoveToTargetSink(),
-                // claims the closest bed it can reach and remembers it as HOME. sits in CORE so it keeps looking
-                // while fighting too, and finding a bed mid fight makes it break off and run there
                 AcquirePoi.create(holder -> holder.is(PoiTypes.HOME), MemoryModuleType.HOME, false, Optional.empty())));
     }
 
     private static void initIdleActivity(Brain<BedbugEntity> brain) {
         brain.addActivity(Activity.IDLE, 10, ImmutableList.of(
-                // make a run for the remembered bed and burrow into it (faster than the search wander)
                 new InfestBedBehavior(SPEED_WHEN_GOING_TO_BED),
-                // no bed and can't fight back, so run from whatever hit us. after InfestBedBehavior and
-                // only with no HOME, so going for a bed always wins
                 new BedbugPanicBehavior(SPEED_WHEN_PANICKING),
-                // no bed known yet, wander around looking for one
                 new RunOne<>(ImmutableList.of(
                         Pair.of(RandomStroll.stroll(SPEED_WHEN_SEARCHING), 2),
                         Pair.of(new DoNothing(30, 60), 1)))));
     }
 
     private static void initFightActivity(Brain<BedbugEntity> brain) {
-        // only fights if something attacked it and it has no bed to run to
         brain.addActivityAndRemoveMemoriesWhenStopped(
                 Activity.FIGHT,
                 ImmutableList.of(
