@@ -61,8 +61,6 @@ public class BedbugModel<T extends BedbugEntity> extends HierarchicalModel<T> {
         this.rightFrontLeg.yRot = -fortyFive2;
         this.leftFrontLeg.yRot = fortyFive2;
 
-        // When squashed, keep the legs (splayed rest pose above) but drop the head tilt
-        // and skip the walking animation below.
         if (splattered) {
             this.head.xRot = 0.0F;
             this.antenna.xRot = 0.0F;

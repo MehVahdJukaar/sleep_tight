@@ -147,8 +147,7 @@ public class ModEvents {
                     }
                 }
             }
-            //has to cover all our beds, not just night bags. fabric has no other hook, so a hammock would
-            //set a respawn point that resolves to nothing later and sends you to world spawn
+            //all our beds, not just night bags. fabric has no other hook
             if (block instanceof IModBed modBed && !modBed.canSetSpawn()) {
                 return false;
             }
@@ -254,11 +253,10 @@ public class ModEvents {
         return null;
     }
 
-    //beds can get stuck occupied if the sleeper vanishes without waking up (chunk unload, crash, another mod
-    //moving the block). only fix is breaking the bed, so we just clear the flag when nobody is in it
+    //beds get stuck occupied when the sleeper vanishes without waking up. clear the flag if nobody's in it
     public static boolean isReallyOccupied(Level level, BlockPos pos, BlockState state) {
         if (!state.hasProperty(BedBlock.OCCUPIED) || !state.getValue(BedBlock.OCCUPIED)) return false;
-        //the entity that holds a player laying down, and the double bed one sits on the block next to it
+        //double bed one sits on the block next to it
         if (!level.getEntitiesOfClass(BedEntity.class, new AABB(pos).inflate(1.5)).isEmpty()) return true;
         for (var e : level.getEntitiesOfClass(LivingEntity.class, new AABB(pos).inflate(2))) {
             if (e.isSleeping()) return true;
@@ -279,7 +277,7 @@ public class ModEvents {
         return !level.getBlockState(pos).isSuffocating(level, pos);
     }
 
-    //absolute position, only for our own beds, where nothing else has a say on where the sleeper goes
+    //absolute pos, only for our own beds
     @Nullable
     @EventCalled
     public static Vec3 getSleepingPosition(Entity entity, BlockState state, BlockPos pos) {
@@ -291,8 +289,8 @@ public class ModEvents {
         return null;
     }
 
-    //offset added on top of wherever the game put the sleeper, for vanilla and modded beds.
-    //other mods move that position for good reasons (Sable pulls it out of its sublevels) so we don't replace it
+    //added on top of wherever the game put the sleeper. other mods move that pos for good reasons (Sable
+    //pulls it out of its sublevels) so we dont replace it
     @Nullable
     @EventCalled
     public static Vec3 getSleepingPositionOffset(Entity entity, BlockState state) {
@@ -355,8 +353,7 @@ public class ModEvents {
             BedData data = STPlatStuff.getBedDataIfPresent(level, pos);
             if (data != null) {
                 playerCap.increaseNightSleptInThisBed(data, player);
-                //bed level is stored on the bed, without this it's never saved or sent to the client
-                //and the bed looks like it doesn't level up
+                //bed level lives on the bed, without this it's never saved nor sent to clients
                 syncBedDataToClients(level.getBlockEntity(getBedHead(state, pos)));
             }
 
@@ -570,22 +567,20 @@ public class ModEvents {
         return pos.relative(dir.getOpposite());
     }
 
-    //infests a random subset of beds that a structure piece (woodland mansion) just placed.
-    //works on any bed block entity (vanilla or modded) since it matches BlockTags.BEDS, not a specific block.
+    //infests some of the beds a structure piece (mansion) just placed. any bed works since it goes by tag
     public static void infestStructureBeds(WorldGenLevel level, ChunkPos chunkPos, BoundingBox pieceBox, RandomSource random) {
         if (!CommonConfigs.BEDBUGS_ENABLED.get()) return;
         double chance = CommonConfigs.MANSION_INFESTATION_CHANCE.get();
         if (chance <= 0) return;
 
-        //iterate only the positions that actually have a block entity in this chunk, rather than probing
-        //every coordinate. copy the set since we read block states/entities while walking it.
+        //copy since we read block entities while walking it
         ChunkAccess chunk = level.getChunk(chunkPos.x, chunkPos.z);
         List<BlockEntity> toInfest = null;
         for (BlockPos p : new ArrayList<>(chunk.getBlockEntitiesPos())) {
             if (!pieceBox.isInside(p)) continue;
             BlockState state = level.getBlockState(p);
             if (!state.is(BlockTags.BEDS)) continue;
-            //only the head holds the data; skips feet so a double bed is counted once
+            //only the head holds the data
             if (!state.hasProperty(BedBlock.PART) || state.getValue(BedBlock.PART) != BedPart.HEAD) continue;
             if (random.nextFloat() >= chance) continue;
 
@@ -596,7 +591,7 @@ public class ModEvents {
         }
         if (toInfest == null) return;
 
-        //defer mutating the data attachment to the main thread, since postProcess runs on a worldgen worker thread.
+        //postProcess runs on a worldgen worker thread so we cant touch the attachment here
 
         MinecraftServer server = level.getLevel().getServer();
         if (server == null) return;

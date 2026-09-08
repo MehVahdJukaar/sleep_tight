@@ -24,10 +24,8 @@ import java.util.UUID;
 
 public class PlayerSleepData {
 
-    //all fields are optional so data saved by older versions still loads.
-    //otherwise updating gives every existing player "Invalid player data" and locks them out of the world
     public static final Codec<PlayerSleepData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            UUIDUtil.CODEC.optionalFieldOf("home_bed_id").forGetter(d -> Optional.ofNullable(d.homeBed)),
+            UUIDUtil.CODEC.optionalFieldOf("home_bed_id").forGetter(d -> Optional.ofNullable(d.lastBedSleptInto)),
             InsomniaCooldown.CODEC.optionalFieldOf("insomnia").forGetter(d -> Optional.of(d.insomnia)),
             Codec.LONG.optionalFieldOf("last_time_slept", -1L).forGetter(PlayerSleepData::getLastWokenUpTime),
             Codec.INT.optionalFieldOf("consecutive_nights", 0).forGetter(PlayerSleepData::getConsecutiveNightsSlept),
@@ -36,7 +34,7 @@ public class PlayerSleepData {
     ).apply(instance, PlayerSleepData::new));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, PlayerSleepData> STREAM_CODEC = StreamCodec.composite(
-            UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs::optional), d -> Optional.ofNullable(d.homeBed),
+            UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs::optional), d -> Optional.ofNullable(d.lastBedSleptInto),
             InsomniaCooldown.STREAM_CODEC, d -> d.insomnia,
             ByteBufCodecs.VAR_LONG, PlayerSleepData::getLastWokenUpTime,
             ByteBufCodecs.INT, PlayerSleepData::getConsecutiveNightsSlept,
@@ -47,10 +45,8 @@ public class PlayerSleepData {
     );
 
     @Nullable
-    private UUID homeBed = null; //last bed slept into
+    private UUID lastBedSleptInto = null;
 
-    //deadline + day-clock rewind tracking; see InsomniaCooldown.
-    //need to be timestamps otherwise it wont work whe player logs off or sets the time
     private InsomniaCooldown insomnia = new InsomniaCooldown();
     private long lastWokenUpTimeStamp = -1;
 
@@ -62,7 +58,7 @@ public class PlayerSleepData {
     }
 
     public PlayerSleepData(Optional<UUID> homeBed, Optional<InsomniaCooldown> insomnia, long lastWokenUpTimeStamp, int consecutiveNightsSlept, int nightsSleptInSameBed, boolean usingDoubleBed) {
-        this.homeBed = homeBed.orElse(null);
+        this.lastBedSleptInto = homeBed.orElse(null);
         this.insomnia = insomnia.orElseGet(InsomniaCooldown::new);
         this.lastWokenUpTimeStamp = lastWokenUpTimeStamp;
         this.consecutiveNightsSlept = consecutiveNightsSlept;
@@ -71,8 +67,6 @@ public class PlayerSleepData {
     }
 
     public void tick(ServerPlayer player) {
-        //on a day-time rewind the cooldown clears itself and notifies the player; we then reset the
-        //consecutive-nights baseline (a player-level concern) and resync.
         if (insomnia.tickRewind(player)) {
             this.lastWokenUpTimeStamp = -1;
             syncToClient(player);
@@ -95,7 +89,7 @@ public class PlayerSleepData {
                 bed.incrementBedLevel(player);
             }
         } else {
-            if (nightsSleptInSameBed != 0 && homeBed != null && CommonConfigs.HOME_BED_REWARD_REQUIRED_NIGHTS.get() >= 0) {
+            if (nightsSleptInSameBed != 0 && lastBedSleptInto != null && CommonConfigs.HOME_BED_REWARD_REQUIRED_NIGHTS.get() >= 0) {
                 player.displayClientMessage(Component.translatable("message.sleep_tight.home_bed_lost"), false);
             }
             this.setLastSleptInto(bed);
@@ -156,10 +150,9 @@ public class PlayerSleepData {
 
     @Nullable
     public UUID getLastBedSleptInto() {
-        return homeBed;
+        return lastBedSleptInto;
     }
 
-    // Affects nightmare chance
     public int getConsecutiveNightsSlept() {
         return consecutiveNightsSlept;
     }
@@ -203,6 +196,6 @@ public class PlayerSleepData {
     }
 
     public void setLastSleptInto(BedData data) {
-        this.homeBed = data.getId();
+        this.lastBedSleptInto = data.getId();
     }
 }

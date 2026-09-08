@@ -46,7 +46,6 @@ public class BedbugAi {
     private static final float SPEED_WHEN_GOING_TO_BED = 1.15F;
     private static final float SPEED_WHEN_SEARCHING = 0.6F;
     private static final float SPEED_WHEN_FIGHTING = 1.0F;
-    // pretty fast, but never faster than its dash for a bed (which keeps priority over panic)
     private static final float SPEED_WHEN_PANICKING = 1.1F;
     private static final int MELEE_COOLDOWN = 20;
 

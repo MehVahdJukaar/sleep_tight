@@ -16,8 +16,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-// woodland mansions used to ship overridden room templates that placed a (now removed) infested bed block.
-// instead we let vanilla place its normal beds and infest a random subset here, so it also works with modded beds.
 @Mixin(TemplateStructurePiece.class)
 public abstract class TemplateStructurePieceMixin {
 

@@ -9,8 +9,6 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
-//sleep cooldown kept on two clocks. day time is the one we actually want to use, but it can be frozen or
-//moved back with /time, so game time is there as a fallback since it always goes up. whichever runs out first ends it
 public class InsomniaCooldown {
 
     public static final Codec<InsomniaCooldown> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -28,7 +26,7 @@ public class InsomniaCooldown {
 
     private long dayDeadline;
     private long gameDeadline;
-    private long lastKnownDayTime; //day time last observed when the cooldown was set; used to detect rewinds
+    private long lastKnownDayTime; //to detect rewinds
 
     public InsomniaCooldown() {
     }
@@ -64,7 +62,6 @@ public class InsomniaCooldown {
             if (!player.getAbilities().instabuild && remaining(player) > 0) {
                 player.displayClientMessage(Component.translatable("message.sleep_tight.time_skipped"), false);
             }
-            //reset so the two clocks agree again
             this.set(dayTime, player.level().getGameTime(), 0);
             return true;
         }

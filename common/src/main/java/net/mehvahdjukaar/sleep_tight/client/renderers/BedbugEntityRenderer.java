@@ -39,9 +39,6 @@ public class BedbugEntityRenderer<T extends BedbugEntity> extends MobRenderer<T,
         return super.getRenderOffset(entity, partialTicks).add(0,-0.01*entity.getBurrowing(partialTicks),0);
     }
 
-    /**
-     * Returns the location of an entity's texture.
-     */
     @Override
     public ResourceLocation getTextureLocation(T entity) {
         return SleepTightClient.BEDBUG_TEXTURE;

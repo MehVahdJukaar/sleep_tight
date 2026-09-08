@@ -373,9 +373,6 @@ public class HammockBlock extends HorizontalDirectionalBlock implements EntityBl
 
     @ForgeOverride
     public Direction getBedDirection(BlockState state, LevelReader level, BlockPos pos) {
-        //UP means no bed direction on neoforge (vanilla and fabric return null instead). give it a horizontal
-        //one and LivingEntityRenderer moves the sleeping model a bed away, since hammocks are centred
-        //on their master block instead of ending at it
         return Direction.UP;
     }
 

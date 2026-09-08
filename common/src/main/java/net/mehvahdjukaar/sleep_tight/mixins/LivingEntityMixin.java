@@ -38,8 +38,6 @@ public abstract class LivingEntityMixin extends Entity {
         }
     }
 
-    //adds our offset on top of the position the game ended up with instead of recomputing it from the bed,
-    //so mods that move beds around keep working
     @Inject(method = "setPosToBed", at = @At("TAIL"))
     public void sleep_tight$offsetBedPos(BlockPos pos, CallbackInfo ci) {
         Vec3 offset = ModEvents.getSleepingPositionOffset(this, this.level().getBlockState(pos));
@@ -47,9 +45,6 @@ public abstract class LivingEntityMixin extends Entity {
             this.setPos(this.position().add(offset));
         }
     }
-    //laying on a bed has no sleeping pos so vanilla returns null here and skips the sleeping transform.
-    //UP means no orientation to the renderer, so it translates by nothing and our laying transform still runs.
-    //neoforge patches this in but we don't want the feature to depend on that
     @Inject(method = "getBedOrientation", at = @At("HEAD"), cancellable = true)
     private void sleep_tight$bedEntityOrientation(CallbackInfoReturnable<Direction> cir) {
         if (this.getVehicle() instanceof BedEntity) {

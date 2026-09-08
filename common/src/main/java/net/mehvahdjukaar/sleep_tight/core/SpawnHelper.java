@@ -16,9 +16,7 @@ public class SpawnHelper {
         level.addFreshEntityWithPassengers(mob);
     }
 
-    //copy of NaturalSpawner.spawnCategoryForPosition, which is private and only spawns random mobs of a category.
-    //we want a specific type at a specific pos but with the same checks, so they're redone here.
-    //centerPos is what the distance check measures from. keep in sync if vanilla changes its spawn checks
+    //copy of the private NaturalSpawner.spawnCategoryForPosition, we want a specific type at a specific pos
     @Nullable
     static <T extends Entity> T createValidMobToSpawn(Vec3 centerPos, ServerLevel level, BlockPos.MutableBlockPos pos,
                                                       EntityType<T> entityType, MobSpawnType spawnType,
@@ -31,8 +29,7 @@ public class SpawnHelper {
 
         double f;
         if (naturalDistanceRules) {
-            // same as NaturalSpawner.isRightDistanceToPlayerAndSpawnPoint: nothing spawns within 24 blocks
-            // of a player or of world spawn
+            //isRightDistanceToPlayerAndSpawnPoint
             Player nearest = level.getNearestPlayer(d, y, e, -1.0, false);
             if (nearest == null) return null;
             f = nearest.distanceToSqr(d, y, e);

@@ -51,7 +51,6 @@ import java.util.*;
 
 public class BedbugEntity extends PathfinderMob {
     private static final EntityDataAccessor<Byte> DATA_FLAGS_ID = SynchedEntityData.defineId(BedbugEntity.class, EntityDataSerializers.BYTE);
-    //one bit each, sharing values would make setClimbing wipe the burrow flag every tick
     private static final int FLAG_CLIMBING = 1;
     private static final int FLAG_SPLATTERED = 2;
     private static final int FLAG_BURROWING = 4;
@@ -170,8 +169,7 @@ public class BedbugEntity extends PathfinderMob {
         } else {
             this.prevBurrowingTicks = burrowingTicks;
 
-            //animation goes off the synced flag. checking the bed here instead would make it stutter
-            //since position and bed state lag a bit behind the server
+            //goes off the synced flag. checking the bed here would stutter since it lags behind the server
             if (this.isBurrowing()) {
                 burrowingTicks++;
                 BlockPos pos = this.findBedToBurrow();
@@ -268,7 +266,6 @@ public class BedbugEntity extends PathfinderMob {
         return new BedbugNavigation(this, level);
     }
 
-    //first bed it goes for. AcquirePoi picks another one when this is gone
     public void setBedTarget(BlockPos pos) {
         this.getBrain().setMemory(MemoryModuleType.HOME, GlobalPos.of(this.level().dimension(), pos.immutable()));
     }
@@ -331,7 +328,7 @@ public class BedbugEntity extends PathfinderMob {
         return super.isColliding(pos, state);
     }
 
-    //bed at its feet or right below it. it digs straight down so beds to the side don't count
+    //digs straight down so beds to the side dont count
     @Nullable
     private BlockPos findBedToBurrow() {
         Level level = this.level();
@@ -350,7 +347,7 @@ public class BedbugEntity extends PathfinderMob {
     public static AttributeSupplier.Builder makeAttributes() {
         return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 9.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.325).add(Attributes.ATTACK_DAMAGE, 1.0)
-                //how far it can path, so also how far away a bed can be for it to reach it
+                //also how far away a bed can be
                 .add(Attributes.FOLLOW_RANGE, 38.0);
     }
 

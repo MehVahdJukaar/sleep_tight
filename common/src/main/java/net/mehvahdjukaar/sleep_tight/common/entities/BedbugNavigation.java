@@ -45,7 +45,6 @@ public class BedbugNavigation extends GroundPathNavigation {
             return blockPos.getY() + (voxelShape.isEmpty() ? 0.0 : voxelShape.max(Direction.Axis.Y));
         }
 
-        // same as super, with bedbug-specific path type tweaks applied per cell
         @Override
         public Set<PathType> getPathTypeWithinMobBB(PathfindingContext context, int x, int y, int z) {
             EnumSet<PathType> enumSet = EnumSet.noneOf(PathType.class);

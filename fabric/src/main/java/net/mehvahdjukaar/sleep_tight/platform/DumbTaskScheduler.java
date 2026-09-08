@@ -15,18 +15,16 @@ public class DumbTaskScheduler {
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             final int now = server.getTickCount();
 
-            // Drain inbound (lock-free, safe for multi-producer)
             for (TickTask t; (t = INBOUND.poll()) != null; ) {
-                SCHEDULED.add(t); // server thread only
+                SCHEDULED.add(t);
             }
 
-            // Run due tasks in tick order
             while (!SCHEDULED.isEmpty() && SCHEDULED.peek().getTick() <= now) {
                 TickTask t = SCHEDULED.poll();
                 try {
                     t.run();
                 } catch (Throwable ex) {
-                    // don't let one task break the tick loop
+                    //dont let one task break the tick loop
                     SleepTight.LOGGER.error("TickTask failed", ex);
                 }
             }
@@ -37,9 +35,7 @@ public class DumbTaskScheduler {
         INBOUND.add(task);
     }
 
-    // Tasks arriving from any thread
     private static final ConcurrentLinkedQueue<TickTask> INBOUND = new java.util.concurrent.ConcurrentLinkedQueue<>();
-    // Only the server thread touches this
     private static final PriorityQueue<TickTask> SCHEDULED =
             new PriorityQueue<>(Comparator.comparingInt(TickTask::getTick));
 
