@@ -18,7 +18,7 @@ dependencies {
     modImplementation("net.mehvahdjukaar:moonlight-fabric:${moonlight_version}")
     modRuntimeOnly("net.mehvahdjukaar:codecui-fabric:${codecui_version}")
 
-    modCompileOnly("net.mehvahdjukaar:supplementaries-fabric:${supplementaries_version}")
+    modCompileOnly("net.mehvahdjukaar:supplementaries-fabric:${supplementaries_version}") { isTransitive = false }
     modImplementation("curse.maven:heartstone-573152:7278328")
     modCompileOnly("curse.maven:handcrafted-538214:6330030")
     modCompileOnly("curse.maven:resourceful-lib-570073:5659871")
