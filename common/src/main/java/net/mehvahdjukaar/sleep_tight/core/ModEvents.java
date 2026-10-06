@@ -15,6 +15,7 @@ import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundNightmarePacket;
 import net.mehvahdjukaar.sleep_tight.common.network.ClientBoundParticleMessage;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.integration.HandcraftedCompat;
+import net.mehvahdjukaar.sleep_tight.integration.SableCompat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
@@ -258,9 +259,8 @@ public class ModEvents {
         if (!state.hasProperty(BedBlock.OCCUPIED) || !state.getValue(BedBlock.OCCUPIED)) return false;
         //double bed one sits on the block next to it
         if (!level.getEntitiesOfClass(BedEntity.class, new AABB(pos).inflate(1.5)).isEmpty()) return true;
-        for (var e : level.getEntitiesOfClass(LivingEntity.class, new AABB(pos).inflate(2))) {
-            if (e.isSleeping()) return true;
-        }
+        if (!SableCompat.getEntitiesIncludingSubLevels(level, LivingEntity.class, new AABB(pos).inflate(2),
+                LivingEntity::isSleeping).isEmpty()) return true;
         if (!level.isClientSide) {
             level.setBlockAndUpdate(pos, state.setValue(BedBlock.OCCUPIED, false));
         }
@@ -284,7 +284,7 @@ public class ModEvents {
         //sleep started
         if (entity.level().isClientSide) ClientEvents.onSleepStarted(entity, state, pos);
         if (state.getBlock() instanceof IModBed iModBed) {
-            return iModBed.getSleepingPosition(state, pos);
+            return SableCompat.projectOutOfSubLevel(entity.level(), iModBed.getSleepingPosition(state, pos));
         }
         return null;
     }
@@ -293,7 +293,7 @@ public class ModEvents {
     //pulls it out of its sublevels) so we dont replace it
     @Nullable
     @EventCalled
-    public static Vec3 getSleepingPositionOffset(Entity entity, BlockState state) {
+    public static Vec3 getSleepingPositionOffset(Entity entity, BlockState state, BlockPos pos) {
         if (!state.is(BlockTags.BEDS)) return null;
         Vec3 offset = Vec3.ZERO;
         //vanilla places player 2 pixels above bed. Player then falls down
@@ -306,7 +306,7 @@ public class ModEvents {
                 offset = BedEntity.getDoubleBedOffset(state.getValue(BedBlock.FACING), offset);
             }
         }
-        return offset == Vec3.ZERO ? null : offset;
+        return offset == Vec3.ZERO ? null : SableCompat.rotateOutOfSubLevel(entity.level(), pos, offset);
     }
 
 

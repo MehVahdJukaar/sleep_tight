@@ -40,7 +40,7 @@ public abstract class LivingEntityMixin extends Entity {
 
     @Inject(method = "setPosToBed", at = @At("TAIL"))
     public void sleep_tight$offsetBedPos(BlockPos pos, CallbackInfo ci) {
-        Vec3 offset = ModEvents.getSleepingPositionOffset(this, this.level().getBlockState(pos));
+        Vec3 offset = ModEvents.getSleepingPositionOffset(this, this.level().getBlockState(pos), pos);
         if (offset != null) {
             this.setPos(this.position().add(offset));
         }

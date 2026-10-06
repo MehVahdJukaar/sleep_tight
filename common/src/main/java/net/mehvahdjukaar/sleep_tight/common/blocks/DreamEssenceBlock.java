@@ -2,6 +2,7 @@ package net.mehvahdjukaar.sleep_tight.common.blocks;
 
 import net.mehvahdjukaar.sleep_tight.SleepTightClient;
 import net.mehvahdjukaar.sleep_tight.common.entities.DreamerEssenceTargetEntity;
+import net.mehvahdjukaar.sleep_tight.integration.SableCompat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.Phantom;
@@ -64,8 +65,8 @@ public class DreamEssenceBlock extends Block {
     }
 
     public static boolean isInRangeInternal(BlockPos pos, Level level) {
-        return !level.getEntitiesOfClass(DreamerEssenceTargetEntity.class,
-                new AABB(pos).inflate(5)).isEmpty();
+        return !SableCompat.getEntitiesIncludingSubLevels(level, DreamerEssenceTargetEntity.class,
+                new AABB(pos).inflate(5), e -> true).isEmpty();
     }
 
 

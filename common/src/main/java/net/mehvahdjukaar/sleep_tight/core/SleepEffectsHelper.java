@@ -6,6 +6,7 @@ import net.mehvahdjukaar.sleep_tight.common.entities.BedEntity;
 import net.mehvahdjukaar.sleep_tight.common.tiles.HammockTile;
 import net.mehvahdjukaar.sleep_tight.configs.CommonConfigs;
 import net.mehvahdjukaar.sleep_tight.integration.HeartstoneCompat;
+import net.mehvahdjukaar.sleep_tight.integration.SableCompat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -181,7 +182,7 @@ public class SleepEffectsHelper {
         BlockState leftState = level.getBlockState(otherPos);
         if (leftState.getBlock() instanceof BedBlock && leftState.getValue(BedBlock.OCCUPIED)) {
             AABB bb = new AABB(otherPos);
-            for (var entity : level.getEntitiesOfClass(LivingEntity.class, bb,
+            for (var entity : SableCompat.getEntitiesIncludingSubLevels(level, LivingEntity.class, bb,
                     v -> v.getSleepingPos().map(p -> p.equals(otherPos)).orElse(false))) {
                 if (mode.allowVillagers && entity instanceof Villager) return true;
                 if (entity instanceof Player p) {

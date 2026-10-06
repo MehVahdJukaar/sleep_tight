@@ -12,6 +12,7 @@ val mc_version: String by extra
 val sbl_version: String by extra
 val codecui_version: String by extra
 val supplementaries_version: String by extra
+val sable_companion_version: String by extra
 
 dependencies {
     modImplementation("net.mehvahdjukaar:moonlight-fabric:${moonlight_version}")
@@ -32,4 +33,7 @@ dependencies {
 
     //   modRuntimeOnly("curse.maven:artsandcrafts-1034791:8041066")
     //  modRuntimeOnly("curse.maven:jinxedlib-1203401:6727690")
+
+    modApi("dev.ryanhcode.sable-companion:sable-companion-fabric-1.21.1:${sable_companion_version}")
+    include("dev.ryanhcode.sable-companion:sable-companion-fabric-1.21.1:${sable_companion_version}")
 }

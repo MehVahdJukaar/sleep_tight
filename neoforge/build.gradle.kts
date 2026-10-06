@@ -11,6 +11,7 @@ val moonlight_version: String by extra
 val codecui_version = extra["codecui_version"] as String
 val mc_version: String by extra
 val sbl_version: String by extra
+val sable_companion_version: String by extra
 
 dependencies {
     modImplementation("net.mehvahdjukaar:moonlight-neoforge:${moonlight_version}")
@@ -31,14 +32,12 @@ dependencies {
     modCompileOnly("curse.maven:entity-texture-features-fabric-568563:5000985")
     modCompileOnly("curse.maven:quark-243121:8146177")
     modCompileOnly("curse.maven:zeta-968868:7980010")
-    //issue triage only, remove when done: #146 (3d skin layers) and #139 (sable sublevels)
-    //version id, not "1.11.2": 41 artifacts share that version number and gradle picks the fabric one
-    modCompileOnly("maven.modrinth:3dskinlayers:xPYbAPfz")
-    modCompileOnly("curse.maven:fsable-1312371:8263584")
-    modCompileOnly("maven.modrinth:vampirism:rAtxPNwi")
 
     modRuntimeOnly("curse.maven:farmers-delight-398521:8083481")
     modRuntimeOnly("curse.maven:artsandcrafts-1034791:8041062")
     modRuntimeOnly("curse.maven:jinxedlib-1203401:6727693")
     modRuntimeOnly("curse.maven:delighto-flight-1347014:8012635")
+
+    api("dev.ryanhcode.sable-companion:sable-companion-common-1.21.1:[${sable_companion_version},)")
+    jarJar("dev.ryanhcode.sable-companion:sable-companion-common-1.21.1:[${sable_companion_version},)")
 }

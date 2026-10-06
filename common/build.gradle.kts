@@ -11,6 +11,7 @@ val mc_version: String by extra
 val sbl_version: String by extra
 val supplementaries_version: String by extra
 val heartstone_version: String by extra
+val sable_companion_version: String by extra
 
 dependencies {
     //@jar ignores moonlight's module metadata. its jar variants are marked neoforge only, so here gradle
@@ -29,4 +30,6 @@ dependencies {
     modCompileOnly("curse.maven:entity-texture-features-fabric-568563:5000985")
     modCompileOnly("curse.maven:quark-243121:8146177")
     modCompileOnly("curse.maven:zeta-968868:7980010")
+
+    modApi("dev.ryanhcode.sable-companion:sable-companion-common-1.21.1:[${sable_companion_version},)")
 }

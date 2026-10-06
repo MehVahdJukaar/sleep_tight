@@ -2,6 +2,7 @@ package net.mehvahdjukaar.sleep_tight.mixins;
 
 import com.google.common.collect.Lists;
 import net.mehvahdjukaar.sleep_tight.common.entities.DreamerEssenceTargetEntity;
+import net.mehvahdjukaar.sleep_tight.integration.SableCompat;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -22,7 +23,7 @@ public abstract class PhantomMixin {
             target = "Lnet/minecraft/world/level/Level;getNearbyPlayers(Lnet/minecraft/world/entity/ai/targeting/TargetingConditions;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;")
     )
     public AABB  sleep_tight$checkForDreamerEssence(TargetingConditions predicate, LivingEntity phantom, AABB area) {
-        List<DreamerEssenceTargetEntity> list = phantom.level().getEntitiesOfClass(DreamerEssenceTargetEntity.class, area,
+        List<DreamerEssenceTargetEntity> list = SableCompat.getEntitiesIncludingSubLevels(phantom.level(), DreamerEssenceTargetEntity.class, area,
                 e -> ((Mob) phantom).getSensing().hasLineOfSight(e));
         if (!list.isEmpty()) {
             list.sort(Comparator.comparingDouble(Entity::getY));
