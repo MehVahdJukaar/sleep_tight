@@ -444,7 +444,7 @@ public class ModEvents {
     @EventCalled
     public static void onEntityKilled(LivingEntity entity, Entity killer) {
         if (!entity.isRemoved() && entity.level() instanceof ServerLevel serverLevel) {
-            if (killer instanceof LivingEntity le && killer.killedEntity(serverLevel, entity)) {
+            if (killer instanceof LivingEntity le && (killer instanceof Player || killer.killedEntity(serverLevel, entity))) {
                 InvigoratedEffect.onLivingDeath(serverLevel, entity, le);
             }
         }
