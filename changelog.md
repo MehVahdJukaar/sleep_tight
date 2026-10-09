@@ -1,1 +1,1 @@
-added sable compat with its companion lib
+fixed mod config breaking when added to a game that didnt have the mod previously installed, onn neo

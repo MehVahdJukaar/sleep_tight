@@ -319,7 +319,6 @@ public class CommonConfigs {
         builder.pop();
 
         SPEC = builder.build();
-        SPEC.forceLoad();
     }
 
     public static void init() {
