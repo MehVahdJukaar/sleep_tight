@@ -28,8 +28,8 @@ dependencies {
     modCompileOnly("curse.maven:configured-457570:4011355")
     modCompileOnly("curse.maven:upgrade-aquatic-326895:6393133")
     modCompileOnly("curse.maven:blueprint-382216:6408581")
-    modCompileOnly("curse.maven:entity-model-features-844662:5722728")
-    modCompileOnly("curse.maven:entity-texture-features-fabric-568563:5000985")
+    modImplementation("maven.modrinth:entity-model-features:3.3.12-neoforge-1.21")
+    modImplementation("maven.modrinth:entitytexturefeatures:7.2.6-neoforge-1.21")
     modCompileOnly("curse.maven:quark-243121:8146177")
     modCompileOnly("curse.maven:zeta-968868:7980010")
 

@@ -1,1 +1,1 @@
-fixed mod config breaking when added to a game that didnt have the mod previously installed, onn neo
+added another emf hack since it keeps un rotating your legs in bed

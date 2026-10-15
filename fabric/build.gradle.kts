@@ -26,8 +26,8 @@ dependencies {
 
     modCompileOnly("curse.maven:yacl-667299:3987709")
     modCompileOnly("maven.modrinth:modmenu:11.0.4")
-    modCompileOnly("curse.maven:entity-model-features-844662:5722728")
-    modCompileOnly("curse.maven:entity-texture-features-fabric-568563:5000985")
+    modImplementation("maven.modrinth:entity-model-features:3.3.12-fabric-1.21")
+    modImplementation("maven.modrinth:entitytexturefeatures:7.2.6-fabric-1.21")
     modCompileOnly("curse.maven:quark-243121:8146177")
     modCompileOnly("curse.maven:zeta-968868:7980010")
 
