@@ -8,7 +8,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.Shapes;
 
-//brain version of vanilla ClimbOnTopOfPowderSnowGoal, which only exists as a goal
+//brain version of vanilla ClimbOnTopOfPowderSnowGoal
 public class ClimbPowderSnowBehavior extends Behavior<BedbugEntity> {
 
     public ClimbPowderSnowBehavior() {

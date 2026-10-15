@@ -169,7 +169,6 @@ public class BedbugEntity extends PathfinderMob {
         } else {
             this.prevBurrowingTicks = burrowingTicks;
 
-            //goes off the synced flag. checking the bed here would stutter since it lags behind the server
             if (this.isBurrowing()) {
                 burrowingTicks++;
                 BlockPos pos = this.findBedToBurrow();

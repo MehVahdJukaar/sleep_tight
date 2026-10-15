@@ -148,7 +148,7 @@ public class ModEvents {
                     }
                 }
             }
-            //all our beds, not just night bags. fabric has no other hook
+            // Fabric has no other hook
             if (block instanceof IModBed modBed && !modBed.canSetSpawn()) {
                 return false;
             }
@@ -254,7 +254,7 @@ public class ModEvents {
         return null;
     }
 
-    //beds get stuck occupied when the sleeper vanishes without waking up. clear the flag if nobody's in it
+    // unsticks the occupied flag too
     public static boolean isReallyOccupied(Level level, BlockPos pos, BlockState state) {
         if (!state.hasProperty(BedBlock.OCCUPIED) || !state.getValue(BedBlock.OCCUPIED)) return false;
         //double bed one sits on the block next to it
@@ -289,8 +289,7 @@ public class ModEvents {
         return null;
     }
 
-    //added on top of wherever the game put the sleeper. other mods move that pos for good reasons (Sable
-    //pulls it out of its sublevels) so we dont replace it
+    //offset only, sable and such move the sleep pos themselves
     @Nullable
     @EventCalled
     public static Vec3 getSleepingPositionOffset(Entity entity, BlockState state, BlockPos pos) {
@@ -353,7 +352,6 @@ public class ModEvents {
             BedData data = STPlatStuff.getBedDataIfPresent(level, pos);
             if (data != null) {
                 playerCap.increaseNightSleptInThisBed(data, player);
-                //bed level lives on the bed, without this it's never saved nor sent to clients
                 syncBedDataToClients(level.getBlockEntity(getBedHead(state, pos)));
             }
 
@@ -567,15 +565,14 @@ public class ModEvents {
         return pos.relative(dir.getOpposite());
     }
 
-    //infests some of the beds a structure piece (mansion) just placed. any bed works since it goes by tag
     public static void infestStructureBeds(WorldGenLevel level, ChunkPos chunkPos, BoundingBox pieceBox, RandomSource random) {
         if (!CommonConfigs.BEDBUGS_ENABLED.get()) return;
         double chance = CommonConfigs.MANSION_INFESTATION_CHANCE.get();
         if (chance <= 0) return;
 
-        //copy since we read block entities while walking it
         ChunkAccess chunk = level.getChunk(chunkPos.x, chunkPos.z);
-        List<BlockEntity> toInfest = null;
+        List<BlockEntity> toInfest = new ArrayList<>();
+        //copy, getBlockEntity can add to it
         for (BlockPos p : new ArrayList<>(chunk.getBlockEntitiesPos())) {
             if (!pieceBox.isInside(p)) continue;
             BlockState state = level.getBlockState(p);
@@ -585,19 +582,15 @@ public class ModEvents {
             if (random.nextFloat() >= chance) continue;
 
             BlockEntity be = level.getBlockEntity(p);
-            if (be == null) continue;
-            if (toInfest == null) toInfest = new ArrayList<>();
-            toInfest.add(be);
+            if (be != null) toInfest.add(be);
         }
-        if (toInfest == null) return;
-
-        //postProcess runs on a worldgen worker thread so we cant touch the attachment here
+        if (toInfest.isEmpty()) return;
 
         MinecraftServer server = level.getLevel().getServer();
         if (server == null) return;
-        List<BlockEntity> beds = toInfest;
+        //worldgen thread, attachments arent safe here
         server.executeIfPossible(() -> {
-            for (BlockEntity be : beds) {
+            for (BlockEntity be : toInfest) {
                 if (be.isRemoved()) continue;
                 BedData data = SleepTight.BED_DATA.getOrCreate(be);
                 if (data.isInfested()) continue;

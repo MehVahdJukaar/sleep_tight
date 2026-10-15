@@ -23,41 +23,22 @@ public class BedbugSpawner implements CustomSpawner {
 
     private static final int PHANTOM_REST_TICKS = 72000;
 
-    private static final int AMBIENT_NIGHT_STEP = 6000;
-    private static final int AMBIENT_MAX_REST_TICKS = 24000;
-
-    private static final int AMBIENT_INTERVAL_BASE_SECONDS = 300;
-    private static final int AMBIENT_INTERVAL_RANDOM_SECONDS = 300;
-
     private int nextTick;
 
     @Override
     public int tick(ServerLevel level, boolean spawnEnemies, boolean spawnFriendlies) {
-        if (!spawnFriendlies) {
-            return 0;
-        }
-        if (!level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) {
-            return 0;
-        }
-        if (!CommonConfigs.BEDBUG_AMBIENT_SPAWNER.get()) {
-            return 0;
-        }
+        if (!spawnFriendlies || !level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) return 0;
+        if (!CommonConfigs.BEDBUG_AMBIENT_SPAWNER.get()) return 0;
 
         RandomSource random = level.random;
         this.nextTick--;
-        if (this.nextTick > 0) {
-            return 0;
-        }
-        this.nextTick += (AMBIENT_INTERVAL_BASE_SECONDS + random.nextInt(AMBIENT_INTERVAL_RANDOM_SECONDS)) * 20;
+        if (this.nextTick > 0) return 0;
+        this.nextTick += (300 + random.nextInt(300)) * 20;
 
         int spawned = 0;
         for (ServerPlayer player : level.players()) {
-            if (player.isSpectator() || player.isCreative()) {
-                continue;
-            }
-            if (!shouldSpawnFor(player, random)) {
-                continue;
-            }
+            if (player.isSpectator() || player.isCreative()) continue;
+            if (!shouldSpawnFor(player, random)) continue;
             if (CommonConfigs.PREVENTED_BY_DREAM_ESSENCE.get()
                     && DreamEssenceBlock.isInRange(player.blockPosition(), level)) {
                 continue;
@@ -79,16 +60,14 @@ public class BedbugSpawner implements CustomSpawner {
 
         int nights = data.getConsecutiveNightsSlept();
         int minNights = CommonConfigs.BEDBUG_AMBIENT_MIN_NIGHTS.get();
-        if (nights < minNights) {
-            return false;
-        }
+        if (nights < minNights) return false;
 
         //more nights slept, easier roll
-        int restedTicks = Mth.clamp((nights - minNights + 1) * AMBIENT_NIGHT_STEP, 1, AMBIENT_MAX_REST_TICKS);
+        int restedTicks = Mth.clamp((nights - minNights + 1) * 6000, 1, 24000);
         return random.nextInt(PHANTOM_REST_TICKS) >= PHANTOM_REST_TICKS - restedTicks;
     }
 
-    static boolean isValidSpawnTime(ServerLevel level, BlockPos pos) {
+    public static boolean isValidSpawnTime(ServerLevel level, BlockPos pos) {
         if (!level.dimensionType().hasSkyLight()) {
             return true;
         }
@@ -103,7 +82,7 @@ public class BedbugSpawner implements CustomSpawner {
     }
 
 
-    static boolean tryWakeUpSpawn(BlockPos bedPos, ServerPlayer player, BedData data) {
+    public static boolean tryWakeUpSpawn(BlockPos bedPos, ServerPlayer player, BedData data) {
         ServerLevel level = (ServerLevel) player.level();
         if (!CommonConfigs.BEDBUGS_ENABLED.get()) return false;
         if (!level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) return false;
@@ -131,7 +110,7 @@ public class BedbugSpawner implements CustomSpawner {
                 null, false, bug -> bug.setBedTarget(bedPos));
     }
 
-    static boolean tryAmbientSpawn(ServerPlayer player, ServerLevel level) {
+    public static boolean tryAmbientSpawn(ServerPlayer player, ServerLevel level) {
         BlockPos center = player.blockPosition();
         int min = CommonConfigs.BEDBUG_AMBIENT_MIN_RANGE.get();
         int max = CommonConfigs.BEDBUG_AMBIENT_MAX_RANGE.get();
@@ -170,7 +149,7 @@ public class BedbugSpawner implements CustomSpawner {
         return false;
     }
 
-    static void setRandomPosInDoughnout(BlockPos center, BlockPos.MutableBlockPos mutable, RandomSource random,
+    public static void setRandomPosInDoughnout(BlockPos center, BlockPos.MutableBlockPos mutable, RandomSource random,
                                         int min, int max) {
         int l = random.nextInt(min, max);
         Vec3 v = new Vec3(l, 0, 0).yRot(random.nextFloat() * Mth.PI * 2)

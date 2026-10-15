@@ -13,19 +13,17 @@ public class DumbTaskScheduler {
     public static void init(){
         //because mc tick task is also dumb
         ServerTickEvents.END_SERVER_TICK.register(server -> {
-            final int now = server.getTickCount();
-
-            for (TickTask t; (t = INBOUND.poll()) != null; ) {
-                SCHEDULED.add(t);
+            int now = server.getTickCount();
+            while (!INBOUND.isEmpty()) {
+                SCHEDULED.add(INBOUND.poll());
             }
 
             while (!SCHEDULED.isEmpty() && SCHEDULED.peek().getTick() <= now) {
                 TickTask t = SCHEDULED.poll();
                 try {
                     t.run();
-                } catch (Throwable ex) {
-                    //dont let one task break the tick loop
-                    SleepTight.LOGGER.error("TickTask failed", ex);
+                } catch (Exception e) {
+                    SleepTight.LOGGER.error("Failed to run scheduled task", e);
                 }
             }
         });
@@ -35,7 +33,7 @@ public class DumbTaskScheduler {
         INBOUND.add(task);
     }
 
-    private static final ConcurrentLinkedQueue<TickTask> INBOUND = new java.util.concurrent.ConcurrentLinkedQueue<>();
+    private static final ConcurrentLinkedQueue<TickTask> INBOUND = new ConcurrentLinkedQueue<>();
     private static final PriorityQueue<TickTask> SCHEDULED =
             new PriorityQueue<>(Comparator.comparingInt(TickTask::getTick));
 

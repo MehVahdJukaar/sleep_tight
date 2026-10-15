@@ -15,18 +15,13 @@ import org.jetbrains.annotations.Nullable;
 //like AnimalPanic but repaths whenever it stops, so it scurries around instead of running to one spot
 public class BedbugPanicBehavior extends Behavior<BedbugEntity> {
 
-    private static final int PANIC_MIN_DURATION = 100;
-    private static final int PANIC_MAX_DURATION = 120;
-    private static final int FLEE_RADIUS_HORIZONTAL = 16;
-    private static final int FLEE_RADIUS_VERTICAL = 7;
-
     private final float speedModifier;
 
     public BedbugPanicBehavior(float speedModifier) {
         super(ImmutableMap.of(
                 MemoryModuleType.HOME, MemoryStatus.VALUE_ABSENT,
                 MemoryModuleType.HURT_BY_ENTITY, MemoryStatus.VALUE_PRESENT),
-                PANIC_MIN_DURATION, PANIC_MAX_DURATION);
+                100, 120);
         this.speedModifier = speedModifier;
     }
 
@@ -56,12 +51,11 @@ public class BedbugPanicBehavior extends Behavior<BedbugEntity> {
 
     @Nullable
     private Vec3 findFleePos(BedbugEntity mob) {
-        Vec3 awayFrom = mob.getBrain().getMemory(MemoryModuleType.HURT_BY_ENTITY)
-                .map(LivingEntity::position).orElse(null);
-        if (awayFrom != null) {
-            Vec3 away = LandRandomPos.getPosAway(mob, FLEE_RADIUS_HORIZONTAL, FLEE_RADIUS_VERTICAL, awayFrom);
+        LivingEntity attacker = mob.getBrain().getMemory(MemoryModuleType.HURT_BY_ENTITY).orElse(null);
+        if (attacker != null) {
+            Vec3 away = LandRandomPos.getPosAway(mob, 16, 7, attacker.position());
             if (away != null) return away;
         }
-        return LandRandomPos.getPos(mob, FLEE_RADIUS_HORIZONTAL, FLEE_RADIUS_VERTICAL);
+        return LandRandomPos.getPos(mob, 16, 7);
     }
 }

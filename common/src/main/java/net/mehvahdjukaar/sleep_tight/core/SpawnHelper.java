@@ -11,14 +11,14 @@ import org.jetbrains.annotations.Nullable;
 public class SpawnHelper {
 
 
-    static void doSpawnMob(ServerLevel level, Mob mob, MobSpawnType spawnType) {
+    public static void doSpawnMob(ServerLevel level, Mob mob, MobSpawnType spawnType) {
         mob.finalizeSpawn(level, level.getCurrentDifficultyAt(mob.blockPosition()), spawnType, null);
         level.addFreshEntityWithPassengers(mob);
     }
 
     //copy of the private NaturalSpawner.spawnCategoryForPosition, we want a specific type at a specific pos
     @Nullable
-    static <T extends Entity> T createValidMobToSpawn(Vec3 centerPos, ServerLevel level, BlockPos.MutableBlockPos pos,
+    public static <T extends Entity> T createValidMobToSpawn(Vec3 centerPos, ServerLevel level, BlockPos.MutableBlockPos pos,
                                                       EntityType<T> entityType, MobSpawnType spawnType,
                                                       boolean naturalDistanceRules) {
         if (!level.isNaturalSpawningAllowed(pos)) return null;
