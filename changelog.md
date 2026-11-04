@@ -1,1 +1,1 @@
-added another emf hack since it keeps un rotating your legs in bed
+- fixed an issue with configs
