@@ -113,7 +113,8 @@ public class SleepEffectsHelper {
         if (playerSleepData.isBedFamiliarityMaxed(bedData)) {
             //effects
             for (var e : WAKE_UP_EFFECTS.get()) {
-                player.addEffect(e.createInstance(bedData.getBedLevel(player) - 1));
+                var effect = e.createInstance(bedData.getBedLevel(player) - 1);
+                if (effect != null) player.addEffect(effect);
             }
         }
     }
@@ -124,7 +125,8 @@ public class SleepEffectsHelper {
         if (otherPos != null) {
             if (playerSleepData.isBedFamiliarityMaxed(bedData)) {
                 for (var e : HEARTSTONE_EFFECT.get()) {
-                    player.addEffect(e.createInstance(bedData.getBedLevel(player) - 1));
+                    var effect = e.createInstance(bedData.getBedLevel(player) - 1);
+                    if (effect != null) player.addEffect(effect);
                 }
             }
         }
